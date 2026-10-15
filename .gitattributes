@@ -1,0 +1,10 @@
+# Normaliza finales de linea: LF en el repo, salvo scripts de Windows.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.png binary
+*.jpg binary
+*.webp binary
+*.jar binary
+*.ico binary

@@ -1,0 +1,30 @@
+name: musubi_app
+description: "MUSUBI: compra-venta entre estudiantes de la UTTT (app Android)."
+publish_to: 'none'
+
+# versionName+versionCode de Android. Subir el build (+N) en cada entrega a Google Play.
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.5
+  flutter: ">=3.47.7"
+
+# Paquetes aprobados en la plantilla inicial (licencia, mantenimiento y seguridad revisados; ver 00-01).
+dependencies:
+  dio: ^5.11.1
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0
+
+flutter:
+  uses-material-design: true
