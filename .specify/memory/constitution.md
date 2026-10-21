@@ -7,7 +7,7 @@
 <!-- Sección compartida con musubi-app/musubi-api: si cambia, cámbiala en ambos repos y regístralo en las dos Memoria.md -->
 ## 1. Propósito y alcance
 
-- **Producto:** MUSUBI, app Android de compra-venta entre estudiantes de la UTTT (Universidad Tecnológica de Tula-Tepeji). Conecta la **oferta** (productos publicados) con la **demanda** (solicitudes "busco…"), con coincidencias automáticas, chat, pedidos con pago contra entrega y Mercado Pago en modo de pruebas, reputación, IA generativa para resumir acuerdos y recomendaciones con ML.
+- **Producto:** MUSUBI, app Android de compra-venta entre estudiantes de la UTTT (Universidad Tecnológica de Tula-Tepeji). Conecta la **oferta** (productos publicados) con la **demanda** (solicitudes "busco…"), con coincidencias automáticas, chat, pedidos pagados por transferencia a la cuenta del vendedor o en efectivo (sin comisión; Musubi no procesa el dinero), reputación, IA generativa para resumir acuerdos y recomendaciones con ML.
 - **Repos hermanos:** `musubi-api` (back, ASP.NET Core / .NET 10) y `musubi-app` (front, Flutter). Cada uno es autosuficiente: constitución, plantilla, specs, `AGENTS.md`, `Memoria.md`, CI y guardarraíles propios.
 - **Contrato entre repos:** el contrato HTTP es canónico en `musubi-api/docs/endpoints.md` (más el OpenAPI que la API expone en Development). El front **enlaza** sus filas y nunca lo duplica.
 - **Metodología:** Spec Driven Development. Cada funcionalidad nace de una spec en `specs/`; esta constitución gobierna su forma, su implementación y su verificación.
@@ -114,7 +114,7 @@ Regla de excepción: ver `specs/phase-00-constitution/00-01-principles-stack/spe
 
 ## 11. Seguridad (OWASP MASVS)
 
-- **Todo lo que va dentro del APK es público:** ningún secreto en el código, en los assets, en `config/*.json` ni en `--dart-define`. Las llaves privadas (IA, Mercado Pago, Firebase Admin) viven solo en `musubi-api`.
+- **Todo lo que va dentro del APK es público:** ningún secreto en el código, en los assets, en `config/*.json` ni en `--dart-define`. Las llaves privadas (IA, Firebase Admin, cifrado de datos de pago) viven solo en `musubi-api`.
 - MASVS-NETWORK: HTTPS fuera de dev; `network_security_config` de release sin tráfico en claro; en debug solo hacia `10.0.2.2`.
 - MASVS-STORAGE: token en almacenamiento seguro (`NOTE (HU-02)`); `android:allowBackup="false"`.
 - MASVS-CODE: dependencias revisadas (Dependabot con `cooldown`), análisis estático estricto.

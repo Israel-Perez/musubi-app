@@ -39,44 +39,48 @@ Los estados nunca se comunican solo con color.
 
 | # | Sección | Pantallas (ID) | HU |
 |---|---|---|---|
-| 1 | Modo visitante | `Inicio-visitante`, `Se-busca-visitante`, `Producto-visitante`, `Visitante-modal` | HU-09, HU-11, HU-15 + **G-01** |
+| 1 | Modo visitante | `Inicio-visitante`, `Se-busca-visitante`, `Producto-visitante`, `Visitante-modal` | HU-48, HU-09, HU-11, HU-15 |
 | 2 | Cuenta con correo institucional | `Registro`, `Registro-error`, `Verificacion`, `Verificacion-lista` | HU-01, HU-03 |
 | 2 | Sesión | `Iniciar-sesion`, `Iniciar-sesion-error` | HU-02 |
-| 3 | Descubrir | `Inicio`, `Recien-publicados`, `Recien-publicados-antiguas` | HU-35 + **G-02** |
+| 3 | Descubrir | `Inicio`, `Recien-publicados`, `Recien-publicados-antiguas` | HU-49, HU-35 |
 | 3 | Buscar | `Busqueda`, `Busqueda-filtros`, `Busqueda-vacia` | HU-09, HU-10, HU-12 |
-| 3 | Producto y vendedor | `Producto`, `Perfil-vendedor`, `Chat-Valeria` | HU-11, HU-05, HU-20 + **G-03**, **G-04** |
-| 4 | Apartados con QR o código | `Apartar`, `Apartado-listo`, `Mis-apartados`, `Verificar-comprador`, `Apartado-verificado` | HU-44 + **G-05** |
-| 5 | Vender | `Publicar`, `Vender-1`…`Vender-4`, `Vender-listo` | HU-06 (RNF-17) + **G-03** |
+| 3 | Producto y vendedor | `Producto`, `Perfil-vendedor`, `Chat-Valeria` | HU-11, HU-50, HU-51, HU-05, HU-20 |
+| 4 | Apartados con QR o código | `Apartar`, `Apartado-listo`, `Mis-apartados`, `Verificar-comprador`, `Apartado-verificado` | HU-52, HU-44 |
+| 5 | Vender | `Publicar`, `Vender-1`…`Vender-4`, `Vender-listo` | HU-06 (RNF-17), HU-50 |
 | 6 | Publicar una necesidad | `Necesidad-1`…`Necesidad-3`, `Necesidad-publicada`, `Mis-solicitudes` | HU-13, HU-18, HU-14, HU-17 |
 | 7 | "Yo tengo este producto" | `Se-busca`, `Yo-tengo-vincular`, `Yo-tengo-oferta`, `Yo-tengo-enviada` | HU-15, HU-16 |
 | 8 | Chat y acuerdo con IA | `Mensajes`, `Chat`, `Acuerdo-esperando`, `Acuerdo-confirmado` | HU-22, HU-20, HU-21, HU-32, HU-33, HU-34 |
-| 9 | Pago y entrega | `Pedido-pago`, `Pago-transferencia`, `Pago-validando`, `Pago-vendedor`, `Pedido-entrega`, `Pedido-efectivo` | HU-23, HU-24, HU-44 + **D-01** |
+| 9 | Pago y entrega | `Pedido-pago`, `Pago-transferencia`, `Pago-validando`, `Pago-vendedor`, `Pedido-entrega`, `Pedido-efectivo` | HU-55, HU-23, HU-24, HU-44 |
 | 9 | Calificar | `Calificar` | HU-27, HU-45 |
 | 10 | Avisos | `Notificaciones` | HU-29, HU-30, HU-31 |
 | 10 | Perfil y vendedor | `Perfil`, `Mis-productos` | HU-04, HU-08, HU-07 |
-| 10 | Favoritos | `Favoritos` | **G-06** |
-| 10 | Ajustes | `Ajustes`, `Cuenta-pagos` | **G-07**, **D-01** |
+| 10 | Favoritos | `Favoritos` | HU-53 |
+| 10 | Ajustes | `Ajustes`, `Cuenta-pagos` | HU-54, HU-55 |
 | 10 | Privacidad | `Privacidad`, `Aviso-privacidad` | HU-47, HU-46 (RNF-05, RNF-07) |
 | 10 | Estados base | `Inicio-cargando`, `Inicio-error` | `02-01` (RNF-18) |
 
-Tienen HU pero no tienen pantalla en la maqueta: HU-19, HU-25, HU-26, HU-28, HU-36…HU-42 y HU-43. Agregarlas está permitido por el lineamiento 4, siempre con la guía de estilo.
+Tienen HU pero no tienen pantalla en la maqueta: HU-19, HU-25, HU-26, HU-28 y HU-36…HU-42 (HU-43 quedó fuera de alcance, D-01). Agregarlas está permitido por el lineamiento 4, siempre con la guía de estilo.
 
-## 3. Funciones de la maqueta sin HU (gaps)
+## 3. Funciones de la maqueta que no estaban en el backlog
 
-Son funciones visibles en la maqueta. El lineamiento 4 impide quitarlas, así que necesitan una HU en Jira y una fila en `docs/trazabilidad.md`.
+Se convirtieron en historias el 21-Oct-2026 (SCRUM-75), porque el lineamiento 4 impide quitarlas.
 
-| ID | Función | Pantallas |
-|---|---|---|
-| G-01 | Explorar como visitante; al comprar, apartar o guardar se pide crear cuenta | Sección 1 |
-| G-02 | Populares de hoy y de la semana, y recién publicados (con "Más antiguas") | `Inicio`, `Recien-publicados*` |
-| G-03 | Inventario por publicación ("Quedan 2", "Último", "Agotado") y cantidad al vender | `Producto`, `Vender-4`, `Mis-productos` |
-| G-04 | Comparar con publicaciones similares (reputación, ventas, precio) y "Avísame" cuando esté disponible | `Producto` |
-| G-05 | Apartar 24 h con QR o código de 6 dígitos que el vendedor verifica | Sección 4 |
-| G-06 | Favoritos | `Favoritos` |
-| G-07 | Modo noche y preferencias | `Ajustes` |
+| ID | Función | Pantallas | HU (Jira) |
+|---|---|---|---|
+| G-01 | Explorar como visitante; al comprar, apartar o guardar se pide crear cuenta | Sección 1 | HU-48 (SCRUM-73) |
+| G-02 | Populares de hoy y de la semana, y recién publicados (con "Más antiguas") | `Inicio`, `Recien-publicados*` | HU-49 (SCRUM-69) |
+| G-03 | Inventario por publicación ("Quedan 2", "Último", "Agotado") y cantidad al vender | `Producto`, `Vender-4`, `Mis-productos` | HU-50 (SCRUM-67) |
+| G-04 | Comparar con publicaciones similares (reputación, ventas, precio) y "Avísame" | `Producto` | HU-51 (SCRUM-70) |
+| G-05 | Apartar 24 h con QR o código de 6 dígitos que el vendedor verifica | Sección 4 | HU-52 (SCRUM-74) |
+| G-06 | Favoritos | `Favoritos` | HU-53 (SCRUM-68) |
+| G-07 | Modo noche y preferencias | `Ajustes` | HU-54 (SCRUM-71) |
 
-## 4. Decisión pendiente
+## 4. Decisiones
 
-**D-01 · Modelo de pago.** La maqueta paga por **transferencia** a la cuenta (CLABE) verificada del vendedor, con validación, o en **efectivo** con un código de entrega de 4 dígitos. Además dice "Musubi no cobra comisión". El backlog tiene HU-43 "Pagar un pedido con Mercado Pago", que no aparece en la maqueta.
+**D-01 · Modelo de pago (decidido el 21-Oct-2026).** Se implementa **solo el modelo de la maqueta**:
 
-El lineamiento 4 obliga a implementar la transferencia y el efectivo. Mercado Pago solo puede quedar como función adicional o salir del alcance. La decisión es del equipo y del PO; mientras no se tome, HU-43 no se implementa.
+- **Transferencia** a la cuenta (CLABE) verificada del vendedor; el vendedor valida el pago.
+- **Efectivo**, con un código de entrega de 4 dígitos.
+- Musubi no cobra comisión ni procesa el dinero.
+
+Lo cubre **HU-55** (SCRUM-72). HU-43, "Pagar un pedido con Mercado Pago" (SCRUM-55), queda **fuera de alcance**.

@@ -31,7 +31,7 @@ Reglas operativas derivadas de fallos reales: las de la referencia que aplican a
 
 | # | Regla | Evidencia | Aplica en |
 |---|---|---|---|
-| 11 | **Todo lo que va dentro del APK es público:** ningún secreto en el código, en los assets, en `config/*.json` ni en `--dart-define`. Las llaves privadas (IA, Mercado Pago, Firebase Admin) viven solo en `musubi-api`. | Plantilla inicial MUSUBI, 15-Oct-2026 | critic B2, Semgrep `musubi-secret-in-dart-define`, `config/README.md` |
+| 11 | **Todo lo que va dentro del APK es público:** ningún secreto en el código, en los assets, en `config/*.json` ni en `--dart-define`. Las llaves privadas (IA, Firebase Admin, cifrado de datos de pago) viven solo en `musubi-api`. | Plantilla inicial MUSUBI, 15-Oct-2026 | critic B2, Semgrep `musubi-secret-in-dart-define`, `config/README.md` |
 | 12 | En comentarios Dart no se empieza con la palabra "todo"/"Todo": la lint `flutter_style_todos` lo marca y `--fatal-infos` rompe el análisis (`todo: error` solo detecta "TODO" en mayúsculas). | Medido con un archivo de prueba, 15-Oct-2026 | Código Dart |
 | 13 | very_good_analysis 11 + Dart 3.13 exigen `const new(...)` en los constructores (`unnecessary_type_name_in_constructor`); `dart fix --apply` lo corrige. | Medido: 12 hallazgos en el primer análisis, 15-Oct-2026 | Código Dart |
 | 14 | En Windows, `sdkmanager.bat` está obsoleto y parte los argumentos en `;` (`platforms;android-36` → "Package not found"). Usar `android sdk install "<paquete>"` (cmdline-tools nuevas). Gradle (AGP) también falla al autoinstalar el NDK; instalarlo a mano: `android sdk install "ndk;28.2.13676358"`. | Medido: el build falló en "NDK 28.2.13676358 not installed", 15-Oct-2026 | `README.md` (setup) |
