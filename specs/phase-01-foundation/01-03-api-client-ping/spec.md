@@ -14,7 +14,7 @@ Primera conexión con el back: un repositorio detrás de una interfaz que consum
 
 ## Diseño
 - `lib/core/network/api_paths.dart`: `ApiPaths.ping` cita su fila de `musubi-api/docs/endpoints.md` (skill `api-contract`).
-- `lib/core/network/api_client.dart`: `createApiClient` + `dioProvider` (connect 5 s, receive 10 s — `NOTE (02-01)`: ajustar con mediciones; `NOTE (HU-02)`: interceptor del token).
+- `lib/core/network/api_client.dart`: `createApiClient` + `dioProvider` (connect 5 s, receive 10 s — `NOTE (02-05)`: ajustar con mediciones; el interceptor del token llegó en `02-01`).
 - `lib/core/errors/network_error_message.dart`: `DioExceptionType` → mensaje en español (switch exhaustivo).
 - `lib/features/status/{domain,data,presentation}/`: `ApiStatus` (sealed: `ApiOnline` | `ApiOffline`), `StatusRepository`, `HttpStatusRepository`, `status_providers.dart`, `home_screen.dart`.
 - El `catch` del repositorio **traduce** la excepción (no la traga): critic B4.

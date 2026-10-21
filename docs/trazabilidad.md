@@ -67,8 +67,9 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 | HU-53 | SCRUM-68 | Por asignar | M-04 | Guardar productos en favoritos | — | — | — | Por iniciar |
 | HU-54 | SCRUM-71 | Por asignar | M-02 | Elegir modo noche y preferencias | — | — | — | Por iniciar |
 | HU-55 | SCRUM-72 | Por asignar | M-08 | Pagar un pedido por transferencia o en efectivo | — | — | — | Por iniciar |
+| HU-56 | SCRUM-78 | Por asignar | M-01 | Recuperar mi contraseña | — | — | — | Por iniciar |
 
-Total: 55 HU (S1: 4 · S2: 11 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por asignar: 8 · Fuera de alcance: 1). HU-48…HU-55 nacen de la maqueta (21-Oct-2026, SCRUM-75); HU-43 sale por la decisión D-01.
+Total: 56 HU (S1: 4 · S2: 11 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por asignar: 9 · Fuera de alcance: 1). HU-48…HU-55 nacen de la maqueta (21-Oct-2026, SCRUM-75); HU-43 sale por la decisión D-01.
 
 ## Specs técnicas (sin HU)
 
@@ -83,6 +84,7 @@ Total: 55 HU (S1: 4 · S2: 11 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por 
 | 01-03 | Cliente de API y ping | 🚧 Borrador con evidencia | `test/features/status/` |
 | 01-04 | Configuración por ambiente | 🚧 Borrador con evidencia | `test/core/config/app_config_test.dart` |
 | 01-05 | Estructura, calidad y CI | 🚧 Borrador con evidencia | `scripts/critic-guardrails.ps1`, `.github/workflows/ci-pr.yml` |
+| 02-01 | Base de la app: tema, navegación, sesión y errores (SCRUM-79) | 🚧 Borrador con evidencia | `test/{app,core,security}/` |
 
 ## Tareas transversales
 

@@ -17,7 +17,7 @@ Reglas operativas derivadas de fallos reales: las de la referencia que aplican a
 | # | Regla | Evidencia | Aplica en |
 |---|---|---|---|
 | 1 | Verificar empíricamente antes de escribir (versiones, rutas, nombres). | Referencia WebAPIDevSecOpsScallingSDD, oct 2026 | skill `empirical-verification` |
-| 2 | Medir tiempos reales antes de fijar timeouts o umbrales. | Referencia WebAPIDevSecOpsScallingSDD, oct 2026 | `lib/core/network/api_client.dart` (`NOTE (02-01)`) |
+| 2 | Medir tiempos reales antes de fijar timeouts o umbrales. | Referencia WebAPIDevSecOpsScallingSDD, oct 2026 | `lib/core/network/api_client.dart` (`NOTE (02-05)`) |
 | 3 | Documentar límites conocidos en vez de hacks (`NOTE (ID)` en 4 capas). | Referencia WebAPIDevSecOpsScallingSDD, oct 2026 | skill `traceability` |
 | 4 | Pruebas de frontera exactas (ambas ramas, mensajes). | Referencia WebAPIDevSecOpsScallingSDD, oct 2026 | skill `testing-strategy` |
 | 5 | Scripts con respaldo explícito y salida determinista (`exit 0/1`). | Referencia WebAPIDevSecOpsScallingSDD, oct 2026 | `scripts/critic-guardrails.ps1` |
