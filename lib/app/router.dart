@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/shell/app_shell.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/features/auth/domain/auth_models.dart';
+import 'package:musubi_app/features/auth/presentation/legal_screens.dart';
+import 'package:musubi_app/features/auth/presentation/sign_up_screen.dart';
+import 'package:musubi_app/features/auth/presentation/verification_screen.dart';
+import 'package:musubi_app/features/auth/presentation/welcome_screen.dart';
 import 'package:musubi_app/features/status/presentation/home_screen.dart';
 
 /// Rutas de la app (02-01). Cada modulo reemplaza su seccion al implementar su
@@ -15,6 +20,10 @@ abstract final class AppRoutes {
   static const publish = '/publicar';
   static const signIn = '/iniciar-sesion';
   static const signUp = '/registro';
+  static const verification = '/registro/verificacion';
+  static const welcome = '/bienvenida';
+  static const privacy = '/aviso-de-privacidad';
+  static const terms = '/terminos';
   static const forgotPassword = '/recuperar-contrasena';
 
   /// Parametro con la ruta a la que se vuelve despues de iniciar sesion.
@@ -25,7 +34,12 @@ abstract final class AppRoutes {
   static const Set<String> requiresSession = {publish, messages, profile};
 
   /// Solo para visitantes: con sesion se vuelve a Inicio.
-  static const Set<String> visitorsOnly = {signIn, signUp, forgotPassword};
+  static const Set<String> visitorsOnly = {
+    signIn,
+    signUp,
+    verification,
+    forgotPassword,
+  };
 
   /// Ruta de regreso segura: solo rutas internas conocidas (evita redirigir a
   /// un destino arbitrario con `?desde=`).
@@ -145,12 +159,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.signUp,
-        // NOTE (HU-01): pantalla "Crea tu cuenta" de la maqueta.
-        builder: (context, state) => const UpcomingSection(
-          title: 'Crea tu cuenta',
-          message: 'Usa el correo de tu universidad.',
-          icon: Icons.person_add_alt,
+        builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.verification,
+        builder: (context, state) => VerificationScreen(
+          registration: state.extra is Registration
+              ? state.extra! as Registration
+              : null,
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.welcome,
+        builder: (context, state) => WelcomeScreen(
+          user: state.extra is AuthUser ? state.extra! as AuthUser : null,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.privacy,
+        builder: (context, state) => const PrivacyNoticeScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.terms,
+        builder: (context, state) => const TermsScreen(),
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,

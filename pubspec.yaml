@@ -46,3 +46,5 @@ flutter:
           weight: 800
   assets:
     - assets/fonts/OFL.txt
+    # Aviso de privacidad y terminos (HU-47): fuente unica para la app y la landing.
+    - assets/legal/
