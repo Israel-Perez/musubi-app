@@ -126,7 +126,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.publish,
-        // NOTE (HU-06): vender un producto. NOTE (HU-13): publicar una necesidad.
+        // NOTE (HU-06): vender un producto.
+        // NOTE (HU-13): publicar una necesidad.
         builder: (context, state) => const UpcomingSection(
           title: 'Publicar',
           message: 'Aquí podrás vender un producto o pedir lo que necesitas.',
