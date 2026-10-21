@@ -48,5 +48,5 @@ No fija versiones exactas (viven en `pubspec.yaml`/`pubspec.lock` y en Memoria.m
 ## Aprobación y Control de Cambios
 - **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 15-Oct-2026
-- **Detalle:** Adaptada de la referencia WebAPIDevSecOpsScallingSDD (00-01) al front Flutter de MUSUBI. Paquetes aprobados por el usuario: Riverpod, go_router, dio y very_good_analysis.
+- **Fecha:** 20-Oct-2026
+- **Detalle:** Adaptada de la referencia WebAPIDevSecOpsScallingSDD (00-01) al front Flutter de MUSUBI. Paquetes aprobados por el usuario: Riverpod, go_router, dio y very_good_analysis. 20-Oct-2026 (SCRUM-66): la constitución §1 (compartida) fija la evaluación el 02-Dic-2026 y hace mandar los lineamientos de la materia; §6 agrega el diseño de la maqueta y los datos locales (02-01).

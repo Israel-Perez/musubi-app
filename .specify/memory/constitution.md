@@ -11,7 +11,8 @@
 - **Repos hermanos:** `musubi-api` (back, ASP.NET Core / .NET 10) y `musubi-app` (front, Flutter). Cada uno es autosuficiente: constitución, plantilla, specs, `AGENTS.md`, `Memoria.md`, CI y guardarraíles propios.
 - **Contrato entre repos:** el contrato HTTP es canónico en `musubi-api/docs/endpoints.md` (más el OpenAPI que la API expone en Development). El front **enlaza** sus filas y nunca lo duplica.
 - **Metodología:** Spec Driven Development. Cada funcionalidad nace de una spec en `specs/`; esta constitución gobierna su forma, su implementación y su verificación.
-- **Calendario del MVP:** 5 sprints de 2 semanas (28-Sep-2026 a 04-Dic-2026). Prueba cerrada en Google Play desde el 09-Nov-2026; publicación y entrega final el 04-Dic-2026.
+- **Calendario del MVP:** sprints de 2 semanas desde el 28-Sep-2026. **Evaluación el 02-Dic-2026**: empieza descargando la app desde Google Play. Prueba cerrada en Google Play desde el 09-Nov-2026; la versión `1.0.0` se publica antes de la evaluación (matriz en `docs/versionado.md`).
+- **Lineamientos de la materia:** son criterios de evaluación y mandan sobre este documento. Texto y checklist (L-NN) en `musubi-api/docs/bitacora/lineamientos-materia.md`. Si una sección de esta constitución o una spec los contradice, se corrige ese artefacto. La app se construye a la imagen de la maqueta (`musubi-app/docs/maqueta/`) y nunca se le quitan funciones.
 - **Equipo:** Start-Up 10IDGS-G3 (4 integrantes; nombres y roles en Jira y Confluence, no en el repo público). Roles Scrum (PO/SM) por definir.
 
 ## 2. Principios no negociables
@@ -72,6 +73,8 @@
 | Tiempo real | Cliente SignalR (chat y avisos dentro de la app) — `NOTE (HU-20)` |
 | Notificaciones y monitoreo | Firebase Cloud Messaging — `NOTE (HU-31)` · Firebase Crashlytics — `NOTE (02-01)` |
 | Configuración | `--dart-define-from-file=config/<ambiente>.json` (valores públicos: URL base y banderas) |
+| Diseño visual | Maqueta de `docs/maqueta/` (lineamiento 4): Plus Jakarta Sans, rojo `#D7191F`, modo claro y oscuro; tokens en `lib/core/theme/` — `NOTE (02-01)` |
+| Datos locales | Caché local de consultas; SQLite con sincronización solo si una HU lo requiere (lineamiento 16) — `NOTE (02-01)` |
 | Pruebas | `flutter_test` (unit + widget), `integration_test` (esqueleto) |
 | Calidad y seguridad | `very_good_analysis` + `strict-casts/inference/raw-types`, `flutter analyze --fatal-infos --fatal-warnings`, Semgrep, critic-guardrails; referencia OWASP MASVS |
 | CI | GitHub Actions (actions fijadas por SHA) + Dependabot (pub, github-actions) |

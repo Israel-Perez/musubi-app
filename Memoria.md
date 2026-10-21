@@ -2,11 +2,30 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (15-Oct-2026)
+## Estado actual (20-Oct-2026)
 
-- Plantilla inicial completa: fases 00 y 01 en "🚧 Borrador con evidencia" (sin revisores designados).
-- format 0 cambios · analyze 0 · test 18/18 · APK de debug (`com.musubi.app`, `targetSdkVersion:'36'`) · critic PASS · Semgrep 0 · actionlint 0.
-- Siguiente: redactar `02-01` (arquitectura de la app) antes de HU-01 (S1).
+- **SCRUM-66** (rama `feature/SCRUM-66-stack-nosql`, PR abierto junto con el del back): maqueta versionada, matriz de versionamiento y lineamientos.
+- format 0 cambios · analyze 0 · test 20/20 · critic PASS · Semgrep 0 · actionlint 0 · shared OK (5 bloques).
+- Siguiente: `02-01` (navegación, sesión, componentes base, tema con los tokens de la maqueta, permisos, caché local) antes de HU-01.
+
+## T3 — Maqueta, versionamiento y lineamientos (20-Oct-2026, SCRUM-66)
+
+**Qué se hizo**
+- Maqueta HTML del equipo en `docs/maqueta/musubi-prototipo.html` (60 pantallas en 10 secciones + guía de estilo; SHA-256 en su README). En `.gitattributes` va como `-text -diff linguist-documentation` para conservar los bytes.
+- `docs/maqueta/README.md`: tokens de diseño, pantallas ↔ HU (propuesta), 7 funciones sin HU (G-01…G-07) y la decisión D-01 (pago).
+- Constitución §1 (compartida, copiada del back): evaluación el **02-Dic-2026**; los lineamientos de la materia mandan; la app es igual a la maqueta. §6: diseño visual y datos locales → `NOTE (02-01)`.
+- `docs/versionado.md` (sección compartida) + `test/versioning_test.dart` (la `version` de `pubspec.yaml`, hoy `0.1.0+1`, debe coincidir con la última fila de la matriz).
+- 00-03: RNF-20/RNF-27 con la paleta y el área táctil de la maqueta; filas L-04 (fidelidad a la maqueta) y Versionamiento.
+
+**Decisiones (con su porqué)**
+- **Los lineamientos viven en el back y aquí se enlazan** (como `endpoints.md`): una sola tabla viva.
+- **La maqueta se versiona en el repo** (y no solo en Drive): las specs citan pantallas por ID y el evaluador revisa el proyecto con prompts.
+- La maqueta solo trae personas y correos ficticios (comparados contra los usuarios de Jira el 20-Oct-2026); su contraseña de demo no es una credencial.
+
+**Pendientes / decisiones del usuario**
+- **D-01:** la maqueta paga por transferencia (CLABE) o efectivo y "no cobra comisión"; HU-43 (Mercado Pago) no aparece. El lineamiento 4 impide quitar lo de la maqueta.
+- **G-01…G-07** (visitante, populares, inventario, comparar/Avísame, apartados con QR, favoritos, modo noche) necesitan HU en Jira.
+- Riesgo de calendario: una cuenta personal nueva de Google Play exige 14 días de prueba cerrada con 12 testers antes de producción; desde el 09-Nov el margen hacia el 02-Dic es corto.
 
 ## T2 — Publicación en GitHub (15-Oct-2026)
 
@@ -62,6 +81,6 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 **Pendientes con dueño**
 - `02-01`: navegación por módulos, componentes base, paleta y contraste (RNF-20), tamaños (RNF-27), Crashlytics (`NOTE (02-01)`), timeouts medidos, cobertura con umbral.
-- `02-02`: firma de subida (`NOTE (02-02)`), ficha de Google Play, prueba cerrada (09-Nov-2026).
+- `02-02`: firma de subida (`NOTE (02-02)`), ficha de Google Play, prueba cerrada (09-Nov-2026), despliegue desde GitHub y tag de versión (`docs/versionado.md`).
 - `HU-02`: sesión, `flutter_secure_storage`, interceptor del token (`NOTE (HU-02)`). `HU-20`: SignalR. `HU-31`: FCM + secretos de Firebase en el CI.
 - Equipo: roles PO/SM, revisores, umbrales "Por definir con el PO", protección de `main` en GitHub y la clave Jira de la tarea de plantilla (commit `SCRUM-XX`).
