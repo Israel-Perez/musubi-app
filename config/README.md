@@ -14,7 +14,7 @@ flutter run --dart-define-from-file=config/dev.json
 ## Reglas (00-04)
 
 - **Todo lo que va en el APK es público.** Cualquier persona puede extraer del APK los valores de `--dart-define`. Aquí solo van la URL base de la API y banderas.
-- **Nunca** llaves privadas (IA, Mercado Pago, Firebase Admin): viven solo en `musubi-api`. El critic falla si un `--dart-define` con `SECRET`, `KEY` o `TOKEN` aparece en el código o en el CI.
+- **Nunca** llaves privadas (IA, Firebase Admin, cifrado de datos de pago): viven solo en `musubi-api`. El critic falla si un `--dart-define` con `SECRET`, `KEY` o `TOKEN` aparece en el código o en el CI.
 - `AppConfig.parse` (`lib/core/config/app_config.dart`) valida al arrancar:
   - `ENV` ∈ {dev, staging, prod};
   - URL absoluta;
