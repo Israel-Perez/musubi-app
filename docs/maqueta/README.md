@@ -10,7 +10,7 @@
 
 ## 1. Sistema visual (guía de estilo)
 
-Fuente de los tokens que implementa `lib/core/theme/` en la spec `02-01`. Si este resumen y la guía de estilo difieren, manda la guía.
+Fuente de los tokens implementados en `lib/core/theme/musubi_tokens.dart` (spec `02-01`, 21-Oct-2026). Si este resumen y la guía de estilo difieren, manda la guía.
 
 | Token | Valor |
 |---|---|

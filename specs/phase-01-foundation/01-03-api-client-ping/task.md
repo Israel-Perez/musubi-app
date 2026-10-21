@@ -7,4 +7,4 @@
 
 ## Pendientes
 - `NOTE (HU-02)`: interceptor del token en `createApiClient`.
-- `NOTE (02-01)`: timeouts medidos contra la API desplegada; reintentos con backoff.
+- `NOTE (02-05)`: timeouts medidos contra la API desplegada; reintentos con backoff.

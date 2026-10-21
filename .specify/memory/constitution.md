@@ -69,12 +69,12 @@
 | Navegación | `go_router` |
 | Cliente HTTP | `dio` (contra `musubi-api`, contrato en `musubi-api/docs/endpoints.md`) |
 | Idioma | Español (`flutter_localizations`, `es-MX`) — RNF-18 |
-| Almacenamiento seguro | `flutter_secure_storage` para el token — `NOTE (HU-02)` |
+| Almacenamiento seguro | `flutter_secure_storage` (Android Keystore) para los tokens de sesión (02-01) |
 | Tiempo real | Cliente SignalR (chat y avisos dentro de la app) — `NOTE (HU-20)` |
-| Notificaciones y monitoreo | Firebase Cloud Messaging — `NOTE (HU-31)` · Firebase Crashlytics — `NOTE (02-01)` |
+| Notificaciones y monitoreo | Firebase Cloud Messaging — `NOTE (HU-31)` · Firebase Crashlytics — `NOTE (HU-31)` (llega con Firebase) |
 | Configuración | `--dart-define-from-file=config/<ambiente>.json` (valores públicos: URL base y banderas) |
-| Diseño visual | Maqueta de `docs/maqueta/` (lineamiento 4): Plus Jakarta Sans, rojo `#D7191F`, modo claro y oscuro; tokens en `lib/core/theme/` — `NOTE (02-01)` |
-| Datos locales | Caché local de consultas; SQLite con sincronización solo si una HU lo requiere (lineamiento 16) — `NOTE (02-01)` |
+| Diseño visual | Maqueta de `docs/maqueta/` (lineamiento 4): Plus Jakarta Sans, rojo `#D7191F`, modo claro y oscuro; tokens en `lib/core/theme/musubi_tokens.dart`; fuente empaquetada (OFL) (02-01) |
+| Datos locales | Caché local de consultas; SQLite con sincronización solo si una HU lo requiere (lineamiento 16); se decide en HU-53 — `NOTE (HU-53)` |
 | Pruebas | `flutter_test` (unit + widget), `integration_test` (esqueleto) |
 | Calidad y seguridad | `very_good_analysis` + `strict-casts/inference/raw-types`, `flutter analyze --fatal-infos --fatal-warnings`, Semgrep, critic-guardrails; referencia OWASP MASVS |
 | CI | GitHub Actions (actions fijadas por SHA) + Dependabot (pub, github-actions) |
