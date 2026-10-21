@@ -12,9 +12,9 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 
 | HU | Jira | Sprint | Módulo | Título | Spec (este repo) | Contraparte | Tests | Estado |
 |---|---|---|---|---|---|---|---|---|
-| HU-01 | SCRUM-19 | S1 | M-01 | Crear cuenta de estudiante | — | — | — | Por iniciar |
-| HU-02 | SCRUM-20 | S1 | M-01 | Iniciar y cerrar sesión | — | — | — | Por iniciar |
-| HU-03 | SCRUM-21 | S1 | M-01 | Validar pertenencia con correo institucional | — | — | — | Por iniciar |
+| HU-01 | SCRUM-19 | S2 | M-01 | Crear cuenta de estudiante | `specs/m01-auth/HU-01-crear-cuenta/` | [musubi-api:HU-01](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-01-crear-cuenta) | `test/features/auth/**` | Borrador con evidencia |
+| HU-02 | SCRUM-20 | S2 | M-01 | Iniciar y cerrar sesión | `specs/m01-auth/HU-02-iniciar-cerrar-sesion/` | [musubi-api:HU-02](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-02-iniciar-cerrar-sesion) | `test/features/auth/presentation/session_flow_test.dart`, `test/core/session/session_api_test.dart` | Borrador con evidencia |
+| HU-03 | SCRUM-21 | S2 | M-01 | Validar pertenencia con correo institucional | `specs/m01-auth/HU-03-validar-correo/` | [musubi-api:HU-03](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-03-validar-correo) | `test/features/auth/presentation/auth_flow_test.dart` | Borrador con evidencia |
 | HU-04 | SCRUM-22 | S1 | M-02 | Editar mi perfil | — | — | — | Por iniciar |
 | HU-05 | SCRUM-34 | S3 | M-02 | Consultar perfil y reputación de otro usuario | — | — | — | Por iniciar |
 | HU-06 | SCRUM-23 | S2 | M-03 | Publicar un producto | — | — | — | Por iniciar |
@@ -58,7 +58,7 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 | HU-44 | SCRUM-56 | S4 | M-08 | Coordinar la entrega en un punto del campus | — | — | — | Por iniciar |
 | HU-45 | SCRUM-50 | S3 | M-13 | Calificar al comprador al terminar un pedido | — | — | — | Por iniciar |
 | HU-46 | SCRUM-32 | S2 | M-01 | Eliminar mi cuenta y mis datos | — | — | — | Por iniciar |
-| HU-47 | SCRUM-33 | S2 | M-01 | Aceptar aviso de privacidad y términos de uso | — | — | — | Por iniciar |
+| HU-47 | SCRUM-33 | S2 | M-01 | Aceptar aviso de privacidad y términos de uso | `specs/m01-auth/HU-47-aviso-privacidad/` | [musubi-api:HU-47](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-47-aviso-privacidad) | `test/features/auth/legal_documents_test.dart`, `auth_flow_test.dart` | Borrador con evidencia |
 | HU-48 | SCRUM-73 | Por asignar | M-04 | Explorar la app como visitante | — | — | — | Por iniciar |
 | HU-49 | SCRUM-69 | Por asignar | M-04 | Ver populares y recién publicados | — | — | — | Por iniciar |
 | HU-50 | SCRUM-67 | Por asignar | M-03 | Manejar la cantidad disponible de un producto | — | — | — | Por iniciar |
@@ -67,8 +67,9 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 | HU-53 | SCRUM-68 | Por asignar | M-04 | Guardar productos en favoritos | — | — | — | Por iniciar |
 | HU-54 | SCRUM-71 | Por asignar | M-02 | Elegir modo noche y preferencias | — | — | — | Por iniciar |
 | HU-55 | SCRUM-72 | Por asignar | M-08 | Pagar un pedido por transferencia o en efectivo | — | — | — | Por iniciar |
+| HU-56 | SCRUM-78 | S2 | M-01 | Recuperar mi contraseña | `specs/m01-auth/HU-56-recuperar-contrasena/` | [musubi-api:HU-56](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-56-recuperar-contrasena) | `test/features/auth/presentation/session_flow_test.dart` | Borrador con evidencia |
 
-Total: 55 HU (S1: 4 · S2: 11 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por asignar: 8 · Fuera de alcance: 1). HU-48…HU-55 nacen de la maqueta (21-Oct-2026, SCRUM-75); HU-43 sale por la decisión D-01.
+Total: 56 HU (S1: 1 · S2: 15 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por asignar: 8 · Fuera de alcance: 1). HU-02 pasó de S1 a S2 y HU-56 entró a S2 (21-Oct-2026). HU-48…HU-55 nacen de la maqueta (21-Oct-2026, SCRUM-75); HU-43 sale por la decisión D-01.
 
 ## Specs técnicas (sin HU)
 
@@ -83,6 +84,7 @@ Total: 55 HU (S1: 4 · S2: 11 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por 
 | 01-03 | Cliente de API y ping | 🚧 Borrador con evidencia | `test/features/status/` |
 | 01-04 | Configuración por ambiente | 🚧 Borrador con evidencia | `test/core/config/app_config_test.dart` |
 | 01-05 | Estructura, calidad y CI | 🚧 Borrador con evidencia | `scripts/critic-guardrails.ps1`, `.github/workflows/ci-pr.yml` |
+| 02-01 | Base de la app: tema, navegación, sesión y errores (SCRUM-79) | 🚧 Borrador con evidencia | `test/{app,core,security}/` |
 
 ## Tareas transversales
 

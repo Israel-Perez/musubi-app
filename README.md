@@ -10,11 +10,14 @@ Se desarrolla con **Spec Driven Development (SDD)** y DevSecOps: cada cambio nac
 - **Maqueta** (la app debe ser igual, lineamiento 4): [`docs/maqueta/`](docs/maqueta/README.md) · Versiones: [`docs/versionado.md`](docs/versionado.md)
 - Lineamientos de la materia (evaluación el 02-Dic-2026): [`musubi-api/docs/bitacora/lineamientos-materia.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/bitacora/lineamientos-materia.md)
 
-## Estado (20-Oct-2026)
+## Estado (21-Oct-2026)
 
 Plantilla inicial lista. Fases 00 (constitución) y 01 (fundación) implementadas en "🚧 Borrador con evidencia", en espera de designar revisores:
 
-- `dart format` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` sin observaciones · `flutter test` 20/20.
+- `dart format` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` sin observaciones · `flutter test` 124/124.
+- HU-01/03/47: "Crea tu cuenta" con detección del campus, verificación con código de 6 dígitos, bienvenida y aviso de privacidad/términos (`assets/legal/`, fuente única para la app y la landing).
+- HU-02 + HU-56: "Hola de nuevo" (iniciar sesión), renovación de la sesión con el refresh token, "Cerrar sesión" con confirmación y recuperar la contraseña con un código de 6 dígitos.
+- Base 02-01: tema de la maqueta (Plus Jakarta Sans, claro/oscuro, contraste AA), barra de 5 pestañas con guardia de sesión, tokens en almacenamiento seguro con renovación automática, errores por `code` y pruebas de seguridad de Android.
 - Maqueta HTML versionada en `docs/maqueta/` con su índice de pantallas ↔ HU (SCRUM-66).
 - APK de debug compilado: paquete `com.musubi.app`, `targetSdkVersion 36`.
 - `critic-guardrails` PASS · Semgrep 0 hallazgos · actionlint sin hallazgos.

@@ -2,11 +2,80 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (20-Oct-2026)
+## Estado actual (21-Oct-2026)
 
-- **SCRUM-66** (rama `feature/SCRUM-66-stack-nosql`, PR abierto junto con el del back): maqueta versionada, matriz de versionamiento y lineamientos.
-- format 0 cambios · analyze 0 · test 20/20 · critic PASS · Semgrep 0 · actionlint 0 · shared OK (5 bloques).
-- Siguiente: `02-01` (navegación, sesión, componentes base, tema con los tokens de la maqueta, permisos, caché local) antes de HU-01.
+- **SCRUM-79** (02-01, PR #3), **HU-01/03/47** (PR #4) y **HU-02 + HU-56** (rama `feature/SCRUM-20-login-recuperar`, apilada sobre HU-01/03/47).
+- format 0 cambios · analyze 0 · test 124/124 · APK de debug OK · critic PASS · Semgrep 0.
+- Siguiente: fusionar los PR apilados (#3 → #4 → HU-02/56) y seguir con el módulo de productos.
+
+## T7 — HU-02 + HU-56 Iniciar y cerrar sesión, recuperar la contraseña (21-Oct-2026, SCRUM-20/78)
+
+**Qué se hizo**
+- `core/session/session_api.dart`: `HttpSessionApi` (`refresh`, `revoke`) sobre `publicDioProvider`; `sessionRefresherProvider` ya renueva de verdad.
+- `SessionController.logOut` (revoca y borra; sin red borra igual); `SessionTokens.fromApi` compartido.
+- Pantallas `SignInScreen` (maqueta `Iniciar-sesion`/`-error`), `ForgotPasswordScreen` (dos pasos), `SignOutButton` (confirmación de `Ajustes`) y `ProfileScreen` provisional.
+- `PasswordRuleList` pasó a `password_rules.dart` (la comparten `Registro` y la recuperación).
+- Pruebas: `session_flow_test.dart` (13), `session_api_test.dart` (8) y 4 del repositorio → 124/124.
+
+**Decisiones (con su porqué)**
+- **Después del login navega la guardia**, no la pantalla: el regreso a `?desde=` vive en un solo lugar.
+- **El refresh solo termina la sesión con 400/401**: sin red o con un 5xx se conserva (L-16g, sesión siempre viva).
+- **Cerrar sesión: primero a Inicio, después el logout**, para que la guardia no mande a "Iniciar sesión".
+- **`auth.email_not_verified` → código nuevo + `Verificacion`**; si el reenvío responde `auth.resend_too_soon`, sirve el código que ya llegó.
+
+**Self-tests**
+- Refresh que devuelve `null` ante cualquier error → fallan "sin red" y "500".
+- `logOut` sin revocar → falla "confirma, revoca en la API y vuelve a Inicio".
+
+**Errores a evitar**
+- Los scripts largos con comillas de Dart dentro de un heredoc de bash fallan al parsear: escribirlos con Write en el scratchpad.
+- Al pasar a una pantalla con `context.go`, no hay botón de regreso: "Iniciar sesión" necesita su X hacia Inicio.
+
+## T6 — HU-01/03/47 Registro, verificación y aviso de privacidad (21-Oct-2026, SCRUM-19/21/33)
+
+**Qué se hizo**
+- `lib/features/auth/`: `AuthRepository` (lanza `ApiFailure` tipado), `HttpAuthRepository` (`publicDioProvider`), `SignUpScreen` (campus en vivo, reglas de contraseña, consentimiento con enlaces), `VerificationScreen` (código, cuenta regresiva para reenviar), `WelcomeScreen` y pantallas legales.
+- `assets/legal/{aviso-de-privacidad,terminos-y-condiciones}.md`: borradores (LFPDPPP, RN-40, RN-22, D-01), fuente única para la app y la landing; `LegalDocumentView` interpreta un Markdown mínimo.
+- Pruebas: 4 del repositorio, 11 del flujo con la app completa y el router real, y 4 de contenido legal → 99/99.
+
+**Decisiones (con su porqué)**
+- **Navegar a `/bienvenida` antes de guardar la sesión**: así la guardia de visitante no redirige a Inicio antes de mostrar la bienvenida.
+- **`SingleChildScrollView` + `Column` en formularios**, no `ListView` (que descarta los campos fuera de la vista; las pruebas no encontraban el botón).
+- **`clockProvider`** inyectable para la cuenta regresiva.
+- Los textos de las pantallas salen literalmente de la maqueta.
+
+**Self-tests**
+- Si se quita el consentimiento de `_canSubmit`, falla "sin aceptar el aviso y los términos no se puede crear".
+
+**Errores a evitar**
+- Riverpod 3 exporta `FutureProviderFamily` desde `package:flutter_riverpod/misc.dart`, no desde el archivo principal.
+- Una prueba "sin nombres de personas" que busca nombres reales con una regex mete esos nombres al repo público: comprobar lo positivo (el responsable es el equipo).
+
+## T5 — 02-01 Base de la app (21-Oct-2026, SCRUM-79)
+
+**Qué se hizo**
+- Tema de la maqueta: `MusubiColors` (ThemeExtension claro/oscuro con el mapa `dc-meta.dark`), `MusubiSizes`, `MusubiType`, Plus Jakarta Sans 400–800 empaquetada (TTF de `tokotype/PlusJakartaSans@18d1cd2`, OFL, registrada en `LicenseRegistry`).
+- Navegación: `StatefulShellRoute` con Inicio, Se busca, Mensajes y Perfil + botón central Publicar (`MusubiBottomBar`); guardia pura `sessionRedirect` y regreso seguro (`AppRoutes.safeReturn`).
+- Sesión: `SessionTokens`, `SecureTokenStore` (flutter_secure_storage 11.2.0), `SessionController` (Visitor/SignedIn; se lee en `main()` antes de pintar), `AuthInterceptor` (token solo hacia la API; una renovación por ola de 401).
+- Errores: `ApiFailure.fromDio` (problem+json con `code`, `title` y `errors` por campo; `network.*` propios).
+- Componentes: `MusubiButton`, `MusubiTextField`, `InlineMessage`, `LoadingView`, `EmptyView`, `ErrorView`.
+- Seguridad (L-07): `test/security/android_config_test.dart` (backup, permisos, tráfico en claro, archivos sensibles).
+
+**Decisiones (con su porqué)**
+- **Fuente empaquetada** (no `google_fonts`): nada se descarga en tiempo de ejecución y la versión queda fija.
+- **Sesión leída en `main()`**: sin pantalla "cargando sesión" ni redirecciones dobles.
+- **Dos clientes HTTP**: `publicDioProvider` (sin sesión; renovación y `/auth`) y `dioProvider` (con interceptor).
+- **Íconos Material outlined** en lugar de un paquete Lucide (sin dependencia nueva).
+- **Sin SQLite en el MVP** (lineamiento 16 dice "si se requiere"); se revisa en HU-53.
+
+**Self-tests**
+- Interceptor que acepta cualquier host → "nunca envía el token a otro host" en rojo.
+
+**Errores a evitar**
+- **Deadlock en `QueuedInterceptor`**: reintentar con el mismo Dio dentro de `onError` deja el error del reintento esperando en la fila bloqueada (la prueba se colgó 30 s). El reintento sale por un cliente sin el interceptor.
+- `FakeHttpAdapter.requests` guarda la misma `RequestOptions` que luego se modifica: para afirmar headers, capturarlos en el momento del envío.
+- `flutter_secure_storage` 11 pide la plataforma Android 35 y Gradle se atora al instalarla (el mismo problema del `sdkmanager.bat` de T1): `android sdk install "platforms;android-35"` a mano. El APK de debug queda con `INTERNET` + `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (lo agrega AndroidX, con nivel de firma; no es peligroso).
+- very_good_analysis exige tipo explícito en `static final` no obvios (`specify_nonobvious_property_types`) y no acepta `[Texto]` en dartdoc si no es un símbolo (`comment_references`).
 
 ## T4 — Backlog alineado con la maqueta (21-Oct-2026, SCRUM-75)
 

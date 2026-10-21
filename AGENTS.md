@@ -71,14 +71,16 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Rutas de la API en `lib/core/network/api_paths.dart`, cada una citando su fila del catálogo del back (skill `api-contract`).
 - Riverpod 3 sin codegen; go_router; dio; Material 3; `es-MX`.
 - Dart 3.13 + very_good_analysis 11: constructores `const new(...)` (`dart fix --apply`).
+- **Base 02-01:** colores y medidas con `context.musubi` y `MusubiSizes` (nunca números sueltos); componentes en `lib/core/widgets/`; errores con `ApiFailure.fromDio` (decidir por `code`); peticiones con sesión por `dioProvider` y públicas por `publicDioProvider`; rutas y guardia en `lib/app/router.dart`.
 - **Maqueta:** `docs/maqueta/` (60 pantallas). La app es igual a la maqueta y no se le quitan funciones (lineamiento 4); cada spec de HU cita sus pantallas por ID (índice en `docs/maqueta/README.md`).
 - **Versión:** `version` de `pubspec.yaml`, alineada con `docs/versionado.md` (lo verifica `test/versioning_test.dart`).
 - **Lineamientos de la materia:** checklist L-NN en `musubi-api/docs/bitacora/lineamientos-materia.md`.
-- Pendientes con dueño: sesión y token seguro → HU-02; SignalR → HU-20; FCM → HU-31; Crashlytics, navegación por módulos y componentes base → 02-01; firma de subida → 02-02.
+- Pendientes con dueño: SignalR → HU-20; FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)
 
-- MASVS-STORAGE: nada sensible en el APK; token en `flutter_secure_storage` (HU-02); `allowBackup=false`.
+- MASVS-STORAGE: nada sensible en el APK; tokens en `flutter_secure_storage` (02-01); `allowBackup=false` y permisos aprobados verificados por `test/security/android_config_test.dart`.
+- MASVS-NETWORK: el token solo viaja al esquema, host y puerto de la API (`AuthInterceptor`, con self-test).
 - MASVS-NETWORK: HTTPS fuera de dev (`AppConfig.parse`); release sin tráfico en claro; debug solo hacia `10.0.2.2`.
 - MASVS-CODE: análisis estricto, Dependabot con `cooldown`, paquetes evaluados (00-01).
 - MASVS-PRIVACY: datos mínimos, aviso de privacidad (HU-47), eliminación de cuenta (HU-46), la IA solo a petición (RNF-06).
