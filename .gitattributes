@@ -8,5 +8,6 @@
 *.webp binary
 *.jar binary
 *.ico binary
+*.ttf binary
 # Maqueta: se conserva byte a byte (SHA-256 en docs/maqueta/README.md) y no cuenta en las estadisticas de lenguajes.
 docs/maqueta/*.html -text -diff linguist-documentation

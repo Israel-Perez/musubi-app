@@ -18,10 +18,10 @@ Esqueleto de la app sobre el que se montan los 14 módulos: raíz, estado, naveg
 | `lib/main.dart` | Valida la configuración (01-04) y arranca `ProviderScope` con el override de `appConfigProvider` |
 | `lib/app/musubi_app.dart` | `MaterialApp.router`: tema, `es-MX`, `GlobalMaterialLocalizations`, `routerConfig` |
 | `lib/app/router.dart` | `AppRoutes` + `routerProvider` (se libera con `ref.onDispose`) |
-| `lib/core/theme/app_theme.dart` | Tema base desde un color semilla — `NOTE (02-01)`: paleta, componentes y contraste AA |
+| `lib/core/theme/app_theme.dart` | Tema de la maqueta (02-01): tokens, tipografía, componentes y contraste AA |
 | `lib/features/README.md` | Convención de capas y reglas (UI → provider → interfaz de repositorio) |
 
-Pendientes: guardas de sesión en el router (`HU-02`), navegación por módulos y componentes base (`02-01`), Crashlytics (`NOTE (02-01)`), FCM (`NOTE (HU-31)`), SignalR (`NOTE (HU-20)`).
+Pendientes: guardas de sesión, navegación por módulos y componentes base, resueltos en `02-01`; Crashlytics (`NOTE (HU-31)`), FCM (`NOTE (HU-31)`), SignalR (`NOTE (HU-20)`).
 
 ## Contratos
 N/A (sin endpoints nuevos; el contrato con el back está en 01-03).

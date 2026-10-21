@@ -2,11 +2,37 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (20-Oct-2026)
+## Estado actual (21-Oct-2026)
 
-- **SCRUM-66** (rama `feature/SCRUM-66-stack-nosql`, PR abierto junto con el del back): maqueta versionada, matriz de versionamiento y lineamientos.
-- format 0 cambios · analyze 0 · test 20/20 · critic PASS · Semgrep 0 · actionlint 0 · shared OK (5 bloques).
-- Siguiente: `02-01` (navegación, sesión, componentes base, tema con los tokens de la maqueta, permisos, caché local) antes de HU-01.
+- **SCRUM-79** (02-01, rama `feature/SCRUM-79-base-app`): tema de la maqueta, navegación, sesión segura y errores.
+- format 0 cambios · analyze 0 · test 80/80 · APK de debug OK (`targetSdkVersion:'36'`) · critic PASS · Semgrep 0.
+- Siguiente: HU-01/03/47 (registro, verificación y aviso de privacidad) y HU-02/56 (login, logout y recuperar contraseña), back y app.
+
+## T5 — 02-01 Base de la app (21-Oct-2026, SCRUM-79)
+
+**Qué se hizo**
+- Tema de la maqueta: `MusubiColors` (ThemeExtension claro/oscuro con el mapa `dc-meta.dark`), `MusubiSizes`, `MusubiType`, Plus Jakarta Sans 400–800 empaquetada (TTF de `tokotype/PlusJakartaSans@18d1cd2`, OFL, registrada en `LicenseRegistry`).
+- Navegación: `StatefulShellRoute` con Inicio, Se busca, Mensajes y Perfil + botón central Publicar (`MusubiBottomBar`); guardia pura `sessionRedirect` y regreso seguro (`AppRoutes.safeReturn`).
+- Sesión: `SessionTokens`, `SecureTokenStore` (flutter_secure_storage 11.2.0), `SessionController` (Visitor/SignedIn; se lee en `main()` antes de pintar), `AuthInterceptor` (token solo hacia la API; una renovación por ola de 401).
+- Errores: `ApiFailure.fromDio` (problem+json con `code`, `title` y `errors` por campo; `network.*` propios).
+- Componentes: `MusubiButton`, `MusubiTextField`, `InlineMessage`, `LoadingView`, `EmptyView`, `ErrorView`.
+- Seguridad (L-07): `test/security/android_config_test.dart` (backup, permisos, tráfico en claro, archivos sensibles).
+
+**Decisiones (con su porqué)**
+- **Fuente empaquetada** (no `google_fonts`): nada se descarga en tiempo de ejecución y la versión queda fija.
+- **Sesión leída en `main()`**: sin pantalla "cargando sesión" ni redirecciones dobles.
+- **Dos clientes HTTP**: `publicDioProvider` (sin sesión; renovación y `/auth`) y `dioProvider` (con interceptor).
+- **Íconos Material outlined** en lugar de un paquete Lucide (sin dependencia nueva).
+- **Sin SQLite en el MVP** (lineamiento 16 dice "si se requiere"); se revisa en HU-53.
+
+**Self-tests**
+- Interceptor que acepta cualquier host → "nunca envía el token a otro host" en rojo.
+
+**Errores a evitar**
+- **Deadlock en `QueuedInterceptor`**: reintentar con el mismo Dio dentro de `onError` deja el error del reintento esperando en la fila bloqueada (la prueba se colgó 30 s). El reintento sale por un cliente sin el interceptor.
+- `FakeHttpAdapter.requests` guarda la misma `RequestOptions` que luego se modifica: para afirmar headers, capturarlos en el momento del envío.
+- `flutter_secure_storage` 11 pide la plataforma Android 35 y Gradle se atora al instalarla (el mismo problema del `sdkmanager.bat` de T1): `android sdk install "platforms;android-35"` a mano. El APK de debug queda con `INTERNET` + `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (lo agrega AndroidX, con nivel de firma; no es peligroso).
+- very_good_analysis exige tipo explícito en `static final` no obvios (`specify_nonobvious_property_types`) y no acepta `[Texto]` en dartdoc si no es un símbolo (`comment_references`).
 
 ## T4 — Backlog alineado con la maqueta (21-Oct-2026, SCRUM-75)
 
