@@ -60,7 +60,7 @@ Esta spec deja esa base y las primeras pruebas de seguridad del móvil (L-07). *
 
 ## Contratos
 - Errores: `musubi-api/docs/errores.md` (se enlaza). Los códigos `network.*` y `request.rejected` son de la app y la API nunca los envía.
-- Sesión: tokens de `musubi-api:02-03`. Los endpoints de login, refresh y logout llegan con HU-02 (`NOTE (HU-02)` en `sessionRefresherProvider` y `SessionController.signOut`).
+- Sesión: tokens de `musubi-api:02-03`. Login, refresh y logout llegaron con HU-02 (`core/session/session_api.dart` y `SessionController.logOut`).
 - Configuración: sin claves nuevas. `flutter_secure_storage` 11.2.0 (BSD-3) es la única dependencia nueva.
 
 ## Tests
