@@ -32,7 +32,7 @@
 - **Estado:** ✅ Hecho (21-Oct-2026).
 
 ## Pendientes
-- `NOTE (HU-02)`: `sessionRefresherProvider` HTTP (`POST /api/v1/auth/refresh`) y logout contra la API en `SessionController.signOut`.
+- ~~`NOTE (HU-02)`: renovación HTTP y logout contra la API~~ → resuelto en HU-02 (`HttpSessionApi`, `SessionController.logOut`, 21-Oct-2026).
 - `NOTE (HU-48)`: aviso "Crea tu cuenta" antes de mandar al visitante a iniciar sesión.
 - `NOTE (HU-15, HU-22, HU-04, HU-06, HU-13)`: reemplazar cada `UpcomingSection` por su pantalla.
 - `NOTE (HU-31)`: Firebase (FCM y Crashlytics). `NOTE (02-05)`: timeouts medidos contra la API desplegada.

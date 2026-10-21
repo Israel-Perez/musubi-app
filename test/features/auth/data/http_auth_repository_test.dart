@@ -7,7 +7,8 @@ import 'package:musubi_app/features/auth/data/http_auth_repository.dart';
 
 import '../../../helpers/fake_http_adapter.dart';
 
-// HU-01 / HU-03: el repositorio habla el contrato de musubi-api
+// HU-01 / HU-02 / HU-03 / HU-56: el repositorio habla el contrato de
+// musubi-api
 // (ContractTest/Fixtures/{campus,register,session}.json) y traduce los errores.
 void main() {
   late FakeHttpAdapter adapter;
@@ -57,6 +58,20 @@ void main() {
     expect(sent['acceptTerms'], isTrue);
     expect(sent['acceptPrivacy'], isTrue);
   });
+
+  const sessionJson = {
+    'accessToken': 'a',
+    'accessTokenExpiresAt': '2026-10-21T18:15:00Z',
+    'refreshToken': 'r',
+    'refreshTokenExpiresAt': '2026-12-20T18:00:00Z',
+    'user': {
+      'id': 'u1',
+      'fullName': 'Ana Sofía Ramírez',
+      'email': 'ana@uttt.edu.mx',
+      'emailVerified': true,
+      'campus': {'shortName': 'UTTT', 'name': 'UTTT completa'},
+    },
+  };
 
   test('confirmacion: arma la sesion y el usuario', () async {
     serve({
@@ -114,5 +129,72 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('login: POST con correo y contrasena, misma forma de sesion', () async {
+    serve(sessionJson);
+
+    final session = await repository.signIn(
+      email: ' ana@uttt.edu.mx ',
+      password: 'musubi2026',
+    );
+
+    expect(adapter.requests.single.path, ApiPaths.authLogin);
+    expect(adapter.requests.single.data, {
+      'email': 'ana@uttt.edu.mx',
+      'password': 'musubi2026',
+    });
+    expect(session.tokens.refreshToken, 'r');
+    expect(session.user.email, 'ana@uttt.edu.mx');
+  });
+
+  test('login: credenciales incorrectas llegan como ApiFailure', () {
+    serve({
+      'title': 'El correo o la contraseña no coinciden.',
+      'status': 401,
+      'code': 'auth.invalid_credentials',
+    }, status: 401);
+
+    expect(
+      () => repository.signIn(email: 'ana@uttt.edu.mx', password: 'x'),
+      throwsA(
+        isA<ApiFailure>().having(
+          (f) => f.code,
+          'code',
+          'auth.invalid_credentials',
+        ),
+      ),
+    );
+  });
+
+  test('recuperar: pide el codigo y lee la espera', () async {
+    serve({'resendAvailableAt': '2026-10-21T18:01:00Z'}, status: 202);
+
+    final next = await repository.requestPasswordReset(' ana@uttt.edu.mx');
+
+    expect(next, DateTime.utc(2026, 10, 21, 18, 1));
+    expect(adapter.requests.single.path, ApiPaths.authPasswordForgot);
+    expect(adapter.requests.single.data, {'email': 'ana@uttt.edu.mx'});
+  });
+
+  test('recuperar: 204 sin cuerpo al guardar la contrasena nueva', () async {
+    adapter = FakeHttpAdapter((_) async => ResponseBody.fromString('', 204));
+    repository = HttpAuthRepository(
+      Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+        ..httpClientAdapter = adapter,
+    );
+
+    await repository.resetPassword(
+      email: 'ana@uttt.edu.mx',
+      code: ' 482173 ',
+      newPassword: 'nueva2026clave',
+    );
+
+    expect(adapter.requests.single.path, ApiPaths.authPasswordReset);
+    expect(adapter.requests.single.data, {
+      'email': 'ana@uttt.edu.mx',
+      'code': '482173',
+      'newPassword': 'nueva2026clave',
+    });
   });
 }

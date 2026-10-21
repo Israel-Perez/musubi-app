@@ -4,9 +4,32 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 ## Estado actual (21-Oct-2026)
 
-- **SCRUM-79** (02-01, PR #3) y **HU-01/03/47** (rama `feature/SCRUM-19-registro-verificacion`, apilada sobre 02-01).
-- format 0 cambios · analyze 0 · test 99/99 · APK de debug OK (`targetSdkVersion:'36'`) · critic PASS · Semgrep 0.
-- Siguiente: HU-02 + HU-56 (login, logout y recuperar contraseña), back y app.
+- **SCRUM-79** (02-01, PR #3), **HU-01/03/47** (PR #4) y **HU-02 + HU-56** (rama `feature/SCRUM-20-login-recuperar`, apilada sobre HU-01/03/47).
+- format 0 cambios · analyze 0 · test 124/124 · APK de debug OK · critic PASS · Semgrep 0.
+- Siguiente: fusionar los PR apilados (#3 → #4 → HU-02/56) y seguir con el módulo de productos.
+
+## T7 — HU-02 + HU-56 Iniciar y cerrar sesión, recuperar la contraseña (21-Oct-2026, SCRUM-20/78)
+
+**Qué se hizo**
+- `core/session/session_api.dart`: `HttpSessionApi` (`refresh`, `revoke`) sobre `publicDioProvider`; `sessionRefresherProvider` ya renueva de verdad.
+- `SessionController.logOut` (revoca y borra; sin red borra igual); `SessionTokens.fromApi` compartido.
+- Pantallas `SignInScreen` (maqueta `Iniciar-sesion`/`-error`), `ForgotPasswordScreen` (dos pasos), `SignOutButton` (confirmación de `Ajustes`) y `ProfileScreen` provisional.
+- `PasswordRuleList` pasó a `password_rules.dart` (la comparten `Registro` y la recuperación).
+- Pruebas: `session_flow_test.dart` (13), `session_api_test.dart` (8) y 4 del repositorio → 124/124.
+
+**Decisiones (con su porqué)**
+- **Después del login navega la guardia**, no la pantalla: el regreso a `?desde=` vive en un solo lugar.
+- **El refresh solo termina la sesión con 400/401**: sin red o con un 5xx se conserva (L-16g, sesión siempre viva).
+- **Cerrar sesión: primero a Inicio, después el logout**, para que la guardia no mande a "Iniciar sesión".
+- **`auth.email_not_verified` → código nuevo + `Verificacion`**; si el reenvío responde `auth.resend_too_soon`, sirve el código que ya llegó.
+
+**Self-tests**
+- Refresh que devuelve `null` ante cualquier error → fallan "sin red" y "500".
+- `logOut` sin revocar → falla "confirma, revoca en la API y vuelve a Inicio".
+
+**Errores a evitar**
+- Los scripts largos con comillas de Dart dentro de un heredoc de bash fallan al parsear: escribirlos con Write en el scratchpad.
+- Al pasar a una pantalla con `context.go`, no hay botón de regreso: "Iniciar sesión" necesita su X hacia Inicio.
 
 ## T6 — HU-01/03/47 Registro, verificación y aviso de privacidad (21-Oct-2026, SCRUM-19/21/33)
 

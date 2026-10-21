@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/session/token_store.dart';
 
@@ -58,9 +59,17 @@ class SessionController extends Notifier<SessionState> {
     state = SignedIn(tokens);
   }
 
-  /// Logout local: borra los tokens del dispositivo (L-10). La revocacion en
-  /// la API la hace quien llama antes de esto.
-  /// NOTE (HU-02): `POST /api/v1/auth/logout` antes de borrar.
+  /// "Cerrar sesion" (HU-02, L-10): revoca la sesion en la API y borra los
+  /// tokens. Sin red se cierra igual en el dispositivo.
+  Future<void> logOut() async {
+    if (state case SignedIn(:final tokens)) {
+      await ref.read(sessionApiProvider).revoke(tokens.refreshToken);
+    }
+    await signOut();
+  }
+
+  /// Fin local de la sesion: borra los tokens del dispositivo. Lo usa
+  /// [logOut] y el interceptor cuando la API ya dio la sesion por terminada.
   Future<void> signOut() async {
     await ref.read(tokenStoreProvider).clear();
     state = const Visitor();

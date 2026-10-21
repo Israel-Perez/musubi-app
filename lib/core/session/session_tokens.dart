@@ -12,6 +12,14 @@ class SessionTokens {
     required this.refreshToken,
   });
 
+  /// Tokens de una `SessionResponse` de musubi-api (login, refresh y
+  /// confirmacion del correo; fixture `session.json` del back).
+  factory fromApi(Map<String, dynamic> json) => SessionTokens(
+    accessToken: json['accessToken'] as String,
+    accessExpiresAt: DateTime.parse('${json['accessTokenExpiresAt']}').toUtc(),
+    refreshToken: json['refreshToken'] as String,
+  );
+
   /// Lee el JSON guardado; devuelve `null` si esta corrupto o incompleto.
   static SessionTokens? tryDecode(String? raw) {
     if (raw == null || raw.isEmpty) return null;

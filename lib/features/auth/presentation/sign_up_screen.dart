@@ -231,14 +231,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 }),
               ),
               const SizedBox(height: MusubiSizes.space2),
-              _Rule(
-                ok: PasswordRules.hasMinLength(_password.text),
-                text: 'Al menos 8 caracteres',
-              ),
-              _Rule(
-                ok: PasswordRules.hasLetterAndDigit(_password.text),
-                text: 'Una letra y un número',
-              ),
+              PasswordRuleList(password: _password.text),
               const SizedBox(height: MusubiSizes.space4),
               _ConsentCheckbox(
                 value: _consent,
@@ -315,37 +308,6 @@ class _CampusHint extends StatelessWidget {
     _CampusChecking() => const LinearProgressIndicator(minHeight: 2),
     _CampusIdle() => const SizedBox.shrink(),
   };
-}
-
-class _Rule extends StatelessWidget {
-  const new({required this.ok, required this.text});
-
-  final bool ok;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.musubi;
-    final color = ok ? c.successText : c.textSecondary;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Icon(
-            ok ? Icons.check_circle : Icons.radio_button_unchecked,
-            size: 18,
-            color: color,
-          ),
-          const SizedBox(width: MusubiSizes.space2),
-          Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: color),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _ConsentCheckbox extends StatefulWidget {

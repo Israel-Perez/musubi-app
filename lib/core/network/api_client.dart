@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/session/auth_interceptor.dart';
+import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 
 /// Timeouts del cliente HTTP. NOTE (02-05): ajustarlos con mediciones reales
@@ -19,12 +20,10 @@ Dio createApiClient(AppConfig config) => Dio(
   ),
 );
 
-/// Renovacion de la sesion. NOTE (HU-02): implementacion HTTP sobre
-/// `POST /api/v1/auth/refresh` con [publicDioProvider]; mientras tanto, un 401
-/// termina la sesion.
+/// Renovacion de la sesion: `POST /api/v1/auth/refresh` (HU-02) con
+/// [publicDioProvider].
 final sessionRefresherProvider = Provider<SessionRefresher>(
-  (ref) =>
-      (_) async => null,
+  (ref) => ref.watch(sessionApiProvider).refresh,
 );
 
 /// Cliente sin sesion: endpoints publicos de `/auth` y la renovacion del token
