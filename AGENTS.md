@@ -71,6 +71,9 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Rutas de la API en `lib/core/network/api_paths.dart`, cada una citando su fila del catálogo del back (skill `api-contract`).
 - Riverpod 3 sin codegen; go_router; dio; Material 3; `es-MX`.
 - Dart 3.13 + very_good_analysis 11: constructores `const new(...)` (`dart fix --apply`).
+- **Maqueta:** `docs/maqueta/` (60 pantallas). La app es igual a la maqueta y no se le quitan funciones (lineamiento 4); cada spec de HU cita sus pantallas por ID (índice en `docs/maqueta/README.md`).
+- **Versión:** `version` de `pubspec.yaml`, alineada con `docs/versionado.md` (lo verifica `test/versioning_test.dart`).
+- **Lineamientos de la materia:** checklist L-NN en `musubi-api/docs/bitacora/lineamientos-materia.md`.
 - Pendientes con dueño: sesión y token seguro → HU-02; SignalR → HU-20; FCM → HU-31; Crashlytics, navegación por módulos y componentes base → 02-01; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)
@@ -94,7 +97,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 
 ## 9. Publicación
 
-> 🚧 Pendiente (`02-02`): firma de subida (`android/key.properties`, ignorado), ficha de Google Play, prueba cerrada desde el 09-Nov-2026 y publicación el 04-Dic-2026.
+> 🚧 Pendiente (`02-02`): firma de subida (`android/key.properties`, ignorado), ficha de Google Play, prueba cerrada desde el 09-Nov-2026 y versión `1.0.0` publicada antes de la evaluación del 02-Dic-2026 (despliegue desde GitHub; versión según `docs/versionado.md`).
 
 ## 10. Reglas basadas en lecciones aprendidas
 
@@ -118,7 +121,7 @@ La fuente canónica es `specs/phase-00-constitution/00-04-lessons-learned/spec.m
 | `integration_test/` | Pruebas en un dispositivo (esqueleto) |
 | `android/` | Proyecto Android (`com.musubi.app`, targetSdk 36) |
 | `config/` | `*.example.json` por ambiente + README |
-| `docs/` | `trazabilidad.md` (47 HU), `modulos.md` (14 módulos) |
+| `docs/` | `trazabilidad.md` (47 HU), `modulos.md` (14 módulos), `versionado.md`, `maqueta/` (HTML + índice) |
 | `specs/` | SDD: plantilla, fases 00 y 01, `mNN-*/HU-NN-*` |
 | `scripts/` | `critic-guardrails.ps1`, `check_shared_sections.ps1` |
 | `.claude/` | `agents/` (3), `skills/` (9), `hooks/` |

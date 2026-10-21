@@ -29,13 +29,15 @@ Umbrales medibles de los RNF del MVP que aplican al front, más los NFR técnico
 | RNF-17 Publicar en pocos pasos | Usabilidad | Front | Publicar un producto en ≤ N pantallas/pasos (por definir) | 🎯 Objetivo (Por definir con el PO) — HU-06 | Revisión de UX + `integration_test` | Pruebas de HU-06 |
 | RNF-18 Interfaz en español con errores claros | Usabilidad | Ambos | Localización `es-MX`; errores de red traducidos sin detalle técnico | 📈 Medido real (base) | `flutter_localizations` + `networkErrorMessage` | `test/features/status/data/http_status_repository_test.dart` |
 | RNF-19 Distinguir productos de solicitudes | Usabilidad | Front | Productos y solicitudes con un estilo visual distinto (color/ícono/etiqueta) | 🎯 Objetivo (Por medir) — HU-15 | Widget/golden test | Pruebas de HU-15 |
-| RNF-20 Legibilidad y contraste | Usabilidad | Front | Contraste WCAG AA (≥ 4.5:1 en el texto); soporte de escala de fuente | 🎯 Objetivo (Por medir) — 02-01 | `meetsGuideline(textContrastGuideline)` | `NOTE (02-01)` |
+| RNF-20 Legibilidad y contraste | Usabilidad | Front | Contraste WCAG AA (≥ 4.5:1 en el texto) con la paleta de la maqueta en modo claro y oscuro; soporte de escala de fuente | 🎯 Objetivo (Por medir) — 02-01 | `meetsGuideline(textContrastGuideline)` | `NOTE (02-01)` |
 | RNF-21 Más universidades | Escalabilidad | Ambos | Ningún dominio ni nombre de universidad fijo en `lib/` | 🎯 Objetivo (Por medir) — HU-03 | Revisión + critic | Pruebas de HU-03 |
 | RNF-23 Organización por módulos | Mantenibilidad | Ambos | `lib/features/<modulo>/` según `docs/modulos.md` | 📈 Medido real (estructura) | `lib/features/README.md` | Revisión de la estructura en cada PR |
 | RNF-24 Versiones, estándares y documentación | Mantenibilidad | Ambos | CI verde en cada PR; specs con la plantilla | 📈 Medido real | GitHub Actions | `.github/workflows/ci-pr.yml` |
 | RNF-25 Pruebas en auth, coincidencias y pedidos | Mantenibilidad | Ambos | Cada HU de M-01, M-06 y M-08 con unit + widget tests | 🎯 Objetivo (Por medir) | `flutter_test` | Suites por HU |
 | RNF-26 Plataformas | Compatibilidad | Front | Android primero: `minSdk` 24, `targetSdk` 36 | 📈 Medido real | `aapt2 dump badging` | `targetSdkVersion:'36'` (15-Oct-2026) |
-| RNF-27 Distintos tamaños de pantalla | Compatibilidad | Front | Sin overflow de 360×640 dp a tablets de 10" | 🎯 Objetivo (Por medir) — 02-01 | Widget test con varios `physicalSize` | `NOTE (02-01)` |
+| RNF-27 Distintos tamaños de pantalla | Compatibilidad | Front | Sin overflow de 360×640 dp a tablets de 10" (la maqueta está a 390×844); área táctil ≥ 44 dp | 🎯 Objetivo (Por medir) — 02-01 | Widget test con varios `physicalSize` + `meetsGuideline(androidTapTargetGuideline)` | `NOTE (02-01)` |
+| L-04 Fidelidad a la maqueta | Usabilidad | Front | Cada pantalla de `docs/maqueta/` implementada en su HU, sin funciones eliminadas | 🎯 Objetivo (Por medir) — por HU | Golden/widget test por pantalla + índice de `docs/maqueta/README.md` | `NOTE (02-01)` |
+| Versionamiento | Mantenibilidad | Front | `version` de `pubspec.yaml` SemVer con `versionCode` y alineada con `docs/versionado.md` | 📈 Medido real (20-Oct-2026) | `flutter_test` | `test/versioning_test.dart` |
 
 No aplican al front (viven en `musubi-api:00-03`): RNF-03, RNF-04, RNF-07, RNF-11, RNF-14, RNF-16 y RNF-22 (el front solo los refleja en la UI).
 
@@ -70,5 +72,5 @@ Los umbrales "Por definir con el PO" esperan a que se designe el Product Owner. 
 ## Aprobación y Control de Cambios
 - **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 15-Oct-2026
-- **Detalle:** RNF-01…RNF-27 filtrados al front, más los NFR técnicos de Flutter.
+- **Fecha:** 20-Oct-2026
+- **Detalle:** RNF-01…RNF-27 filtrados al front, más los NFR técnicos de Flutter. 20-Oct-2026 (SCRUM-66): fidelidad a la maqueta (L-04), área táctil de 44 dp y versionamiento medido.

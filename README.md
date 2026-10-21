@@ -7,12 +7,15 @@ Se desarrolla con **Spec Driven Development (SDD)** y DevSecOps: cada cambio nac
 - Repo hermano (API .NET 10): <https://github.com/Israel-Perez/musubi-api>
 - Contrato HTTP: [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (canónico; aquí se enlaza, no se copia)
 - Backlog: Jira, proyecto `SCRUM` · Documentación funcional: Confluence
+- **Maqueta** (la app debe ser igual, lineamiento 4): [`docs/maqueta/`](docs/maqueta/README.md) · Versiones: [`docs/versionado.md`](docs/versionado.md)
+- Lineamientos de la materia (evaluación el 02-Dic-2026): [`musubi-api/docs/bitacora/lineamientos-materia.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/bitacora/lineamientos-materia.md)
 
-## Estado (15-Oct-2026)
+## Estado (20-Oct-2026)
 
 Plantilla inicial lista. Fases 00 (constitución) y 01 (fundación) implementadas en "🚧 Borrador con evidencia", en espera de designar revisores:
 
-- `dart format` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` sin observaciones · `flutter test` 18/18.
+- `dart format` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` sin observaciones · `flutter test` 20/20.
+- Maqueta HTML versionada en `docs/maqueta/` con su índice de pantallas ↔ HU (SCRUM-66).
 - APK de debug compilado: paquete `com.musubi.app`, `targetSdkVersion 36`.
 - `critic-guardrails` PASS · Semgrep 0 hallazgos · actionlint sin hallazgos.
 - Pantalla inicial "Musubi" que consulta `GET /api/v1/ping` y muestra el estado sin romperse si la API no responde.
@@ -63,7 +66,8 @@ test/                         unit + widget (helpers/ con fakes)
 integration_test/             pruebas en un dispositivo
 android/                      com.musubi.app · targetSdk 36 · network_security_config
 config/                       *.example.json por ambiente
-specs/ docs/ scripts/ .claude/ .github/ .semgrep/
+docs/                         trazabilidad, módulos, versionado.md, maqueta/
+specs/ scripts/ .claude/ .github/ .semgrep/
 ```
 
 La convención de módulos y capas está en [`lib/features/README.md`](lib/features/README.md); los 14 módulos, en [`docs/modulos.md`](docs/modulos.md).

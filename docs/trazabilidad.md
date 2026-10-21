@@ -75,3 +75,14 @@ Total: 47 HU (S1: 4 · S2: 11 · S3: 17 · S4: 6 · S5: 8 · Post-MVP: 1).
 | 01-03 | Cliente de API y ping | 🚧 Borrador con evidencia | `test/features/status/` |
 | 01-04 | Configuración por ambiente | 🚧 Borrador con evidencia | `test/core/config/app_config_test.dart` |
 | 01-05 | Estructura, calidad y CI | 🚧 Borrador con evidencia | `scripts/critic-guardrails.ps1`, `.github/workflows/ci-pr.yml` |
+
+## Tareas transversales
+
+| Jira | Qué | Specs tocadas | Evidencia | Estado |
+|---|---|---|---|---|
+| SCRUM-66 | Maqueta versionada, matriz de versionamiento, fecha de evaluación y lineamientos | 00-01, 00-03 | `docs/maqueta/`, `test/versioning_test.dart` | En revisión (PR) |
+
+## Lineamientos de la materia y maqueta
+
+- Checklist canónico (L-01…L-19) en [`musubi-api/docs/bitacora/lineamientos-materia.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/bitacora/lineamientos-materia.md) (se enlaza, no se copia).
+- Pantallas de la maqueta ↔ HU: [`docs/maqueta/README.md`](maqueta/README.md). El lineamiento 4 exige que la app sea igual a la maqueta; cada spec de HU del front cita sus pantallas por ID.
