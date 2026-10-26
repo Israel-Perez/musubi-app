@@ -4,9 +4,29 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 ## Estado actual (21-Oct-2026)
 
-- **SCRUM-79** (02-01, rama `feature/SCRUM-79-base-app`): tema de la maqueta, navegación, sesión segura y errores.
-- format 0 cambios · analyze 0 · test 80/80 · APK de debug OK (`targetSdkVersion:'36'`) · critic PASS · Semgrep 0.
-- Siguiente: HU-01/03/47 (registro, verificación y aviso de privacidad) y HU-02/56 (login, logout y recuperar contraseña), back y app.
+- **SCRUM-79** (02-01, PR #3) y **HU-01/03/47** (rama `feature/SCRUM-19-registro-verificacion`, apilada sobre 02-01).
+- format 0 cambios · analyze 0 · test 99/99 · APK de debug OK (`targetSdkVersion:'36'`) · critic PASS · Semgrep 0.
+- Siguiente: HU-02 + HU-56 (login, logout y recuperar contraseña), back y app.
+
+## T6 — HU-01/03/47 Registro, verificación y aviso de privacidad (21-Oct-2026, SCRUM-19/21/33)
+
+**Qué se hizo**
+- `lib/features/auth/`: `AuthRepository` (lanza `ApiFailure` tipado), `HttpAuthRepository` (`publicDioProvider`), `SignUpScreen` (campus en vivo, reglas de contraseña, consentimiento con enlaces), `VerificationScreen` (código, cuenta regresiva para reenviar), `WelcomeScreen` y pantallas legales.
+- `assets/legal/{aviso-de-privacidad,terminos-y-condiciones}.md`: borradores (LFPDPPP, RN-40, RN-22, D-01), fuente única para la app y la landing; `LegalDocumentView` interpreta un Markdown mínimo.
+- Pruebas: 4 del repositorio, 11 del flujo con la app completa y el router real, y 4 de contenido legal → 99/99.
+
+**Decisiones (con su porqué)**
+- **Navegar a `/bienvenida` antes de guardar la sesión**: así la guardia de visitante no redirige a Inicio antes de mostrar la bienvenida.
+- **`SingleChildScrollView` + `Column` en formularios**, no `ListView` (que descarta los campos fuera de la vista; las pruebas no encontraban el botón).
+- **`clockProvider`** inyectable para la cuenta regresiva.
+- Los textos de las pantallas salen literalmente de la maqueta.
+
+**Self-tests**
+- Si se quita el consentimiento de `_canSubmit`, falla "sin aceptar el aviso y los términos no se puede crear".
+
+**Errores a evitar**
+- Riverpod 3 exporta `FutureProviderFamily` desde `package:flutter_riverpod/misc.dart`, no desde el archivo principal.
+- Una prueba "sin nombres de personas" que busca nombres reales con una regex mete esos nombres al repo público: comprobar lo positivo (el responsable es el equipo).
 
 ## T5 — 02-01 Base de la app (21-Oct-2026, SCRUM-79)
 
