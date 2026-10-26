@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:musubi_app/app/return_path.dart';
 import 'package:musubi_app/app/shell/app_shell.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
@@ -10,8 +11,8 @@ import 'package:musubi_app/features/auth/presentation/sign_in_screen.dart';
 import 'package:musubi_app/features/auth/presentation/sign_up_screen.dart';
 import 'package:musubi_app/features/auth/presentation/verification_screen.dart';
 import 'package:musubi_app/features/auth/presentation/welcome_screen.dart';
+import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
-import 'package:musubi_app/features/status/presentation/home_screen.dart';
 
 /// Rutas de la app (02-01). Cada modulo reemplaza su seccion al implementar su
 /// HU; los nombres en espanol coinciden con la maqueta.
@@ -32,8 +33,8 @@ abstract final class AppRoutes {
   /// Parametro con la ruta a la que se vuelve despues de iniciar sesion.
   static const returnParam = 'desde';
 
-  /// Requieren sesion: el visitante va a iniciar sesion.
-  /// NOTE (HU-48): mostrar antes el aviso "Crea tu cuenta" de la maqueta.
+  /// Requieren sesion. Desde la app, el visitante ve antes la hoja "Crea tu
+  /// cuenta" (HU-48); esta guardia cubre los enlaces directos.
   static const Set<String> requiresSession = {publish, messages, profile};
 
   /// Solo para visitantes: con sesion se vuelve a Inicio.
@@ -53,7 +54,13 @@ abstract final class AppRoutes {
 }
 
 /// Decide a donde va una navegacion segun la sesion (pura: se prueba sola).
-String? sessionRedirect({required bool signedIn, required Uri location}) {
+/// [rememberedReturn] es a donde volver si la ruta no trae `?desde=` (la
+/// pantalla desde la que se abrio "Crea tu cuenta").
+String? sessionRedirect({
+  required bool signedIn,
+  required Uri location,
+  String? rememberedReturn,
+}) {
   final path = location.path;
   if (!signedIn && AppRoutes.requiresSession.contains(path)) {
     return Uri(
@@ -63,7 +70,7 @@ String? sessionRedirect({required bool signedIn, required Uri location}) {
   }
   if (signedIn && AppRoutes.visitorsOnly.contains(path)) {
     return AppRoutes.safeReturn(
-      location.queryParameters[AppRoutes.returnParam],
+      location.queryParameters[AppRoutes.returnParam] ?? rememberedReturn,
     );
   }
   return null;
@@ -87,6 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) => sessionRedirect(
       signedIn: ref.read(sessionControllerProvider) is SignedIn,
       location: state.uri,
+      rememberedReturn: ref.read(returnPathProvider),
     ),
     routes: [
       StatefulShellRoute.indexedStack(

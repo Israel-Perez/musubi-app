@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Colores de marca (guia de estilo de la maqueta). values-night los redefine para el modo oscuro. -->
+<resources>
+    <color name="musubi_brand">#D7191F</color>
+    <!-- Anillo derecho del logotipo: tinta en claro, blanco en oscuro. -->
+    <color name="musubi_ring_right">#1C1C1E</color>
+    <!-- Fondo del splash = fondo de la app (el splash animado de Flutter arranca igual). -->
+    <color name="musubi_splash_background">#FFFFFF</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

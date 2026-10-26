@@ -80,23 +80,45 @@ class MusubiBottomBar extends StatelessWidget {
               tab(0),
               tab(1),
               Expanded(
-                child: Center(
-                  child: Semantics(
-                    button: true,
-                    label: 'Publicar',
-                    child: SizedBox.square(
-                      dimension: MusubiSizes.publishButton,
-                      child: FloatingActionButton(
-                        heroTag: null,
-                        elevation: 0,
-                        tooltip: 'Publicar',
-                        backgroundColor: c.brand,
-                        foregroundColor: c.onBrand,
-                        shape: const CircleBorder(),
-                        onPressed: onPublish,
-                        child: const Icon(Icons.add, size: 28),
+                // Maqueta: boton rojo que sobresale de la barra, con su
+                // etiqueta "Publicar" debajo.
+                child: OverflowBox(
+                  maxHeight: MusubiSizes.navBarHeight + 24,
+                  alignment: Alignment.bottomCenter,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Semantics(
+                        button: true,
+                        label: 'Publicar',
+                        excludeSemantics: true,
+                        child: SizedBox.square(
+                          dimension: MusubiSizes.publishButton,
+                          child: FloatingActionButton(
+                            heroTag: null,
+                            elevation: 2,
+                            tooltip: 'Publicar',
+                            backgroundColor: c.brand,
+                            foregroundColor: c.onBrand,
+                            shape: const CircleBorder(),
+                            onPressed: onPublish,
+                            child: const Icon(Icons.add, size: 28),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 2),
+                      ExcludeSemantics(
+                        child: Text(
+                          'Publicar',
+                          style: MusubiType.label.copyWith(
+                            color: c.textPrimary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
               ),

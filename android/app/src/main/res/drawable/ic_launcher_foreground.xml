@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Primer plano del icono adaptable (Android 8+, SCRUM-81): los anillos sobre fondo blanco.
+     Lienzo de 108 dp; la zona segura es un circulo de 66 dp: los anillos miden 56 x 35 dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="26"
+        android:translateY="36.5"
+        android:scaleX="0.875"
+        android:scaleY="0.875">
+        <path
+            android:pathData="M10,20 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"
+            android:strokeColor="#D7191F"
+            android:strokeWidth="6" />
+        <path
+            android:pathData="M26,20 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"
+            android:strokeColor="#1C1C1E"
+            android:strokeWidth="6" />
+        <path
+            android:pathData="M24,6 A14,14 0 0,1 37.16,15.21"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="11" />
+        <path
+            android:pathData="M23.023,6.034 A14,14 0 0,1 37.458,16.141"
+            android:strokeColor="#D7191F"
+            android:strokeWidth="6" />
+        <path
+            android:pathData="M40,34 A14,14 0 0,1 26.84,24.79"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="11" />
+        <path
+            android:pathData="M40.977,33.966 A14,14 0 0,1 26.542,23.859"
+            android:strokeColor="#1C1C1E"
+            android:strokeWidth="6" />
+    </group>
+</vector>

@@ -2,11 +2,36 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (21-Oct-2026)
+## Estado actual (25-Oct-2026)
 
-- **SCRUM-79** (02-01, PR #3), **HU-01/03/47** (PR #4) y **HU-02 + HU-56** (rama `feature/SCRUM-20-login-recuperar`, apilada sobre HU-01/03/47).
-- format 0 cambios · analyze 0 · test 124/124 · APK de debug OK · critic PASS · Semgrep 0.
-- Siguiente: fusionar los PR apilados (#3 → #4 → HU-02/56) y seguir con el módulo de productos.
+- **HU-48 fase 1 + 02-03** (rama `feature/SCRUM-73-visitante-splash`): vitrina del visitante, hoja "Crea tu cuenta", regreso a donde estabas, logotipo, ícono y splash animado. La API ya corre en AWS (`musubi-api:02-05`).
+- format 0 · analyze 0 · test 144/144 · critic PASS · Semgrep 0 · APK probado en un Galaxy A54 contra AWS.
+- Siguiente: HU-06 (publicar) + catálogo público (fase 2 de HU-48).
+
+## T9 — HU-48 fase 1 y 02-03 Marca y arranque (25-Oct-2026, SCRUM-73/81)
+
+**Qué se hizo**
+- `lib/features/marketplace/`: Inicio igual a la maqueta (encabezado, Populares Hoy/Semana, Recién publicados, Se busca, banner) con sus estados de carga, error y vacío. `PendingCatalogRepository` hasta HU-06.
+- Hoja "Crea tu cuenta" (9 motivos del `GATE` del prototipo), pestañas Mensajes/Perfil/Publicar con la hoja, chip del campus y regreso a donde estabas (`returnPathProvider` + `?desde=`).
+- Logotipo (`MusubiRingsPainter`), ícono adaptable + monocromo + PNG de Android 7, splash nativo (Android 12+ y anteriores) y splash animado de ~1.5 s.
+- Pruebas: `visitor_flow_test.dart` (14), `brand_splash_test.dart` (4), `musubi_logo_test.dart` (4) → 144/144.
+
+**Decisiones (con su porqué)**
+- **Splash animado aunque la maqueta dice "sin splash":** lo pidió el usuario (lineamiento 4: agregar sí, quitar no). Va sobre la app ya construida y respeta "reducir animaciones".
+- **Registro e inicio de sesión con `go`:** con `push`, la guardia del router no regresaba a `?desde=` al entrar.
+- **Sin el reintento automático de Riverpod 3 en Inicio:** el error se ve al instante y la maqueta trae "Reintentar".
+- **Módulo `marketplace` y no `home`:** así lo fija `docs/modulos.md` (M-04).
+
+**Self-tests**
+- Pestañas sin la hoja → falla "el visitante que toca Perfil ve Crea tu perfil".
+- La bienvenida sin el regreso → falla "Crear cuenta: tras la bienvenida vuelve a donde estaba".
+
+**Errores a evitar**
+- **Riverpod 3 reintenta solo** los proveedores que fallan (con espera creciente): un estado de error nunca se ve si no se pasa `retry: (_, _) => null`.
+- `scrollUntilVisible` con listas horizontales dentro de una vertical: pasar `scrollable: find.byType(Scrollable).first`; `ensureVisible` mueve la horizontal.
+- `headlineSmall` no está en el tema: cae en el estilo de Material (peso normal). Usar `titleLarge` y los estilos de `MusubiType`.
+- En el logotipo, el arco de hueco y el de color no deben terminar juntos: el suavizado deja una costura clara.
+- Las capturas de la maqueta en modo headless se hacen con Edge (`--headless=new --screenshot`) sobre una copia del HTML con `#flujo.Pantalla`; las hojas no abren con clics simulados.
 
 ## T8 — Prueba en un celular por USB (25-Oct-2026, SCRUM-79)
 
