@@ -8,6 +8,7 @@ flutter run --dart-define-from-file=config/dev.json
 | Archivo | Versionado | Uso |
 |---|---|---|
 | `dev.example.json` | Sí | Emulador de Android contra musubi-api local: `http://10.0.2.2:5080` (10.0.2.2 es la PC vista desde el emulador; el puerto es el del perfil `http` de la API) |
+| `usb.example.json` | Sí | Celular por USB contra musubi-api local: `http://localhost:5080`. Antes, `adb reverse tcp:5080 tcp:5080` (el `localhost` del celular apunta al puerto 5080 de la PC); se pierde al desconectar el cable |
 | `staging.example.json` / `prod.example.json` | Sí | Plantillas con HTTPS obligatorio (RNF-02); las URLs reales se definen al desplegar (`musubi-api:02-05`) |
 | `dev.json`, `staging.json`, `prod.json` | **No** (ignorados) | Valores reales de cada desarrollador o del pipeline |
 

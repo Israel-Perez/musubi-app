@@ -7,7 +7,7 @@
 ## 1. Forma de trabajo
 
 - **Setup:** Flutter 3.47.7 (stable), JDK 17 y Android SDK (platform `android-36`, build-tools 36.1.0, NDK 28.2.13676358). En Windows, instala los paquetes con `android sdk install "<paquete>"` (`sdkmanager.bat` parte los argumentos en `;`).
-- `Copy-Item config/dev.example.json config/dev.json` → `flutter run --dart-define-from-file=config/dev.json` (emulador contra musubi-api local en `http://10.0.2.2:5080`).
+- `Copy-Item config/dev.example.json config/dev.json` → `flutter run --dart-define-from-file=config/dev.json` (emulador contra musubi-api local en `http://10.0.2.2:5080`). Con un celular por USB: `adb reverse tcp:5080 tcp:5080` y `config/usb.json` (`http://localhost:5080`).
 - **Comandos:**
   - `dart format --output=none --set-exit-if-changed .`
   - `flutter analyze --fatal-infos --fatal-warnings`
@@ -81,7 +81,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 
 - MASVS-STORAGE: nada sensible en el APK; tokens en `flutter_secure_storage` (02-01); `allowBackup=false` y permisos aprobados verificados por `test/security/android_config_test.dart`.
 - MASVS-NETWORK: el token solo viaja al esquema, host y puerto de la API (`AuthInterceptor`, con self-test).
-- MASVS-NETWORK: HTTPS fuera de dev (`AppConfig.parse`); release sin tráfico en claro; debug solo hacia `10.0.2.2`.
+- MASVS-NETWORK: HTTPS fuera de dev (`AppConfig.parse`); release sin tráfico en claro; debug/profile solo hacia `10.0.2.2` (emulador) y `localhost` (USB con `adb reverse`).
 - MASVS-CODE: análisis estricto, Dependabot con `cooldown`, paquetes evaluados (00-01).
 - MASVS-PRIVACY: datos mínimos, aviso de privacidad (HU-47), eliminación de cuenta (HU-46), la IA solo a petición (RNF-06).
 - Firebase (HU-31): política en la skill `critic-guardrails` (archivos ignorados, regenerados en CI desde secretos).

@@ -9,7 +9,7 @@ Configuración de compilación por ambiente con `--dart-define-from-file`, sabie
 1. Configuración por archivo: `config/<ambiente>.json`; se versionan solo los `*.example.json` y los reales se ignoran.
 2. Solo valores públicos: URL base de la API y banderas. Ninguna llave privada.
 3. Validación al arrancar (`AppConfig.parse`): ambiente conocido, URL absoluta, HTTPS fuera de dev, y HTTP en dev solo hacia hosts locales.
-4. La red de Android coincide: release sin tráfico en claro; debug/profile permiten HTTP solo hacia `10.0.2.2`.
+4. La red de Android coincide: release sin tráfico en claro; debug/profile permiten HTTP solo hacia `10.0.2.2` (emulador) y `localhost` (celular por USB con `adb reverse`, desde el 25-Oct-2026).
 
 ## Diseño
 
@@ -24,7 +24,7 @@ Archivos:
 
 - `config/{dev,staging,prod}.example.json` (versionados) + `config/README.md`.
 - `lib/core/config/app_config.dart`: `AppConfig.parse`, `AppConfig.fromEnvironment`, `appConfigProvider`.
-- `android/app/src/main/res/xml/network_security_config.xml` (release: sin tráfico en claro) y las versiones `debug`/`profile` (excepción para `10.0.2.2`).
+- `android/app/src/main/res/xml/network_security_config.xml` (release: sin tráfico en claro) y las versiones `debug`/`profile` (excepción para `10.0.2.2` y `localhost`).
 
 ## Contratos
 Claves de la tabla. Una clave nueva: fila aquí + ejemplo en `config/*.example.json` + validación en `AppConfig.parse`.
