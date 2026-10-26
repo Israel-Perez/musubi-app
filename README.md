@@ -39,6 +39,7 @@ Plantilla inicial lista. Fases 00 (constitución) y 01 (fundación) implementada
 flutter pub get
 Copy-Item config/dev.example.json config/dev.json        # ignorado por Git
 flutter run --dart-define-from-file=config/dev.json      # emulador → musubi-api en http://10.0.2.2:5080
+adb reverse tcp:5080 tcp:5080; flutter run --dart-define-from-file=config/usb.json   # celular por USB → http://localhost:5080
 ```
 
 Para ver "Servidor conectado", levanta la API (`dotnet run --project Musubi.Api` en `musubi-api`). Sin la API, la app muestra "Sin conexión con el servidor" y el botón "Reintentar".

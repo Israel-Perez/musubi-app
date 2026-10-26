@@ -35,7 +35,7 @@ void main() {
     expect(config, isNot(contains('cleartextTrafficPermitted="true"')));
   });
 
-  test('debug y profile: HTTP en claro solo hacia el emulador', () {
+  test('debug y profile: HTTP en claro solo hacia la PC de desarrollo', () {
     for (final variant in ['debug', 'profile']) {
       final config = read(
         'android/app/src/$variant/res/xml/network_security_config.xml',
@@ -45,7 +45,7 @@ void main() {
           .map((m) => m.group(1)!.trim())
           .toSet();
 
-      expect(domains, {'10.0.2.2'}, reason: variant);
+      expect(domains, {'10.0.2.2', 'localhost'}, reason: variant);
       expect(
         config,
         contains('<base-config cleartextTrafficPermitted="false"'),

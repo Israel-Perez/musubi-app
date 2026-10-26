@@ -8,6 +8,12 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - format 0 cambios · analyze 0 · test 124/124 · APK de debug OK · critic PASS · Semgrep 0.
 - Siguiente: fusionar los PR apilados (#3 → #4 → HU-02/56) y seguir con el módulo de productos.
 
+## T8 — Prueba en un celular por USB (25-Oct-2026, SCRUM-79)
+
+- La PC no tiene emulador (6 GB de RAM, sin hipervisor): se probó HU-01/02/03/47/56 en un Galaxy A54 por USB contra la API local.
+- `adb reverse tcp:5080 tcp:5080` + `config/usb.example.json` (`http://localhost:5080`); `localhost` se agregó a la excepción de HTTP de debug/profile (release sigue solo HTTPS; `test/security/android_config_test.dart` lo verifica).
+- **Error a evitar:** si el cable se mueve, el celular se desconecta y `adb reverse` se pierde; la app queda "sin conexión" hasta repetirlo.
+
 ## T7 — HU-02 + HU-56 Iniciar y cerrar sesión, recuperar la contraseña (21-Oct-2026, SCRUM-20/78)
 
 **Qué se hizo**
