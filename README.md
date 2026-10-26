@@ -14,7 +14,8 @@ Se desarrolla con **Spec Driven Development (SDD)** y DevSecOps: cada cambio nac
 
 Plantilla inicial lista. Fases 00 (constitución) y 01 (fundación) implementadas en "🚧 Borrador con evidencia", en espera de designar revisores:
 
-- `dart format` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` sin observaciones · `flutter test` 20/20.
+- `dart format` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` sin observaciones · `flutter test` 80/80.
+- Base 02-01: tema de la maqueta (Plus Jakarta Sans, claro/oscuro, contraste AA), barra de 5 pestañas con guardia de sesión, tokens en almacenamiento seguro con renovación automática, errores por `code` y pruebas de seguridad de Android.
 - Maqueta HTML versionada en `docs/maqueta/` con su índice de pantallas ↔ HU (SCRUM-66).
 - APK de debug compilado: paquete `com.musubi.app`, `targetSdkVersion 36`.
 - `critic-guardrails` PASS · Semgrep 0 hallazgos · actionlint sin hallazgos.
