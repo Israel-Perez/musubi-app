@@ -18,7 +18,7 @@ Cada cambio nace de una spec que sigue [`_template.md`](_template.md) (gobernanz
 |---|---|---|
 | 00 — Constitución | 00-01 Principios y stack · 00-02 Gobernanza SDD y DoD · 00-03 NFR · 00-04 Lecciones aprendidas | 🚧 Borrador con evidencia |
 | 01 — Fundación | 01-01 Setup y toolchain · 01-02 Estructura de la app (shell) · 01-03 Cliente de API y ping · 01-04 Configuración por ambiente · 01-05 Estructura, calidad y CI | 🚧 Borrador con evidencia |
-| 02 — Arquitectura de la app | 02-01 Navegación por módulos, estado, cliente de API (interceptores, sesión), tema y componentes base, Crashlytics · 02-02 Publicación en Google Play (firma de subida, prueba cerrada desde el 09-Nov-2026) | Pendiente (se redacta antes de HU-01) |
+| 02 — Arquitectura de la app | 02-01 Navegación por módulos, estado, cliente de API (interceptores, sesión), tema y componentes base, Crashlytics · 02-02 Publicación en Google Play (firma de subida, prueba cerrada desde el 09-Nov-2026) · 02-03 Marca y arranque (logotipo, ícono y splash) | Pendiente (se redacta antes de HU-01) |
 | Módulos | `m01-auth/` … `m14-admin/` — una carpeta por módulo, una spec por HU (contraparte en `musubi-api`) | Por sprint |
 
 Los IDs de la fase 02 son **tentativos**: son los dueños de los `NOTE (02-0N)` que ya existen en el código. Si cambian, se actualizan los NOTE con `grep "NOTE (02-"`.

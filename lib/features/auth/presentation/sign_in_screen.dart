@@ -12,6 +12,7 @@ import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
 import 'package:musubi_app/core/widgets/musubi_text_field.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
+import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 
 /// Se llega a "Iniciar sesion" despues de cambiar la contrasena (HU-56).
@@ -122,14 +123,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        // Si se llego por la guardia no hay a donde volver: a Inicio.
-        leading: context.canPop()
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.close),
-                tooltip: 'Volver a Inicio',
-                onPressed: () => context.go(AppRoutes.home),
-              ),
+        // Si se llego con go (guardia u hoja "Crea tu cuenta") no hay pila:
+        // la X vuelve a donde estaba.
+        leading: context.canPop() ? null : const ExitToExploreButton(),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

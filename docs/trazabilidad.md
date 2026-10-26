@@ -59,7 +59,7 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 | HU-45 | SCRUM-50 | S3 | M-13 | Calificar al comprador al terminar un pedido | — | — | — | Por iniciar |
 | HU-46 | SCRUM-32 | S2 | M-01 | Eliminar mi cuenta y mis datos | — | — | — | Por iniciar |
 | HU-47 | SCRUM-33 | S2 | M-01 | Aceptar aviso de privacidad y términos de uso | `specs/m01-auth/HU-47-aviso-privacidad/` | [musubi-api:HU-47](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-47-aviso-privacidad) | `test/features/auth/legal_documents_test.dart`, `auth_flow_test.dart` | Borrador con evidencia |
-| HU-48 | SCRUM-73 | Por asignar | M-04 | Explorar la app como visitante | — | — | — | Por iniciar |
+| HU-48 | SCRUM-73 | S2 | M-04 | Explorar la app como visitante | `specs/m04-marketplace/HU-48-explorar-visitante/` | — (catálogo público con HU-06) | `test/features/marketplace/visitor_flow_test.dart`, `test/app/navigation_test.dart` | Borrador con evidencia (fase 1) |
 | HU-49 | SCRUM-69 | Por asignar | M-04 | Ver populares y recién publicados | — | — | — | Por iniciar |
 | HU-50 | SCRUM-67 | Por asignar | M-03 | Manejar la cantidad disponible de un producto | — | — | — | Por iniciar |
 | HU-51 | SCRUM-70 | Por asignar | M-04 | Comparar opciones y pedir aviso de disponibilidad | — | — | — | Por iniciar |
@@ -69,7 +69,7 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 | HU-55 | SCRUM-72 | Por asignar | M-08 | Pagar un pedido por transferencia o en efectivo | — | — | — | Por iniciar |
 | HU-56 | SCRUM-78 | S2 | M-01 | Recuperar mi contraseña | `specs/m01-auth/HU-56-recuperar-contrasena/` | [musubi-api:HU-56](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-56-recuperar-contrasena) | `test/features/auth/presentation/session_flow_test.dart` | Borrador con evidencia |
 
-Total: 56 HU (S1: 1 · S2: 15 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por asignar: 8 · Fuera de alcance: 1). HU-02 pasó de S1 a S2 y HU-56 entró a S2 (21-Oct-2026). HU-48…HU-55 nacen de la maqueta (21-Oct-2026, SCRUM-75); HU-43 sale por la decisión D-01.
+Total: 56 HU (S1: 1 · S2: 16 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por asignar: 7 · Fuera de alcance: 1). HU-48 entró a S2 (25-Oct-2026). HU-02 pasó de S1 a S2 y HU-56 entró a S2 (21-Oct-2026). HU-48…HU-55 nacen de la maqueta (21-Oct-2026, SCRUM-75); HU-43 sale por la decisión D-01.
 
 ## Specs técnicas (sin HU)
 

@@ -170,7 +170,7 @@ void main() {
       final h = Harness(tester);
       await h.open(AppRoutes.signIn);
 
-      await tester.tap(find.byTooltip('Volver a Inicio'));
+      await tester.tap(find.byTooltip('Seguir explorando'));
       await tester.pumpAndSettle();
 
       expect(h.location, AppRoutes.home);

@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:musubi_app/app/router.dart';
+import 'package:musubi_app/app/return_path.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
 
 /// "Correo verificado" (maqueta `Verificacion-lista`, HU-03).
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends ConsumerWidget {
   const new({required this.user, super.key});
 
   final AuthUser? user;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final c = context.musubi;
     final user = this.user;
@@ -90,7 +91,9 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(),
               MusubiButton(
                 label: 'Empezar a explorar',
-                onPressed: () => context.go(AppRoutes.home),
+                // Vuelve a donde estaba al abrir "Crea tu cuenta" (HU-48).
+                onPressed: () =>
+                    context.go(ref.read(returnPathProvider.notifier).take()),
               ),
             ],
           ),

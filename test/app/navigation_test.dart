@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/app/musubi_app.dart';
 import 'package:musubi_app/app/router.dart';
+import 'package:musubi_app/app/shell/musubi_bottom_bar.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
@@ -69,19 +70,27 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    // La pestana de la barra (Inicio tambien tiene una seccion "Se busca").
+    Finder tab(String label) => find.descendant(
+      of: find.byType(MusubiBottomBar),
+      matching: find.bySemanticsLabel(label),
+    );
+
     testWidgets('muestra las 5 opciones de la maqueta', (tester) async {
       await pumpApp(tester);
 
       for (final label in ['Inicio', 'Se busca', 'Mensajes', 'Perfil']) {
-        expect(find.bySemanticsLabel(label), findsOneWidget);
+        expect(tab(label), findsOneWidget);
       }
       expect(find.byTooltip('Publicar'), findsOneWidget);
+      // Maqueta: el boton central lleva su etiqueta debajo.
+      expect(find.text('Publicar'), findsOneWidget);
     });
 
     testWidgets('el visitante explora Se busca', (tester) async {
       await pumpApp(tester);
 
-      await tester.tap(find.bySemanticsLabel('Se busca'));
+      await tester.tap(tab('Se busca'));
       await tester.pumpAndSettle();
 
       expect(
@@ -90,12 +99,27 @@ void main() {
       );
     });
 
-    testWidgets('el visitante que toca Perfil va a iniciar sesion', (
+    testWidgets('el visitante que toca Perfil ve "Crea tu perfil" (HU-48)', (
       tester,
     ) async {
       await pumpApp(tester);
 
-      await tester.tap(find.bySemanticsLabel('Perfil'));
+      await tester.tap(tab('Perfil'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Crea tu perfil'), findsOneWidget);
+      expect(find.text('Entra con tu correo institucional.'), findsNothing);
+    });
+
+    testWidgets('un enlace directo a Perfil sin sesion va a iniciar sesion', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MusubiApp)),
+      );
+
+      container.read(routerProvider).go(AppRoutes.profile);
       await tester.pumpAndSettle();
 
       expect(find.text('Entra con tu correo institucional.'), findsOneWidget);
@@ -104,7 +128,7 @@ void main() {
     testWidgets('con sesion entra a Perfil', (tester) async {
       await pumpApp(tester, tokens: testTokens());
 
-      await tester.tap(find.bySemanticsLabel('Perfil'));
+      await tester.tap(tab('Perfil'));
       await tester.pumpAndSettle();
 
       expect(
@@ -115,7 +139,7 @@ void main() {
 
     testWidgets('al cerrar sesion la guardia saca de Perfil', (tester) async {
       await pumpApp(tester, tokens: testTokens());
-      await tester.tap(find.bySemanticsLabel('Perfil'));
+      await tester.tap(tab('Perfil'));
       await tester.pumpAndSettle();
 
       final container = ProviderScope.containerOf(

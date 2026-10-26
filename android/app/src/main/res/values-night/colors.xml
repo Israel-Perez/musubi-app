@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modo oscuro (mapa dc-meta.dark de la maqueta: #FFFFFF -> #17171A). -->
+<resources>
+    <color name="musubi_ring_right">#FFFFFF</color>
+    <color name="musubi_splash_background">#17171A</color>
+</resources>

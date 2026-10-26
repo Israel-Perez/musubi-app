@@ -12,6 +12,7 @@ import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
 import 'package:musubi_app/core/widgets/musubi_text_field.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
+import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/auth/presentation/password_rules.dart';
 
@@ -168,7 +169,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             failure.code == 'rate_limit.exceeded');
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        leading: context.canPop() ? null : const ExitToExploreButton(),
+      ),
       body: SafeArea(
         // Formulario: Column dentro de SingleChildScrollView (construye todos
         // los campos; un ListView descartaria los que salen de la vista).
