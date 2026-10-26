@@ -6,4 +6,4 @@
 - **Estado:** ✅ Hecho (21-Oct-2026).
 
 ## Pendientes
-- `NOTE (HU-02)`: si alguien con la cuenta pendiente intenta iniciar sesión (`auth.email_not_verified`), llevarlo a esta pantalla.
+- ~~`NOTE (HU-02)`: cuenta pendiente que intenta iniciar sesión~~ → resuelto en HU-02: pide un código nuevo y abre esta pantalla (21-Oct-2026).

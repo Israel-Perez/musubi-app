@@ -75,7 +75,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - **Maqueta:** `docs/maqueta/` (60 pantallas). La app es igual a la maqueta y no se le quitan funciones (lineamiento 4); cada spec de HU cita sus pantallas por ID (índice en `docs/maqueta/README.md`).
 - **Versión:** `version` de `pubspec.yaml`, alineada con `docs/versionado.md` (lo verifica `test/versioning_test.dart`).
 - **Lineamientos de la materia:** checklist L-NN en `musubi-api/docs/bitacora/lineamientos-materia.md`.
-- Pendientes con dueño: renovación HTTP y logout contra la API → HU-02; SignalR → HU-20; FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.
+- Pendientes con dueño: SignalR → HU-20; FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)
 

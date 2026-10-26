@@ -49,35 +49,51 @@ class HttpAuthRepository implements AuthRepository {
   Future<SignedInSession> confirmCode({
     required String email,
     required String code,
-  }) async {
-    final body = await _post(ApiPaths.authConfirm, {
+  }) async => _session(
+    await _post(ApiPaths.authConfirm, {
       'email': email.trim(),
       'code': code.trim(),
-    });
-    final user = body['user'] as Map<String, dynamic>;
-    return SignedInSession(
-      tokens: SessionTokens(
-        accessToken: body['accessToken'] as String,
-        accessExpiresAt: _date(body['accessTokenExpiresAt']),
-        refreshToken: body['refreshToken'] as String,
-      ),
-      user: AuthUser(
-        id: user['id'] as String,
-        fullName: user['fullName'] as String,
-        email: user['email'] as String,
-        emailVerified: user['emailVerified'] as bool,
-        campus: _campus(user['campus'] as Map<String, dynamic>),
-      ),
-    );
-  }
+    }),
+  );
+
+  @override
+  Future<SignedInSession> signIn({
+    required String email,
+    required String password,
+  }) async => _session(
+    await _post(ApiPaths.authLogin, {
+      'email': email.trim(),
+      'password': password,
+    }),
+  );
+
+  @override
+  Future<DateTime> requestPasswordReset(String email) async => _date(
+    (await _post(ApiPaths.authPasswordForgot, {
+      'email': email.trim(),
+    }))['resendAvailableAt'],
+  );
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) => _post(ApiPaths.authPasswordReset, {
+    'email': email.trim(),
+    'code': code.trim(),
+    'newPassword': newPassword,
+  }, expectBody: false);
 
   Future<Map<String, dynamic>> _post(
     String path,
-    Map<String, Object> body,
-  ) async {
+    Map<String, Object> body, {
+    bool expectBody = true,
+  }) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(path, data: body);
       final data = response.data;
+      if (!expectBody) return const {};
       if (data == null) {
         throw const ApiFailure(
           code: ApiFailure.serverError,
@@ -89,6 +105,21 @@ class HttpAuthRepository implements AuthRepository {
       // Se traduce (no se traga): la pantalla decide por el code.
       throw ApiFailure.fromDio(error);
     }
+  }
+
+  /// `SessionResponse` (fixture `session.json` del back).
+  static SignedInSession _session(Map<String, dynamic> body) {
+    final user = body['user'] as Map<String, dynamic>;
+    return SignedInSession(
+      tokens: SessionTokens.fromApi(body),
+      user: AuthUser(
+        id: user['id'] as String,
+        fullName: user['fullName'] as String,
+        email: user['email'] as String,
+        emailVerified: user['emailVerified'] as bool,
+        campus: _campus(user['campus'] as Map<String, dynamic>),
+      ),
+    );
   }
 
   static Campus _campus(Map<String, dynamic> json) => Campus(

@@ -21,4 +21,22 @@ abstract final class ApiPaths {
   /// `POST /api/v1/auth/verification/confirm` — fila "M-01"
   /// (spec `musubi-api:HU-03`).
   static const authConfirm = '/api/v1/auth/verification/confirm';
+
+  /// `POST /api/v1/auth/login` — fila "M-01" (spec `musubi-api:HU-02`).
+  static const authLogin = '/api/v1/auth/login';
+
+  /// `POST /api/v1/auth/refresh` — fila "M-01" (spec `musubi-api:HU-02`,
+  /// contrato de 02-03).
+  static const authRefresh = '/api/v1/auth/refresh';
+
+  /// `POST /api/v1/auth/logout` — fila "M-01" (spec `musubi-api:HU-02`).
+  static const authLogout = '/api/v1/auth/logout';
+
+  /// `POST /api/v1/auth/password/forgot` — fila "M-01"
+  /// (spec `musubi-api:HU-56`).
+  static const authPasswordForgot = '/api/v1/auth/password/forgot';
+
+  /// `POST /api/v1/auth/password/reset` — fila "M-01"
+  /// (spec `musubi-api:HU-56`).
+  static const authPasswordReset = '/api/v1/auth/password/reset';
 }

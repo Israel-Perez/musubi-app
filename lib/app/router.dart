@@ -4,10 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/shell/app_shell.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
+import 'package:musubi_app/features/auth/presentation/forgot_password_screen.dart';
 import 'package:musubi_app/features/auth/presentation/legal_screens.dart';
+import 'package:musubi_app/features/auth/presentation/sign_in_screen.dart';
 import 'package:musubi_app/features/auth/presentation/sign_up_screen.dart';
 import 'package:musubi_app/features/auth/presentation/verification_screen.dart';
 import 'package:musubi_app/features/auth/presentation/welcome_screen.dart';
+import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/status/presentation/home_screen.dart';
 
 /// Rutas de la app (02-01). Cada modulo reemplaza su seccion al implementar su
@@ -127,12 +130,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.profile,
-                // NOTE (HU-04): perfil; NOTE (HU-02): cerrar sesion.
-                builder: (context, state) => const UpcomingSection(
-                  title: 'Perfil',
-                  message: 'Aquí estarán tu perfil y tus ajustes.',
-                  icon: Icons.person_outline,
-                ),
+                builder: (context, state) => const ProfileScreen(),
               ),
             ],
           ),
@@ -150,11 +148,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.signIn,
-        // NOTE (HU-02): pantalla "Iniciar sesion" de la maqueta.
-        builder: (context, state) => const UpcomingSection(
-          title: 'Iniciar sesión',
-          message: 'Entra con tu correo institucional.',
-          icon: Icons.login,
+        builder: (context, state) => SignInScreen(
+          passwordChanged: state.extra is PasswordChanged
+              ? state.extra! as PasswordChanged
+              : null,
         ),
       ),
       GoRoute(
@@ -185,11 +182,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
-        // NOTE (HU-56): recuperar la contrasena.
-        builder: (context, state) => const UpcomingSection(
-          title: 'Recuperar contraseña',
-          message: 'Te enviaremos un código a tu correo institucional.',
-          icon: Icons.lock_reset,
+        builder: (context, state) => ForgotPasswordScreen(
+          email: state.extra is String ? state.extra! as String : null,
         ),
       ),
     ],

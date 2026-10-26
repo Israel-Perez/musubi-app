@@ -6,5 +6,5 @@
 - **Estado:** ✅ Hecho (21-Oct-2026).
 
 ## Pendientes
-- `NOTE (HU-02)`: pantalla "Iniciar sesión", destino de "¿Ya tienes cuenta?".
+- ~~`NOTE (HU-02)`: pantalla "Iniciar sesión"~~ → resuelto en HU-02 (21-Oct-2026).
 - `NOTE (HU-48)`: aviso "Crea tu cuenta" del modo visitante.
