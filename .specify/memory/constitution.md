@@ -70,6 +70,7 @@
 | Cliente HTTP | `dio` (contra `musubi-api`, contrato en `musubi-api/docs/endpoints.md`) |
 | Idioma | Español (`flutter_localizations`, `es-MX`) — RNF-18 |
 | Almacenamiento seguro | `flutter_secure_storage` (Android Keystore) para los tokens de sesión (02-01) |
+| Fotos | `image_picker` (flutter.dev, BSD-3): cámara del sistema y selector de fotos de Android, sin permisos nuevos; reduce a 1600 px antes de subir (HU-06, excepción de 00-01 del 27-Oct-2026) |
 | Tiempo real | Cliente SignalR (chat y avisos dentro de la app) — `NOTE (HU-20)` |
 | Notificaciones y monitoreo | Firebase Cloud Messaging — `NOTE (HU-31)` · Firebase Crashlytics — `NOTE (HU-31)` (llega con Firebase) |
 | Configuración | `--dart-define-from-file=config/<ambiente>.json` (valores públicos: URL base y banderas) |

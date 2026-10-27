@@ -22,6 +22,7 @@ import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/skeleton.dart';
 import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
+import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
 import 'package:musubi_app/features/marketplace/presentation/filter_sheet.dart';
@@ -81,7 +82,7 @@ class HomeScreen extends ConsumerWidget {
               ...switch (feed) {
                 AsyncData(:final value) =>
                   signedIn
-                      ? _memberContent(context, value)
+                      ? _memberContent(context, ref, value)
                       : _visitorContent(context, ref, value, gate),
                 AsyncError(:final error) => [
                   SliverToBoxAdapter(
@@ -113,17 +114,20 @@ class HomeScreen extends ConsumerWidget {
   ) {
     final filter = ref.watch(catalogFilterProvider);
     return [
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: _PopularSection(
-            feed: feed,
-            member: false,
-            onSave: () => gate(AccountGateMotive.save),
-            onEmptyAction: () => gate(AccountGateMotive.publish),
+      // NOTE (HU-49): sin vistas (HU-11) no hay "Populares"; si la vitrina
+      // esta vacia, la seccion explica por que.
+      if (feed.popular.isNotEmpty || (feed.recent.isEmpty && filter.count == 0))
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: _PopularSection(
+              feed: feed,
+              member: false,
+              onSave: () => gate(AccountGateMotive.save),
+              onEmptyAction: () => gate(AccountGateMotive.publish),
+            ),
           ),
         ),
-      ),
       if (feed.recent.isNotEmpty || filter.count > 0)
         SliverToBoxAdapter(
           child: Padding(
@@ -151,21 +155,31 @@ class HomeScreen extends ConsumerWidget {
     ];
   }
 
-  List<Widget> _memberContent(BuildContext context, HomeFeed feed) {
+  List<Widget> _memberContent(
+    BuildContext context,
+    WidgetRef ref,
+    HomeFeed feed,
+  ) {
     // NOTE (HU-53): guardar desde la vitrina.
     void noop() {}
+    void sell() {
+      ref.read(sellDraftProvider.notifier).start();
+      unawaited(context.push(AppRoutes.sell));
+    }
+
     return [
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 22),
-          child: _PopularSection(
-            feed: feed,
-            member: true,
-            onSave: noop,
-            onEmptyAction: () => unawaited(context.push(AppRoutes.publish)),
+      if (feed.popular.isNotEmpty || feed.recent.isEmpty)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 22),
+            child: _PopularSection(
+              feed: feed,
+              member: true,
+              onSave: noop,
+              onEmptyAction: sell,
+            ),
           ),
         ),
-      ),
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.only(top: 26),
@@ -174,7 +188,7 @@ class HomeScreen extends ConsumerWidget {
             member: true,
             onOffer: noop,
             onSeeAll: () => context.go(AppRoutes.wanted),
-            onEmptyAction: () => unawaited(context.push(AppRoutes.publish)),
+            onEmptyAction: () => unawaited(context.push(AppRoutes.need)),
           ),
         ),
       ),

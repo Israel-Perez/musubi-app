@@ -5,6 +5,7 @@ import 'package:musubi_app/core/widgets/css_line_box.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_sheet.dart';
 import 'package:musubi_app/core/widgets/shake.dart';
 
 enum InlineMessageKind { error, warning, success }
@@ -204,6 +205,46 @@ class _FloatYState extends State<FloatY> with SingleTickerProviderStateMixin {
     },
     child: widget.child,
   );
+}
+
+/// Aparece creciendo desde [from] (`__pop` de la maqueta): la hoja "Crea tu
+/// cuenta" usa 0.6 con la curva de las hojas; las fotos de `Vender-1`, 0.92
+/// con `ease`. Respeta "quitar animaciones".
+class PopIn extends StatelessWidget {
+  const new({
+    required this.child,
+    super.key,
+    this.delay = Duration.zero,
+    this.duration = const Duration(milliseconds: 400),
+    this.from = 0.6,
+    this.curve = musubiEaseOut,
+  });
+
+  final Widget child;
+  final Duration delay;
+  final Duration duration;
+  final double from;
+  final Curve curve;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return child;
+    final total = delay + duration;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: total,
+      curve: Interval(
+        delay.inMicroseconds / total.inMicroseconds,
+        1,
+        curve: curve,
+      ),
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.scale(scale: from + (1 - from) * t, child: child),
+      ),
+      child: child,
+    );
+  }
 }
 
 /// Cargando: el arco que gira con su texto (RNF-12: nunca una espera muda).

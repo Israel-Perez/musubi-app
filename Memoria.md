@@ -4,9 +4,29 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 ## Estado actual (27-Oct-2026)
 
-- **02-04 Fidelidad con la maqueta** (rama `feature/SCRUM-82-fidelidad-maqueta`): componentes, pantallas de cuenta, Inicio (visitante y con sesión), hoja "Crea tu cuenta", Perfil y Ajustes iguales a la maqueta en claro y oscuro, más la vitrina de muestra (`DEMO_CATALOG`, solo dev).
-- format 0 · analyze 0 · test 195/195 · critic PASS (pwsh y 5.1) · APK debug √.
-- Siguiente: HU-06 (publicar) + catálogo público (fase 2 de HU-48).
+- **HU-06 Publicar un producto** (rama `feature/SCRUM-23-publicar-producto`, apilada sobre `feature/SCRUM-82-fidelidad-maqueta`): hoja "¿Qué quieres publicar?", flujo `Vender-1…4` → `Vender-listo`, "Mis productos" e Inicio con la vitrina real (`GET /api/v1/products`). Versión `0.2.0+2`.
+- format 0 · analyze 0 · test 217/217 · critic PASS.
+- Siguiente: fusionar #9 y luego este PR; desplegar el back (`musubi-api` #12) y probar en el celular contra AWS.
+
+## T11 — HU-06 Publicar un producto (27-Oct-2026, SCRUM-23)
+
+**Qué se hizo**
+- `features/listings`: `HttpListingsRepository`, `PhotoPicker` (`image_picker`), `SellDraftNotifier` (sube cada foto al agregarla), pantallas `sell_*`, `PublishOverlay` y `MyProductsScreen`.
+- `HttpCatalogRepository` reemplaza a `PendingCatalogRepository`; las fotos se arman con `API_BASE_URL` porque CloudFront sirve `/media/*` en el mismo dominio.
+- Íconos nuevos de la maqueta con el generador de 02-04. `PopIn` pasó a `core/widgets` con escala y curva configurables.
+- Pruebas: 195 → 217 (flujo de venta, repositorios HTTP, borrador e Inicio sin "Populares").
+
+**Decisiones (con su porqué)**
+- **`image_picker` como excepción al stack** (aprobada por el usuario): es de flutter.dev, no agrega permisos y reduce la foto antes de subirla.
+- **"Publicar" es una capa en el marco de pestañas:** en la maqueta la barra sigue encima y su botón cambia a "Cerrar".
+- **"Populares" oculto sin vistas** (HU-11/49), por decisión del usuario.
+
+**Errores a evitar**
+- **`Image.file` en pruebas:** la lectura del archivo empieza dentro del reloj falso y nunca termina, así que `precacheImage` en `runAsync` se cuelga. Precargar las fotos antes de que la pantalla las pida.
+- **Adaptador falso de Dio:** debe consumir `requestStream`. Si no, el archivo de un multipart queda abierto y Windows no deja borrarlo.
+- **`CustomPaint(painter:)` se pinta debajo del hijo:** un borde punteado sobre un fondo va en `foregroundPainter`.
+- **Flex en CSS:** un `width: 32px` dentro de un flex se encoge (`flex-shrink`). Medir en el DOM antes de copiar el número.
+- **Chrome parte las palabras después del guion** ("fx-/991ES") y Flutter no: diferencia aceptada en las tarjetas.
 
 ## T10 — 02-04 Fidelidad con la maqueta (26/27-Oct-2026, SCRUM-82)
 

@@ -105,6 +105,9 @@ class MusubiColors extends ThemeExtension<MusubiColors> {
   Color get successText => _pick(0xFF167C47, 0xFF4CD38A);
   Color get successSoft => _pick(0xFFE8F6EE, 0xFF12301F);
 
+  /// Franja verde del rango de precios (`Vender-3`).
+  Color get successBand => _pick(0xFFB9DCC8, 0xFF1F4D33);
+
   /// Ambar: puntos de "Quedan 2" y estrellas (igual en oscuro).
   Color get warning => const Color(0xFFE8A317);
   Color get warningText => _pick(0xFF8F5B00, 0xFFF2B544);
@@ -121,6 +124,13 @@ class MusubiColors extends ThemeExtension<MusubiColors> {
 
   /// Linea punteada del boleto "Se busca".
   Color get ticketLine => _pick(0xFFEFA9AC, 0xFF6B2A2E);
+
+  /// Borde de una opcion elegida sobre rojo claro ("Como nuevo", "Lo que
+  /// necesito").
+  Color get brandSoftBorder => _pick(0xFFF4B5B7, 0xFF7A2B30);
+
+  /// Icono de un control deshabilitado ("Quitar uno" con 1 pieza).
+  Color get disabledIcon => _pick(0xFFB5B5BA, 0xFF6E6E76);
 
   // Aviso breve (snack).
 

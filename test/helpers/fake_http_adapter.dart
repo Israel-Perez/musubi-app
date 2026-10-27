@@ -26,9 +26,12 @@ class FakeHttpAdapter implements HttpClientAdapter {
     RequestOptions options,
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
-  ) {
+  ) async {
     requests.add(options);
-    return handler(options);
+    // Como la red: se consume el cuerpo (y se cierra el archivo de un
+    // multipart).
+    await requestStream?.drain<void>();
+    return await handler(options);
   }
 
   @override
