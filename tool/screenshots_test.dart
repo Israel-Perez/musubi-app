@@ -26,6 +26,9 @@ import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
+import 'package:musubi_app/features/listings/data/photo_picker.dart';
+import 'package:musubi_app/features/listings/domain/listing_models.dart';
+import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
@@ -35,6 +38,7 @@ import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
 import '../test/helpers/fake_auth_repository.dart';
 import '../test/helpers/fake_catalog_repository.dart';
+import '../test/helpers/fake_listings_repository.dart';
 import '../test/helpers/fake_session_api.dart';
 import '../test/helpers/fake_status_repository.dart';
 import '../test/helpers/in_memory_token_store.dart';
@@ -60,6 +64,18 @@ final _anaUser = AuthUser(
   emailVerified: true,
   campus: uttt,
 );
+
+/// Fotos reales para `Vender-1` (la de la maqueta, copiada a archivos).
+final List<String> _photoFiles = [];
+
+class _FilePicker implements PhotoPicker {
+  @override
+  Future<String?> takePhoto() async => _photoFiles.first;
+
+  @override
+  Future<List<String>> pickFromGallery({required int max}) async =>
+      _photoFiles.take(max).toList();
+}
 
 class _InboxStub implements EmailInbox {
   @override
@@ -100,6 +116,12 @@ class _Shot {
             sessionApiProvider.overrideWithValue(FakeSessionApi()),
             clockProvider.overrideWithValue(() => _now),
             emailInboxProvider.overrideWithValue(_InboxStub()),
+            listingsRepositoryProvider.overrideWithValue(
+              FakeListingsRepository(
+                range: const PriceRange(lowCents: 38000, highCents: 52000),
+              ),
+            ),
+            photoPickerProvider.overrideWithValue(_FilePicker()),
             statusRepositoryProvider.overrideWithValue(
               FakeStatusRepository([const ApiOnline(version: 'v1')]),
             ),
@@ -300,6 +322,12 @@ final Map<String, (bool, _Scene)> _scenes = {
   'inicio-scroll': (true, (s) => s.scroll(5000)),
   'perfil': (true, (s) => s.tap(find.bySemanticsLabel('Perfil'))),
   'ajustes': (true, (s) => s.go(AppRoutes.settings)),
+  'publicar': (true, (s) => s.tap(find.text('Publicar'))),
+  'vender-1': (true, (s) => _sellTo(s, 1)),
+  'vender-2': (true, (s) => _sellTo(s, 2)),
+  'vender-3': (true, (s) => _sellTo(s, 3)),
+  'vender-4': (true, (s) => _sellTo(s, 4)),
+  'vender-listo': (true, (s) => _sellTo(s, 5)),
   'cerrar-sesion': (
     true,
     (s) async {
@@ -308,6 +336,50 @@ final Map<String, (bool, _Scene)> _scenes = {
     },
   ),
 };
+
+/// Publicar → Vender-1…4 → Vender-listo con los datos del prototipo.
+Future<void> _sellTo(_Shot s, int step) async {
+  final tester = s.tester;
+  Future<void> quiet() async {
+    // Sin el aviso breve en la captura (la maqueta no lo muestra).
+    ScaffoldMessenger.of(tester.element(find.byType(Scaffold).last))
+        .removeCurrentSnackBar();
+    await s.settle();
+  }
+
+  // Las fotos se leen fuera del reloj falso: si `Image.file` empieza a
+  // leerlas dentro de la prueba, la lectura nunca termina.
+  final context = tester.element(find.byType(Scaffold).first);
+  await tester.runAsync(() async {
+    for (final path in _photoFiles) {
+      await precacheImage(FileImage(File(path)), context);
+    }
+  });
+  await s.tap(find.text('Publicar'));
+  await s.tap(find.byKey(const Key('publish-sell')));
+  await s.tap(find.byKey(const Key('sell-gallery')));
+  await quiet();
+  if (step < 2) return;
+  await s.tap(find.text('Continuar'));
+  await s.type('sell-title', 'Calculadora científica Casio fx-991ES Plus');
+  await s.type(
+    'sell-description',
+    'La usé un semestre para Cálculo y Física. Funciona perfecto, incluye su '
+        'tapa y pilas nuevas. Tiene un rayón pequeño en la parte de atrás, se '
+        've en la foto 3.',
+  );
+  await s.settle();
+  if (step < 3) return;
+  await s.tap(find.text('Continuar'));
+  await s.type('sell-price', '450');
+  await s.tap(find.byKey(const Key('sell-category-calculadoras')));
+  FocusManager.instance.primaryFocus?.unfocus();
+  await s.settle();
+  if (step < 4) return;
+  await s.tap(find.text('Continuar'));
+  if (step < 5) return;
+  await s.tap(find.byKey(const Key('sell-publish')));
+}
 
 /// Escenas que necesitan otro catalogo (cargando o sin red).
 final Map<String, (bool, CatalogRepository)> _states = {
@@ -345,7 +417,17 @@ void _phone(WidgetTester tester) {
 bool _wanted(String name) => _only.isEmpty || _only.split(',').contains(name);
 
 void main() {
-  setUpAll(_loadFonts);
+  setUpAll(() async {
+    await _loadFonts();
+    final bytes = (await rootBundle.load('assets/products/casio.webp')).buffer
+        .asUint8List();
+    final dir = Directory.systemTemp.createTempSync('musubi-fotos-');
+    for (var i = 1; i <= 3; i++) {
+      _photoFiles.add(
+        (File('${dir.path}/foto-$i.webp')..writeAsBytesSync(bytes)).path,
+      );
+    }
+  });
 
   for (final MapEntry(key: name, value: (member, scene)) in _scenes.entries) {
     if (!_wanted(name)) continue;

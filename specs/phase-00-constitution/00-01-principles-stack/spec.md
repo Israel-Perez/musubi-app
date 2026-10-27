@@ -39,7 +39,7 @@ N/A — verificación estructural y por los guardarraíles que hacen cumplir cad
 
 ## Criterios
 - Cada principio cita una consecuencia práctica verificable (tabla de Diseño).
-- `pubspec.yaml` solo contiene paquetes del stack (`dio`, `flutter_riverpod`, `go_router`, `flutter_localizations`; dev: `very_good_analysis`, `flutter_test`, `integration_test`).
+- `pubspec.yaml` solo contiene paquetes del stack (`dio`, `flutter_riverpod`, `go_router`, `flutter_localizations`, `flutter_secure_storage`, `image_picker`; dev: `very_good_analysis`, `flutter_test`, `integration_test`).
 - `AGENTS.md` y `00-02` citan `00-01` (`grep -n "00-01" AGENTS.md specs/phase-00-constitution/00-02-sdd-governance/spec.md`).
 
 ## Límites
@@ -49,4 +49,4 @@ No fija versiones exactas (viven en `pubspec.yaml`/`pubspec.lock` y en Memoria.m
 - **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
 - **Fecha:** 20-Oct-2026
-- **Detalle:** Adaptada de la referencia WebAPIDevSecOpsScallingSDD (00-01) al front Flutter de MUSUBI. Paquetes aprobados por el usuario: Riverpod, go_router, dio y very_good_analysis. 20-Oct-2026 (SCRUM-66): la constitución §1 (compartida) fija la evaluación el 02-Dic-2026 y hace mandar los lineamientos de la materia; §6 agrega el diseño de la maqueta y los datos locales (02-01).
+- **Detalle:** Adaptada de la referencia WebAPIDevSecOpsScallingSDD (00-01) al front Flutter de MUSUBI. Paquetes aprobados por el usuario: Riverpod, go_router, dio y very_good_analysis. 20-Oct-2026 (SCRUM-66): la constitución §1 (compartida) fija la evaluación el 02-Dic-2026 y hace mandar los lineamientos de la materia; §6 agrega el diseño de la maqueta y los datos locales (02-01). 27-Oct-2026 (SCRUM-23): `image_picker` 1.2.4 aprobado por el usuario como excepción (ver el `plan.md` de HU-06).

@@ -6,16 +6,21 @@ import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/shell/musubi_bottom_bar.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/auth/presentation/account_gate.dart';
+import 'package:musubi_app/features/listings/presentation/publish_sheet.dart';
+import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 
 /// Marco de las 4 pestanas (cada una conserva su pila de navegacion).
 ///
 /// Visitante (HU-48): Mensajes, Perfil y Publicar no navegan; abren la hoja
-/// "Crea tu cuenta" y, al terminar, se vuelve a la pantalla actual.
-class AppShell extends ConsumerWidget {
+/// "Crea tu cuenta" y, al terminar, se vuelve a la pantalla actual. Con
+/// sesion, "Publicar" abre "¿Qué quieres publicar?" detras de la barra, que
+/// cambia su boton por "Cerrar" (maqueta `Publicar`).
+class AppShell extends ConsumerStatefulWidget {
   const new({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
@@ -27,40 +32,81 @@ class AppShell extends ConsumerWidget {
   };
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  bool _publishOpen = false;
+
+  void _setPublish({required bool open}) {
+    if (_publishOpen != open) setState(() => _publishOpen = open);
+  }
+
+  void _gate(AccountGateMotive motive) {
+    final here = GoRouter.of(context)
+        .routerDelegate
+        .currentConfiguration
+        .uri
+        .path;
+    unawaited(showAccountGate(context, motive: motive, returnTo: here));
+  }
+
+  void _openFlow(String route) {
+    _setPublish(open: false);
+    if (route == AppRoutes.sell) ref.read(sellDraftProvider.notifier).start();
+    unawaited(context.push(route));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final signedIn = ref.watch(sessionControllerProvider) is SignedIn;
+    final shell = widget.navigationShell;
+    final barHeight =
+        MusubiSizes.navBarHeight + MediaQuery.viewPaddingOf(context).bottom;
 
-    void gate(AccountGateMotive motive) {
-      final here = GoRouter.of(context)
-          .routerDelegate
-          .currentConfiguration
-          .uri
-          .path;
-      unawaited(showAccountGate(context, motive: motive, returnTo: here));
-    }
-
-    return Scaffold(
-      // La pantalla sigue debajo de la franja transparente del boton
-      // "Publicar", como en la maqueta.
-      extendBody: true,
-      body: navigationShell,
-      bottomNavigationBar: MusubiBottomBar(
-        currentIndex: navigationShell.currentIndex,
-        onTabSelected: (index) {
-          final motive = _membersOnly[index];
-          if (!signedIn && motive != null) {
-            gate(motive);
-            return;
-          }
-          navigationShell.goBranch(
-            index,
-            // Tocar la pestana activa regresa a su raiz.
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
-        onPublish: () => signedIn
-            ? unawaited(context.push(AppRoutes.publish))
-            : gate(AccountGateMotive.publish),
+    return PopScope(
+      canPop: !_publishOpen,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _setPublish(open: false);
+      },
+      child: Scaffold(
+        // La pantalla sigue debajo de la franja transparente del boton
+        // "Publicar", como en la maqueta.
+        extendBody: true,
+        body: Stack(
+          children: [
+            shell,
+            Positioned.fill(
+              child: PublishOverlay(
+                open: _publishOpen && signedIn,
+                bottomInset: barHeight,
+                onClose: () => _setPublish(open: false),
+                onSell: () => _openFlow(AppRoutes.sell),
+                onNeed: () => _openFlow(AppRoutes.need),
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: MusubiBottomBar(
+          currentIndex: shell.currentIndex,
+          publishOpen: _publishOpen && signedIn,
+          onTabSelected: (index) {
+            _setPublish(open: false);
+            final motive = AppShell._membersOnly[index];
+            if (!signedIn && motive != null) {
+              _gate(motive);
+              return;
+            }
+            shell.goBranch(
+              index,
+              // Tocar la pestana activa regresa a su raiz.
+              initialLocation: index == shell.currentIndex,
+            );
+          },
+          onPublish: () => signedIn
+              ? _setPublish(open: !_publishOpen)
+              : _gate(AccountGateMotive.publish),
+        ),
       ),
     );
   }

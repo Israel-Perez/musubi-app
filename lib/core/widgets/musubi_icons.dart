@@ -377,6 +377,97 @@ abstract final class MusubiIcons {
     IconPath('m6 6 12 12'),
   ]);
 
+  /// `tag`.
+  static const tag = MusubiIconData([
+    IconPath(
+      'M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 '
+      '1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z',
+    ),
+    IconCircle(7.5, 7.5, 1),
+  ]);
+
+  /// `tag (sin punto)`.
+  static const tagPlain = MusubiIconData([
+    IconPath(
+      'M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 '
+      '1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z',
+    ),
+  ]);
+
+  /// `image`.
+  static const image = MusubiIconData([
+    IconRect(3, 3, 18, 18, radius: 2),
+    IconCircle(9, 9, 2),
+    IconPath('m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21'),
+  ]);
+
+  /// `lightbulb`.
+  static const lightbulb = MusubiIconData([
+    IconPath(
+      'M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 '
+      '2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5',
+    ),
+    IconPath('M9 18h6'),
+    IconPath('M10 22h4'),
+  ]);
+
+  /// `calculator`.
+  static const calculator = MusubiIconData([
+    IconRect(4, 2, 16, 20, radius: 2),
+    IconPath('M8 6h8'),
+    IconPath('M16 14v4'),
+    IconPath('M16 10h.01'),
+    IconPath('M12 10h.01'),
+    IconPath('M8 10h.01'),
+    IconPath('M12 14h.01'),
+    IconPath('M8 14h.01'),
+    IconPath('M12 18h.01'),
+    IconPath('M8 18h.01'),
+  ]);
+
+  /// `ruler`.
+  static const ruler = MusubiIconData([
+    IconPath(
+      'M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 '
+      '8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z',
+    ),
+    IconPath('m14.5 12.5 2-2'),
+    IconPath('m11.5 9.5 2-2'),
+    IconPath('m8.5 6.5 2-2'),
+    IconPath('m17.5 15.5 2-2'),
+  ]);
+
+  /// `cpu`.
+  static const cpu = MusubiIconData([
+    IconRect(4, 4, 16, 16, radius: 2),
+    IconRect(9, 9, 6, 6, radius: 1),
+    IconPath('M15 2v2'),
+    IconPath('M15 20v2'),
+    IconPath('M2 15h2'),
+    IconPath('M2 9h2'),
+    IconPath('M20 15h2'),
+    IconPath('M20 9h2'),
+    IconPath('M9 2v2'),
+    IconPath('M9 20v2'),
+  ]);
+
+  /// `trending-down`.
+  static const trendingDown = MusubiIconData([
+    IconPath('M22 17 13.5 8.5 8.5 13.5 2 7'),
+    IconPath('M16 17h6v-6'),
+  ]);
+
+  /// `users`.
+  static const users = MusubiIconData([
+    IconPath('M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'),
+    IconCircle(9, 7, 4),
+    IconPath('M22 21v-2a4 4 0 0 0-3-3.87'),
+    IconPath('M16 3.13a4 4 0 0 1 0 7.75'),
+  ]);
+
+  /// `minus`.
+  static const minus = MusubiIconData([IconPath('M5 12h14')]);
+
   /// `eye-off` (Lucide; la maqueta solo muestra el ojo abierto).
   static const eyeOff = MusubiIconData([
     IconPath(

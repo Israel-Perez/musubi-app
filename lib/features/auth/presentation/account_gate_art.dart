@@ -5,9 +5,9 @@ import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/avatars.dart';
 import 'package:musubi_app/core/widgets/css_dashes.dart';
+import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
-import 'package:musubi_app/core/widgets/musubi_sheet.dart';
 
 /// Ilustraciones de la hoja "Crea tu cuenta" (maqueta `Inicio-visitante`,
 /// un panel rojo claro de 168 de alto por motivo). Las piezas aparecen con
@@ -52,40 +52,6 @@ class GateArtPanel extends StatelessWidget {
       ),
     ),
   );
-}
-
-/// `__pop`: aparece desde 0.6 con la curva de la maqueta, tras [delay].
-class PopIn extends StatelessWidget {
-  const new({
-    required this.child,
-    super.key,
-    this.delay = Duration.zero,
-    this.duration = const Duration(milliseconds: 400),
-  });
-
-  final Widget child;
-  final Duration delay;
-  final Duration duration;
-
-  @override
-  Widget build(BuildContext context) {
-    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return child;
-    final total = delay + duration;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: total,
-      curve: Interval(
-        delay.inMicroseconds / total.inMicroseconds,
-        1,
-        curve: musubiEaseOut,
-      ),
-      builder: (context, t, child) => Opacity(
-        opacity: t,
-        child: Transform.scale(scale: 0.6 + 0.4 * t, child: child),
-      ),
-      child: child,
-    );
-  }
 }
 
 Duration _ms(int value) => Duration(milliseconds: value);

@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_sheet.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 
 /// Pestana de la barra inferior.
@@ -26,6 +29,7 @@ class MusubiBottomBar extends StatelessWidget {
     required this.onTabSelected,
     required this.onPublish,
     super.key,
+    this.publishOpen = false,
   });
 
   /// Lo que el boton "Publicar" sobresale arriba de la barra.
@@ -46,6 +50,9 @@ class MusubiBottomBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTabSelected;
   final VoidCallback onPublish;
+
+  /// "¿Qué quieres publicar?" abierta: el boton central es "Cerrar".
+  final bool publishOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +98,9 @@ class MusubiBottomBar extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(flex: 2),
-                Expanded(child: _PublishButton(onTap: onPublish)),
+                Expanded(
+                  child: _PublishButton(open: publishOpen, onTap: onPublish),
+                ),
                 const Spacer(flex: 2),
               ],
             ),
@@ -103,16 +112,18 @@ class MusubiBottomBar extends StatelessWidget {
 }
 
 class _PublishButton extends StatelessWidget {
-  const new({required this.onTap});
+  const new({required this.open, required this.onTap});
 
+  final bool open;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
+    final animate = !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
     return Pressable(
       onTap: onTap,
-      semanticLabel: 'Publicar',
+      semanticLabel: open ? 'Cerrar' : 'Publicar',
       builder: (context, pressed) => Column(
         spacing: 3,
         children: [
@@ -120,28 +131,50 @@ class _PublishButton extends StatelessWidget {
             width: MusubiSizes.publishButton,
             height: MusubiSizes.publishButton,
             decoration: BoxDecoration(
-              color: pressed ? c.brandPressed : c.brand,
+              color: open
+                  ? c.inverse
+                  : pressed
+                  ? c.brandPressed
+                  : c.brand,
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(color: c.background, spreadRadius: 4),
-                const BoxShadow(
-                  color: Color(0x4DD7191F),
-                  offset: Offset(0, 8),
+                BoxShadow(
+                  color: open
+                      ? const Color(0x401C1C1E)
+                      : const Color(0x4DD7191F),
+                  offset: const Offset(0, 8),
                   blurRadius: 18,
                 ),
               ],
             ),
-            child: const Center(
-              child: MusubiIcon(
-                MusubiIcons.plus,
-                size: 26,
-                strokeWidth: 2.4,
-                color: Color(0xFFFFFFFF),
-              ),
+            child: Center(
+              child: open
+                  // `Publicar__turn`: la X entra girando desde -90 grados.
+                  ? TweenAnimationBuilder<double>(
+                      tween: Tween(begin: animate ? -0.25 : 0, end: 0),
+                      duration: const Duration(milliseconds: 350),
+                      curve: musubiEaseOut,
+                      builder: (context, turns, child) => Transform.rotate(
+                        angle: turns * 2 * math.pi,
+                        child: child,
+                      ),
+                      child: const MusubiIcon(
+                        MusubiIcons.x,
+                        strokeWidth: 2.4,
+                        color: Color(0xFFFFFFFF),
+                      ),
+                    )
+                  : const MusubiIcon(
+                      MusubiIcons.plus,
+                      size: 26,
+                      strokeWidth: 2.4,
+                      color: Color(0xFFFFFFFF),
+                    ),
             ),
           ),
           Text(
-            'Publicar',
+            open ? 'Cerrar' : 'Publicar',
             style: MusubiType.style(
               11,
               weight: FontWeight.w700,

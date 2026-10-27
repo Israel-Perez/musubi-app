@@ -11,6 +11,7 @@ import 'package:musubi_app/core/widgets/musubi_controls.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
+import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
@@ -138,6 +139,37 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
+  });
+
+  // HU-48 fase 2: sin vistas (HU-11) no hay "Populares"; la vitrina vacia
+  // explica por que.
+  testWidgets('sin vistas no hay Populares, pero si lo recien publicado', (
+    tester,
+  ) async {
+    await _open(
+      tester,
+      catalog: FakeCatalogRepository([
+        const HomeFeed(
+          recent: [
+            ProductSummary(
+              id: 'r1',
+              title: 'Calculadora Casio fx-991ES Plus',
+              priceCents: 45000,
+              stock: 1,
+            ),
+          ],
+        ),
+      ]),
+    );
+
+    expect(find.text('Populares'), findsNothing);
+    expect(find.text('Recién publicados'), findsOneWidget);
+  });
+
+  testWidgets('vitrina vacia: lo dice en lugar de Populares', (tester) async {
+    await _open(tester, catalog: FakeCatalogRepository());
+
+    expect(find.byKey(const Key('home-empty-products')), findsOneWidget);
   });
 
   group('con sesion (maqueta Inicio)', () {

@@ -1,20 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
+import 'package:musubi_app/core/network/api_client.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
-import 'package:musubi_app/features/marketplace/data/pending_catalog_repository.dart';
+import 'package:musubi_app/features/marketplace/data/http_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
-import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
-/// Catalogo de la vitrina (en pruebas, un fake). Con `DEMO_CATALOG` (solo
-/// en dev) muestra los productos ficticios de la maqueta.
-final catalogRepositoryProvider = Provider<CatalogRepository>(
-  (ref) => ref.watch(appConfigProvider).demoCatalog
+/// Catalogo de la vitrina (en pruebas, un fake): `GET /api/v1/products`
+/// (HU-48 fase 2). Con `DEMO_CATALOG` (solo en dev) muestra los productos
+/// ficticios de la maqueta.
+final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
+  final config = ref.watch(appConfigProvider);
+  return config.demoCatalog
       ? DemoCatalogRepository(ref.watch(clockProvider))
-      : PendingCatalogRepository(ref.watch(statusRepositoryProvider)),
-);
+      : HttpCatalogRepository(ref.watch(dioProvider), config.apiBaseUrl);
+});
 
 /// Periodo elegido en "Populares" (Hoy por defecto).
 final popularPeriodProvider =

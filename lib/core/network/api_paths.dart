@@ -39,4 +39,21 @@ abstract final class ApiPaths {
   /// `POST /api/v1/auth/password/reset` — fila "M-01"
   /// (spec `musubi-api:HU-56`).
   static const authPasswordReset = '/api/v1/auth/password/reset';
+
+  /// `GET /api/v1/categories` — fila "M-03" (spec `musubi-api:HU-06`).
+  static const categories = '/api/v1/categories';
+
+  /// `GET /api/v1/products` (vitrina publica, HU-48) y `POST` (publicar,
+  /// HU-06) — filas "M-03".
+  static const products = '/api/v1/products';
+
+  /// `POST /api/v1/products/photos` — fila "M-03" (spec `musubi-api:HU-06`).
+  static const productPhotos = '/api/v1/products/photos';
+
+  /// `GET /api/v1/products/mine` — fila "M-03" (spec `musubi-api:HU-06`).
+  static const myProducts = '/api/v1/products/mine';
+
+  /// `GET /api/v1/products/price-range` — fila "M-03"
+  /// (spec `musubi-api:HU-06`).
+  static const priceRange = '/api/v1/products/price-range';
 }
