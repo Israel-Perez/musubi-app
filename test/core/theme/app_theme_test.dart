@@ -42,20 +42,39 @@ void main() {
     expect(MusubiColors.light.error, const Color(0xFFC4320A));
   });
 
-  test('tema: Plus Jakarta Sans, botones de 56 dp y campos con radio 14', () {
+  test('tema: Plus Jakarta Sans, sin ripple y los tokens de la maqueta', () {
     final theme = AppTheme.light();
 
     expect(theme.textTheme.headlineLarge?.fontFamily, MusubiType.family);
     expect(theme.textTheme.headlineLarge?.fontSize, 28);
     expect(theme.textTheme.headlineLarge?.fontWeight, FontWeight.w800);
-    expect(
-      theme.filledButtonTheme.style?.minimumSize?.resolve({})?.height,
-      MusubiSizes.buttonHeight,
-    );
-    final border = theme.inputDecorationTheme.border! as OutlineInputBorder;
-    expect(border.borderRadius, BorderRadius.circular(14));
+    // La maqueta cambia el fondo al presionar; no hay onda de Material.
+    expect(theme.splashFactory, NoSplash.splashFactory);
     expect(theme.materialTapTargetSize, MaterialTapTargetSize.padded);
     expect(theme.extension<MusubiColors>(), MusubiColors.light);
     expect(AppTheme.dark().extension<MusubiColors>(), MusubiColors.dark);
+  });
+
+  test('texto como en CSS: interlineado y espaciado explicitos', () {
+    // Sin `line-height`: el `normal` de la fuente (1.26), no el del tema.
+    final normal = MusubiType.style(13);
+    expect(normal.height, MusubiType.normalLineHeight);
+    expect(normal.leadingDistribution, TextLeadingDistribution.even);
+    // Sin `letter-spacing`: 0 (si no, se hereda el 0.25 de Material).
+    expect(normal.letterSpacing, 0);
+
+    final title = MusubiType.style(28, line: 34, em: -0.025);
+    expect(title.height, 34 / 28);
+    expect(title.letterSpacing, closeTo(-0.7, 1e-9));
+  });
+
+  test('modo noche: el mapa de la maqueta (dc-meta.dark)', () {
+    const dark = MusubiColors.dark;
+    expect(dark.background, const Color(0xFF17171A));
+    expect(dark.surface, const Color(0xFF232327));
+    expect(dark.brandText, const Color(0xFFFF5C61));
+    // Los rellenos rojos y el tinta del banner no cambian.
+    expect(dark.brand, MusubiColors.light.brand);
+    expect(dark.inverse, MusubiColors.light.inverse);
   });
 }

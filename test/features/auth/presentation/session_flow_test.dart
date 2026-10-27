@@ -7,6 +7,8 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
+import 'package:musubi_app/core/widgets/musubi_icon.dart';
+import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
@@ -125,7 +127,7 @@ void main() {
 
       expect(h.repository.calls, contains('resend:luis@uttt.edu.mx'));
       expect(find.text('Revisa tu correo institucional'), findsOneWidget);
-      expect(find.text('luis@uttt.edu.mx'), findsOneWidget);
+      expect(find.textContaining('luis@uttt.edu.mx'), findsOneWidget);
       expect(h.signedIn, isFalse);
     });
 
@@ -151,29 +153,44 @@ void main() {
       expect(find.text(FakeAuthRepository.activeEmail), findsOneWidget);
     });
 
-    testWidgets('el boton se habilita solo con correo y contrasena', (
+    testWidgets('sin correo ni contrasena: lo dice en cada campo', (
       tester,
     ) async {
       final h = Harness(tester);
       await h.open(AppRoutes.signIn);
-      FilledButton primary() =>
-          tester.widget<FilledButton>(find.byType(FilledButton).last);
 
-      expect(primary().onPressed, isNull);
-      await h.type('signin-email', FakeAuthRepository.activeEmail);
-      expect(primary().onPressed, isNull);
-      await h.type('signin-password', 'x');
-      expect(primary().onPressed, isNotNull);
+      // Como en la maqueta, "Iniciar sesión" se toca y explica lo que falta.
+      await h.tapText('Iniciar sesión');
+
+      expect(find.text('Escribe tu correo institucional.'), findsOneWidget);
+      expect(find.text('Escribe tu contraseña.'), findsOneWidget);
+      expect(h.repository.calls.where((c) => c.startsWith('signIn')), isEmpty);
     });
 
-    testWidgets('sin a donde volver, la X lleva a Inicio', (tester) async {
+    testWidgets('sin a donde volver, la flecha lleva a Inicio', (tester) async {
       final h = Harness(tester);
       await h.open(AppRoutes.signIn);
 
-      await tester.tap(find.byTooltip('Seguir explorando'));
+      await tester.tap(
+        find.byWidgetPredicate(
+          (w) => w is MusubiIcon && w.icon == MusubiIcons.chevronLeft,
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(h.location, AppRoutes.home);
+    });
+
+    testWidgets('al entrar, un aviso breve saluda', (tester) async {
+      final h = Harness(tester);
+      await h.open(AppRoutes.signIn);
+
+      await h.signIn(
+        FakeAuthRepository.activeEmail,
+        FakeAuthRepository.activePassword,
+      );
+
+      expect(find.textContaining('Ya estás dentro de Musubi'), findsOneWidget);
     });
   });
 
@@ -239,9 +256,13 @@ void main() {
 
       await h.type('forgot-code', FakeAuthRepository.validCode);
       await h.type('forgot-password', 'corta');
+      await h.tapText('Guardar contraseña');
 
-      final save = tester.widget<FilledButton>(find.byType(FilledButton).last);
-      expect(save.onPressed, isNull);
+      expect(
+        find.text('Tu contraseña necesita 8 caracteres, letras y números'),
+        findsOneWidget,
+      );
+      expect(h.repository.calls.where((c) => c.startsWith('reset')), isEmpty);
     });
 
     testWidgets('reenviar: disponible al terminar la cuenta regresiva', (
@@ -257,7 +278,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       await h.tapText('Reenviar código');
 
-      expect(find.text('Te enviamos un código nuevo.'), findsOneWidget);
+      expect(find.text('Te enviamos un código nuevo'), findsOneWidget);
       expect(
         h.repository.calls.where((c) => c.startsWith('forgot:')),
         hasLength(2),
@@ -279,7 +300,7 @@ void main() {
   group('cerrar sesion', () {
     testWidgets('confirma, revoca en la API y vuelve a Inicio', (tester) async {
       final h = Harness(tester)..initial = testTokens();
-      await h.open(AppRoutes.profile);
+      await h.open(AppRoutes.settings);
 
       await h.tapText('Cerrar sesión');
       expect(find.text('¿Cerrar sesión?'), findsOneWidget);
@@ -295,7 +316,7 @@ void main() {
 
     testWidgets('cancelar no cierra la sesion', (tester) async {
       final h = Harness(tester)..initial = testTokens();
-      await h.open(AppRoutes.profile);
+      await h.open(AppRoutes.settings);
 
       await h.tapText('Cerrar sesión');
       await h.tapText('Cancelar');

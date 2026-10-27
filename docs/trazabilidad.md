@@ -59,7 +59,7 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 | HU-45 | SCRUM-50 | S3 | M-13 | Calificar al comprador al terminar un pedido | — | — | — | Por iniciar |
 | HU-46 | SCRUM-32 | S2 | M-01 | Eliminar mi cuenta y mis datos | — | — | — | Por iniciar |
 | HU-47 | SCRUM-33 | S2 | M-01 | Aceptar aviso de privacidad y términos de uso | `specs/m01-auth/HU-47-aviso-privacidad/` | [musubi-api:HU-47](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-47-aviso-privacidad) | `test/features/auth/legal_documents_test.dart`, `auth_flow_test.dart` | Borrador con evidencia |
-| HU-48 | SCRUM-73 | S2 | M-04 | Explorar la app como visitante | `specs/m04-marketplace/HU-48-explorar-visitante/` | — (catálogo público con HU-06) | `test/features/marketplace/visitor_flow_test.dart`, `test/app/navigation_test.dart` | Borrador con evidencia (fase 1) |
+| HU-48 | SCRUM-73 | S2 | M-04 | Explorar la app como visitante | `specs/m04-marketplace/HU-48-explorar-visitante/` | — (catálogo público con HU-06) | `test/features/marketplace/visitor_flow_test.dart`, `test/features/marketplace/home_screen_test.dart`, `test/app/navigation_test.dart` | Borrador con evidencia (fase 1) |
 | HU-49 | SCRUM-69 | Por asignar | M-04 | Ver populares y recién publicados | — | — | — | Por iniciar |
 | HU-50 | SCRUM-67 | Por asignar | M-03 | Manejar la cantidad disponible de un producto | — | — | — | Por iniciar |
 | HU-51 | SCRUM-70 | Por asignar | M-04 | Comparar opciones y pedir aviso de disponibilidad | — | — | — | Por iniciar |

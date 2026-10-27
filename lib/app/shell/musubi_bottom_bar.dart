@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
+import 'package:musubi_app/core/widgets/musubi_icon.dart';
+import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/pressable.dart';
 
 /// Pestana de la barra inferior.
 @immutable
 class BottomBarItem {
-  const new({
-    required this.label,
-    required this.icon,
-    required this.activeIcon,
-  });
+  const new({required this.label, required this.icon});
 
   final String label;
-  final IconData icon;
-  final IconData activeIcon;
+  final MusubiIconData icon;
 }
 
 /// Barra inferior de la maqueta: Inicio, Se busca, (Publicar), Mensajes,
 /// Perfil. Activo: icono y texto en rojo, peso 800. "Publicar" es un boton
-/// central de 52 dp que abre las opciones de publicar (no es una pestana).
+/// rojo de 52 con radio 18 que sobresale [overhang] px arriba de la barra.
+///
+/// Va con `extendBody: true`: la franja de arriba es transparente (deja ver
+/// la pantalla) y solo el boton recibe toques ahi.
 class MusubiBottomBar extends StatelessWidget {
   const new({
     required this.currentIndex,
@@ -27,27 +28,18 @@ class MusubiBottomBar extends StatelessWidget {
     super.key,
   });
 
+  /// Lo que el boton "Publicar" sobresale arriba de la barra.
+  static const overhang = 18.0;
+
+  /// Borde de arriba: como en la maqueta (`box-sizing: border-box`), queda
+  /// dentro de la barra y el contenido empieza debajo de el.
+  static const _border = 1.0;
+
   static const tabs = [
-    BottomBarItem(
-      label: 'Inicio',
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-    ),
-    BottomBarItem(
-      label: 'Se busca',
-      icon: Icons.campaign_outlined,
-      activeIcon: Icons.campaign,
-    ),
-    BottomBarItem(
-      label: 'Mensajes',
-      icon: Icons.chat_bubble_outline,
-      activeIcon: Icons.chat_bubble,
-    ),
-    BottomBarItem(
-      label: 'Perfil',
-      icon: Icons.person_outline,
-      activeIcon: Icons.person,
-    ),
+    BottomBarItem(label: 'Inicio', icon: MusubiIcons.house),
+    BottomBarItem(label: 'Se busca', icon: MusubiIcons.megaphone),
+    BottomBarItem(label: 'Mensajes', icon: MusubiIcons.messageCircle),
+    BottomBarItem(label: 'Perfil', icon: MusubiIcons.user),
   ];
 
   /// Indice de la pestana activa (0..3, sin contar "Publicar").
@@ -58,6 +50,7 @@ class MusubiBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
+    final inset = MediaQuery.viewPaddingOf(context).bottom;
     Widget tab(int index) => Expanded(
       child: _TabButton(
         item: tabs[index],
@@ -66,67 +59,96 @@ class MusubiBottomBar extends StatelessWidget {
       ),
     );
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: c.background,
-        border: Border(top: BorderSide(color: c.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: MusubiSizes.navBarHeight,
-          child: Row(
-            children: [
-              tab(0),
-              tab(1),
-              Expanded(
-                // Maqueta: boton rojo que sobresale de la barra, con su
-                // etiqueta "Publicar" debajo.
-                child: OverflowBox(
-                  maxHeight: MusubiSizes.navBarHeight + 24,
-                  alignment: Alignment.bottomCenter,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Semantics(
-                        button: true,
-                        label: 'Publicar',
-                        excludeSemantics: true,
-                        child: SizedBox.square(
-                          dimension: MusubiSizes.publishButton,
-                          child: FloatingActionButton(
-                            heroTag: null,
-                            elevation: 2,
-                            tooltip: 'Publicar',
-                            backgroundColor: c.brand,
-                            foregroundColor: c.onBrand,
-                            shape: const CircleBorder(),
-                            onPressed: onPublish,
-                            child: const Icon(Icons.add, size: 28),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      ExcludeSemantics(
-                        child: Text(
-                          'Publicar',
-                          style: MusubiType.label.copyWith(
-                            color: c.textPrimary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
+    return SizedBox(
+      height: overhang + MusubiSizes.navBarHeight + inset,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            top: overhang,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: c.background,
+                border: Border(top: BorderSide(color: c.border)),
               ),
-              tab(2),
-              tab(3),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            left: 4,
+            right: 4,
+            top: overhang + _border,
+            height: MusubiSizes.navBarHeight - _border,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [tab(0), tab(1), const Spacer(), tab(2), tab(3)],
+            ),
+          ),
+          // Publicar: la quinta parte central, 18 px arriba del contenido.
+          Positioned(
+            top: _border,
+            left: 4,
+            right: 4,
+            child: Row(
+              children: [
+                const Spacer(flex: 2),
+                Expanded(child: _PublishButton(onTap: onPublish)),
+                const Spacer(flex: 2),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PublishButton extends StatelessWidget {
+  const new({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Pressable(
+      onTap: onTap,
+      semanticLabel: 'Publicar',
+      builder: (context, pressed) => Column(
+        spacing: 3,
+        children: [
+          Container(
+            width: MusubiSizes.publishButton,
+            height: MusubiSizes.publishButton,
+            decoration: BoxDecoration(
+              color: pressed ? c.brandPressed : c.brand,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(color: c.background, spreadRadius: 4),
+                const BoxShadow(
+                  color: Color(0x4DD7191F),
+                  offset: Offset(0, 8),
+                  blurRadius: 18,
+                ),
+              ],
+            ),
+            child: const Center(
+              child: MusubiIcon(
+                MusubiIcons.plus,
+                size: 26,
+                strokeWidth: 2.4,
+                color: Color(0xFFFFFFFF),
+              ),
+            ),
+          ),
+          Text(
+            'Publicar',
+            style: MusubiType.style(
+              11,
+              weight: FontWeight.w700,
+              color: c.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -143,31 +165,29 @@ class _TabButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.musubi;
     final color = selected ? c.brandText : c.textSecondary;
-    return Semantics(
-      button: true,
+    return Pressable(
+      onTap: onTap,
+      semanticLabel: item.label,
       selected: selected,
-      label: item.label,
-      excludeSemantics: true,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 32,
+      builder: (context, _) => SizedBox(
+        height: 58,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 3,
           children: [
-            Icon(
-              selected ? item.activeIcon : item.icon,
+            MusubiIcon(
+              item.icon,
+              strokeWidth: selected ? 2 : 1.8,
               color: color,
-              size: 24,
             ),
-            const SizedBox(height: 2),
             Text(
               item.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: MusubiType.label.copyWith(
+              style: MusubiType.style(
+                11,
+                weight: selected ? FontWeight.w800 : FontWeight.w600,
                 color: color,
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
           ],

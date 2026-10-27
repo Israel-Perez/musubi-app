@@ -21,15 +21,15 @@ Maqueta, sección 1: `Inicio-visitante`, `Se-busca-visitante`, `Producto-visitan
    - cargando (`Inicio-cargando`: la forma de la vitrina);
    - error de red (`Inicio-error`: "Sin conexión a internet", "No pudimos cargar las publicaciones", "Reintentar");
    - vacío: dice por qué está vacío y qué hacer ("Vender algo", "Pedir algo").
-3. **Hoja "Crea tu cuenta"** (`GATE` del prototipo), con 9 motivos, cada uno con su ícono y su texto: comprar, chatear, guardar, ofrecer ("Yo tengo este producto"), pedir, publicar, mensajes, perfil y seguir.
-   - Lleva el chip "Solo necesitas tu correo de la universidad".
+3. **Hoja "Crea tu cuenta"** (`GATE` del prototipo), con 9 motivos, cada uno con su ilustración y su texto: comprar, chatear, guardar, ofrecer ("Yo tengo este producto"), pedir, publicar, mensajes, perfil y campus.
+   - Lleva el chip "Solo con tu correo @uttt.edu.mx".
    - Botones: "Crear cuenta", "Ya tengo cuenta" y "Seguir explorando".
-   - Pie: "Al terminar, te regresamos a donde estabas."
+   - Pie: "Al entrar, vuelves justo aquí."
 4. **Pestañas:** para el visitante, Mensajes, Perfil y Publicar abren la hoja y no navegan. Un enlace directo a esas rutas sigue yendo a "Iniciar sesión" (guardia de 02-01).
 5. **Regreso:** al iniciar sesión (`?desde=`) o al terminar el registro ("Empezar a explorar"), se vuelve a la pantalla desde la que se abrió la hoja. Solo se aceptan rutas internas conocidas (`AppRoutes.safeReturn`).
 6. **Chip del campus:**
-   - visitante: hoja "Estás explorando la UTTT", con "Al entrar, vuelves justo aquí.";
-   - con sesión: "Tu campus es la UTTT".
+   - visitante: la hoja "Crea tu cuenta" con el motivo del campus ("Estás explorando la UTTT");
+   - con sesión: lleva la insignia de verificado y no abre nada (maqueta `Inicio`).
 7. La barra inferior muestra la etiqueta "Publicar" debajo del botón central, como en la maqueta.
 
 ## Diseño
@@ -37,7 +37,7 @@ Maqueta, sección 1: `Inicio-visitante`, `Se-busca-visitante`, `Producto-visitan
   - `domain/` (`HomeFeed`, `ProductSummary`, `WantedSummary`, `CatalogRepository`);
   - `data/pending_catalog_repository.dart`, que distingue "sin red" (ping) de "vacío". `NOTE (HU-06)`: `HttpCatalogRepository`;
   - `presentation/` (`HomeScreen`, `CampusChip`, tarjetas de la vitrina).
-- `lib/features/auth/presentation/account_gate.dart`: `AccountGateMotive`, `showAccountGate`, `continueToAccount` y `ExitToExploreButton`.
+- `lib/features/auth/presentation/account_gate.dart`: `AccountGateMotive`, `showAccountGate` y `continueToAccount`. Las ilustraciones están en `account_gate_art.dart` (02-04).
 - `lib/app/return_path.dart` (`returnPathProvider`). `sessionRedirect` usa `rememberedReturn` si no hay `?desde=`.
 - El registro y el inicio de sesión se abren con `go`, no con `push`. Así la guardia del router saca de la pantalla de visitante al entrar.
 - `homeFeedProvider` **sin el reintento automático de Riverpod 3**: el error se ve de inmediato y la persona reintenta.
@@ -67,7 +67,7 @@ Ninguno todavía. El catálogo público llega con HU-06 y su fila en `musubi-api
 - `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 144/144 · critic PASS · Semgrep 0 · APK probado en un Galaxy A54 contra AWS.
 
 ## Límites
-- Hasta HU-06 la vitrina siempre está vacía: no hay productos que mostrar.
+- Hasta HU-06 la vitrina está vacía: no hay productos que mostrar. La excepción es la vitrina de muestra de dev (`DEMO_CATALOG`, 02-04).
 - El detalle del producto (`Producto-visitante`), "Recién publicados" con filtro de categorías y "Se busca" completo llegan en la fase 2.
 - Campus único (UTTT) para visitantes. `NOTE (HU-48)`: elegir campus cuando haya más comunidades (RNF-21).
 
@@ -76,3 +76,6 @@ Ninguno todavía. El catálogo público llega con HU-06 y su fila en `musubi-api
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
 - **Fecha:** 25-Oct-2026
 - **Detalle:** Fase 1 por decisión del usuario (25-Oct-2026): primero la experiencia del visitante y después el catálogo con HU-06.
+- **26-Oct-2026 (SCRUM-82, `02-04`):**
+  - la hoja, el chip del campus y los textos quedan iguales a la maqueta;
+  - el motivo "seguir" se cambió por "campus", que es el que trae el `GATE` del prototipo.

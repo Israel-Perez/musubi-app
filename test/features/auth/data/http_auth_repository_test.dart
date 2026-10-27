@@ -93,12 +93,19 @@ void main() {
       code: '482173',
     );
 
+    // El perfil viaja con la sesion para saludar ("Hola, Ana") sin otra
+    // llamada (SCRUM-82).
     expect(
       session.tokens,
       SessionTokens(
         accessToken: 'a',
         accessExpiresAt: DateTime.utc(2026, 10, 21, 18, 15),
         refreshToken: 'r',
+        profile: const SessionProfile(
+          fullName: 'Ana Sofía Ramírez',
+          email: 'ana@uttt.edu.mx',
+          campus: 'UTTT',
+        ),
       ),
     );
     expect(session.user.initials, 'AR');

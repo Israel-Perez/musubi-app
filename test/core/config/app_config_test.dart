@@ -83,5 +83,40 @@ void main() {
         throwsA(isA<AppConfigException>()),
       );
     });
+
+    // SCRUM-82: la vitrina de muestra nunca llega a staging ni a prod.
+    test('DEMO_CATALOG solo en dev', () {
+      final dev = AppConfig.parse(
+        environment: 'dev',
+        apiBaseUrl: 'https://d1.cloudfront.example',
+        demoCatalog: true,
+      );
+      expect(dev.demoCatalog, isTrue);
+      expect(
+        AppConfig.parse(
+          environment: 'dev',
+          apiBaseUrl: 'http://10.0.2.2:5080',
+        ).demoCatalog,
+        isFalse,
+      );
+
+      for (final env in ['staging', 'prod']) {
+        expect(
+          () => AppConfig.parse(
+            environment: env,
+            apiBaseUrl: 'https://api.musubi.example',
+            demoCatalog: true,
+          ),
+          throwsA(
+            isA<AppConfigException>().having(
+              (e) => e.message,
+              'message',
+              contains('DEMO_CATALOG'),
+            ),
+          ),
+          reason: env,
+        );
+      }
+    });
   });
 }

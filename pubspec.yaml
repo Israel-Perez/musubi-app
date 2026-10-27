@@ -46,5 +46,10 @@ flutter:
           weight: 800
   assets:
     - assets/fonts/OFL.txt
+    # Licencia de los iconos Lucide (ISC) que se copian de la maqueta (SCRUM-82).
+    - assets/licenses/
     # Aviso de privacidad y terminos (HU-47): fuente unica para la app y la landing.
     - assets/legal/
+    # Ilustraciones de la maqueta (WebP de 600 px): hoja "Crea tu cuenta" y
+    # catalogo de muestra de dev (SCRUM-82).
+    - assets/products/

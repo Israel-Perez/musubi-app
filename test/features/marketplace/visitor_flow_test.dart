@@ -34,7 +34,8 @@ class Harness {
   late final store = InMemoryTokenStore(initial);
   late ProviderContainer container;
 
-  Future<void> open() async {
+  /// Sin [settle] (estado "cargando": el esqueleto brilla sin fin).
+  Future<void> open({bool settle = true}) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -55,7 +56,11 @@ class Harness {
     container = ProviderScope.containerOf(
       tester.element(find.byType(MusubiApp)),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
   }
 
   Finder tab(String label) => find.descendant(
@@ -122,8 +127,7 @@ void main() {
       tester,
     ) async {
       final h = Harness(tester, catalog: FakeCatalogRepository.pending());
-      await h.tester.pumpWidget(const SizedBox());
-      await h.open();
+      await h.open(settle: false);
 
       expect(find.byKey(const Key('home-loading')), findsOneWidget);
       expect(find.bySemanticsLabel('Cargando publicaciones…'), findsOneWidget);
@@ -203,10 +207,10 @@ void main() {
       await h.open();
 
       await h.tap(find.byType(SaveButton));
-      expect(find.text('Crea tu cuenta para guardar'), findsOneWidget);
+      expect(find.text('Guarda lo que te gusta'), findsOneWidget);
       expect(h.location, AppRoutes.home);
       await h.tapText('Seguir explorando');
-      expect(find.text('Crea tu cuenta para guardar'), findsNothing);
+      expect(find.text('Guarda lo que te gusta'), findsNothing);
 
       // El boton vive en una fila horizontal: se baja la vista vertical hasta
       // dejarlo completo en pantalla (ensureVisible moveria la horizontal).
@@ -219,7 +223,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Yo tengo este producto'));
       await tester.pumpAndSettle();
-      expect(find.text('Crea tu cuenta para ofrecerlo'), findsOneWidget);
+      expect(find.text('¿Lo tienes? Véndelo'), findsOneWidget);
     });
 
     testWidgets('Mensajes y Publicar no navegan: piden la cuenta', (
@@ -229,11 +233,11 @@ void main() {
       await h.open();
 
       await h.tap(h.tab('Mensajes'));
-      expect(find.text('Aquí verás tus mensajes'), findsOneWidget);
+      expect(find.text('Aquí verás tus chats'), findsOneWidget);
       await h.tapText('Seguir explorando');
 
-      await h.tap(find.byTooltip('Publicar'));
-      expect(find.text('Crea tu cuenta para publicar'), findsOneWidget);
+      await h.tap(h.tab('Publicar'));
+      expect(find.text('Vende en minutos'), findsOneWidget);
       expect(h.location, AppRoutes.home);
     });
 
@@ -258,10 +262,14 @@ void main() {
         FakeAuthRepository.activePassword,
       );
       await tester.pump();
-      await h.tap(find.byType(FilledButton).last);
+      await h.tap(find.text('Iniciar sesión').last);
 
       expect(h.signedIn, isTrue);
       expect(h.location, AppRoutes.wanted);
+      expect(
+        find.text('Listo, ya entraste. Te regresamos a donde estabas.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Crear cuenta: tras la bienvenida vuelve a donde estaba', (
@@ -291,13 +299,13 @@ void main() {
       );
       await tester.pump();
       await h.tap(find.byKey(const Key('signup-consent')));
-      await h.tap(find.widgetWithText(FilledButton, 'Crear cuenta'));
+      await h.tap(find.text('Crear cuenta').last);
+      // El sexto digito verifica solo.
       await tester.enterText(
         find.byKey(const Key('verification-code')),
         FakeAuthRepository.validCode,
       );
-      await tester.pump();
-      await h.tapText('Verificar correo');
+      await tester.pumpAndSettle();
       await h.tapText('Empezar a explorar');
 
       expect(h.signedIn, isTrue);
@@ -342,10 +350,7 @@ void main() {
         );
         expect(find.text(motive.title), findsOneWidget, reason: motive.name);
         expect(find.text(motive.message), findsOneWidget, reason: motive.name);
-        expect(
-          find.text('Solo necesitas tu correo de la universidad'),
-          findsOneWidget,
-        );
+        expect(find.text('Solo con tu correo @uttt.edu.mx'), findsOneWidget);
       }
     });
   });
