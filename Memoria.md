@@ -4,9 +4,19 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 ## Estado actual (27-Oct-2026)
 
-- **HU-06 Publicar un producto** (rama `feature/SCRUM-23-publicar-producto`, apilada sobre `feature/SCRUM-82-fidelidad-maqueta`): hoja "¿Qué quieres publicar?", flujo `Vender-1…4` → `Vender-listo`, "Mis productos" e Inicio con la vitrina real (`GET /api/v1/products`). Versión `0.2.0+2`.
-- format 0 · analyze 0 · test 217/217 · critic PASS.
-- Siguiente: fusionar #9 y luego este PR; desplegar el back (`musubi-api` #12) y probar en el celular contra AWS.
+- **HU-06 fusionada** (#10, `0.2.0+2`) e instalada en el Galaxy A54 contra AWS (catálogo real).
+- **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): spec, plan y tareas en `specs/m02-profile/HU-04-editar-perfil/` (🚧 Borrador). Siguiente: T1 (dominio y repositorio), en paralelo al back.
+
+## T12 — HU-04 Editar mi perfil: spec (27-Oct-2026, SCRUM-22)
+
+**Qué se hizo**
+- Se concilió Jira con la maqueta: `Perfil`, `Ajustes` con sus hojas "Datos personales", "Correo institucional" y "Cambiar contraseña", y `Privacidad` ("Quién te ve").
+
+**Decisiones (con su porqué)**
+- **El usuario pidió el módulo de perfil completo más una foto.** La foto se sube al elegirla, con el `PhotoPicker` de HU-06.
+- **Carrera y cuatrimestre con selectores**, no con texto libre (usuario): datos uniformes y un periodo siempre válido para la carrera.
+- **Lo que depende de otra HU se oculta**, no se pinta deshabilitado: mosaicos, filas de `Ajustes` y de `Privacidad` (cada uno con su `NOTE`).
+- **Versión al pie de `Ajustes`** desde una constante verificada contra `pubspec.yaml`, sin `package_info_plus`.
 
 ## T14 — Dominio propio: aviso de privacidad y configuración de la nube (29-Oct-2026, SCRUM-84/85)
 
