@@ -52,13 +52,7 @@ class AuthUser {
   String get firstName => fullName.trim().split(RegExp(r'\s+')).first;
 
   /// Iniciales del avatar ("AR").
-  String get initials {
-    final parts = fullName.trim().split(RegExp(r'\s+'));
-    final first = parts.first;
-    final last = parts.length > 1 ? parts.last : '';
-    return '${first.isEmpty ? '' : first[0]}${last.isEmpty ? '' : last[0]}'
-        .toUpperCase();
-  }
+  String get initials => initialsOf(fullName);
 }
 
 /// Sesion recien abierta: tokens + usuario.

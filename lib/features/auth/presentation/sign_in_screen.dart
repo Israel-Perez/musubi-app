@@ -3,16 +3,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:musubi_app/app/return_path.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
-import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
+import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_logo.dart';
+import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/musubi_text_field.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
-import 'package:musubi_app/features/auth/presentation/account_gate.dart';
+import 'package:musubi_app/features/auth/presentation/auth_layout.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 
 /// Se llega a "Iniciar sesion" despues de cambiar la contrasena (HU-56).
@@ -23,7 +26,8 @@ class PasswordChanged {
 }
 
 /// "Hola de nuevo" (maqueta `Iniciar-sesion` / `Iniciar-sesion-error`,
-/// HU-02). Al entrar, la guardia del router lleva a `?desde=` o a Inicio.
+/// HU-02). Al entrar, la guardia del router lleva a `?desde=` o a Inicio y
+/// un aviso breve lo confirma.
 class SignInScreen extends ConsumerStatefulWidget {
   const new({this.passwordChanged, super.key});
 
@@ -39,47 +43,75 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     text: widget.passwordChanged?.email,
   );
   final _password = TextEditingController();
+  final _passwordFocus = FocusNode();
   bool _submitting = false;
   ApiFailure? _failure;
 
-  @override
-  void initState() {
-    super.initState();
-    for (final controller in [_email, _password]) {
-      controller.addListener(() => setState(() {}));
-    }
-  }
+  /// Campos vacios al intentar entrar.
+  String? _emailMissing;
+  String? _passwordMissing;
+  Object? _attempt;
 
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
-  bool get _canSubmit =>
-      !_submitting &&
-      _email.text.trim().isNotEmpty &&
-      _password.text.isNotEmpty;
-
   Future<void> _submit() async {
+    final attempt = Object();
     setState(() {
-      _submitting = true;
+      _attempt = attempt;
       _failure = null;
+      _emailMissing = _email.text.trim().isEmpty
+          ? 'Escribe tu correo institucional.'
+          : null;
+      _passwordMissing = _password.text.isEmpty
+          ? 'Escribe tu contraseña.'
+          : null;
     });
+    if (_emailMissing != null || _passwordMissing != null) return;
+
+    setState(() => _submitting = true);
     final session = ref.read(sessionControllerProvider.notifier);
+    final messenger = ScaffoldMessenger.of(context);
+    final returning =
+        AppRoutes.safeReturn(
+          GoRouterState.of(context)
+                  .uri
+                  .queryParameters[AppRoutes.returnParam] ??
+              ref.read(returnPathProvider),
+        ) !=
+        AppRoutes.home;
     try {
       final signedIn = await ref
           .read(authRepositoryProvider)
           .signIn(email: _email.text, password: _password.text);
       // La guardia saca de esta pantalla de visitante hacia `?desde=`.
       await session.signIn(signedIn.tokens);
+      if (!mounted) return;
+      showMusubiSnack(
+        messenger,
+        returning
+            ? 'Listo, ya entraste. Te regresamos a donde estabas.'
+            : '¡Hola, ${signedIn.user.firstName}! Ya estás dentro de Musubi.',
+        icon: returning ? MusubiIcons.undo2 : MusubiIcons.check,
+      );
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       if (failure.code == 'auth.email_not_verified') {
         await _goVerify();
       } else {
         setState(() => _failure = failure);
+        if (failure.code == 'auth.invalid_credentials') {
+          _passwordFocus.requestFocus();
+          _password.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: _password.text.length,
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -116,53 +148,64 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final c = context.musubi;
     final failure = _failure;
     final wrongCredentials = failure?.code == 'auth.invalid_credentials';
+    final banner = failure != null && failure.fieldErrors.isEmpty;
 
-    return Scaffold(
-      appBar: AppBar(
-        // Si se llego con go (guardia u hoja "Crea tu cuenta") no hay pila:
-        // la X vuelve a donde estaba.
-        leading: context.canPop() ? null : const ExitToExploreButton(),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            MusubiSizes.gutter,
-            0,
-            MusubiSizes.gutter,
-            MusubiSizes.space8,
+    return AuthLayout(
+      onBack: () => leaveAuth(context, ref),
+      actions: [
+        MusubiButton(
+          label: 'Iniciar sesión',
+          loading: _submitting,
+          loadingLabel: 'Entrando…',
+          onPressed: _submit,
+        ),
+        AuthFooterLink(
+          question: '¿Eres nuevo en Musubi?',
+          label: 'Crea tu cuenta',
+          onTap: () => context.push(AppRoutes.signUp),
+        ),
+      ],
+      children: [
+        const AuthHeading(
+          title: 'Hola de nuevo',
+          subtitle: TextSpan(text: 'Entra con tu correo institucional.'),
+          leading: Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: MusubiRings(height: 35),
           ),
+        ),
+        if (widget.passwordChanged != null && failure == null)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: InlineMessage(
+              key: Key('signin-password-changed'),
+              kind: InlineMessageKind.success,
+              title: 'Listo, tu contraseña cambió',
+              message: 'Entra con la nueva en todos tus dispositivos.',
+            ),
+          ),
+        if (banner)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: InlineMessage(
+              key: const Key('signin-error'),
+              title: 'No pudimos iniciar sesión',
+              message: wrongCredentials
+                  ? 'El correo o la contraseña no coinciden. Revísalos e '
+                        'inténtalo otra vez.'
+                  : failure.message,
+              shakeTrigger: _attempt,
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
           child: AutofillGroup(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: MusubiSizes.space4,
               children: [
-                Text('Hola de nuevo', style: textTheme.headlineMedium),
-                const SizedBox(height: MusubiSizes.space1),
-                Text(
-                  'Entra con tu correo institucional.',
-                  style: textTheme.bodyLarge,
-                ),
-                const SizedBox(height: MusubiSizes.space6),
-                if (widget.passwordChanged != null && failure == null) ...[
-                  const InlineMessage(
-                    key: Key('signin-password-changed'),
-                    kind: InlineMessageKind.success,
-                    title: 'Listo, tu contraseña cambió',
-                    message: 'Entra con la nueva en todos tus dispositivos.',
-                  ),
-                  const SizedBox(height: MusubiSizes.space4),
-                ],
-                if (failure != null && failure.fieldErrors.isEmpty) ...[
-                  InlineMessage(
-                    key: const Key('signin-error'),
-                    title: 'No pudimos iniciar sesión',
-                    message: failure.message,
-                  ),
-                  const SizedBox(height: MusubiSizes.space4),
-                ],
                 MusubiTextField(
                   label: 'Correo institucional',
                   fieldKey: const Key('signin-email'),
@@ -171,63 +214,46 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
-                  errorText: failure?.fieldError('email'),
+                  errorText: _emailMissing ?? failure?.fieldError('email'),
+                  shakeTrigger: _attempt,
                 ),
-                const SizedBox(height: MusubiSizes.space4),
                 MusubiTextField(
                   label: 'Contraseña',
                   fieldKey: const Key('signin-password'),
                   controller: _password,
+                  focusNode: _passwordFocus,
                   obscure: true,
                   textInputAction: TextInputAction.done,
                   autofillHints: const [AutofillHints.password],
                   onSubmitted: (_) {
-                    if (_canSubmit) unawaited(_submit());
+                    if (!_submitting) unawaited(_submit());
                   },
-                  errorText: wrongCredentials
-                      ? 'Revisa mayúsculas, minúsculas y números.'
-                      : failure?.fieldError('password'),
+                  errorText:
+                      _passwordMissing ??
+                      (wrongCredentials
+                          ? 'Revisa mayúsculas, minúsculas y números.'
+                          : failure?.fieldError('password')),
+                  shakeTrigger: _attempt,
                 ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: MusubiButton(
-                    label: '¿Olvidaste tu contraseña?',
-                    kind: MusubiButtonKind.text,
-                    onPressed: () => context.push(
-                      AppRoutes.forgotPassword,
-                      extra: _email.text.trim(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: MusubiSizes.space4),
-                MusubiButton(
-                  label: 'Iniciar sesión',
-                  loading: _submitting,
-                  onPressed: _canSubmit ? _submit : null,
-                ),
-                const SizedBox(height: MusubiSizes.space3),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      '¿Eres nuevo en Musubi?',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: c.textSecondary,
+                Transform.translate(
+                  offset: const Offset(0, -6),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: MusubiButton(
+                      label: '¿Olvidaste tu contraseña?',
+                      kind: MusubiButtonKind.link,
+                      onPressed: () => context.push(
+                        AppRoutes.forgotPassword,
+                        extra: _email.text.trim(),
                       ),
                     ),
-                    MusubiButton(
-                      label: 'Crea tu cuenta',
-                      kind: MusubiButtonKind.text,
-                      onPressed: () => context.push(AppRoutes.signUp),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -17,11 +17,15 @@ Future<void> main() async {
   // Falla rapido si la configuracion de compilacion es invalida (01-04).
   final config = AppConfig.fromEnvironment();
 
-  // Licencia de la fuente empaquetada (OFL 1.1) en la pantalla de licencias.
+  // Licencias de lo empaquetado en la pantalla de licencias: la fuente
+  // (OFL 1.1) y los iconos de la maqueta (Lucide, ISC).
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(const [
       'Plus Jakarta Sans',
     ], await rootBundle.loadString('assets/fonts/OFL.txt'));
+    yield LicenseEntryWithLineBreaks(const [
+      'Lucide',
+    ], await rootBundle.loadString('assets/licenses/lucide.txt'));
   });
 
   // La sesion se lee antes de pintar: la app nunca muestra un estado "cargando

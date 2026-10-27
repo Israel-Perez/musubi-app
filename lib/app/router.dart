@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/return_path.dart';
 import 'package:musubi_app/app/shell/app_shell.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
 import 'package:musubi_app/features/auth/presentation/forgot_password_screen.dart';
 import 'package:musubi_app/features/auth/presentation/legal_screens.dart';
@@ -29,13 +30,21 @@ abstract final class AppRoutes {
   static const privacy = '/aviso-de-privacidad';
   static const terms = '/terminos';
   static const forgotPassword = '/recuperar-contrasena';
+  static const search = '/buscar';
+  static const notifications = '/notificaciones';
+  static const settings = '/ajustes';
 
   /// Parametro con la ruta a la que se vuelve despues de iniciar sesion.
   static const returnParam = 'desde';
 
   /// Requieren sesion. Desde la app, el visitante ve antes la hoja "Crea tu
   /// cuenta" (HU-48); esta guardia cubre los enlaces directos.
-  static const Set<String> requiresSession = {publish, messages, profile};
+  static const Set<String> requiresSession = {
+    publish,
+    messages,
+    profile,
+    settings,
+  };
 
   /// Solo para visitantes: con sesion se vuelve a Inicio.
   static const Set<String> visitorsOnly = {
@@ -116,7 +125,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const UpcomingSection(
                   title: 'Se busca',
                   message: 'Aquí verás lo que buscan en tu campus.',
-                  icon: Icons.campaign_outlined,
+                  icon: MusubiIcons.megaphone,
                 ),
               ),
             ],
@@ -129,7 +138,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const UpcomingSection(
                   title: 'Mensajes',
                   message: 'Aquí estarán tus conversaciones.',
-                  icon: Icons.chat_bubble_outline,
+                  icon: MusubiIcons.messageCircle,
                 ),
               ),
             ],
@@ -151,7 +160,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const UpcomingSection(
           title: 'Publicar',
           message: 'Aquí podrás vender un producto o pedir lo que necesitas.',
-          icon: Icons.add_circle_outline,
+          icon: MusubiIcons.plus,
+          canGoBack: true,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.search,
+        // NOTE (HU-09): busqueda y filtros.
+        builder: (context, state) => const UpcomingSection(
+          title: 'Buscar',
+          message: 'Aquí podrás buscar libros, laptops, batas y más.',
+          icon: MusubiIcons.search,
+          canGoBack: true,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        // NOTE (HU-31): avisos de la app.
+        builder: (context, state) => const UpcomingSection(
+          title: 'Notificaciones',
+          message: 'Aquí verás ofertas, mensajes y avisos de tu campus.',
+          icon: MusubiIcons.bell,
+          canGoBack: true,
         ),
       ),
       GoRoute(

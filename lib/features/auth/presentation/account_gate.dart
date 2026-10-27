@@ -5,66 +5,60 @@ import 'package:musubi_app/app/return_path.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
+import 'package:musubi_app/core/widgets/avatars.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
+import 'package:musubi_app/core/widgets/musubi_icon.dart';
+import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_sheet.dart';
+import 'package:musubi_app/features/auth/presentation/account_gate_art.dart';
 
-/// Por que se pide la cuenta (maqueta, `GATE` del modo visitante, HU-48):
-/// icono, titulo y texto de la hoja "Crea tu cuenta".
+/// Por que se pide la cuenta (maqueta `Inicio-visitante`, HU-48): la
+/// ilustracion, el titulo y el texto de la hoja "Crea tu cuenta".
 enum AccountGateMotive {
   buy(
-    Icons.shopping_bag_outlined,
     'Crea tu cuenta para comprar',
-    'Acuerda el precio con quien vende, paga por transferencia o en efectivo '
-        'y recibe en el campus.',
+    'Acuerda el precio, paga seguro y recibe en el campus.',
   ),
   chat(
-    Icons.chat_bubble_outline,
     'Crea tu cuenta para chatear',
-    'Pregunta por el producto, negocia el precio y acuerda la entrega sin '
-        'salir de Musubi.',
+    'Pregunta, negocia y acuerda la entrega.',
   ),
   save(
-    Icons.favorite_border,
-    'Crea tu cuenta para guardar',
-    'Guarda lo que te gusta y encuéntralo rápido cuando vuelvas.',
+    'Guarda lo que te gusta',
+    'Crea tu cuenta y encuéntralo rápido después.',
   ),
-  offer(
-    Icons.front_hand_outlined,
-    'Crea tu cuenta para ofrecerlo',
-    'Responde «Yo tengo este producto» y véndeselo a quien lo está buscando.',
-  ),
+  offer('¿Lo tienes? Véndelo', 'Crea tu cuenta y ofrécelo a quien lo busca.'),
   request(
-    Icons.campaign_outlined,
-    'Crea tu cuenta para pedirlo',
-    'Publica lo que necesitas y recibe ofertas de quien ya lo tiene.',
+    'Pide lo que necesitas',
+    'Crea tu cuenta y recibe ofertas de tu campus.',
   ),
-  publish(
-    Icons.add_box_outlined,
-    'Crea tu cuenta para publicar',
-    'Vende lo que ya no usas o pide lo que necesitas a tu comunidad.',
-  ),
+  publish('Vende en minutos', 'Crea tu cuenta, sube unas fotos y listo.'),
   messages(
-    Icons.chat_bubble_outline,
-    'Aquí verás tus mensajes',
-    'Crea tu cuenta o inicia sesión para chatear con quien compra y quien '
-        'vende.',
+    'Aquí verás tus chats',
+    'Entra para hablar con quien compra y vende.',
   ),
-  profile(
-    Icons.person_outline,
-    'Crea tu perfil',
-    'Tu reputación, tus pedidos y tus publicaciones, en un solo lugar.',
-  ),
-  follow(
-    Icons.person_add_alt,
-    'Crea tu cuenta para seguir',
-    'Sigue a quien vende lo que te interesa y entérate cuando publique algo '
-        'nuevo.',
+  profile('Crea tu perfil', 'Tu reputación, ventas y compras en un lugar.'),
+  campus(
+    'Estás explorando la UTTT',
+    'Tu campus se fija con tu correo institucional.',
   );
 
-  new(this.icon, this.title, this.message);
+  new(this.title, this.message);
 
-  final IconData icon;
   final String title;
   final String message;
+
+  Widget get art => switch (this) {
+    buy => const BuyArt(),
+    chat => const ChatArt(),
+    save => const SaveArt(),
+    offer => const OfferArt(),
+    request => const RequestArt(),
+    publish => const PublishArt(),
+    messages => const MessagesArt(),
+    profile => const ProfileArt(),
+    campus => const CampusArt(),
+  };
 }
 
 /// Abre la hoja "Crea tu cuenta" sin salir de la pantalla. [returnTo] es a
@@ -73,17 +67,8 @@ Future<void> showAccountGate(
   BuildContext context, {
   required AccountGateMotive motive,
   required String returnTo,
-}) => showModalBottomSheet<void>(
-  context: context,
-  useRootNavigator: true,
-  isScrollControlled: true,
-  showDragHandle: true,
-  backgroundColor: context.musubi.background,
-  shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(
-      top: Radius.circular(MusubiSizes.radiusSheet),
-    ),
-  ),
+}) => showMusubiSheet<void>(
+  context,
   builder: (_) => AccountGateSheet(motive: motive, returnTo: returnTo),
 );
 
@@ -108,25 +93,8 @@ void continueToAccount(
   );
 }
 
-/// X de "Iniciar sesion" y "Crea tu cuenta" cuando no hay a donde hacer pop:
-/// vuelve a la pantalla desde la que se abrio (`?desde=` o la recordada).
-class ExitToExploreButton extends ConsumerWidget {
-  const new({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) => IconButton(
-    icon: const Icon(Icons.close),
-    tooltip: 'Seguir explorando',
-    onPressed: () => context.go(
-      AppRoutes.safeReturn(
-        GoRouterState.of(context).uri.queryParameters[AppRoutes.returnParam] ??
-            ref.read(returnPathProvider),
-      ),
-    ),
-  );
-}
-
-/// Contenido de la hoja (maqueta: `.gate` + acciones + pie).
+/// Contenido de la hoja (maqueta: ilustracion + texto + "Solo con tu correo"
+/// + acciones + "Al entrar, vuelves justo aquí.").
 class AccountGateSheet extends ConsumerWidget {
   const new({required this.motive, required this.returnTo, super.key});
 
@@ -139,103 +107,132 @@ class AccountGateSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.musubi;
-    final textTheme = Theme.of(context).textTheme;
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          MusubiSizes.gutter,
-          0,
-          MusubiSizes.gutter,
-          MusubiSizes.space4,
-        ),
-        child: Column(
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Column(
           key: Key('account-gate-${motive.name}'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: c.brandSoft,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(motive.icon, size: 30, color: c.brandText),
-              ),
-            ),
-            const SizedBox(height: MusubiSizes.space4),
-            Text(
-              motive.title,
-              textAlign: TextAlign.center,
-              style: textTheme.titleLarge?.copyWith(fontSize: 22),
-            ),
-            const SizedBox(height: MusubiSizes.space2),
-            Text(
-              motive.message,
-              textAlign: TextAlign.center,
-              style: textTheme.bodyMedium?.copyWith(color: c.textSecondary),
-            ),
-            const SizedBox(height: MusubiSizes.space4),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: MusubiSizes.space3,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: c.surface,
-                  borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.school_outlined, size: 16, color: c.brandText),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        'Solo necesitas tu correo de la universidad',
-                        style: MusubiType.label.copyWith(color: c.textPrimary),
-                      ),
-                    ),
-                  ],
+            const SizedBox(height: 14),
+            motive.art,
+            const SizedBox(height: 18),
+            Semantics(
+              header: true,
+              child: Text(
+                motive.title,
+                textAlign: TextAlign.center,
+                style: MusubiType.style(
+                  23,
+                  weight: FontWeight.w800,
+                  line: 29,
+                  em: -0.025,
+                  color: c.textPrimary,
                 ),
               ),
             ),
-            const SizedBox(height: MusubiSizes.space6),
+            const SizedBox(height: 6),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: Text(
+                  motive.message,
+                  textAlign: TextAlign.center,
+                  style: MusubiType.style(
+                    14.5,
+                    line: 21,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: MusubiSizes.space4),
+            const Center(child: InstitutionalEmailChip()),
+            const SizedBox(height: 18),
             MusubiButton(
               label: 'Crear cuenta',
               onPressed: () => _continue(context, ref, AppRoutes.signUp),
             ),
-            const SizedBox(height: MusubiSizes.space2),
+            const SizedBox(height: 10),
             MusubiButton(
               label: 'Ya tengo cuenta',
               kind: MusubiButtonKind.secondary,
               onPressed: () => _continue(context, ref, AppRoutes.signIn),
             ),
+            const SizedBox(height: 10),
             MusubiButton(
               label: 'Seguir explorando',
-              kind: MusubiButtonKind.text,
+              kind: MusubiButtonKind.quiet,
+              height: MusubiSizes.buttonHeightSmall,
               onPressed: () => Navigator.of(context).pop(),
             ),
-            const SizedBox(height: MusubiSizes.space1),
+            const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 6,
               children: [
-                Icon(Icons.undo, size: 14, color: c.textSecondary),
-                const SizedBox(width: MusubiSizes.space1),
-                Flexible(
-                  child: Text(
-                    'Al terminar, te regresamos a donde estabas.',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: c.textSecondary,
-                    ),
+                MusubiIcon(MusubiIcons.undo2, size: 14, color: c.textSecondary),
+                Text(
+                  'Al entrar, vuelves justo aquí.',
+                  style: MusubiType.style(
+                    12,
+                    weight: FontWeight.w600,
+                    line: 16,
+                    color: c.textSecondary,
                   ),
                 ),
               ],
             ),
           ],
         ),
+        // X de la maqueta: 28 abajo del borde de la hoja y 26 de la derecha
+        // (antes van 8 de relleno y 5 de la manija; a los lados, 20).
+        Positioned(
+          top: 15,
+          right: 6,
+          child: SheetCloseButton(onTap: () => Navigator.of(context).pop()),
+        ),
+      ],
+    );
+  }
+}
+
+/// "VC PN JS DH · Solo con tu correo @uttt.edu.mx".
+class InstitutionalEmailChip extends StatelessWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(6, 5, 14, 5),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 10,
+        children: [
+          CommunityAvatars(
+            size: 26,
+            overlap: 8,
+            borderColor: c.surface,
+            borderWidth: 2,
+            fontSize: 9,
+          ),
+          Flexible(
+            child: Text(
+              'Solo con tu correo @uttt.edu.mx',
+              style: MusubiType.style(
+                12.5,
+                weight: FontWeight.w700,
+                line: 16,
+                color: c.textPrimary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

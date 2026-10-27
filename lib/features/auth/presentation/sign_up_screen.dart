@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
@@ -10,13 +11,23 @@ import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
+import 'package:musubi_app/core/widgets/musubi_controls.dart';
+import 'package:musubi_app/core/widgets/musubi_icon.dart';
+import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/musubi_text_field.dart';
+import 'package:musubi_app/core/widgets/shake.dart';
+import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
-import 'package:musubi_app/features/auth/presentation/account_gate.dart';
+import 'package:musubi_app/features/auth/presentation/auth_layout.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/auth/presentation/password_rules.dart';
 
 /// "Crea tu cuenta" (maqueta `Registro` / `Registro-error`, HU-01 y HU-47).
+/// Como en la maqueta, "Crear cuenta" siempre se puede tocar: si falta algo,
+/// lo dice (sacude el campo y avisa). Con un correo que no es de la
+/// universidad se ve gris, como en `Registro-error`, y al tocarlo sacude el
+/// aviso y vuelve al correo.
 class SignUpScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -49,11 +60,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _email = TextEditingController();
   final _name = TextEditingController();
   final _password = TextEditingController();
+  final _emailFocus = FocusNode();
   Timer? _debounce;
   _CampusCheck _campus = const _CampusIdle();
   bool _consent = false;
   bool _submitting = false;
   ApiFailure? _failure;
+
+  /// Correo o nombre vacios y contrasena que no cumple al tocar "Crear
+  /// cuenta".
+  bool _emailMissing = false;
+  bool _nameMissing = false;
+  bool _passwordWeak = false;
+  Object? _attempt;
+  Object? _consentShake;
 
   @override
   void initState() {
@@ -67,18 +87,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   void dispose() {
     _debounce?.cancel();
     _email.dispose();
+    _emailFocus.dispose();
     _name.dispose();
     _password.dispose();
     super.dispose();
   }
 
-  bool get _canSubmit =>
-      !_submitting &&
-      _email.text.trim().isNotEmpty &&
-      _name.text.trim().length >= 2 &&
-      PasswordRules.isValid(_password.text) &&
-      _consent &&
-      _campus is! _CampusRejected;
+  bool get _nameValid => _name.text.trim().length >= 2;
 
   void _onEmailChanged(String value) {
     _debounce?.cancel();
@@ -115,11 +130,40 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
   }
 
+  void _warn(String message) => showMusubiSnack(
+    ScaffoldMessenger.of(context),
+    message,
+    icon: MusubiIcons.circleAlert,
+    tone: SnackTone.warn,
+    bottomOffset: AuthLayout.actionsHeight,
+  );
+
   Future<void> _submit() async {
+    final attempt = Object();
     setState(() {
-      _submitting = true;
+      _attempt = attempt;
       _failure = null;
+      _emailMissing = _email.text.trim().isEmpty;
+      _nameMissing = !_nameValid;
+      _passwordWeak = !PasswordRules.isValid(_password.text);
     });
+    // Mismo orden que la maqueta: correo, nombre, contrasena y aviso.
+    if (_emailMissing || _campus is _CampusRejected) {
+      _emailFocus.requestFocus();
+      return;
+    }
+    if (_nameMissing) return;
+    if (_passwordWeak) {
+      _warn('Tu contraseña necesita 8 caracteres, letras y números');
+      return;
+    }
+    if (!_consent) {
+      setState(() => _consentShake = Object());
+      _warn('Acepta los términos para continuar');
+      return;
+    }
+
+    setState(() => _submitting = true);
     try {
       final registration = await ref
           .read(authRepositoryProvider)
@@ -154,9 +198,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final c = context.musubi;
     final failure = _failure;
+    final rejected = _campus is _CampusRejected;
+    // Rechazado: borde rojo y la explicacion va en su caja (sin linea).
+    final emailError = rejected
+        ? ''
+        : _emailMissing && _email.text.trim().isEmpty
+        ? 'Escribe tu correo institucional.'
+        : _fieldError('email', const {});
     final bannerCodes = {
       'auth.email_already_registered',
       'auth.consent_required',
@@ -168,156 +218,280 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             failure.code == ApiFailure.serverError ||
             failure.code == 'rate_limit.exceeded');
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: context.canPop() ? null : const ExitToExploreButton(),
-      ),
-      body: SafeArea(
-        // Formulario: Column dentro de SingleChildScrollView (construye todos
-        // los campos; un ListView descartaria los que salen de la vista).
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            MusubiSizes.gutter,
-            0,
-            MusubiSizes.gutter,
-            MusubiSizes.space8,
-          ),
+    return AuthLayout(
+      onBack: () => leaveAuth(context, ref),
+      actions: [
+        MusubiButton(
+          label: 'Crear cuenta',
+          loading: _submitting,
+          loadingLabel: 'Creando tu cuenta…',
+          dimmed: rejected,
+          onPressed: _submit,
+        ),
+        AuthFooterLink(
+          question: '¿Ya tienes cuenta?',
+          label: 'Inicia sesión',
+          onTap: () => context.go(AppRoutes.signIn),
+        ),
+      ],
+      children: [
+        const AuthHeading(
+          title: 'Crea tu cuenta',
+          subtitle: TextSpan(text: 'Usa el correo de tu universidad.'),
+          leading: Eyebrow('Paso 1 de 2'),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: MusubiSizes.space4,
             children: [
-              Text('PASO 1 DE 2', style: textTheme.labelSmall),
-              const SizedBox(height: MusubiSizes.space2),
-              Text('Crea tu cuenta', style: textTheme.headlineMedium),
-              const SizedBox(height: MusubiSizes.space1),
-              Text(
-                'Usa el correo de tu universidad.',
-                style: textTheme.bodyLarge,
-              ),
-              const SizedBox(height: MusubiSizes.space6),
               MusubiTextField(
                 label: 'Correo institucional',
                 fieldKey: const Key('signup-email'),
                 controller: _email,
+                focusNode: _emailFocus,
                 hint: 'tu.nombre@uttt.edu.mx',
+                prefixIcon: MusubiIcons.mail,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.email],
                 onChanged: _onEmailChanged,
-                errorText: _campus is _CampusRejected
-                    ? 'Este correo no es de tu universidad'
-                    : _fieldError('email', const {}),
-                helper: _campus is _CampusRejected
-                    ? null
-                    : 'Tu campus se detecta con lo que va después de la @',
+                errorText: emailError,
+                shakeTrigger: _attempt,
+                suffix: switch (_campus) {
+                  _CampusFound() => MusubiIcon(
+                    MusubiIcons.circleCheck,
+                    size: 20,
+                    color: c.success,
+                  ),
+                  _CampusRejected() => MusubiIcon(
+                    MusubiIcons.circleAlert,
+                    size: 20,
+                    color: c.error,
+                  ),
+                  _ => null,
+                },
+                footer: _CampusHint(check: _campus, shakeTrigger: _attempt),
               ),
-              const SizedBox(height: MusubiSizes.space2),
-              _CampusHint(check: _campus),
-              const SizedBox(height: MusubiSizes.space4),
               MusubiTextField(
                 label: 'Nombre completo',
                 fieldKey: const Key('signup-name'),
                 controller: _name,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.name],
-                maxLength: 120,
-                errorText: _fieldError('fullName', const {}),
+                inputFormatters: [LengthLimitingTextInputFormatter(120)],
+                errorText: _nameMissing && !_nameValid
+                    ? 'Escribe tu nombre completo.'
+                    : _fieldError('fullName', const {}),
+                shakeTrigger: _attempt,
+                suffix: _nameValid
+                    ? MusubiIcon(
+                        MusubiIcons.circleCheck,
+                        size: 20,
+                        color: c.success,
+                      )
+                    : null,
               ),
-              const SizedBox(height: MusubiSizes.space2),
               MusubiTextField(
                 label: 'Contraseña',
                 fieldKey: const Key('signup-password'),
                 controller: _password,
                 obscure: true,
                 autofillHints: const [AutofillHints.newPassword],
-                errorText: _fieldError('password', const {
-                  'auth.weak_password',
-                }),
+                errorText:
+                    _passwordWeak && !PasswordRules.isValid(_password.text)
+                    ? 'Usa al menos 8 caracteres, con letras y números.'
+                    : _fieldError('password', const {'auth.weak_password'}),
+                shakeTrigger: _attempt,
+                // `Registro-error` no muestra las reglas: la atencion va al
+                // correo.
+                footer: rejected
+                    ? null
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: PasswordRuleList(password: _password.text),
+                      ),
               ),
-              const SizedBox(height: MusubiSizes.space2),
-              PasswordRuleList(password: _password.text),
-              const SizedBox(height: MusubiSizes.space4),
               _ConsentCheckbox(
                 value: _consent,
+                shakeTrigger: _consentShake,
                 onChanged: (value) => setState(() {
                   _consent = value;
                   _failure = null;
                 }),
               ),
               if (showBanner) ...[
-                const SizedBox(height: MusubiSizes.space3),
-                InlineMessage(message: failure.message),
+                InlineMessage(message: failure.message, shakeTrigger: _attempt),
                 if (failure.code == 'auth.email_already_registered')
                   Align(
                     alignment: Alignment.centerLeft,
                     child: MusubiButton(
                       label: 'Iniciar sesión',
-                      kind: MusubiButtonKind.text,
+                      kind: MusubiButtonKind.link,
                       onPressed: () => context.go(AppRoutes.signIn),
                     ),
                   ),
               ],
-              const SizedBox(height: MusubiSizes.space6),
-              MusubiButton(
-                label: 'Crear cuenta',
-                loading: _submitting,
-                onPressed: _canSubmit ? _submit : null,
-              ),
-              const SizedBox(height: MusubiSizes.space3),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('¿Ya tienes cuenta?', style: textTheme.bodyMedium),
-                  MusubiButton(
-                    label: 'Inicia sesión',
-                    kind: MusubiButtonKind.text,
-                    onPressed: () => context.go(AppRoutes.signIn),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Bajo el correo: campus detectado, correo que no es de la universidad o
+/// la pista de que el campus sale de lo que va despues de la @.
+class _CampusHint extends StatelessWidget {
+  const new({required this.check, required this.shakeTrigger});
+
+  final _CampusCheck check;
+  final Object? shakeTrigger;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return switch (check) {
+      _CampusFound(:final campus) => RiseIn(
+        key: const Key('campus-found'),
+        offset: -4,
+        duration: const Duration(milliseconds: 350),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: c.successSoft,
+            borderRadius: BorderRadius.circular(MusubiSizes.radiusField),
+          ),
+          child: Row(
+            spacing: 10,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: c.brand,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: MusubiIcon(
+                    MusubiIcons.graduationCap,
+                    size: 18,
+                    strokeWidth: 2.1,
+                    color: Color(0xFFFFFFFF),
                   ),
-                ],
+                ),
               ),
-              Text(
-                'Solo los estudiantes tienen correo institucional: así Musubi '
-                'se queda solo para tu comunidad.',
-                style: textTheme.bodyMedium?.copyWith(color: c.textSecondary),
-                textAlign: TextAlign.center,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 1,
+                  children: [
+                    Text(
+                      'Campus detectado: ${campus.shortName}',
+                      style: MusubiType.style(
+                        13.5,
+                        weight: FontWeight.w800,
+                        line: 18,
+                        color: c.successText,
+                      ),
+                    ),
+                    Text(
+                      campus.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: MusubiType.style(
+                        12.5,
+                        weight: FontWeight.w600,
+                        line: 17,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
       ),
-    );
+      _CampusRejected() => Shake(
+        key: const Key('campus-rejected'),
+        trigger: shakeTrigger,
+        child: RiseIn(
+          offset: -4,
+          duration: const Duration(milliseconds: 350),
+          delay: const Duration(milliseconds: 100),
+          child: Semantics(
+            liveRegion: true,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: c.errorSoft,
+                borderRadius: BorderRadius.circular(MusubiSizes.radiusThumb),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8,
+                children: [
+                  MusubiIcon(
+                    MusubiIcons.triangleAlert,
+                    size: 18,
+                    strokeWidth: 2.2,
+                    color: c.error,
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 2,
+                      children: [
+                        Text(
+                          'Este correo no es de tu universidad',
+                          style: MusubiType.style(
+                            13.5,
+                            weight: FontWeight.w800,
+                            line: 18,
+                            color: c.error,
+                          ),
+                        ),
+                        Text(
+                          'Usa el correo que te dio tu universidad, por '
+                          'ejemplo tu.nombre@uttt.edu.mx. Con él detectamos '
+                          'tu campus.',
+                          style: MusubiType.style(
+                            13,
+                            line: 18,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      _CampusIdle() || _CampusChecking() => FieldMessage(
+        text: 'Tu campus se detecta con lo que va después de la @',
+        icon: MusubiIcons.graduationCap,
+        color: c.textSecondary,
+      ),
+    };
   }
 }
 
-class _CampusHint extends StatelessWidget {
-  const new({required this.check});
-
-  final _CampusCheck check;
-
-  @override
-  Widget build(BuildContext context) => switch (check) {
-    _CampusFound(:final campus) => InlineMessage(
-      key: const Key('campus-found'),
-      kind: InlineMessageKind.success,
-      title: 'Campus detectado: ${campus.shortName}',
-      message: campus.name,
-    ),
-    _CampusRejected() => const InlineMessage(
-      key: Key('campus-rejected'),
-      title: 'Este correo no es de tu universidad',
-      message:
-          'Usa el correo que te dio tu universidad, por ejemplo '
-          'tu.nombre@uttt.edu.mx. Con él detectamos tu campus.',
-    ),
-    _CampusChecking() => const LinearProgressIndicator(minHeight: 2),
-    _CampusIdle() => const SizedBox.shrink(),
-  };
-}
-
+/// "Acepto los Términos y condiciones y el Aviso de privacidad."
 class _ConsentCheckbox extends StatefulWidget {
-  const new({required this.value, required this.onChanged});
+  const new({
+    required this.value,
+    required this.onChanged,
+    required this.shakeTrigger,
+  });
 
   final bool value;
   final ValueChanged<bool> onChanged;
+  final Object? shakeTrigger;
 
   @override
   State<_ConsentCheckbox> createState() => _ConsentCheckboxState();
@@ -339,47 +513,47 @@ class _ConsentCheckboxState extends State<_ConsentCheckbox> {
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    final textTheme = Theme.of(context).textTheme;
-    final link = textTheme.bodyMedium?.copyWith(
-      color: c.brandText,
-      fontWeight: FontWeight.w800,
-      decoration: TextDecoration.underline,
-    );
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Checkbox(
-          key: const Key('signup-consent'),
-          value: widget.value,
-          activeColor: c.brand,
-          onChanged: (value) => widget.onChanged(value ?? false),
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text.rich(
-              TextSpan(
-                style: textTheme.bodyMedium?.copyWith(color: c.textPrimary),
-                children: [
-                  const TextSpan(text: 'Acepto los '),
-                  TextSpan(
-                    text: 'Términos y condiciones',
-                    style: link,
-                    recognizer: _terms,
-                  ),
-                  const TextSpan(text: ' y el '),
-                  TextSpan(
-                    text: 'Aviso de privacidad',
-                    style: link,
-                    recognizer: _privacy,
-                  ),
-                  const TextSpan(text: '.'),
-                ],
+    final link = TextStyle(color: c.brandText, fontWeight: FontWeight.w700);
+    return Transform.translate(
+      offset: const Offset(-11, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 4,
+        children: [
+          MusubiCheckbox(
+            key: const Key('signup-consent'),
+            value: widget.value,
+            semanticLabel: 'Acepto los términos y el aviso de privacidad',
+            shakeTrigger: widget.shakeTrigger,
+            onChanged: widget.onChanged,
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 11),
+              child: Text.rich(
+                TextSpan(
+                  style: MusubiType.style(14, line: 21, color: c.textSecondary),
+                  children: [
+                    const TextSpan(text: 'Acepto los '),
+                    TextSpan(
+                      text: 'Términos y condiciones',
+                      style: link,
+                      recognizer: _terms,
+                    ),
+                    const TextSpan(text: ' y el '),
+                    TextSpan(
+                      text: 'Aviso de privacidad',
+                      style: link,
+                      recognizer: _privacy,
+                    ),
+                    const TextSpan(text: '.'),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

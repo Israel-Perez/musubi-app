@@ -73,6 +73,12 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Dart 3.13 + very_good_analysis 11: constructores `const new(...)` (`dart fix --apply`).
 - **Base 02-01:** colores y medidas con `context.musubi` y `MusubiSizes` (nunca números sueltos); componentes en `lib/core/widgets/`; errores con `ApiFailure.fromDio` (decidir por `code`); peticiones con sesión por `dioProvider` y públicas por `publicDioProvider`; rutas y guardia en `lib/app/router.dart`.
 - **Maqueta:** `docs/maqueta/` (60 pantallas). La app es igual a la maqueta y no se le quitan funciones (lineamiento 4); cada spec de HU cita sus pantallas por ID (índice en `docs/maqueta/README.md`).
+- **Piezas de la maqueta (02-04):**
+  - textos con `MusubiType.style(size, line:, em:)`, con altura de línea y espaciado explícitos; `CssLineBox` para `line-height: normal` en columnas;
+  - íconos con `MusubiIcon(MusubiIcons.x)` (Lucide desde el SVG de la maqueta), nunca `Icons.*`;
+  - toques con `Pressable` o `MusubiButton`, sin onda;
+  - hojas con `showMusubiSheet`, diálogos con `showMusubiDialog` y avisos con `showMusubiSnack`.
+  - Para comparar con la maqueta: `flutter test tool/screenshots_test.dart --dart-define=SHOTS=<carpeta>`.
 - **Versión:** `version` de `pubspec.yaml`, alineada con `docs/versionado.md` (lo verifica `test/versioning_test.dart`).
 - **Lineamientos de la materia:** checklist L-NN en `musubi-api/docs/bitacora/lineamientos-materia.md`.
 - Pendientes con dueño: SignalR → HU-20; FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.

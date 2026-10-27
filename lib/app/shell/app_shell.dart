@@ -7,6 +7,8 @@ import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/shell/musubi_bottom_bar.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
+import 'package:musubi_app/core/widgets/musubi_icon.dart';
+import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 
 /// Marco de las 4 pestanas (cada una conserva su pila de navegacion).
@@ -38,6 +40,9 @@ class AppShell extends ConsumerWidget {
     }
 
     return Scaffold(
+      // La pantalla sigue debajo de la franja transparente del boton
+      // "Publicar", como en la maqueta.
+      extendBody: true,
       body: navigationShell,
       bottomNavigationBar: MusubiBottomBar(
         currentIndex: navigationShell.currentIndex,
@@ -61,22 +66,39 @@ class AppShell extends ConsumerWidget {
   }
 }
 
-/// Seccion que todavia no tiene su HU implementada.
+/// Seccion que todavia no tiene su HU implementada: titulo de la maqueta y
+/// un aviso de "en camino" con la forma de `Inicio-error`.
 class UpcomingSection extends StatelessWidget {
   const new({
     required this.title,
     required this.message,
     required this.icon,
     super.key,
+    this.canGoBack = false,
   });
 
   final String title;
   final String message;
-  final IconData icon;
+  final MusubiIconData icon;
+
+  /// Pantalla fuera de las pestanas (Publicar, Notificaciones): con flecha.
+  final bool canGoBack;
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)),
-    body: EmptyView(title: title, message: message, icon: icon),
+    body: Column(
+      children: [
+        if (canGoBack)
+          MusubiTopBar(title: title, onBack: () => context.pop())
+        else
+          TabHeader(title: title),
+        Expanded(
+          child: SafeArea(
+            top: false,
+            child: EmptyView(title: 'Muy pronto', message: message, icon: icon),
+          ),
+        ),
+      ],
+    ),
   );
 }

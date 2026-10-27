@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 
-/// Tema de MUSUBI construido desde la guia de estilo de la maqueta (02-01).
-/// Los componentes leen los tokens con `context.musubi`.
+/// Tema de MUSUBI construido desde la maqueta (02-01). Los componentes de
+/// `core/widgets` leen los tokens con `context.musubi`; el tema de Material
+/// queda para lo que la app no dibuja (licencias, selector de texto).
 abstract final class AppTheme {
   static ThemeData light() => _build(MusubiColors.light, Brightness.light);
 
@@ -41,19 +42,8 @@ abstract final class AppTheme {
       bodyMedium: colored(MusubiType.bodySmall, c.textSecondary),
       labelLarge: colored(MusubiType.button, c.textPrimary),
       labelMedium: colored(MusubiType.label, c.textPrimary),
-      labelSmall: colored(MusubiType.overline, c.textSecondary),
+      labelSmall: colored(MusubiType.eyebrow, c.textSecondary),
     );
-
-    final buttonShape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(MusubiSizes.radiusButton),
-    );
-    const buttonSize = Size(MusubiSizes.minTouch, MusubiSizes.buttonHeight);
-
-    OutlineInputBorder fieldBorder(Color color, {double width = 1}) =>
-        OutlineInputBorder(
-          borderRadius: BorderRadius.circular(MusubiSizes.radiusField),
-          borderSide: BorderSide(color: color, width: width),
-        );
 
     return ThemeData(
       useMaterial3: true,
@@ -63,8 +53,19 @@ abstract final class AppTheme {
       textTheme: textTheme,
       scaffoldBackgroundColor: c.background,
       extensions: [c],
+      // La maqueta no tiene ripple: cada componente cambia su fondo al
+      // presionar (`Pressable`).
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       // Area tactil minima de 44 dp aunque el elemento sea mas chico (RNF-27).
       materialTapTargetSize: MaterialTapTargetSize.padded,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: MusubiPageTransitionsBuilder(),
+          TargetPlatform.iOS: MusubiPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: c.background,
         foregroundColor: c.textPrimary,
@@ -73,63 +74,54 @@ abstract final class AppTheme {
         centerTitle: false,
         titleTextStyle: colored(MusubiType.title2, c.textPrimary),
       ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: c.brand,
-          foregroundColor: c.onBrand,
-          disabledBackgroundColor: c.border,
-          disabledForegroundColor: c.textSecondary,
-          minimumSize: buttonSize,
-          shape: buttonShape,
-          textStyle: MusubiType.button,
-        ).copyWith(overlayColor: WidgetStatePropertyAll(c.brandPressed)),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: c.textPrimary,
-          minimumSize: buttonSize,
-          shape: buttonShape,
-          side: BorderSide(color: c.border, width: 1.5),
-          textStyle: MusubiType.button,
-        ),
-      ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: c.brandText,
-          minimumSize: const Size(MusubiSizes.minTouch, MusubiSizes.minTouch),
           textStyle: MusubiType.button.copyWith(fontSize: 15),
         ),
       ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: c.background,
-        hintStyle: colored(MusubiType.field, c.textSecondary),
-        helperStyle: colored(MusubiType.bodySmall, c.textSecondary),
-        errorStyle: colored(MusubiType.bodySmall, c.error),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: MusubiSizes.space4,
-          vertical: MusubiSizes.space4,
-        ),
-        border: fieldBorder(c.border),
-        enabledBorder: fieldBorder(c.border),
-        focusedBorder: fieldBorder(c.brand, width: 2),
-        errorBorder: fieldBorder(c.error),
-        focusedErrorBorder: fieldBorder(c.error, width: 2),
-      ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: c.brand,
+        selectionColor: c.brandSoft,
         selectionHandleColor: c.brand,
       ),
-      dividerTheme: DividerThemeData(color: c.border, thickness: 1),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: c.textPrimary,
-        contentTextStyle: colored(MusubiType.bodySmall, c.background),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(MusubiSizes.radiusThumb),
-        ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
+      dividerTheme: DividerThemeData(color: c.divider, thickness: 1),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: c.brand),
+    );
+  }
+}
+
+/// Transicion de pantallas de la maqueta (`aNavF`, 0.3 s): la nueva entra 40
+/// px desde la derecha mientras pasa de 0.35 a opaca.
+class MusubiPageTransitionsBuilder extends PageTransitionsBuilder {
+  const new();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: const Cubic(0.2, 0.8, 0.2, 1),
+    );
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.35, end: 1).animate(curved),
+      child: AnimatedBuilder(
+        animation: curved,
+        builder: (context, child) => Transform.translate(
+          offset: Offset(40 * (1 - curved.value), 0),
+          child: child,
+        ),
+        child: child,
+      ),
     );
   }
 }

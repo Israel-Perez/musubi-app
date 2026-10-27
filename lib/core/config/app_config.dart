@@ -10,14 +10,23 @@ enum AppEnvironment { dev, staging, prod }
 /// API y banderas. Nunca llaves privadas (00-04).
 @immutable
 class AppConfig {
-  const new _({required this.environment, required this.apiBaseUrl});
+  const new _({
+    required this.environment,
+    required this.apiBaseUrl,
+    this.demoCatalog = false,
+  });
 
   /// Valida y construye la configuracion. Lanza [AppConfigException] si:
   /// - el ambiente no es `dev`, `staging` ni `prod`;
   /// - la URL no es absoluta o su esquema no es http/https;
   /// - fuera de `dev` la URL no usa HTTPS (RNF-02);
-  /// - en `dev` se usa HTTP hacia un host que no es local.
-  factory parse({required String environment, required String apiBaseUrl}) {
+  /// - en `dev` se usa HTTP hacia un host que no es local;
+  /// - se pide el catalogo de muestra fuera de `dev`.
+  factory parse({
+    required String environment,
+    required String apiBaseUrl,
+    bool demoCatalog = false,
+  }) {
     final env = AppEnvironment.values.asNameMap()[environment];
     if (env == null) {
       throw AppConfigException(
@@ -50,18 +59,30 @@ class AppConfig {
       }
     }
 
+    if (demoCatalog && env != AppEnvironment.dev) {
+      throw AppConfigException(
+        'DEMO_CATALOG solo se permite en dev; ambiente: ${env.name}.',
+      );
+    }
+
     final normalized = uri.replace(
       path: uri.path.endsWith('/')
           ? uri.path.substring(0, uri.path.length - 1)
           : uri.path,
     );
-    return AppConfig._(environment: env, apiBaseUrl: normalized);
+    return AppConfig._(
+      environment: env,
+      apiBaseUrl: normalized,
+      demoCatalog: demoCatalog,
+    );
   }
 
-  /// Lee `ENV` y `API_BASE_URL` definidos al compilar.
+  /// Lee `ENV`, `API_BASE_URL` y `DEMO_CATALOG` definidos al compilar.
   factory fromEnvironment() => AppConfig.parse(
     environment: const String.fromEnvironment('ENV', defaultValue: 'dev'),
     apiBaseUrl: const String.fromEnvironment('API_BASE_URL'),
+    // ignore: avoid_redundant_argument_values, se fija al compilar.
+    demoCatalog: const bool.fromEnvironment('DEMO_CATALOG'),
   );
 
   /// Hosts a los que `dev` puede hablar por HTTP. `10.0.2.2` es la PC vista
@@ -71,6 +92,10 @@ class AppConfig {
 
   final AppEnvironment environment;
   final Uri apiBaseUrl;
+
+  /// Vitrina con los productos ficticios de la maqueta en lugar del catalogo
+  /// de la API (solo `dev`). NOTE (HU-06): sin uso cuando haya catalogo real.
+  final bool demoCatalog;
 }
 
 /// Configuracion invalida: es un error de quien compila, no del usuario.

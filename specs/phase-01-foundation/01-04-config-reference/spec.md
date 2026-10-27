@@ -17,12 +17,13 @@ Configuración de compilación por ambiente con `--dart-define-from-file`, sabie
 |---|---|---|---|
 | `ENV` | `dev` | [01-04 / Implementado] | `dev` \| `staging` \| `prod` |
 | `API_BASE_URL` | `http://10.0.2.2:5080` | [01-04 / Implementado] | URL base de musubi-api (10.0.2.2 = PC vista desde el emulador; puerto del perfil `http` de la API) |
+| `DEMO_CATALOG` | `true` (solo `demo.example.json`) | [SCRUM-82 / Implementado] | Vitrina de muestra con los productos de la maqueta (`DemoCatalogRepository`); `AppConfig.parse` la rechaza fuera de dev. Se revisa al llegar el catálogo real (HU-06) |
 | Firebase (opciones del cliente) | — | [HU-31 / Pendiente] | Generadas por `flutterfire configure` en `lib/firebase_options.dart` (ignorado; ver la skill `critic-guardrails`) |
 | `SIGNALR_HUB_PATH` (tentativa) | — | [HU-20 / Pendiente] | Ruta del hub (fila del catálogo del back) |
 
 Archivos:
 
-- `config/{dev,staging,prod}.example.json` (versionados) + `config/README.md`.
+- `config/{dev,usb,demo,staging,prod}.example.json` (versionados) + `config/README.md`.
 - `lib/core/config/app_config.dart`: `AppConfig.parse`, `AppConfig.fromEnvironment`, `appConfigProvider`.
 - `android/app/src/main/res/xml/network_security_config.xml` (release: sin tráfico en claro) y las versiones `debug`/`profile` (excepción para `10.0.2.2` y `localhost`).
 
@@ -30,10 +31,10 @@ Archivos:
 Claves de la tabla. Una clave nueva: fila aquí + ejemplo en `config/*.example.json` + validación en `AppConfig.parse`.
 
 ## Tests
-- `test/core/config/app_config_test.dart` (7): dev HTTP hacia 10.0.2.2; prod HTTPS con la barra final normalizada; staging HTTP rechazado (RNF-02); dev HTTP hacia un host externo rechazado; URL vacía o relativa rechazada; ambiente desconocido rechazado; esquema distinto de http/https rechazado.
+- `test/core/config/app_config_test.dart` (8): dev HTTP hacia 10.0.2.2; prod HTTPS con la barra final normalizada; staging HTTP rechazado (RNF-02); dev HTTP hacia un host externo rechazado; URL vacía o relativa rechazada; ambiente desconocido rechazado; esquema distinto de http/https rechazado; `DEMO_CATALOG` rechazado fuera de dev (SCRUM-82).
 
 ## Criterios
-- `flutter test test/core/config/app_config_test.dart` → 7/7.
+- `flutter test test/core/config/app_config_test.dart` → 8/8.
 - `git status --ignored config` → `config/dev.json` ignorado (`!!`).
 - `pwsh scripts/critic-guardrails.ps1` → PASS (B2: sin claves `*SECRET*|*KEY*|*TOKEN*` en `config/` ni en `--dart-define`; B3: sin `http://` en `lib/`).
 
@@ -44,4 +45,4 @@ Las URLs de staging y prod son placeholders hasta el despliegue (`musubi-api:02-
 - **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
 - **Fecha:** 15-Oct-2026
-- **Detalle:** Tabla inicial con 2 claves implementadas y 2 pendientes.
+- **Detalle:** Tabla inicial con 2 claves implementadas y 2 pendientes. 26-Oct-2026: `DEMO_CATALOG` (SCRUM-82).

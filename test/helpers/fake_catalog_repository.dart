@@ -4,7 +4,8 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 
-/// Fake de [CatalogRepository]: responde en orden y registra los periodos.
+/// Fake de [CatalogRepository]: responde en orden y registra los periodos y
+/// los filtros.
 class FakeCatalogRepository implements CatalogRepository {
   new([List<Object> responses = const [HomeFeed()]])
     : _responses = [...responses];
@@ -14,10 +15,15 @@ class FakeCatalogRepository implements CatalogRepository {
 
   final List<Object> _responses;
   final List<PopularPeriod> periods = [];
+  final List<CatalogFilter> filters = [];
 
   @override
-  Future<HomeFeed> homeFeed({required PopularPeriod period}) {
+  Future<HomeFeed> homeFeed({
+    required PopularPeriod period,
+    CatalogFilter filter = const CatalogFilter(),
+  }) {
     periods.add(period);
+    filters.add(filter);
     final next = _responses.length > 1
         ? _responses.removeAt(0)
         : _responses.first;

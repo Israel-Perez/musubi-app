@@ -133,7 +133,7 @@ class MusubiRingsPainter extends CustomPainter {
 
 /// Logotipo completo: simbolo + "Musubi" (encabezado de Inicio, splash).
 class MusubiLogo extends StatelessWidget {
-  const new({this.ringsHeight = 22, this.fontSize = 22, super.key});
+  const new({this.ringsHeight = 22, this.fontSize = 21, super.key});
 
   final double ringsHeight;
   final double fontSize;
@@ -141,15 +141,15 @@ class MusubiLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
+    spacing: fontSize * 8 / 21,
     children: [
       ExcludeSemantics(child: MusubiRings(height: ringsHeight)),
-      SizedBox(width: fontSize * 0.36),
       Text(
         'Musubi',
-        style: MusubiType.title2.copyWith(
-          fontSize: fontSize,
-          height: 1.1,
-          letterSpacing: -fontSize * 0.03,
+        style: MusubiType.style(
+          fontSize,
+          weight: FontWeight.w800,
+          em: -0.03,
           color: context.musubi.textPrimary,
         ),
       ),

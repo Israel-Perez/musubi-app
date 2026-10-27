@@ -2,11 +2,45 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (25-Oct-2026)
+## Estado actual (27-Oct-2026)
 
-- **HU-48 fase 1 + 02-03** (rama `feature/SCRUM-73-visitante-splash`): vitrina del visitante, hoja "Crea tu cuenta", regreso a donde estabas, logotipo, ícono y splash animado. La API ya corre en AWS (`musubi-api:02-05`).
-- format 0 · analyze 0 · test 144/144 · critic PASS · Semgrep 0 · APK probado en un Galaxy A54 contra AWS.
+- **02-04 Fidelidad con la maqueta** (rama `feature/SCRUM-82-fidelidad-maqueta`): componentes, pantallas de cuenta, Inicio (visitante y con sesión), hoja "Crea tu cuenta", Perfil y Ajustes iguales a la maqueta en claro y oscuro, más la vitrina de muestra (`DEMO_CATALOG`, solo dev).
+- format 0 · analyze 0 · test 195/195 · critic PASS (pwsh y 5.1) · APK debug √.
 - Siguiente: HU-06 (publicar) + catálogo público (fase 2 de HU-48).
+
+## T10 — 02-04 Fidelidad con la maqueta (26/27-Oct-2026, SCRUM-82)
+
+**Qué se hizo**
+- **Componentes** de la maqueta en `lib/core/widgets/`, sin onda al tocar (`Pressable`): botón, campo, código de 6, casilla, switch, hojas, diálogo, aviso breve, esqueleto, barra superior y avatares.
+- **Íconos Lucide** pintados desde el `d` de los SVG de la maqueta (`svg_path.dart`, `musubi_icons.dart`); licencia ISC en la pantalla de licencias.
+- **Pantallas:**
+  - cuenta: iniciar sesión, registro, verificación, bienvenida, recuperar contraseña, aviso y términos;
+  - Inicio visitante y con sesión, con carga, error y "Filtrar";
+  - hoja "Crea tu cuenta" con 9 ilustraciones;
+  - Perfil, y Ajustes con "¿Cerrar sesión?".
+- **Sesión y demo:**
+  - `SessionProfile` en la sesión ("Hola, Ana");
+  - "Abrir mi correo" por el canal `musubi/email`;
+  - `DEMO_CATALOG` (solo dev) con los productos de la maqueta.
+- **Herramienta:** `tool/screenshots_test.dart` captura a 390×844 @3x y con `RECTS=true` imprime las cajas de texto. La maqueta se midió con Edge sin ventana (capturas y `getBoundingClientRect` vía `--dump-dom`).
+- **Pruebas:** 144 → 195.
+
+**Decisiones (con su porqué)**
+- **Íconos propios desde el SVG, sin paquete:** un paquete de íconos está fuera del stack (00-01) y no garantiza el mismo trazo.
+- **Botones siempre habilitados que explican qué falta**, como la maqueta. En `Registro-error`, "Crear cuenta" se ve gris (`dimmed`) pero responde, como su `aria-disabled`: sacude el aviso y vuelve al correo.
+- **Vitrina de muestra solo en dev:** `AppConfig.parse` la rechaza fuera de dev, para que un APK de producción nunca muestre datos inventados.
+- **Animaciones sin fin de la maqueta con vueltas contadas** (onda de la bienvenida, sobre que flota): una animación infinita no deja asentar la pantalla en las pruebas y gasta batería.
+- **"Publicaciones recientes" de la más nueva a la más vieja** (`HomeFeed.newestFirst`), como en `Inicio`.
+
+**Errores a evitar**
+- **Material cambia el texto:** inyecta `letterSpacing: 0.25` y su propia altura de línea. Fija las dos en cada texto (`MusubiType.style`); sin eso, los textos quedaban 3.6 % más anchos.
+- **Redondeo de línea:** Flutter (SkParagraph) redondea cada línea a un entero, y Chrome a 3x redondea por separado el ascenso y el descenso (a 13 px: 16 contra 16.333). En columnas (etiqueta → campo) usa `CssLineBox`; si no, se acumula ~0.33 pt por texto.
+- **Punteado:** Chrome pinta `1.5px dashed` a 3x con guion de 8 y hueco de 4 px del dispositivo, y ajusta el hueco para terminar en guion (`cssDashSegments`). Con 4.5/4.5 el boleto se veía distinto.
+- **Barra inferior:** la de la maqueta es `box-sizing: border-box`. El borde de 1 px va dentro y el contenido empieza debajo.
+- **Fuente Ahem de las pruebas:** sus textos son más anchos. Usa `Flexible`/ellipsis y prueba con letra al 130 %.
+- **`find.bySemanticsLabel`** no encuentra nada sin semántica activa: busca por llaves o tipos.
+- **Capturas a media animación:** las de la maqueta pueden salir así (la ilustración de la hoja en oscuro, el sobre que flota). Antes de "corregir", revisa la animación.
+- **Mide la maqueta en el DOM**, no a ojo: la deriva de 1.7 pt de `Registro` solo apareció al comparar posiciones exactas.
 
 ## T9 — HU-48 fase 1 y 02-03 Marca y arranque (25-Oct-2026, SCRUM-73/81)
 

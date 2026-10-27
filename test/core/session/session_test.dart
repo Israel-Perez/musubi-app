@@ -16,6 +16,53 @@ void main() {
       expect(SessionTokens.tryDecode(tokens.encode()), tokens);
     });
 
+    test('el perfil de la sesion se guarda y se lee con los tokens', () {
+      final tokens = SessionTokens(
+        accessToken: 'a',
+        accessExpiresAt: DateTime.utc(2026, 10, 21, 12, 15),
+        refreshToken: 'r',
+        profile: const SessionProfile(
+          fullName: 'Ana Sofía Ramírez',
+          email: 'ana.ramirez@uttt.edu.mx',
+          campus: 'UTTT',
+        ),
+      );
+
+      final decoded = SessionTokens.tryDecode(tokens.encode());
+
+      expect(decoded, tokens);
+      expect(decoded?.profile?.firstName, 'Ana');
+      expect(decoded?.profile?.initials, 'AR');
+      expect(tokens.toString(), isNot(contains('Ana')));
+    });
+
+    test('una sesion guardada antes del perfil sigue valida', () {
+      const old =
+          '{"accessToken":"a","accessExpiresAt":"2026-10-21T12:15:00.000Z",'
+          '"refreshToken":"r"}';
+
+      final decoded = SessionTokens.tryDecode(old);
+
+      expect(decoded?.refreshToken, 'r');
+      expect(decoded?.profile, isNull);
+    });
+
+    test('la respuesta de la API trae el perfil (fixture session.json)', () {
+      final tokens = SessionTokens.fromApi(const {
+        'accessToken': 'a',
+        'accessTokenExpiresAt': '2026-10-21T18:15:00Z',
+        'refreshToken': 'r',
+        'user': {
+          'fullName': 'Ana Sofía Ramírez',
+          'email': 'ana.ramirez@uttt.edu.mx',
+          'campus': {'shortName': 'UTTT', 'name': 'Universidad'},
+        },
+      });
+
+      expect(tokens.profile?.campus, 'UTTT');
+      expect(tokens.profile?.email, 'ana.ramirez@uttt.edu.mx');
+    });
+
     test('un valor corrupto o incompleto no es una sesion', () {
       expect(SessionTokens.tryDecode(null), isNull);
       expect(SessionTokens.tryDecode('no-es-json'), isNull);

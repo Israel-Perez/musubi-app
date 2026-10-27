@@ -82,7 +82,7 @@ void main() {
       for (final label in ['Inicio', 'Se busca', 'Mensajes', 'Perfil']) {
         expect(tab(label), findsOneWidget);
       }
-      expect(find.byTooltip('Publicar'), findsOneWidget);
+      expect(tab('Publicar'), findsOneWidget);
       // Maqueta: el boton central lleva su etiqueta debajo.
       expect(find.text('Publicar'), findsOneWidget);
     });
@@ -97,6 +97,7 @@ void main() {
         find.text('Aquí verás lo que buscan en tu campus.'),
         findsOneWidget,
       );
+      expect(find.text('Muy pronto'), findsOneWidget);
     });
 
     testWidgets('el visitante que toca Perfil ve "Crea tu perfil" (HU-48)', (
@@ -131,10 +132,9 @@ void main() {
       await tester.tap(tab('Perfil'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Aquí estarán tu perfil y tus ajustes.'),
-        findsOneWidget,
-      );
+      expect(find.text('Perfil'), findsWidgets);
+      expect(find.text('Verificada'), findsOneWidget);
+      expect(find.byKey(const Key('profile-settings')), findsOneWidget);
     });
 
     testWidgets('al cerrar sesion la guardia saca de Perfil', (tester) async {

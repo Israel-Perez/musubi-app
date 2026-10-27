@@ -1,0 +1,5 @@
+{
+  "ENV": "dev",
+  "API_BASE_URL": "https://api.musubi.example",
+  "DEMO_CATALOG": true
+}
