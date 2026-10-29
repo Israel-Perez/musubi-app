@@ -80,6 +80,8 @@ La convención de módulos y capas está en [`lib/features/README.md`](lib/featu
 
 ## Flujo SDD
 
+**¿Eres nuevo en el equipo?** Lee [`docs/guia-equipo.md`](docs/guia-equipo.md): accesos, herramientas, el flujo de una HU paso a paso con Claude Code u OpenCode, prompts listos para copiar y lo que choca al trabajar varias personas a la vez.
+
 1. Al iniciar el sprint de una HU: `specs/mNN-<modulo>/HU-NN-<slug>/{spec,plan,task}.md`, con la **misma carpeta** que en `musubi-api` y el enlace en `Contraparte`.
 2. Rama `feature/SCRUM-NN-slug`.
 3. Esqueleto con el agente `slice-scaffolder` → implementación y pruebas (skills `vertical-slice` y `api-contract`).

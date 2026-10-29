@@ -117,6 +117,7 @@ La fuente canónica es `specs/phase-00-constitution/00-04-lessons-learned/spec.m
 - `security-reviewer`: gate pre-push contra OWASP MASVS; **solo lectura forzada** (`disallowedTools` + hook `readonly-git-guard.ps1`).
 - `traceability-clerk`: spec ↔ código ↔ test ↔ Jira ↔ contraparte; solo lectura forzada.
 - Reglas en `.claude/skills/` (9 skills); convención en `.claude/agents/README.md`.
+- OpenCode: lee este `AGENTS.md` y las skills de `.claude/skills/`; sus agentes están en `.opencode/agents/` y remiten a `.claude/agents/` (solo lectura por `permission`). Flujo del equipo: `docs/guia-equipo.md`.
 
 ---
 
