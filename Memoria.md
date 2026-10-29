@@ -8,6 +8,16 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - format 0 · analyze 0 · test 217/217 · critic PASS.
 - Siguiente: fusionar #9 y luego este PR; desplegar el back (`musubi-api` #12) y probar en el celular contra AWS.
 
+## T14 — Dominio propio: aviso de privacidad y configuración de la nube (29-Oct-2026, SCRUM-84/85)
+
+**Qué se hizo**
+- **Aviso de privacidad:** el contacto es `contacto@musubiapp.com.mx` (antes decía "por definir"), y se agregó el enlace a https://musubiapp.com.mx/eliminar-cuenta. El sitio `musubi-landing` lo genera desde este archivo.
+- **`config/prod.example.json`** apunta a `https://api.musubiapp.com.mx`, una URL fija y pública. Para compilar contra la nube basta copiarlo a `prod.json`.
+
+**Decisiones (con su porqué)**
+- **Sin domicilio físico en el aviso, solo el correo** (decisión del usuario). Las solicitudes ARCO se atienden por correo.
+- **La URL real va en el ejemplo versionado:** ya no cambia al recrear la infraestructura y es pública, porque viaja dentro del APK. Así un compañero que clona el repo ya no ve "sin conexión".
+
 ## T11 — HU-06 Publicar un producto (27-Oct-2026, SCRUM-23)
 
 **Qué se hizo**

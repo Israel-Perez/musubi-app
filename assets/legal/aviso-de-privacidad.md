@@ -4,7 +4,7 @@ Versión 2026-10 · Actualizado en octubre de 2026 · BORRADOR pendiente de revi
 
 ## Quién es responsable de tus datos
 
-Musubi es un proyecto estudiantil del equipo Start-Up 10IDGS-G3 de la Universidad Tecnológica de Tula-Tepeji (UTTT), responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP). Domicilio y medio de contacto: por definir antes de la publicación en Google Play.
+Musubi es un proyecto estudiantil del equipo Start-Up 10IDGS-G3 de la Universidad Tecnológica de Tula-Tepeji (UTTT), responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP). Medio de contacto para cualquier asunto de tus datos personales: contacto@musubiapp.com.mx.
 
 ## Qué datos guardamos
 
@@ -54,7 +54,8 @@ No vendemos ni rentamos tus datos. Solo los compartimos con:
 Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos, y revocar tu consentimiento:
 
 - Desde la app: Perfil, luego Privacidad, luego Tus datos (incluye descargar tus datos y eliminar tu cuenta).
-- Por escrito, al medio de contacto del responsable.
+- Por correo a contacto@musubiapp.com.mx, desde tu correo institucional.
+- Para eliminar tu cuenta sin entrar a la app, sigue los pasos de https://musubiapp.com.mx/eliminar-cuenta.
 
 Respondemos en un plazo máximo de 20 días hábiles. Si eliminas tu cuenta, borramos tus datos personales; los registros de pedidos que deben conservarse quedan anonimizados.
 

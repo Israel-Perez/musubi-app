@@ -1,4 +1,4 @@
 {
   "ENV": "prod",
-  "API_BASE_URL": "https://api.musubi.example"
+  "API_BASE_URL": "https://api.musubiapp.com.mx"
 }

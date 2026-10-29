@@ -9,8 +9,9 @@ flutter run --dart-define-from-file=config/dev.json
 |---|---|---|
 | `dev.example.json` | Sí | Emulador de Android contra musubi-api local: `http://10.0.2.2:5080` (10.0.2.2 es la PC vista desde el emulador; el puerto es el del perfil `http` de la API) |
 | `usb.example.json` | Sí | Celular por USB contra musubi-api local: `http://localhost:5080`. Antes, `adb reverse tcp:5080 tcp:5080` (el `localhost` del celular apunta al puerto 5080 de la PC); se pierde al desconectar el cable |
-| `demo.example.json` | Sí | Vitrina de muestra (SCRUM-82): `DEMO_CATALOG` muestra los productos de la maqueta mientras llega el catálogo real (HU-06). Copia en `config/demo.json` y pon la URL HTTPS de la API (la de `prod.json`) |
-| `staging.example.json` / `prod.example.json` | Sí | Plantillas con HTTPS obligatorio (RNF-02); las URLs reales se definen al desplegar (`musubi-api:02-05`) |
+| `demo.example.json` | Sí | Vitrina de muestra (SCRUM-82): `DEMO_CATALOG` muestra los productos de la maqueta sobre la API en la nube. Cópialo a `config/demo.json` |
+| `prod.example.json` | Sí | La API en la nube: `https://api.musubiapp.com.mx` (dominio fijo, SCRUM-85). Es pública, como todo lo del APK. Cópialo a `config/prod.json` y compila con `--dart-define-from-file=config/prod.json` |
+| `staging.example.json` | Sí | Plantilla con HTTPS obligatorio (RNF-02); no hay ambiente de staging todavía |
 | `dev.json`, `demo.json`, `staging.json`, `prod.json` | **No** (ignorados) | Valores reales de cada desarrollador o del pipeline |
 
 ## Reglas (00-04)
