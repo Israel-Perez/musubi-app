@@ -2,10 +2,11 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (27-Oct-2026)
+## Estado actual (29-Oct-2026)
 
-- **HU-06 fusionada** (#10, `0.2.0+2`) e instalada en el Galaxy A54 contra AWS (catálogo real).
+- **En `main`:** `0.2.0+2` con `config/prod.example.json` apuntando a `https://api.musubiapp.com.mx`. Probado en el Galaxy A54 contra el dominio.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): spec, plan y tareas en `specs/m02-profile/HU-04-editar-perfil/` (🚧 Borrador). Siguiente: T1 (dominio y repositorio), en paralelo al back.
+- **Guía del equipo** (SCRUM-83, PR #15): `docs/guia-equipo.md` y los agentes de OpenCode.
 
 ## T12 — HU-04 Editar mi perfil: spec (27-Oct-2026, SCRUM-22)
 
