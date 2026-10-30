@@ -327,6 +327,7 @@ final Map<String, (bool, _Scene)> _scenes = {
   'inicio-scroll': (true, (s) => s.scroll(5000)),
   'perfil': (true, (s) => s.tap(find.bySemanticsLabel('Perfil'))),
   'ajustes': (true, (s) => s.go(AppRoutes.settings)),
+  'privacidad': (true, (s) => s.go(AppRoutes.accountPrivacy)),
   'publicar': (true, (s) => s.tap(find.text('Publicar'))),
   'vender-1': (true, (s) => _sellTo(s, 1)),
   'vender-2': (true, (s) => _sellTo(s, 2)),

@@ -1,17 +1,19 @@
 # HU-46 — Eliminar mi cuenta y mis datos (tareas)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Datos
+- **Qué:** `AccountRepository`, `HttpAccountRepository` y `ApiPaths.accountDelete`.
+- **Verificar:** `http_account_repository_test.dart` (2).
+- **Estado:** ✅ Hecho (30-Oct-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-46)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Pantalla y flujo
+- **Qué:** `PrivacyScreen`, `DeleteAccountButton`, `ConfirmPasswordSheet`, la ruta `/ajustes/privacidad`, la fila en `Ajustes` y `MusubiTopBar.titleAtStart`.
+- **Verificar:** `delete_account_flow_test.dart` (5) y la captura `privacidad` contra la maqueta.
+- **Estado:** ✅ Hecho (30-Oct-2026).
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+## T3 — Versión y publicación
+- **Qué:** `0.3.0+4` y su fila en `docs/versionado.md`. Subir a la prueba cerrada de Google Play después del despliegue del back.
+- **Estado:** 🚧 La versión está lista; falta subirla.
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## Pendientes
+- `NOTE (HU-04)`: "Quién te ve" y "Cambiar contraseña".
+- `NOTE (HU-28)`: "Usuarios bloqueados".

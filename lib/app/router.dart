@@ -19,6 +19,7 @@ import 'package:musubi_app/features/listings/presentation/sell_done_screen.dart'
 import 'package:musubi_app/features/listings/presentation/sell_photos_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_price_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
+import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 
 /// Rutas de la app (02-01). Cada modulo reemplaza su seccion al implementar su
@@ -38,6 +39,9 @@ abstract final class AppRoutes {
   static const search = '/buscar';
   static const notifications = '/notificaciones';
   static const settings = '/ajustes';
+
+  /// `Privacidad` (HU-46; "Quien te ve" llega con HU-04).
+  static const accountPrivacy = '/ajustes/privacidad';
 
   /// "Vender un producto" (HU-06): `Vender-1…4` y `Vender-listo`.
   static const sell = '/vender';
@@ -61,6 +65,7 @@ abstract final class AppRoutes {
     messages,
     profile,
     settings,
+    accountPrivacy,
     sell,
     sellDetails,
     sellPrice,
@@ -218,6 +223,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.accountPrivacy,
+        builder: (context, state) => const PrivacyScreen(),
       ),
       GoRoute(
         path: AppRoutes.search,

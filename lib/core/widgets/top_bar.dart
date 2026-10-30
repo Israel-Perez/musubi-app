@@ -8,14 +8,23 @@ import 'package:musubi_app/core/widgets/pressable.dart';
 /// Barra superior de las pantallas de la maqueta: 44 de alto bajo la barra
 /// de estado y flecha "Regresar" (chevron de 24) a la izquierda. A la derecha
 /// puede ir algo ("PASO 2 DE 2"); con [title], el titulo va al centro de 17
-/// (`Ajustes`).
+/// (`Ajustes`), o junto a la flecha con [titleAtStart] (`Privacidad`).
 class MusubiTopBar extends StatelessWidget {
-  const new({super.key, this.onBack, this.title, this.trailing});
+  const new({
+    super.key,
+    this.onBack,
+    this.title,
+    this.trailing,
+    this.titleAtStart = false,
+  });
 
   /// `null` deja el espacio sin flecha (`Verificacion-lista`).
   final VoidCallback? onBack;
   final String? title;
   final Widget? trailing;
+
+  /// Titulo de 20 a la izquierda, a 4 de la flecha (`Privacidad`).
+  final bool titleAtStart;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +51,7 @@ class MusubiTopBar extends StatelessWidget {
       bottom: false,
       child: Padding(
         padding: EdgeInsets.only(
-          left: 8,
+          left: titleAtStart ? 6 : 8,
           right: title == null && trailing != null ? 20 : 8,
         ),
         child: SizedBox(
@@ -50,7 +59,24 @@ class MusubiTopBar extends StatelessWidget {
           child: Row(
             children: [
               back,
-              if (title != null) ...[
+              if (title != null && titleAtStart) ...[
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      title,
+                      style: MusubiType.style(
+                        20,
+                        weight: FontWeight.w800,
+                        line: 26,
+                        em: -0.02,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ] else if (title != null) ...[
                 Expanded(
                   child: Semantics(
                     header: true,

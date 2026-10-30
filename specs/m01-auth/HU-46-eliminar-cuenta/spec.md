@@ -1,50 +1,73 @@
 # HU-46 — Eliminar mi cuenta y mis datos (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-46 / SCRUM-32 / Sprint 2 (12 – 23 oct 2026) / M-01 / [musubi-api:HU-46](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-46-eliminar-cuenta)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-46 / SCRUM-32 / S3 / M-01 / [musubi-api:HU-46](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-46-eliminar-cuenta)
 
 ## Contexto
-Jira (SCRUM-32): Como **usuario**, quiero **eliminar mi cuenta y mis datos desde la aplicación o desde una página web**, para **tener control sobre mi información personal**.
+**Maqueta:**
+- `Ajustes`, sección "Privacidad y seguridad" → `Privacidad`;
+- en `Privacidad`: "Tus datos" y "Eliminar mi cuenta";
+- el diálogo "¿Eliminar tu cuenta?".
 
-- Maqueta: `Privacidad`, `Aviso-privacidad`.
-- Trazabilidad: RNF-08 · Entregable 1 §12 (requisito de Google Play) · LFPDPPP 2025.
-- Origen: Entregable 1 §12 — historia nueva, no estaba en la lista original.
+Google Play exige poder pedir el borrado **dentro de la app**, además de la página web `https://musubiapp.com.mx/eliminar-cuenta` (SCRUM-84). Es requisito para pasar de la prueba cerrada a producción.
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-01`, `HU-04`.
+**Depende de:** `02-01`, `02-04` (piezas de la maqueta), `HU-02` (sesión) y el back de HU-46 (fila `POST /api/v1/account/delete`).
 
 ## Requisitos
-1. Existe la opción "Eliminar cuenta" dentro de la aplicación.
-2. Existe una página web pública, en el dominio del proyecto, para solicitar la eliminación de la cuenta.
-3. Se informa al usuario qué datos se eliminan y cuáles se conservan, y por cuánto tiempo.
-4. El procedimiento es congruente con el aviso de privacidad.
-
-RNF que aplican: RNF-08.
+1. **`Ajustes`:** muestra la sección "Privacidad y seguridad" con la fila "Privacidad", que abre `/ajustes/privacidad`.
+2. **`Privacidad`**, igual a la maqueta:
+   - el título junto a la flecha;
+   - el resumen rojo "Tu perfil solo lo ve tu campus · No vendemos tus datos";
+   - "TUS DATOS" con "Aviso de privacidad";
+   - el botón con borde "Eliminar mi cuenta" en rojo de peligro.
+3. **"Eliminar mi cuenta":** abre el diálogo de la maqueta ("Se borran tu perfil, tus publicaciones y tus chats. No se puede deshacer.", botón "Eliminar cuenta"). "Cancelar" no hace nada.
+4. **Contraseña (agregado de seguridad):** la hoja "Confirma tu contraseña" pide la contraseña actual.
+   - Sin contraseña: "Escribe tu contraseña." y no llama a la API.
+   - Contraseña incorrecta: "La contraseña no es correcta." (código `auth.wrong_password`); la sesión sigue.
+   - Mientras borra, el botón dice "Eliminando…".
+5. **Al terminar:**
+   - vuelve a Inicio como visitante;
+   - borra los tokens del dispositivo (la API ya borró las sesiones);
+   - avisa "Eliminamos tu cuenta y tus datos.".
 
 ## Diseño
-- Feature `lib/features/auth/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-46. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-46)` (skill `deferred-scope-fakes`).
+- `features/auth/domain/account_repository.dart` y `data/http_account_repository.dart`, con `dioProvider` (con sesión). `accountRepositoryProvider` está en `auth_providers.dart`.
+- `features/auth/presentation/delete_account.dart`: `DeleteAccountButton` y `ConfirmPasswordSheet`.
+- `features/profile/presentation/privacy_screen.dart` (`PrivacyScreen`) y `settings_row.dart`: la fila de `Ajustes` pasó a un archivo compartido.
+- `core/widgets/top_bar.dart`: opción `titleAtStart` (título de 20 junto a la flecha, como la maqueta).
+- `MusubiColors.dangerText` (`#B42318`, en oscuro `#FF7A6E`) y el ícono `MusubiIcons.trash`.
+- Ruta `AppRoutes.accountPrivacy` (`/ajustes/privacidad`), con sesión.
+- **Pendientes:**
+  - `NOTE (HU-04)`: "Quién te ve" y "Cambiar contraseña";
+  - `NOTE (HU-28)`: "Usuarios bloqueados";
+  - "Descargar mis datos" no tiene HU y queda oculto.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-46, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+- Fila "M-01" `POST /api/v1/account/delete` de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md).
+- En código: `ApiPaths.accountDelete`.
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- `tool/screenshots_test.dart`: escenas de las pantallas, comparadas con la maqueta en claro y oscuro.
+- `test/features/auth/data/http_account_repository_test.dart` (2): `POST` con la contraseña; `auth.wrong_password` → `ApiFailure`.
+- `test/features/auth/presentation/delete_account_flow_test.dart` (5):
+  - de `Ajustes` a `Privacidad`;
+  - sin contraseña;
+  - contraseña incorrecta;
+  - borrado completo: visitante, almacén vacío, Inicio y el aviso;
+  - cancelar el diálogo.
+- `tool/screenshots_test.dart`: escena `privacidad`, comparada con la maqueta `#sesion.Privacidad`.
 
 ## Criterios
-- [ ] Existe la opción "Eliminar cuenta" dentro de la aplicación.
-- [ ] Existe una página web pública, en el dominio del proyecto, para solicitar la eliminación de la cuenta.
-- [ ] Se informa al usuario qué datos se eliminan y cuáles se conservan, y por cuánto tiempo.
-- [ ] El procedimiento es congruente con el aviso de privacidad.
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] Existe "Eliminar mi cuenta" dentro de la app y borra la cuenta en la API (contraparte).
+- [x] Con la contraseña incorrecta, la cuenta y la sesión siguen.
+- [x] Al borrar, el dispositivo queda como visitante y sin tokens.
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 224/224 · critic PASS.
+- [ ] Probado en un teléfono desde la prueba cerrada de Google Play (versión `0.3.0+4`), contra la API desplegada.
 
 ## Límites
-- Decisión pendiente (Jira): Debe estar lista antes de la prueba cerrada en Google Play (inicio 9 nov 2026).
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- **"Quién te ve"** de la maqueta llega con HU-04. La captura difiere de la maqueta solo en esa sección.
+- **"Usuarios bloqueados"** (HU-28) y **"Descargar mis datos"** (sin HU) quedan ocultos: lo que no funciona no se muestra.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 30-Oct-2026
+- **Detalle:** pedir la contraseña es un agregado de seguridad sobre la maqueta (lineamiento 4: agregar sí, quitar no).

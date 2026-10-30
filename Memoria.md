@@ -8,6 +8,21 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): spec, plan y tareas en `specs/m02-profile/HU-04-editar-perfil/` (🚧 Borrador). Siguiente: T1 (dominio y repositorio), en paralelo al back.
 - **Guía del equipo** (SCRUM-83, PR #15): `docs/guia-equipo.md` y los agentes de OpenCode.
 
+## T18 — HU-46 Eliminar mi cuenta desde la app (30-Oct-2026, SCRUM-32)
+
+**Qué se hizo**
+- `Ajustes` tiene la sección "Privacidad y seguridad", que lleva a `Privacidad` (`/ajustes/privacidad`), igual a la maqueta: resumen rojo, "TUS DATOS" y "Eliminar mi cuenta".
+- El flujo: diálogo de la maqueta → hoja "Confirma tu contraseña" → la API borra la cuenta → Inicio como visitante y el aviso "Eliminamos tu cuenta y tus datos.".
+- `AccountRepository`/`HttpAccountRepository` (con sesión). `SettingsRow` pasó a un archivo compartido. `MusubiTopBar.titleAtStart`, el token `dangerText` y el ícono `trash`.
+- App `0.3.0+4`. Pruebas: 224/224. La captura `privacidad` coincide con la maqueta, salvo "Quién te ve" (HU-04).
+
+**Decisiones (con su porqué)**
+- **La contraseña va en una hoja, después del diálogo de la maqueta:** se conserva el diálogo y se agrega la seguridad (lineamiento 4).
+- **Al terminar se llama a `signOut()` y no a `logOut()`:** la API ya borró las sesiones, así que no hay nada que revocar.
+
+**Errores a evitar**
+- **Con `context.push`,** `routerDelegate.currentConfiguration.uri` sigue reportando la ruta base. En las pruebas, verifica la pantalla con `find.byType`.
+
 ## T17 — Cuenta de revisión de Google Play (29-Oct-2026, SCRUM-88)
 
 - La API acepta `@musubiapp.com.mx` en la UTTT (`musubi-api` `db/003`). Con `revision@musubiapp.com.mx` se llena "Acceso a la app" en Play Console (`docs/play/README.md`). La contraseña vive solo en el gestor del titular.

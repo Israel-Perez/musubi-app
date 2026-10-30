@@ -14,6 +14,7 @@ import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/auth/presentation/sign_out_button.dart';
+import 'package:musubi_app/features/profile/presentation/settings_row.dart';
 
 SessionProfile? _profile(WidgetRef ref) =>
     switch (ref.watch(sessionControllerProvider)) {
@@ -285,7 +286,7 @@ class SettingsScreen extends ConsumerWidget {
                 const _SectionLabel('Cuenta'),
                 _Group(
                   children: [
-                    _SettingsRow(
+                    SettingsRow(
                       icon: MusubiIcons.mail,
                       title: 'Correo institucional',
                       value: 'Verificado',
@@ -293,15 +294,27 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                const _SectionLabel('Privacidad y seguridad'),
+                _Group(
+                  children: [
+                    // NOTE (HU-04): "Cambiar contraseña" y "Quién te ve".
+                    SettingsRow(
+                      icon: MusubiIcons.shieldCheck,
+                      title: 'Privacidad',
+                      onTap: () =>
+                          unawaited(context.push(AppRoutes.accountPrivacy)),
+                    ),
+                  ],
+                ),
                 const _SectionLabel('Ayuda'),
                 _Group(
                   children: [
-                    _SettingsRow(
+                    SettingsRow(
                       icon: MusubiIcons.fileText,
                       title: 'Aviso de privacidad',
                       onTap: () => unawaited(context.push(AppRoutes.privacy)),
                     ),
-                    _SettingsRow(
+                    SettingsRow(
                       icon: MusubiIcons.shieldCheck,
                       title: 'Términos y condiciones',
                       onTap: () => unawaited(context.push(AppRoutes.terms)),
@@ -368,90 +381,5 @@ class _Group extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-/// Fila de `Ajustes`: icono en su cuadro de 36, titulo, valor y flecha.
-class _SettingsRow extends StatelessWidget {
-  const new({
-    required this.icon,
-    required this.title,
-    this.value,
-    this.valueColor,
-    this.onTap,
-  });
-
-  final MusubiIconData icon;
-  final String title;
-  final String? value;
-  final Color? valueColor;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.musubi;
-    Widget row({bool pressed = false}) => Container(
-      constraints: const BoxConstraints(minHeight: 60),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      color: pressed ? c.surface : null,
-      child: Row(
-        spacing: MusubiSizes.space3,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Center(
-              child: MusubiIcon(
-                icon,
-                size: 19,
-                strokeWidth: 1.9,
-                color: c.textPrimary,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              title,
-              style: MusubiType.style(
-                15,
-                weight: FontWeight.w700,
-                line: 20,
-                color: c.textPrimary,
-              ),
-            ),
-          ),
-          if (value != null)
-            Text(
-              value!,
-              style: MusubiType.style(
-                13.5,
-                weight: FontWeight.w700,
-                color: valueColor ?? c.textSecondary,
-              ),
-            ),
-          if (onTap != null)
-            MusubiIcon(
-              MusubiIcons.chevronRight,
-              size: 18,
-              color: c.textSecondary,
-            ),
-        ],
-      ),
-    );
-    return onTap == null
-        ? Semantics(
-            label: value == null ? title : '$title: $value',
-            excludeSemantics: true,
-            child: row(),
-          )
-        : Pressable(
-            onTap: onTap,
-            semanticLabel: title,
-            builder: (context, pressed) => row(pressed: pressed),
-          );
   }
 }

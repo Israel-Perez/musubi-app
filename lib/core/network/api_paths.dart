@@ -53,6 +53,10 @@ abstract final class ApiPaths {
   /// `GET /api/v1/products/mine` — fila "M-03" (spec `musubi-api:HU-06`).
   static const myProducts = '/api/v1/products/mine';
 
+  /// `POST /api/v1/account/delete` — fila "M-01" (spec `musubi-api:HU-46`).
+  /// Con sesion; pide la contrasena actual.
+  static const accountDelete = '/api/v1/account/delete';
+
   /// `GET /api/v1/products/price-range` — fila "M-03"
   /// (spec `musubi-api:HU-06`).
   static const priceRange = '/api/v1/products/price-range';

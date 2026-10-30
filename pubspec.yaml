@@ -3,7 +3,7 @@ description: "MUSUBI: compra-venta entre estudiantes de la UTTT (app Android)."
 publish_to: 'none'
 
 # versionName+versionCode de Android. Subir el build (+N) en cada entrega a Google Play.
-version: 0.3.0+3
+version: 0.3.0+4
 
 environment:
   sdk: ^3.13.5

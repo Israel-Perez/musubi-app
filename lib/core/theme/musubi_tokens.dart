@@ -118,6 +118,9 @@ class MusubiColors extends ThemeExtension<MusubiColors> {
   Color get error => _pick(0xFFC4320A, 0xFFFF7A50);
   Color get errorSoft => _pick(0xFFFDEEE8, 0xFF3A1A10);
 
+  /// Rojo de las acciones destructivas: "Eliminar mi cuenta" (`Privacidad`).
+  Color get dangerText => _pick(0xFFB42318, 0xFFFF7A6E);
+
   /// Relleno rojo oxido (insignia "!" de `Inicio-error`; igual en oscuro).
   Color get errorFill => const Color(0xFFC4320A);
   Color get errorBorder => _pick(0xFFF4CBBB, 0xFF6A3220);
