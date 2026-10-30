@@ -1,12 +1,16 @@
 # 02-02 — Publicación en Google Play (tareas)
 
 ## T1 — Firma y build de release
-- **Qué:** llave de subida, `key.properties`, el AAB firmado y su revisión con `aapt2`.
-- **Estado:** ⏳ Por hacer.
+- **Qué:** llave de subida, `key.properties`, el AAB firmado y su revisión.
+- **Estado:** ✅ Hecho (29-Oct-2026, SCRUM-87).
+  - La llave está fuera del repo, en RSA 4096 con alias `upload`.
+  - `app-release.aab` `0.3.0+3` está firmado con `CN=Musubi` (`keytool -printcert`).
 
 ## T2 — Ficha y contenido de la app
 - **Qué:** textos, gráficos y capturas (`docs/play/`), Seguridad de los datos, IARC, público y acceso para revisores.
-- **Estado:** ⏳ Por hacer.
+- **Estado:** 🚧 En curso.
+  - Listos en `docs/play/`: ícono, gráfico, 6 capturas, textos y respuestas.
+  - Falta: cuenta de revisión y confirmar el público.
 
 ## T3 — Prueba interna y prueba cerrada
 - **Qué:** subir `0.3.0+3`, inscribir a 12 o más testers y cuidar los 14 días seguidos.
