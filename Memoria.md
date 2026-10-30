@@ -8,6 +8,27 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): spec, plan y tareas en `specs/m02-profile/HU-04-editar-perfil/` (🚧 Borrador). Siguiente: T1 (dominio y repositorio), en paralelo al back.
 - **Guía del equipo** (SCRUM-83, PR #15): `docs/guia-equipo.md` y los agentes de OpenCode.
 
+## T17 — Cuenta de revisión de Google Play (29-Oct-2026, SCRUM-88)
+
+- La API acepta `@musubiapp.com.mx` en la UTTT (`musubi-api` `db/003`). Con `revision@musubiapp.com.mx` se llena "Acceso a la app" en Play Console (`docs/play/README.md`). La contraseña vive solo en el gestor del titular.
+- Fila de versionado: API `0.3.0-alpha.3`, esquema 3 (sección compartida).
+
+## T16 — Primera versión para Google Play (29-Oct-2026, SCRUM-87)
+
+**Qué se hizo**
+- Llave de subida (RSA 4096, alias `upload`) en la carpeta `.musubi-play` del perfil del titular, fuera del repo. `android/key.properties` (ignorado) apunta a ella.
+- App `0.3.0+3`, con su fila en `docs/versionado.md` (sección compartida). AAB de release firmado contra `https://api.musubiapp.com.mx`.
+- `docs/play/` con la ficha es-419, las respuestas de "Contenido de la app" y "Seguridad de los datos", el ícono de 512 px (PNG de 32 bits), el gráfico de 1024 × 500 y 6 capturas de 1170 × 2340.
+- `tool/screenshots_test.dart` acepta `SHOT_HEIGHT`: con 780 da 2:1, el límite de Play.
+
+**Decisiones (con su porqué)**
+- **Sin captura de Inicio con "Populares":** la versión real oculta esa sección hasta HU-11, y la ficha no debe prometer lo que la app no hace.
+- **Gráficos con los arcos alargados del ícono adaptable:** con los arcos de la maqueta quedaba una costura en el cruce de los anillos.
+
+**Errores a evitar**
+- **Edge sin ventana genera PNG RGB de 24 bits**, y Play pide el ícono de 32 bits: hay que convertirlo (se hizo con Python puro, sin PIL).
+- **Proporción de las capturas:** las del teléfono (1080 × 2340) y las de 390 × 844 pasan de 2:1, y Play las rechaza.
+
 ## T15 — Specs en borrador de todo el backlog (29-Oct-2026, SCRUM-86)
 
 **Qué se hizo**
