@@ -53,7 +53,7 @@ No vendemos ni rentamos tus datos. Solo los compartimos con:
 
 Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos, y revocar tu consentimiento:
 
-- Desde la app: Perfil, luego Privacidad, luego Tus datos (incluye descargar tus datos y eliminar tu cuenta).
+- Desde la app, para eliminar tu cuenta: Perfil, luego Ajustes (el engrane), luego Privacidad, luego Eliminar mi cuenta.
 - Por correo a contacto@musubiapp.com.mx, desde tu correo institucional.
 - Para eliminar tu cuenta sin entrar a la app, sigue los pasos de https://musubiapp.com.mx/eliminar-cuenta.
 
