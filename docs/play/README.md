@@ -8,10 +8,10 @@ Todo lo que se escribe o se sube en Play Console para Musubi (`com.musubi.app`).
 |---|---|---|
 | `icon-512.png` | Ícono de la ficha | 512 × 512, PNG de 32 bits |
 | `feature-1024x500.png` | Gráfico de funciones | 1024 × 500, PNG o JPG |
-| `capturas/01…06-*.png` | Capturas del teléfono | 1170 × 2340 (2:1 como máximo) |
+| `capturas/01…05-*.png` | Capturas del teléfono | 1080 × 1920 (9:16); 4 o más permiten promocionar la app |
 
-- Las capturas salen de `flutter test tool/screenshots_test.dart --dart-define=SHOTS=<carpeta> --dart-define=SHOT_HEIGHT=780 --dart-define=ONLY=…`. Usan datos de muestra de la maqueta.
-- No hay captura de Inicio con "Populares": la versión actual oculta esa sección hasta HU-11.
+- Las capturas salen de `flutter test tool/screenshots_test.dart --dart-define=SHOTS=<carpeta> --dart-define=SHOT_WIDTH=360 --dart-define=SHOT_HEIGHT=640 --dart-define=ONLY=…`. Usan datos de muestra de la maqueta.
+- No hay captura de Inicio con "Populares": la versión actual oculta esa sección hasta HU-11. Tampoco de Perfil, que hoy solo dice "Muy pronto".
 
 ## Ficha de la tienda (Español, Latinoamérica)
 

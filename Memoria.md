@@ -40,9 +40,12 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Sin captura de Inicio con "Populares":** la versión real oculta esa sección hasta HU-11, y la ficha no debe prometer lo que la app no hace.
 - **Gráficos con los arcos alargados del ícono adaptable:** con los arcos de la maqueta quedaba una costura en el cruce de los anillos.
 
+- **Prueba cerrada publicada el 30-Oct-2026** (cuenta personal: 12 testers × 14 días seguidos → producción desde el ~13-Nov).
+
 **Errores a evitar**
+- **"Something went wrong on our end" al instalar desde Play:** había una Musubi instalada por cable, firmada con la llave de debug. Android no reemplaza una app firmada con otra llave: hay que desinstalarla primero.
 - **Edge sin ventana genera PNG RGB de 24 bits**, y Play pide el ícono de 32 bits: hay que convertirlo (se hizo con Python puro, sin PIL).
-- **Proporción de las capturas:** las del teléfono (1080 × 2340) y las de 390 × 844 pasan de 2:1, y Play las rechaza.
+- **Proporción de las capturas:** Play Console pide **9:16** exacto. Usa `SHOT_WIDTH=360 SHOT_HEIGHT=640` (1080 × 1920); las de 1170 × 2340 (2:1) no sirven.
 
 ## T15 — Specs en borrador de todo el backlog (29-Oct-2026, SCRUM-86)
 

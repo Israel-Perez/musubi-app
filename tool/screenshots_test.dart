@@ -1,7 +1,7 @@
 // Capturas de la app para compararlas con la maqueta (SCRUM-82): cada
-// pantalla a 390 x 844 puntos a 3x (alto con SHOT_HEIGHT), con Plus Jakarta
-// Sans, sombras y fotos reales, y la barra de estado de la maqueta (54 arriba,
-// 24 abajo).
+// pantalla a 390 x 844 puntos a 3x (otro tamano con SHOT_WIDTH/SHOT_HEIGHT),
+// con Plus Jakarta Sans, sombras y fotos reales, y la barra de estado de la
+// maqueta (54 arriba, 24 abajo).
 //
 // No corre con `flutter test` (vive en tool/). Para generarlas:
 //   flutter test tool/screenshots_test.dart --dart-define=SHOTS=<carpeta>
@@ -49,8 +49,9 @@ const _only = String.fromEnvironment('ONLY');
 const _dark = bool.fromEnvironment('DARK');
 const _rects = bool.fromEnvironment('RECTS');
 
-/// Alto en pt (844 = maqueta). Google Play pide que el lado largo no pase del
-/// doble del corto: 780 da 1170 x 2340 (02-02).
+/// Tamano en pt (390 x 844 = maqueta). Google Play pide capturas 9:16:
+/// 360 x 640 da 1080 x 1920 (02-02).
+const _width = int.fromEnvironment('SHOT_WIDTH', defaultValue: 390);
 const _height = int.fromEnvironment('SHOT_HEIGHT', defaultValue: 844);
 
 /// Hora de la maqueta ("hace 20 min" sale igual que en el prototipo).
@@ -409,7 +410,7 @@ Future<void> _loadFonts() async {
 
 void _phone(WidgetTester tester) {
   tester.view
-    ..physicalSize = const Size(390 * 3, _height * 3.0)
+    ..physicalSize = const Size(_width * 3.0, _height * 3.0)
     ..devicePixelRatio = 3
     ..padding = const FakeViewPadding(top: 54 * 3, bottom: 24 * 3)
     ..viewPadding = const FakeViewPadding(top: 54 * 3, bottom: 24 * 3);

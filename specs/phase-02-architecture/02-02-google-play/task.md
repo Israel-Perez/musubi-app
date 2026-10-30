@@ -14,7 +14,10 @@
 
 ## T3 — Prueba interna y prueba cerrada
 - **Qué:** subir `0.3.0+3`, inscribir a 12 o más testers y cuidar los 14 días seguidos.
-- **Estado:** ⏳ Por hacer (la cuenta de desarrollador está en verificación).
+- **Estado:** 🚧 En curso.
+  - La cuenta personal está verificada y `0.3.0+3` se subió a la prueba interna.
+  - **Prueba cerrada publicada el 30-Oct-2026.** Si los 12 testers siguen inscritos, la solicitud de producción puede enviarse desde el ~13-Nov-2026.
+  - Para instalar desde Play hay que desinstalar antes cualquier APK firmado con otra llave.
 
 ## T4 — Despliegue desde GitHub
 - **Qué:** `release-play.yml` con la cuenta de servicio y los secretos de firma.
