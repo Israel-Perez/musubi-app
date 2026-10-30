@@ -8,6 +8,11 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): spec, plan y tareas en `specs/m02-profile/HU-04-editar-perfil/` (🚧 Borrador). Siguiente: T1 (dominio y repositorio), en paralelo al back.
 - **Guía del equipo** (SCRUM-83, PR #15): `docs/guia-equipo.md` y los agentes de OpenCode.
 
+## T17 — Cuenta de revisión de Google Play (29-Oct-2026, SCRUM-88)
+
+- La API acepta `@musubiapp.com.mx` en la UTTT (`musubi-api` `db/003`). Con `revision@musubiapp.com.mx` se llena "Acceso a la app" en Play Console (`docs/play/README.md`). La contraseña vive solo en el gestor del titular.
+- Fila de versionado: API `0.3.0-alpha.3`, esquema 3 (sección compartida).
+
 ## T16 — Primera versión para Google Play (29-Oct-2026, SCRUM-87)
 
 **Qué se hizo**

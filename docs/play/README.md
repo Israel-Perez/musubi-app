@@ -59,7 +59,7 @@ Revísalas antes de enviar. Deben describir lo que **esta** versión hace, no lo
 |---|---|
 | Política de privacidad | `https://musubiapp.com.mx/privacidad` |
 | Anuncios | No contiene anuncios |
-| Acceso a la app | Algunas funciones requieren iniciar sesión. Se da una cuenta de prueba con usuario y contraseña (pendiente: cuenta de revisión, ver la spec 02-02) |
+| Acceso a la app | Algunas funciones requieren iniciar sesión. Cuenta de revisión: `revision@musubiapp.com.mx` (dominio del equipo dentro de la UTTT, SCRUM-88). La contraseña vive solo en el gestor del titular. Instrucciones en inglés: ver abajo |
 | Clasificación de contenido (IARC) | Categoría: Compras/mercado. Sin violencia, sexo, lenguaje vulgar, drogas ni apuestas. **Sí**: los usuarios publican contenido que ven otros usuarios. No comparte ubicación. No vende productos digitales |
 | Público objetivo | 18 años o más (pendiente de confirmar) |
 | App de noticias / gubernamental / salud / préstamos | No |
@@ -86,6 +86,17 @@ Qué datos se recopilan:
 Notas:
 - La API guarda el *user agent* de cada sesión para que el usuario la reconozca. No es un identificador del dispositivo.
 - **Cuando lleguen** chat (HU-20), avisos push (HU-31), Crashlytics o la foto de perfil (HU-04), **hay que actualizar este formulario** antes de subir esa versión.
+
+### Acceso a la app: texto para Play (en inglés)
+
+- **Nombre:** `Reviewer account (student)`.
+- **Usuario:** `revision@musubiapp.com.mx`.
+- **Contraseña:** la del gestor del titular. No se escribe aquí.
+- **Otra información:**
+
+```text
+Musubi is a marketplace for students of Universidad Tecnologica de Tula-Tepeji. Tap "Iniciar sesion" (Sign in) on the Profile tab and use these credentials. No two-step verification or one-time code is required to sign in: the email of this account is already verified. Without signing in, the app can also be browsed as a visitor.
+```
 
 ## Pasos en Play Console (primera vez)
 
