@@ -293,6 +293,13 @@ abstract final class MusubiIcons {
     IconCircle(12, 12, 3),
   ]);
 
+  /// `trash-2` ("Eliminar mi cuenta").
+  static const trash = MusubiIconData([
+    IconPath('M3 6h18'),
+    IconPath('M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'),
+    IconPath('M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'),
+  ]);
+
   /// `shield-check`.
   static const shieldCheck = MusubiIconData([
     IconPath(
