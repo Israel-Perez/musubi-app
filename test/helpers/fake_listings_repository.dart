@@ -25,6 +25,9 @@ class FakeListingsRepository implements ListingsRepository {
   /// Cuantas subidas fallan antes de que funcionen.
   int failUploads;
 
+  /// Fotos que la moderacion de la API rechaza (02-07).
+  final Set<String> rejectedPaths = {};
+
   final List<String> uploaded = [];
   final List<NewListing> published = [];
   List<OwnListing> own = const [];
@@ -34,6 +37,13 @@ class FakeListingsRepository implements ListingsRepository {
 
   @override
   Future<UploadedPhoto> uploadPhoto(String filePath) async {
+    if (rejectedPaths.contains(filePath)) {
+      throw const ApiFailure(
+        code: 'moderation.image_rejected',
+        message: 'Esta foto no cumple las reglas de la comunidad. Usa otra.',
+        status: 422,
+      );
+    }
     if (failUploads > 0) {
       failUploads--;
       throw const ApiFailure(

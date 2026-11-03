@@ -286,6 +286,29 @@ class _PhotoTile extends StatelessWidget {
                 child: Center(
                   child: photo.upload == PhotoUpload.uploading
                       ? const MusubiSpinner(color: Color(0xFFFFFFFF))
+                      : photo.upload == PhotoUpload.rejected
+                      // 02-07: rechazada por la API; se explica al tocarla.
+                      ? Pressable(
+                          onTap: () => showSellSnack(
+                            context,
+                            photo.error ?? 'Esta foto no se puede usar.',
+                            icon: MusubiIcons.circleAlert,
+                            tone: SnackTone.warn,
+                          ),
+                          semanticLabel:
+                              'Foto ${index + 1} rechazada: '
+                              '${photo.error ?? ''}',
+                          builder: (context, _) => const SizedBox.square(
+                            dimension: MusubiSizes.minTouch,
+                            child: Center(
+                              child: MusubiIcon(
+                                MusubiIcons.triangleAlert,
+                                size: 22,
+                                color: Color(0xFFFFFFFF),
+                              ),
+                            ),
+                          ),
+                        )
                       : Pressable(
                           onTap: onRetry,
                           semanticLabel:

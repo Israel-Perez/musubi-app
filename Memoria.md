@@ -8,6 +8,18 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
 
+## T22 — Rechazos de la moderación en Vender (03-Nov-2026, SCRUM-92, musubi-api 02-07)
+
+**Qué se hizo**
+- `PhotoUpload.rejected`: una foto que la API no acepta (`moderation.image_*` o `listings.photo_*`) queda rechazada con el mensaje de la API.
+  - No se reintenta sola.
+  - Su miniatura muestra un aviso y, al tocarla, explica por qué.
+  - Al publicar se pide quitarla.
+- Los textos rechazados (`moderation.text_rejected`) ya llegaban con su mensaje a `Vender-4`.
+
+**Errores a evitar**
+- **No trates un 4xx de la API como falla de red:** antes, una foto rechazada se reintentaba y terminaba en "Revisa tu conexión".
+
 ## T20 — HU-04 Editar mi perfil (03-Nov-2026, SCRUM-22)
 
 **Qué se hizo**
