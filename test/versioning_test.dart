@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:musubi_app/app/app_version.dart';
 
 // Lineamiento 11: la version de pubspec.yaml coincide con la ultima fila de
 // la matriz de compatibilidad (docs/versionado.md, seccion 3).
@@ -27,5 +28,9 @@ void main() {
     expect(rows, isNotEmpty);
     final appColumn = rows.last.split('|')[5].trim();
     expect(appColumn, pubspecVersion);
+  });
+
+  test('Ajustes muestra la version de pubspec sin el versionCode', () {
+    expect(appVersion, pubspecVersion!.split('+').first);
   });
 }

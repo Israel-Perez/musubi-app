@@ -63,18 +63,15 @@ class SettingsRow extends StatelessWidget {
           if (value != null)
             Text(
               value!,
+              // "Verificado" (verde) va en 700; "Quién te ve" (gris), en 600.
               style: MusubiType.style(
                 13.5,
-                weight: FontWeight.w700,
+                weight: valueColor == null ? FontWeight.w600 : FontWeight.w700,
                 color: valueColor ?? c.textSecondary,
               ),
             ),
           if (onTap != null)
-            MusubiIcon(
-              MusubiIcons.chevronRight,
-              size: 18,
-              color: c.textSecondary,
-            ),
+            MusubiIcon(MusubiIcons.chevronRight, size: 18, color: c.chevron),
         ],
       ),
     );

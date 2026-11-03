@@ -2,11 +2,38 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (29-Oct-2026)
+## Estado actual (03-Nov-2026)
 
-- **En `main`:** `0.2.0+2` con `config/prod.example.json` apuntando a `https://api.musubiapp.com.mx`. Probado en el Galaxy A54 contra el dominio.
-- **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): spec, plan y tareas en `specs/m02-profile/HU-04-editar-perfil/` (🚧 Borrador). Siguiente: T1 (dominio y repositorio), en paralelo al back.
-- **Guía del equipo** (SCRUM-83, PR #15): `docs/guia-equipo.md` y los agentes de OpenCode.
+- **En Google Play:** `0.3.0+4` en la prueba cerrada (HU-46), publicada con `release-play`.
+- **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
+- **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
+
+## T20 — HU-04 Editar mi perfil (03-Nov-2026, SCRUM-22)
+
+**Qué se hizo**
+- `lib/features/profile/`: dominio (`MyProfile`, `Career`, `AcademicTerm`, `ProfileVisibility`), `HttpProfileRepository` y `myProfileProvider`. Un mismo estado alimenta `Perfil`, `Ajustes` y `Privacidad`.
+- Pantallas iguales a la maqueta, en claro y oscuro:
+  - `Perfil`: estadísticas y mosaicos "Mis publicaciones" y "Privacidad";
+  - `Ajustes` (ahora en `settings_screen.dart`), con la versión al pie;
+  - hojas "Datos personales" (foto, carrera y cuatrimestre), "Correo institucional" y "Cambiar contraseña";
+  - "Quién te ve" en `Privacidad`.
+- Piezas nuevas en `core/widgets`: `MusubiPanel`/`showMusubiPanel` (`UI.sheet`), `MusubiOptions` (`UI.options`), `PanelCard`/`PanelNote`, `ProfileAvatar` y el ícono `bellOff`. También el token `chevron` (`#9A9AA0`), `MusubiTextField(sheet: true)` (`.s-field`) y `MusubiSwitch.knobColor`.
+- Cambiar la contraseña: `AccountRepository.changePassword` y `SessionController.signIn` con la sesión nueva.
+- Versión `0.4.0+5` (`app_version.dart`, verificada contra `pubspec.yaml`). Pruebas: 224 → 253.
+
+**Decisiones (con su porqué)**
+- **Lo que no existe no se muestra:** "Mis apartados", "Mis solicitudes", "Favoritos", "Mis pedidos", "Cuenta para recibir pagos", modo noche, avisos, "Centro de ayuda", "Reportar", "Usuarios bloqueados" y "Descargar mis datos". Cada uno queda con su `NOTE (HU-NN)`.
+- **El campo de carrera muestra el nombre corto** ("Ing. en Sistemas", como la maqueta); la lista muestra el oficial.
+- **"Mostrar si estoy en línea" apagado por defecto:** así lo trae la maqueta (`sw('enLinea', false)`). La API se alineó en el PR #29.
+- **Interruptores optimistas:** cambian al instante; si la API falla, regresan y lo explican.
+- **La hoja con título mide lo que su contenido** (`.sheet-tall` solo fija el mínimo del 62 %) y las acciones quedan abajo.
+
+**Errores a evitar**
+- **`ensureVisible` + `tap` sin `pump()`:** el toque usa la posición anterior al desplazamiento. Corregido en el arnés de `session_flow_test.dart`.
+- **Dentro de una hoja (`.sheet-b`), la maqueta hereda `line-height: 22px`:** etiquetas y ayudas son más altas que en las pantallas (`MusubiTextField(sheet: true)`).
+- **`#FFFFFF` en la maqueta oscura se vuelve el fondo:** el cuadro del escudo y la perilla de `Privacidad` son oscuros; `#FEFEFE` (`Ajustes`) y el `fill` dentro de un SVG (anillo de la insignia) siguen blancos.
+- **Margen negativo (`.opts{margin:0 -10px}`):** Flutter no lo acepta en `Container`. Se resuelve con un relleno menor en la hoja (`bodyInset: 12`).
+- **Respaldo para una prueba de mordida:** `git checkout` no restaura un archivo nuevo. Respalda antes de editar.
 
 ## T19 — Publicar en Google Play desde GitHub Actions (02-Nov-2026, SCRUM-89)
 

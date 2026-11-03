@@ -59,6 +59,9 @@ class Harness {
 
   Future<void> tapText(String text) async {
     await tester.ensureVisible(find.text(text).last);
+    // El desplazamiento se pinta en el siguiente cuadro: sin el, el toque usa
+    // la posicion anterior.
+    await tester.pump();
     await tester.tap(find.text(text).last);
     await tester.pumpAndSettle();
   }

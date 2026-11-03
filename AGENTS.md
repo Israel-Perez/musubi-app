@@ -77,7 +77,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
   - textos con `MusubiType.style(size, line:, em:)`, con altura de línea y espaciado explícitos; `CssLineBox` para `line-height: normal` en columnas;
   - íconos con `MusubiIcon(MusubiIcons.x)` (Lucide desde el SVG de la maqueta), nunca `Icons.*`;
   - toques con `Pressable` o `MusubiButton`, sin onda;
-  - hojas con `showMusubiSheet`, diálogos con `showMusubiDialog` y avisos con `showMusubiSnack`.
+  - hojas con `showMusubiSheet`; hojas con título, X y acciones (`UI.sheet`) con `showMusubiPanel` + `MusubiPanel` y listas de opciones con `MusubiOptions`; diálogos con `showMusubiDialog` y avisos con `showMusubiSnack`.
   - Para comparar con la maqueta: `flutter test tool/screenshots_test.dart --dart-define=SHOTS=<carpeta>`.
 - **Versión:** `version` de `pubspec.yaml`, alineada con `docs/versionado.md` (lo verifica `test/versioning_test.dart`).
 - **Lineamientos de la materia:** checklist L-NN en `musubi-api/docs/bitacora/lineamientos-materia.md`.

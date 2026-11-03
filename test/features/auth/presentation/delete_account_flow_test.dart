@@ -3,35 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/app/musubi_app.dart';
 import 'package:musubi_app/app/router.dart';
-import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
-import 'package:musubi_app/features/auth/domain/account_repository.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
+import '../../../helpers/fake_account_repository.dart';
 import '../../../helpers/fake_status_repository.dart';
 import '../../../helpers/in_memory_token_store.dart';
-
-/// Borra la cuenta si la contrasena es la de la prueba.
-class FakeAccountRepository implements AccountRepository {
-  static const password = 'musubi2026';
-
-  final attempts = <String>[];
-
-  @override
-  Future<void> deleteAccount(String password) async {
-    attempts.add(password);
-    if (password != FakeAccountRepository.password) {
-      throw const ApiFailure(
-        code: 'auth.wrong_password',
-        message: 'La contraseña no es correcta.',
-        status: 400,
-      );
-    }
-  }
-}
 
 // HU-46: maqueta Ajustes → Privacidad → "Eliminar mi cuenta", su dialogo y,
 // como agregado de seguridad, la contrasena actual.

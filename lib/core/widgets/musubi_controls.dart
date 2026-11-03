@@ -78,6 +78,7 @@ class MusubiSwitch extends StatelessWidget {
     this.width = 51,
     this.height = 31,
     this.knob = 27,
+    this.knobColor = const Color(0xFFFFFFFF),
   });
 
   final bool value;
@@ -86,6 +87,10 @@ class MusubiSwitch extends StatelessWidget {
   final double width;
   final double height;
   final double knob;
+
+  /// Blanca (`#FEFEFE` de `Ajustes`); `Privacidad` usa `#FFFFFF`, que en
+  /// modo noche es el fondo.
+  final Color knobColor;
 
   @override
   Widget build(BuildContext context) {
@@ -115,10 +120,10 @@ class MusubiSwitch extends StatelessWidget {
                 child: Container(
                   width: knob,
                   height: knob,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFFFFF),
+                  decoration: BoxDecoration(
+                    color: knobColor,
                     shape: BoxShape.circle,
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: Color(0x401C1C1E),
                         offset: Offset(0, 1),
