@@ -8,6 +8,18 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
 
+## T21 — Caché de la app (03-Nov-2026, SCRUM-91, 02-06)
+
+**Qué se hizo**
+- `EtagCacheInterceptor` en `dioProvider`: manda el `If-None-Match` de la copia y, con un `304` de la API, entrega la copia como `200`. La llave es identidad + URL, con un tope de 64 copias.
+
+**Decisiones (con su porqué)**
+- **Sin paquete de caché HTTP:** un interceptor propio basta y queda dentro del stack.
+- **La identidad va en la llave:** una cuenta nunca recibe la copia de otra.
+
+**Errores a evitar**
+- **Un `304` es error para Dio** (`validateStatus` 2xx): el interceptor lo acepta solo cuando manda un `If-None-Match`.
+
 ## T20 — HU-04 Editar mi perfil (03-Nov-2026, SCRUM-22)
 
 **Qué se hizo**
