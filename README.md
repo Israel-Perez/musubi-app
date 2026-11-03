@@ -103,13 +103,17 @@ La convención de módulos y capas está en [`lib/features/README.md`](lib/featu
 
 Las actions están fijadas por SHA y Flutter está fijado (`FLUTTER_VERSION`). Dependabot (pub y github-actions, con `cooldown` de 7 días) las mantiene al día.
 
-## Protección de rama recomendada (`main`)
+## Protección de rama (`main`)
 
-En GitHub → Settings → Branches (o Rulesets) → regla para `main`:
+Ruleset **"Main Proteccion"** (GitHub → Settings → Rules → Rulesets), activo desde el 03-Nov-2026. Detalle en la spec [`02-05`](specs/phase-02-architecture/02-05-ci-cd/spec.md).
 
-- Requerir un pull request con **1 aprobación** (de un integrante distinto del autor).
-- Requerir que pasen los checks: `analyze`, `test`, `critic` y `semgrep` (`build-apk` corre después del merge).
-- Requerir que la rama esté actualizada y bloquear los force push.
+- No se puede borrar `main` ni hacer force push.
+- Pull request obligatorio con **1 aprobación** (de un integrante distinto del autor).
+- Checks obligatorios con la rama al día: `analyze`, `test`, `critic` y `semgrep` (`build-apk` corre después del merge).
+- Revisión automática de Copilot en cada PR.
+- El administrador puede saltar la aprobación solo desde un PR, mientras no haya un revisor fijo.
+
+Los MCP del equipo (Atlassian y AWS) se configuran como dice [`musubi-api/docs/mcp.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/mcp.md).
 
 > En GitHub gratuito, la protección de rama (y los rulesets) solo se aplica en **repos públicos**. Para un repo **privado** se necesita GitHub Pro (cuenta personal) o GitHub Team (organización).
 
