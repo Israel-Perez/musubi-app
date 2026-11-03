@@ -124,3 +124,49 @@ Musubi is a marketplace for students of Universidad Tecnologica de Tula-Tepeji. 
 - **Uso local:** `android/key.properties` (ignorado por Git) apunta a ella.
 - **Respaldo:** la carpeta completa debe copiarse a un lugar seguro (Drive personal y gestor de contraseñas). Si se pierde, Google puede cambiarla, pero el trámite tarda días.
 - **Huella SHA-256 del certificado de subida:** `98:BB:B0:9E:CD:93:5E:6E:6A:06:94:40:68:2C:9E:B5:E9:64:7B:7D:42:4A:30:10:92:3B:95:73:CF:CD:61:93`.
+
+## Publicar desde GitHub Actions (`release-play.yml`, L-16a)
+
+**Qué hace:** se lanza a mano y solo desde `main`.
+1. Revisa que la etiqueta `app-v<version>` no exista.
+2. Corre `flutter analyze` y `flutter test`.
+3. Compila el AAB firmado con la llave de subida.
+4. Lo sube a la pista elegida con la API de Google Play.
+5. Crea la etiqueta.
+
+Las notas de la versión salen de `whatsnew/whatsnew-es-419` (máximo 500 caracteres): cámbialas antes de cada publicación.
+
+### Configuración (una sola vez)
+
+1. **Google Cloud** (con la cuenta del desarrollador, `desarrollo@musubiapp.com.mx`):
+   - crea un proyecto (por ejemplo, `musubi-play`);
+   - en **APIs y servicios → Biblioteca**, activa **Google Play Android Developer API**;
+   - en **IAM → Cuentas de servicio**, crea `github-release` **sin roles**;
+   - en **Claves → Agregar clave → JSON**, descarga el archivo. Es un secreto: no lo subas al repo ni lo compartas.
+2. **Play Console → Usuarios y permisos → Invitar a usuarios:**
+   - escribe el correo de la cuenta de servicio (`github-release@<proyecto>.iam.gserviceaccount.com`);
+   - en **Permisos de la app → Musubi**, marca "Lanzar a producción, excluir dispositivos y usar Play App Signing" y "Lanzar versiones en pistas de prueba".
+   - El permiso puede tardar unos minutos en aplicarse.
+3. **GitHub → musubi-app → Settings → Environments → `google-play`:**
+   - rama permitida: `main`;
+   - secretos:
+
+     | Secreto | Valor |
+     |---|---|
+     | `PLAY_UPLOAD_KEYSTORE_B64` | `musubi-upload.jks` en base64 (`[Convert]::ToBase64String([IO.File]::ReadAllBytes("$env:USERPROFILE\.musubi-play\musubi-upload.jks"))`) |
+     | `PLAY_UPLOAD_KEYSTORE_PASSWORD` | La de `contrasena-llave-subida.txt` |
+     | `PLAY_UPLOAD_KEY_ALIAS` | `upload` |
+     | `PLAY_UPLOAD_KEY_PASSWORD` | La misma de `contrasena-llave-subida.txt` (PKCS12 usa una sola) |
+     | `PLAY_SERVICE_ACCOUNT_JSON` | El contenido completo del JSON de la cuenta de servicio |
+
+### Publicar una versión
+
+1. Sube `version` en `pubspec.yaml`. El `+N` es el versionCode de Play y debe ser mayor que el último subido.
+2. Agrega su fila en `docs/versionado.md` y actualiza `whatsnew/whatsnew-es-419`.
+3. Fusiona a `main`. Si la versión depende de cambios en la API, **despliega antes la API** (`infra-up` en musubi-api).
+4. **Actions → release-play → Run workflow:**
+   - pista `alpha` (prueba cerrada), `internal` o `production`;
+   - estado `completed`.
+5. Google revisa la versión (de minutos a horas) y la publica en esa pista.
+
+**Pistas:** `alpha` es el id de la prueba cerrada predeterminada de Play Console. Si creaste otra con un nombre propio, su id es ese nombre.

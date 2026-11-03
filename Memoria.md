@@ -8,6 +8,19 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): spec, plan y tareas en `specs/m02-profile/HU-04-editar-perfil/` (🚧 Borrador). Siguiente: T1 (dominio y repositorio), en paralelo al back.
 - **Guía del equipo** (SCRUM-83, PR #15): `docs/guia-equipo.md` y los agentes de OpenCode.
 
+## T19 — Publicar en Google Play desde GitHub Actions (02-Nov-2026, SCRUM-89)
+
+**Qué se hizo**
+- `.github/workflows/release-play.yml`:
+  - se lanza a mano y solo desde `main`, en el entorno `google-play`;
+  - pasos: pruebas → AAB firmado → `r0adkll/upload-google-play` v1.1.5 (fijado por SHA) → etiqueta `app-vX.Y.Z+N`.
+- Notas de la versión en `docs/play/whatsnew/whatsnew-es-419`. La guía de configuración está en `docs/play/README.md`.
+
+**Decisiones (con su porqué)**
+- **`r0adkll/upload-google-play`:** MIT, la más usada, mantenida y sin dependencias que instalar. Hacerlo a mano con la API (`edits`) es más código, sin beneficio.
+- **Entorno `google-play` con solo `main` permitido:** la llave de subida y la cuenta de servicio no quedan al alcance de una rama cualquiera.
+- **La etiqueta ya existente frena la publicación:** dos versiones no pueden tener el mismo versionCode.
+
 ## T18 — HU-46 Eliminar mi cuenta desde la app (30-Oct-2026, SCRUM-32)
 
 **Qué se hizo**
