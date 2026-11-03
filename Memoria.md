@@ -19,6 +19,17 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 **Errores a evitar**
 - **No trates un 4xx de la API como falla de red:** antes, una foto rechazada se reintentaba y terminaba en "Revisa tu conexión".
+## T21 — Caché de la app (03-Nov-2026, SCRUM-91, 02-06)
+
+**Qué se hizo**
+- `EtagCacheInterceptor` en `dioProvider`: manda el `If-None-Match` de la copia y, con un `304` de la API, entrega la copia como `200`. La llave es identidad + URL, con un tope de 64 copias.
+
+**Decisiones (con su porqué)**
+- **Sin paquete de caché HTTP:** un interceptor propio basta y queda dentro del stack.
+- **La identidad va en la llave:** una cuenta nunca recibe la copia de otra.
+
+**Errores a evitar**
+- **Un `304` es error para Dio** (`validateStatus` 2xx): el interceptor lo acepta solo cuando manda un `If-None-Match`.
 
 ## T20 — HU-04 Editar mi perfil (03-Nov-2026, SCRUM-22)
 
