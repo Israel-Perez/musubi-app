@@ -35,7 +35,7 @@ Quien tiene sesión consulta y edita su perfil y decide qué ve su campus. Jira 
    - "Correo institucional · Verificado" abre su hoja;
    - en "Privacidad y seguridad": "Cambiar contraseña" y "Privacidad · Quién te ve";
    - en "Ayuda": aviso de privacidad y términos;
-   - "Cerrar sesión" y, al pie, "Musubi 0.3.0", la versión real de la app.
+   - "Cerrar sesión" y, al pie, "Musubi 0.4.0", la versión real de la app (`app_version.dart`).
 3. **"Datos personales"** (hoja alta):
    - **Foto:** la foto de perfil con "Cambiar foto", que ofrece "Tomar foto", "Elegir de la galería" y "Quitar foto". Mientras se sube, el avatar muestra el avance; al terminar avisa "Actualizamos tu foto".
    - **Nombre:** deshabilitado, con "Viene de tu correo institucional verificado".
@@ -53,7 +53,7 @@ Quien tiene sesión consulta y edita su perfil y decide qué ve su campus. Jira 
    - al guardar, reemplaza la sesión sin volver a pedir el login y avisa "Actualizamos tu contraseña".
 6. **`Privacidad`:**
    - el resumen "Tu perfil solo lo ve tu campus · No vendemos tus datos";
-   - "Quién te ve" con tres interruptores (carrera, ventas y en línea):
+   - "Quién te ve" con tres interruptores (carrera, ventas y en línea; "en línea" empieza apagado, como en la maqueta):
      - cada uno se guarda al tocarlo y avisa, por ejemplo "Tu carrera se ve en tu perfil" u "Ocultamos tu carrera de tu perfil";
      - si falla, regresa a su estado anterior y lo explica;
    - en "Tus datos", el aviso de privacidad.
@@ -72,9 +72,10 @@ Quien tiene sesión consulta y edita su perfil y decide qué ve su campus. Jira 
     - pantallas: `profile_screen.dart`, `settings_screen.dart` (sale de `profile_screen.dart`) y `privacy_screen.dart`;
     - hojas: `personal_data_sheet.dart` (con las listas de carrera y periodo), `email_sheet.dart`, `change_password_sheet.dart` y `profile_photo_sheet.dart`.
 - **`core/widgets/avatars.dart`:** `ProfileAvatar` muestra la foto de red y cae en las iniciales si no hay o si falla.
-- **Cambiar contraseña** vive en `features/auth` (`AuthRepository.changePassword`). `SessionController.replaceTokens` guarda la sesión nueva.
+- **Cambiar contraseña:** `AccountRepository.changePassword` (cliente con sesión, en `features/auth`). `SessionController.signIn` guarda la sesión nueva sin pedir el login.
+- **Piezas nuevas de la maqueta** (`core/widgets/musubi_panel.dart`): `showMusubiPanel` + `MusubiPanel` (`UI.sheet`: título, X y acciones), `MusubiOptions` (`UI.options`), `PanelCard` (`.s-card`) y `PanelNote` (`.sheet-note`). También `MusubiTextField(sheet: true)` (`.s-field`).
 - **Ruta nueva:** `/ajustes/privacidad`, con sesión.
-- **Íconos nuevos de la maqueta** con el generador de 02-04 (cámara y candado, si faltan).
+- **Íconos:** `bellOff` (aviso al apagar un interruptor). Cámara, candado y los demás ya existían.
 - **Lo que no funciona todavía no se muestra.** Se agrega con su HU, como "Populares" en HU-06. Pendientes:
   - `NOTE (HU-14)`: "Mis solicitudes";
   - `NOTE (HU-53)`: "Favoritos";
@@ -117,7 +118,8 @@ Quien tiene sesión consulta y edita su perfil y decide qué ve su campus. Jira 
   - actual incorrecta;
   - éxito: reemplaza los tokens y avisa.
 - `test/features/profile/profile_models_test.dart`: `termLabel`, periodos por carrera y línea del perfil.
-- `tool/screenshots_test.dart`: escenas `perfil`, `ajustes`, `datos-personales`, `correo`, `cambiar-contrasena` y `privacidad`.
+- `tool/screenshots_test.dart`: escenas `perfil`, `ajustes`, `datos-personales`, `correo`, `cambiar-contrasena` y `privacidad`, con el perfil de la maqueta (4.9, 12 ventas y 8 compras).
+- `test/versioning_test.dart` (+1): "Musubi 0.4.0" de `Ajustes` es la versión de `pubspec.yaml`.
 
 ## Criterios
 - `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 100 % · critic PASS.
@@ -139,10 +141,13 @@ Quien tiene sesión consulta y edita su perfil y decide qué ve su campus. Jira 
   - cuenta para cobrar (HU-55).
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 27-Oct-2026
+- **Fecha:** 27-Oct-2026 (spec) · 03-Nov-2026 (implementación)
 - **Detalle:**
   - alcance acordado con el usuario el 27-Oct-2026;
+  - evidencia (03-Nov-2026): format OK · analyze 0 · 253 pruebas · critic PASS. Capturas lado a lado con la maqueta en claro y oscuro: `Perfil`, `Ajustes`, "Datos personales", "Correo institucional", "Cambiar contraseña" y `Privacidad`;
+  - desviaciones aceptadas: el ojo para ver la contraseña (agregado de HU-01) y el bloque de la foto en "Datos personales";
+  - falta la prueba en el Galaxy A54 contra AWS, después de desplegar la API `0.4.0-alpha.1`;
   - desviaciones de la maqueta documentadas: selectores en lugar de campos de texto, foto de perfil y lo oculto hasta su HU;
   - sin paquetes nuevos.

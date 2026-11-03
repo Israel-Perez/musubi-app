@@ -33,6 +33,7 @@ class MusubiTextField extends StatefulWidget {
     this.prefixIcon,
     this.suffix,
     this.footer,
+    this.sheet = false,
   });
 
   final String label;
@@ -68,6 +69,10 @@ class MusubiTextField extends StatefulWidget {
 
   /// Lo que va bajo la caja: campus detectado, reglas de la contrasena.
   final Widget? footer;
+
+  /// Dentro de una hoja con titulo (`.s-field`): la etiqueta hereda la linea
+  /// de 22 del cuerpo de la hoja y la separacion es de 6.
+  final bool sheet;
 
   @override
   State<MusubiTextField> createState() => _MusubiTextFieldState();
@@ -175,17 +180,21 @@ class _MusubiTextFieldState extends State<MusubiTextField> {
       ),
     );
 
+    final label = Text(
+      widget.label,
+      style: MusubiType.label.copyWith(color: c.textPrimary),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: MusubiSizes.space2,
+      spacing: widget.sheet ? 6 : MusubiSizes.space2,
       children: [
-        CssLineBox(
-          fontSize: 13,
-          child: Text(
-            widget.label,
-            style: MusubiType.label.copyWith(color: c.textPrimary),
-          ),
-        ),
+        if (widget.sheet)
+          SizedBox(
+            height: 22,
+            child: Align(alignment: Alignment.centerLeft, child: label),
+          )
+        else
+          CssLineBox(fontSize: 13, child: label),
         Shake(
           trigger: error == null ? null : widget.shakeTrigger ?? error,
           pattern: ShakePattern.field,

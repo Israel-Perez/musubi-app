@@ -78,14 +78,16 @@ Qué datos se recopilan:
 | Información personal → Nombre | Sí | Funcionalidad de la app, administración de la cuenta | No |
 | Información personal → Dirección de correo | Sí | Administración de la cuenta (verificación y recuperación) | No |
 | Información personal → IDs de usuario | Sí (ID interno de la cuenta) | Administración de la cuenta | No |
-| Fotos y videos → Fotos | Sí (fotos de los productos publicados) | Funcionalidad de la app | Sí (solo quien publica) |
+| Fotos y videos → Fotos | Sí (fotos de los productos publicados y foto de perfil, desde `0.4.0`) | Funcionalidad de la app | Sí (solo quien publica o quien sube su foto) |
+| Información personal → Otra información | Sí (carrera y cuatrimestre del perfil, desde `0.4.0`) | Funcionalidad de la app | Sí |
 | Actividad en la app → Otro contenido generado por el usuario | Sí (publicaciones: título, descripción, precio) | Funcionalidad de la app | Sí |
 | Ubicación, contactos, mensajes, información financiera, salud, archivos, calendario, audio | No | — | — |
 | Información y rendimiento de la app (fallos) | No (sin Crashlytics en esta versión) | — | — |
 
 Notas:
 - La API guarda el *user agent* de cada sesión para que el usuario la reconozca. No es un identificador del dispositivo.
-- **Cuando lleguen** chat (HU-20), avisos push (HU-31), Crashlytics o la foto de perfil (HU-04), **hay que actualizar este formulario** antes de subir esa versión.
+- **`0.4.0` (HU-04) agrega la foto de perfil y la carrera:** actualiza el formulario en Play Console antes de enviar esa versión.
+- **Cuando lleguen** chat (HU-20), avisos push (HU-31) o Crashlytics, **hay que actualizar este formulario** antes de subir esa versión.
 
 ### Acceso a la app: texto para Play (en inglés)
 

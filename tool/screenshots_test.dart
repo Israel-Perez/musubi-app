@@ -34,12 +34,15 @@ import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dar
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/profile/domain/profile_models.dart';
+import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
 import '../test/helpers/fake_auth_repository.dart';
 import '../test/helpers/fake_catalog_repository.dart';
 import '../test/helpers/fake_listings_repository.dart';
+import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_session_api.dart';
 import '../test/helpers/fake_status_repository.dart';
 import '../test/helpers/in_memory_token_store.dart';
@@ -69,6 +72,33 @@ final _anaUser = AuthUser(
   email: _ana.email,
   emailVerified: true,
   campus: uttt,
+);
+
+/// El perfil de la maqueta (`Perfil`): "Ing. en Sistemas · 6º semestre",
+/// 4.9 con 27 calificaciones, 12 ventas y 8 compras.
+final _anaProfile = MyProfile(
+  id: '6716a0000000000000000001',
+  fullName: _ana.fullName,
+  email: _ana.email,
+  emailVerifiedAt: DateTime.utc(2025, 1, 15),
+  campusShortName: 'UTTT',
+  campusName: 'Universidad Tecnológica de Tula-Tepeji',
+  academicTerm: const AcademicTerm(unit: 'semestre', count: 12),
+  career: const Career(
+    slug: 'ing-sistemas',
+    name: 'Ingeniería en Sistemas',
+    shortName: 'Ing. en Sistemas',
+    firstTerm: 1,
+    lastTerm: 12,
+    level: CareerLevel.engineering,
+  ),
+  term: 6,
+  stats: const ProfileStats(
+    ratingAvg: 4.9,
+    ratingCount: 27,
+    sales: 12,
+    purchases: 8,
+  ),
 );
 
 /// Fotos reales para `Vender-1` (la de la maqueta, copiada a archivos).
@@ -128,6 +158,9 @@ class _Shot {
               ),
             ),
             photoPickerProvider.overrideWithValue(_FilePicker()),
+            profileRepositoryProvider.overrideWithValue(
+              FakeProfileRepository(initial: _anaProfile),
+            ),
             statusRepositoryProvider.overrideWithValue(
               FakeStatusRepository([const ApiOnline(version: 'v1')]),
             ),
@@ -329,6 +362,33 @@ final Map<String, (bool, _Scene)> _scenes = {
   'perfil': (true, (s) => s.tap(find.bySemanticsLabel('Perfil'))),
   'ajustes': (true, (s) => s.go(AppRoutes.settings)),
   'privacidad': (true, (s) => s.go(AppRoutes.accountPrivacy)),
+  'datos-personales': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.settings);
+      await s.tap(find.byKey(const Key('settings-account')));
+    },
+  ),
+  'correo': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.settings);
+      await s.tap(find.byKey(const Key('settings-email')));
+    },
+  ),
+  'cambiar-contrasena': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.settings);
+      await s.tap(find.byKey(const Key('settings-password')));
+      await s.tester.enterText(
+        find.byKey(const Key('change-password-current')),
+        'musubi2025',
+      );
+      FocusManager.instance.primaryFocus?.unfocus();
+      await s.settle();
+    },
+  ),
   'publicar': (true, (s) => s.tap(find.text('Publicar'))),
   'vender-1': (true, (s) => _sellTo(s, 1)),
   'vender-2': (true, (s) => _sellTo(s, 2)),

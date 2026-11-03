@@ -135,6 +135,9 @@ class MusubiColors extends ThemeExtension<MusubiColors> {
   /// Icono de un control deshabilitado ("Quitar uno" con 1 pieza).
   Color get disabledIcon => _pick(0xFFB5B5BA, 0xFF6E6E76);
 
+  /// Flecha de las filas de `Ajustes` y `Privacidad` (`stroke="#9A9AA0"`).
+  Color get chevron => _pick(0xFF9A9AA0, 0xFF7C7C84);
+
   // Aviso breve (snack).
 
   Color get snack => _pick(0xFF1C1C1E, 0xFFF2F2F4);

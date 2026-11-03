@@ -21,6 +21,7 @@ import 'package:musubi_app/features/listings/presentation/sell_price_screen.dart
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
+import 'package:musubi_app/features/profile/presentation/settings_screen.dart';
 
 /// Rutas de la app (02-01). Cada modulo reemplaza su seccion al implementar su
 /// HU; los nombres en espanol coinciden con la maqueta.

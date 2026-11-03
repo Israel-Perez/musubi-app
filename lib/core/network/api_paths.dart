@@ -60,4 +60,23 @@ abstract final class ApiPaths {
   /// `GET /api/v1/products/price-range` — fila "M-03"
   /// (spec `musubi-api:HU-06`).
   static const priceRange = '/api/v1/products/price-range';
+
+  /// `POST /api/v1/auth/password/change` — fila "M-01"
+  /// (spec `musubi-api:HU-04`). Con sesion; devuelve una sesion nueva.
+  static const authPasswordChange = '/api/v1/auth/password/change';
+
+  /// `GET` y `PUT /api/v1/profiles/me` — filas "M-02"
+  /// (spec `musubi-api:HU-04`).
+  static const myProfile = '/api/v1/profiles/me';
+
+  /// `PUT /api/v1/profiles/me/visibility` — fila "M-02"
+  /// (spec `musubi-api:HU-04`).
+  static const myProfileVisibility = '/api/v1/profiles/me/visibility';
+
+  /// `PUT` y `DELETE /api/v1/profiles/me/photo` — filas "M-02"
+  /// (spec `musubi-api:HU-04`).
+  static const myProfilePhoto = '/api/v1/profiles/me/photo';
+
+  /// `GET /api/v1/careers` — fila "M-02" (spec `musubi-api:HU-04`).
+  static const careers = '/api/v1/careers';
 }

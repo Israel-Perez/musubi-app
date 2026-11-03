@@ -34,6 +34,14 @@ abstract final class MusubiIcons {
     IconPath('M10.3 21a1.94 1.94 0 0 0 3.4 0'),
   ]);
 
+  /// `bell-off` (aviso al apagar un interruptor de `Privacidad`).
+  static const bellOff = MusubiIconData([
+    IconPath('M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5'),
+    IconPath('M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7'),
+    IconPath('M10.3 21a1.94 1.94 0 0 0 3.4 0'),
+    IconPath('m2 2 20 20'),
+  ]);
+
   /// `book-open`.
   static const bookOpen = MusubiIconData([
     IconPath('M12 7v14'),

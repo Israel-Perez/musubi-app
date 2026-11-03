@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
+import 'package:musubi_app/core/widgets/musubi_button.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
 
@@ -47,6 +48,73 @@ class InitialsAvatar extends StatelessWidget {
           color: ink,
         ),
       ),
+    );
+  }
+}
+
+/// Avatar de una persona (HU-04): su foto de perfil o, si no tiene o no
+/// carga, sus iniciales. Con [uploading] muestra un velo con el arco que
+/// gira mientras sube la foto nueva.
+class ProfileAvatar extends StatelessWidget {
+  const new({
+    required this.initials,
+    required this.size,
+    super.key,
+    this.photoUrl,
+    this.fontSize,
+    this.uploading = false,
+  });
+
+  final String initials;
+  final double size;
+  final String? photoUrl;
+  final double? fontSize;
+
+  /// Mientras se sube una foto nueva: velo con el arco que gira.
+  final bool uploading;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = InitialsAvatar(
+      initials: initials,
+      size: size,
+      fontSize: fontSize,
+    );
+    final url = photoUrl;
+    final avatar = url == null
+        ? fallback
+        : ClipOval(
+            child: SizedBox.square(
+              dimension: size,
+              child: Image.network(
+                url,
+                key: ValueKey(url),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => fallback,
+                frameBuilder: (_, child, frame, sync) =>
+                    sync || frame != null ? child : fallback,
+              ),
+            ),
+          );
+    if (!uploading) return avatar;
+    return Stack(
+      children: [
+        avatar,
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: Color(0x8C1C1C1E),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: MusubiSpinner(
+                size: size * 0.34,
+                color: const Color(0xFFFFFFFF),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

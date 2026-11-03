@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/features/auth/domain/account_repository.dart';
 
-/// [AccountRepository] sobre `/api/v1/account` (fila M-01 de
+/// [AccountRepository] sobre `/api/v1/account` y
+/// `/api/v1/auth/password/change` (filas M-01 de
 /// `musubi-api/docs/endpoints.md`). Usa el cliente con sesion.
 class HttpAccountRepository implements AccountRepository {
   new(this._dio);
@@ -19,6 +21,22 @@ class HttpAccountRepository implements AccountRepository {
       );
     } on DioException catch (error) {
       // Se traduce (no se traga): la pantalla decide por el code.
+      throw ApiFailure.fromDio(error);
+    }
+  }
+
+  @override
+  Future<SessionTokens> changePassword({
+    required String current,
+    required String next,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiPaths.authPasswordChange,
+        data: {'currentPassword': current, 'newPassword': next},
+      );
+      return SessionTokens.fromApi(response.data!);
+    } on DioException catch (error) {
       throw ApiFailure.fromDio(error);
     }
   }
