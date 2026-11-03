@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
@@ -71,5 +72,30 @@ void main() {
       ..save()
       ..start();
     expect(container.read(sellDraftProvider).title, 'Bata de laboratorio');
+  });
+
+  test('una foto rechazada por la moderacion detiene la publicacion', () async {
+    final listings = FakeListingsRepository()..rejectedPaths.add('mala.jpg');
+    final container = ProviderContainer.test(
+      overrides: [listingsRepositoryProvider.overrideWithValue(listings)],
+    );
+    final draft = container.read(sellDraftProvider.notifier)
+      ..addPhotos(['buena.jpg', 'mala.jpg']);
+    await Future<void>.delayed(Duration.zero);
+
+    final photos = container.read(sellDraftProvider).photos;
+    expect(photos.map((p) => p.upload), [
+      PhotoUpload.done,
+      PhotoUpload.rejected,
+    ]);
+    await expectLater(
+      draft.publish(),
+      throwsA(
+        isA<ApiFailure>()
+            .having((f) => f.code, 'code', 'moderation.image_rejected')
+            .having((f) => f.message, 'message', startsWith('Quita la foto')),
+      ),
+    );
+    expect(listings.published, isEmpty);
   });
 }

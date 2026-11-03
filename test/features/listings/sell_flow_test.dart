@@ -247,6 +247,28 @@ void main() {
     expect(h.listings.uploaded, ['fotos/camara-1.jpg']);
   });
 
+  testWidgets(
+    'foto rechazada por la moderacion: no se reintenta y explica por que',
+    (tester) async {
+      final h = _Harness(tester);
+      h.listings.rejectedPaths.add('fotos/camara-1.jpg');
+      await h.open();
+      await h.startSelling();
+
+      await h.tapKey('sell-camera');
+
+      expect(find.bySemanticsLabel('Reintentar subir la foto 1'), findsNothing);
+      final rejected = find.bySemanticsLabel(RegExp('Foto 1 rechazada'));
+      expect(rejected, findsOneWidget);
+      await h.tap(rejected);
+      expect(
+        find.text('Esta foto no cumple las reglas de la comunidad. Usa otra.'),
+        findsOneWidget,
+      );
+      expect(h.listings.uploaded, isEmpty);
+    },
+  );
+
   testWidgets('Guardar conserva el borrador para despues', (tester) async {
     final h = _Harness(tester);
     await h.open();

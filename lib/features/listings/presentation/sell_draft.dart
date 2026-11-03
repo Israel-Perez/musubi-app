@@ -8,7 +8,9 @@ import 'package:musubi_app/features/listings/presentation/listings_providers.dar
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 
 /// Estado de la subida de una foto del borrador.
-enum PhotoUpload { uploading, done, failed }
+/// Estado de la subida de una foto. [rejected]: la API no la acepta
+/// (moderacion o formato, 02-07); reintentar no sirve, hay que quitarla.
+enum PhotoUpload { uploading, done, failed, rejected }
 
 /// Foto del borrador: el archivo del telefono y, al subirse, su llave.
 @immutable
@@ -18,6 +20,7 @@ class DraftPhoto {
     required this.path,
     this.key,
     this.upload = PhotoUpload.uploading,
+    this.error,
   });
 
   /// Id local (estable al reordenar).
@@ -26,12 +29,17 @@ class DraftPhoto {
   final String? key;
   final PhotoUpload upload;
 
-  DraftPhoto copyWith({String? key, PhotoUpload? upload}) => DraftPhoto(
-    id: id,
-    path: path,
-    key: key ?? this.key,
-    upload: upload ?? this.upload,
-  );
+  /// Por que la API la rechazo (mensaje en espanol de la API).
+  final String? error;
+
+  DraftPhoto copyWith({String? key, PhotoUpload? upload, String? error}) =>
+      DraftPhoto(
+        id: id,
+        path: path,
+        key: key ?? this.key,
+        upload: upload ?? this.upload,
+        error: error ?? this.error,
+      );
 }
 
 /// Borrador de "Vender un producto" (maqueta `Vender-1…4`).
@@ -189,8 +197,18 @@ class SellDraftNotifier extends Notifier<SellDraft> {
     quantity: (state.quantity + delta).clamp(1, SellDraft.maxQuantity),
   );
 
-  /// Espera las fotos, reintenta las que fallaron y publica.
+  /// Espera las fotos, reintenta las que fallaron y publica. Una foto
+  /// rechazada por la API detiene la publicacion con su motivo.
   Future<ProductSummary> publish() async {
+    final rejected = state.photos
+        .where((p) => p.upload == PhotoUpload.rejected)
+        .firstOrNull;
+    if (rejected != null) {
+      throw ApiFailure(
+        code: 'moderation.image_rejected',
+        message: 'Quita la foto marcada. ${rejected.error ?? ''}'.trim(),
+      );
+    }
     for (final photo in state.photos) {
       if (photo.upload == PhotoUpload.failed) _upload(photo);
     }
@@ -231,10 +249,23 @@ class SellDraftNotifier extends Notifier<SellDraft> {
             photo.id,
             (p) => p.copyWith(key: uploaded.key, upload: PhotoUpload.done),
           ),
-          onError: (Object _) =>
-              _set(photo.id, (p) => p.copyWith(upload: PhotoUpload.failed)),
+          onError: (Object error) => _set(
+            photo.id,
+            (p) => _isRejection(error)
+                ? p.copyWith(
+                    upload: PhotoUpload.rejected,
+                    error: (error as ApiFailure).message,
+                  )
+                : p.copyWith(upload: PhotoUpload.failed),
+          ),
         );
   }
+
+  /// La API no acepta la foto (moderacion o formato): reintentar no sirve.
+  static bool _isRejection(Object error) =>
+      error is ApiFailure &&
+      (error.code.startsWith('moderation.image') ||
+          error.code.startsWith('listings.photo_'));
 
   void _set(int id, DraftPhoto Function(DraftPhoto) change) {
     if (!ref.mounted) return;
