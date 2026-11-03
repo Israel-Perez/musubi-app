@@ -21,9 +21,10 @@
 
 ## T4 — Despliegue desde GitHub
 - **Qué:** `release-play.yml` con la cuenta de servicio y los secretos de firma.
-- **Estado:** 🚧 En curso (SCRUM-89).
+- **Estado:** ✅ Hecho (03-Nov-2026, SCRUM-89).
   - El workflow está listo (actionlint OK) y las notas viven en `docs/play/whatsnew/`.
-  - Falta la cuenta de servicio, los secretos del entorno `google-play` y la primera corrida (`0.3.0+4` a la prueba cerrada).
+  - Cuenta de servicio con permisos en Play Console y los 5 secretos en el entorno `google-play`.
+  - Primera corrida: `0.3.0+4` subida a la prueba cerrada (`alpha`). La etiqueta `app-v0.3.0+4` se creó a mano porque al runner le faltaba la identidad de git; ya está corregido.
 
 ## T5 — Producción
 - **Qué:** cuestionario de acceso, publicación y verificación de la descarga.
