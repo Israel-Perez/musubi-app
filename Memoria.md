@@ -21,6 +21,13 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Entorno `google-play` con solo `main` permitido:** la llave de subida y la cuenta de servicio no quedan al alcance de una rama cualquiera.
 - **La etiqueta ya existente frena la publicación:** dos versiones no pueden tener el mismo versionCode.
 
+**Primera corrida (03-Nov-2026):** `0.3.0+4` subió a la prueba cerrada (`alpha`). Run 41590675848.
+
+**Errores a evitar**
+- **"The caller does not have permission":** la cuenta de servicio necesita permisos de la app en Play Console, en Gestionar cuenta → Usuarios y permisos. Los roles de Google Cloud no bastan.
+- **`git tag -a` en el runner:** sin `user.name`/`user.email` falla con exit 128 (la subida ya ocurrió). El workflow ahora configura `github-actions[bot]`; la etiqueta `app-v0.3.0+4` se creó a mano.
+- **Aviso de la action:** `track` está obsoleto en favor de `tracks`. Sigue funcionando en v1.1.5; hay que migrarlo al subir de versión.
+
 ## T18 — HU-46 Eliminar mi cuenta desde la app (30-Oct-2026, SCRUM-32)
 
 **Qué se hizo**
