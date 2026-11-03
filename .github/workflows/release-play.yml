@@ -111,7 +111,10 @@ jobs:
         env:
           TAG: ${{ steps.version.outputs.tag }}
           TRACK: ${{ inputs.track }}
+        # La etiqueta anotada necesita autor: el runner no trae identidad de git.
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Google Play ($TRACK)"
           git push origin "$TAG"
           echo "### $TAG en la pista $TRACK de Google Play" >> "$GITHUB_STEP_SUMMARY"

@@ -66,7 +66,7 @@ La cuenta de desarrollador es **personal** (un equipo estudiantil no tiene D-U-N
 - [ ] La ficha, la clasificación, Seguridad de los datos, el público, los anuncios y el acceso para revisores están completos (sin avisos en Play Console).
 - [ ] La prueba cerrada tiene 12 o más testers inscritos durante 14 días seguidos.
 - [ ] La app está publicada en producción y se descarga desde Google Play antes del 02-Dic-2026.
-- [ ] `release-play.yml` sube una versión desde GitHub (L-16a).
+- [x] `release-play.yml` sube una versión desde GitHub (L-16a): `0.3.0+4`, 03-Nov-2026.
 
 ## Límites
 - **Cuenta personal:** el nombre legal del titular lo verifica Google; en la ficha se muestra "Musubi" como desarrollador.
