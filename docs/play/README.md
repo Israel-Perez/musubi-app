@@ -138,7 +138,7 @@ Las notas de la versión salen de `whatsnew/whatsnew-es-419` (máximo 500 caract
 
 ### Configuración (una sola vez)
 
-1. **Google Cloud** (con la cuenta del desarrollador, `desarrollo@musubiapp.com.mx`):
+1. **Google Cloud** (con la cuenta del desarrollador: `desarrollomusubi@gmail.com` en Google Cloud y Play Console; `desarrollo@musubiapp.com.mx` es el correo del dominio que llega al mismo buzón del equipo):
    - crea un proyecto (por ejemplo, `musubi-play`);
    - en **APIs y servicios → Biblioteca**, activa **Google Play Android Developer API**;
    - en **IAM → Cuentas de servicio**, crea `github-release` **sin roles**;
@@ -158,6 +158,8 @@ Las notas de la versión salen de `whatsnew/whatsnew-es-419` (máximo 500 caract
      | `PLAY_UPLOAD_KEY_ALIAS` | `upload` |
      | `PLAY_UPLOAD_KEY_PASSWORD` | La misma de `contrasena-llave-subida.txt` (PKCS12 usa una sola) |
      | `PLAY_SERVICE_ACCOUNT_JSON` | El contenido completo del JSON de la cuenta de servicio |
+
+**Cuenta de servicio creada:** `github-release@sodium-cat-513606-s7.iam.gserviceaccount.com` (proyecto `sodium-cat-513606-s7`). Su llave JSON solo vive en el secreto `PLAY_SERVICE_ACCOUNT_JSON`. Si una llave se expone (por ejemplo, pegada en un chat), bórrala en Google Cloud → Cuentas de servicio → Claves y crea otra.
 
 ### Publicar una versión
 

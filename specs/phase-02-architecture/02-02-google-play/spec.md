@@ -5,7 +5,7 @@
 ## Contexto
 La evaluación del 02-Dic-2026 empieza descargando la app desde Google Play (L-01) y pide desplegar desde GitHub (L-16a).
 
-La cuenta de desarrollador es **personal** (un equipo estudiantil no tiene D-U-N-S) y se registró con `desarrollo@musubiapp.com.mx`. Por ser personal y nueva, Google exige una **prueba cerrada con al menos 12 testers durante 14 días seguidos** antes de dar acceso a producción.
+La cuenta de desarrollador es **personal** (un equipo estudiantil no tiene D-U-N-S) y se registró con `desarrollomusubi@gmail.com` (Google Cloud y Play Console). `desarrollo@musubiapp.com.mx` es el correo del dominio del equipo. Por ser personal y nueva, Google exige una **prueba cerrada con al menos 12 testers durante 14 días seguidos** antes de dar acceso a producción.
 
 **Depende de:**
 - `02-01`, `02-03` (marca e ícono);
