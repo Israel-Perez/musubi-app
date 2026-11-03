@@ -1,0 +1,121 @@
+name: release-play
+
+# 02-02 T4 (L-16a): publica la app en Google Play desde GitHub. Se lanza a mano y solo desde main:
+# pruebas -> AAB firmado con la llave de subida (secretos del entorno google-play) -> API de Google
+# Play -> etiqueta app-vX.Y.Z+N. Guia y secretos: docs/play/README.md. Actions fijadas por SHA (00-04).
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: "Pista de Google Play (alpha = prueba cerrada)"
+        type: choice
+        options: [internal, alpha, production]
+        default: alpha
+      status:
+        description: "completed publica al terminar la revision; draft la deja en borrador en Play Console"
+        type: choice
+        options: [completed, draft]
+        default: completed
+
+permissions:
+  contents: write # solo para la etiqueta app-v*
+
+concurrency:
+  group: release-play
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.47.7"
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: google-play
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Version (lineamiento 11)
+        id: version
+        run: |
+          version=$(sed -n 's/^version: *//p' pubspec.yaml | tr -d '[:space:]')
+          tag="app-v$version"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::error::$tag ya existe: sube version en pubspec.yaml (el +N es el versionCode de Play) y su fila en docs/versionado.md."
+            exit 1
+          fi
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Pruebas
+        run: |
+          flutter analyze --fatal-infos --fatal-warnings
+          flutter test
+
+      # La URL de la API es publica (va en el APK); config/prod.example.json ya la trae.
+      - name: Configuracion de produccion
+        run: cp config/prod.example.json config/prod.json
+
+      # La llave solo existe en el runner y en el entorno google-play; nunca se imprime.
+      - name: Llave de subida
+        env:
+          KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.PLAY_UPLOAD_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.PLAY_UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.PLAY_UPLOAD_KEY_PASSWORD }}
+        run: |
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          {
+            echo "storeFile=$RUNNER_TEMP/upload.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
+
+      - name: AAB ${{ steps.version.outputs.version }}
+        run: flutter build appbundle --release --dart-define-from-file=config/prod.json
+
+      - name: Firmado con la llave de subida
+        run: keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | grep -q "CN=Musubi"
+
+      - uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.musubi.app
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          releaseName: ${{ steps.version.outputs.version }}
+          track: ${{ inputs.track }}
+          status: ${{ inputs.status }}
+          whatsNewDirectory: docs/play/whatsnew
+
+      - name: Etiqueta ${{ steps.version.outputs.tag }}
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          TRACK: ${{ inputs.track }}
+        run: |
+          git tag -a "$TAG" -m "Google Play ($TRACK)"
+          git push origin "$TAG"
+          echo "### $TAG en la pista $TRACK de Google Play" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Limpiar la llave
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" android/key.properties
