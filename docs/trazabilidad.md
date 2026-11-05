@@ -65,11 +65,11 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 | HU-51 | SCRUM-70 | Por asignar | M-04 | Comparar opciones y pedir aviso de disponibilidad | `specs/m04-marketplace/HU-51-comparar-avisame/` | [musubi-api:HU-51](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m04-marketplace/HU-51-comparar-avisame) | — | Spec en borrador |
 | HU-52 | SCRUM-74 | Por asignar | M-08 | Apartar un producto y verificar la entrega con QR o código | `specs/m08-orders/HU-52-apartar-producto/` | [musubi-api:HU-52](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m08-orders/HU-52-apartar-producto) | — | Spec en borrador |
 | HU-53 | SCRUM-68 | Por asignar | M-04 | Guardar productos en favoritos | `specs/m04-marketplace/HU-53-favoritos/` | [musubi-api:HU-53](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m04-marketplace/HU-53-favoritos) | — | Spec en borrador |
-| HU-54 | SCRUM-71 | Por asignar | M-02 | Elegir modo noche y preferencias | `specs/m02-profile/HU-54-modo-noche-preferencias/` | [musubi-api:HU-54](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m02-profile/HU-54-modo-noche-preferencias) | — | Spec en borrador |
+| HU-54 | SCRUM-71 | S3 | M-02 | Elegir modo noche y preferencias | `specs/m02-profile/HU-54-modo-noche-preferencias/` | [musubi-api:HU-54](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m02-profile/HU-54-modo-noche-preferencias) | — | Spec en borrador |
 | HU-55 | SCRUM-72 | Por asignar | M-08 | Pagar un pedido por transferencia o en efectivo | `specs/m08-orders/HU-55-pago-transferencia-efectivo/` | [musubi-api:HU-55](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m08-orders/HU-55-pago-transferencia-efectivo) | — | Spec en borrador |
 | HU-56 | SCRUM-78 | S2 | M-01 | Recuperar mi contraseña | `specs/m01-auth/HU-56-recuperar-contrasena/` | [musubi-api:HU-56](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-56-recuperar-contrasena) | `test/features/auth/presentation/session_flow_test.dart` | Borrador con evidencia |
 
-Total: 56 HU (S1: 1 · S2: 16 · S3: 17 · S4: 5 · S5: 8 · Post-MVP: 1 · Por asignar: 7 · Fuera de alcance: 1). HU-48 entró a S2 (25-Oct-2026). HU-02 pasó de S1 a S2 y HU-56 entró a S2 (21-Oct-2026). HU-48…HU-55 nacen de la maqueta (21-Oct-2026, SCRUM-75); HU-43 sale por la decisión D-01.
+Total: 56 HU (S1: 1 · S2: 16 · S3: 18 · S4: 5 · S5: 8 · Post-MVP: 1 · Por asignar: 6 · Fuera de alcance: 1). HU-54 entró a S3 (03-Nov-2026). HU-48 entró a S2 (25-Oct-2026). HU-02 pasó de S1 a S2 y HU-56 entró a S2 (21-Oct-2026). HU-48…HU-55 nacen de la maqueta (21-Oct-2026, SCRUM-75); HU-43 sale por la decisión D-01.
 
 ## Specs técnicas (sin HU)
 
