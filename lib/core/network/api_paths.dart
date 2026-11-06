@@ -100,4 +100,13 @@ abstract final class ApiPaths {
   /// `WS /hubs/chat` — fila "M-07" (spec `musubi-api:HU-20`): solo
   /// WebSockets, sin negociar, con el token en `?access_token=`.
   static const chatHub = '/hubs/chat';
+
+  /// `GET /api/v1/products/{id}` — fila "M-03" (spec `musubi-api:HU-11`):
+  /// publico; el vendedor solo viene con sesion.
+  static String product(String id) => '$products/${Uri.encodeComponent(id)}';
+
+  /// `GET /api/v1/profiles/{id}` — fila "M-02" (spec `musubi-api:HU-04`;
+  /// HU-05 lo amplia): perfil publico, con sesion.
+  static String publicProfile(String id) =>
+      '/api/v1/profiles/${Uri.encodeComponent(id)}';
 }

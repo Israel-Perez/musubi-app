@@ -249,7 +249,16 @@ class _Shot {
             ),
             photoPickerProvider.overrideWithValue(_FilePicker()),
             profileRepositoryProvider.overrideWithValue(
-              FakeProfileRepository(initial: _anaProfile),
+              FakeProfileRepository(initial: _anaProfile)
+                // Tarjeta de quien vende en `Producto` (HU-11).
+                ..publicProfiles['demo-casio-991es'] = const PublicProfile(
+                  id: 'demo-casio-991es',
+                  fullName: 'Valeria Cruz',
+                  careerShortName: 'Arquitectura',
+                  ratingAvg: 4.6,
+                  ratingCount: 18,
+                  sales: 15,
+                ),
             ),
             statusRepositoryProvider.overrideWithValue(
               FakeStatusRepository([const ApiOnline(version: 'v1')]),
@@ -357,6 +366,8 @@ typedef _Scene = Future<void> Function(_Shot shot);
 final Map<String, (bool, _Scene)> _scenes = {
   'chat-valeria': (true, (s) => s.go(AppRoutes.conversation('c1'))),
   'mensajes': (true, (s) => s.go(AppRoutes.messages)),
+  'producto': (true, (s) => s.go(AppRoutes.product('casio-991es'))),
+  'producto-visitante': (false, (s) => s.go(AppRoutes.product('casio-991es'))),
   'inicio-visitante': (false, (s) async {}),
   'inicio-visitante-scroll1': (false, (s) => s.scroll(650)),
   'inicio-visitante-scroll2': (false, (s) => s.scroll(1300)),

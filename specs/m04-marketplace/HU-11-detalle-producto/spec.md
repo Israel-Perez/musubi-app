@@ -19,29 +19,49 @@ Jira (SCRUM-28): Como **comprador**, quiero **ver el detalle de un producto**, p
 RNF que aplican: RNF-19.
 
 ## Diseño
-- Feature `lib/features/marketplace/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-11. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-11)` (skill `deferred-scope-fakes`).
+- `ProductScreen` (maqueta `Producto` y `Producto-visitante`) en `/producto/:id`, público como la vitrina (HU-48):
+  - carrusel de 360 con regresar, el campus con su insignia, compartir, guardar, los puntos y "1 / 4"; si está agotado, "Ya no está disponible";
+  - precio (tachado si está agotado) y la pastilla "Usado · Como nuevo";
+  - título, "Categoría · Publicado hace…";
+  - tarjetas Estado / Disponibles ("Último", "Quedan 2") / Entrega;
+  - "Apártalo 24 h sin pagar", la descripción y la tarjeta de quien vende;
+  - barra: "Mensaje", "Apartar" y "Comprar". Si está agotado: "Avísame" y "Ver parecidos". Si es mía: "Ver mis productos".
+- **Quien vende:**
+  - con sesión, nombre, calificación, ventas y carrera, desde `GET /profiles/{id}` (`ProfileRepository.publicProfile`; la pantalla `Perfil-vendedor` completa es de HU-05);
+  - sin sesión, la API no lo dice (RNF-05): "Estudiante verificado · Crea tu cuenta para ver quién lo vende". La maqueta del visitante muestra el nombre, pero se mantiene la regla de privacidad de la vitrina.
+- **"Mensaje" y "Comprar"** abren el chat con quien vende (HU-20), como la maqueta. Sin sesión abren "Crea tu cuenta" con su motivo.
+- **Inicio:** tocar un producto, con o sin sesión, abre su detalle.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-11, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Fila `GET /api/v1/products/{id}` (musubi-api `docs/endpoints.md`, M-03) y `GET /api/v1/profiles/{id}` (M-02), enlazadas desde `lib/core/network/api_paths.dart`.
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- `tool/screenshots_test.dart`: escenas de las pantallas, comparadas con la maqueta en claro y oscuro.
+- `test/features/marketplace/product_screen_test.dart`:
+  - con sesión (todo el detalle y la tarjeta de quien vende);
+  - visitante (sin quien vende, y "Mensaje" pide la cuenta);
+  - agotado;
+  - mi publicación;
+  - inexistente;
+  - el repositorio HTTP.
+- `test/features/chat/chat_flow_test.dart`: Inicio → detalle → "Mensaje" → chat.
+- Capturas `producto` y `producto-visitante`, comparadas con `Producto`.
 
 ## Criterios
-- [ ] El detalle muestra fotografías, descripción, precio, estado, cantidad, datos del vendedor y su reputación.
-- [ ] Desde el detalle se puede contactar al vendedor (chat) o comprar.
-- [ ] La interfaz distingue visualmente los productos publicados de las solicitudes de compra (RNF-19).
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] El detalle muestra fotografías, descripción, precio, estado, cantidad, datos del vendedor y su reputación → "con sesion: todo el detalle y la tarjeta de quien vende".
+- [x] Desde el detalle se puede contactar al vendedor (chat) o comprar → "del producto en Inicio a su detalle y de ahi al chat". "Comprar" abre el chat hasta los pedidos: `NOTE (HU-23)`.
+- [x] La interfaz distingue los productos publicados de las solicitudes de compra (RNF-19): precio grande, la pastilla de estado y las tarjetas de piezas y entrega, contra los boletos "Se busca" de Inicio.
+- [x] `flutter analyze` sin observaciones, `flutter test` 292/292 y critic PASS.
 
 ## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- "Apártalo 24 h" y "Apartar": `NOTE (HU-52)`.
+- "Compara antes de comprar" y "Ver parecidos": `NOTE (HU-51)`.
+- Guardar y "Avísame": `NOTE (HU-53)`.
+- Compartir: fuera de alcance por ahora.
+- El perfil de quien vende: `NOTE (HU-05)`.
+- "Responde en ~1 h": fuera de alcance.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 06-Nov-2026
+- **Detalle:** 29-Oct-2026: spec ligera (SCRUM-86). 06-Nov-2026 (SCRUM-28): implementada con musubi-api `0.5.0-alpha.3`.

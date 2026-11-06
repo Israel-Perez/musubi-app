@@ -1,5 +1,6 @@
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 
 /// Vitrina de muestra con los productos ficticios de la maqueta
 /// (`Inicio-visitante`): solo con `DEMO_CATALOG=true` en `dev`, para revisar
@@ -349,6 +350,37 @@ class DemoCatalogRepository implements CatalogRepository {
       wanted: wanted,
       categories: categories,
       recentTotal: 48,
+    );
+  }
+
+  /// Detalle de muestra (HU-11) armado con la tarjeta de la vitrina.
+  @override
+  Future<ProductDetail> product(String id) async {
+    final (summary, minutes) = _products.firstWhere(
+      (entry) => entry.$1.id == id,
+      orElse: () => _products.first,
+    );
+    return ProductDetail(
+      id: summary.id,
+      title: summary.title,
+      description:
+          'Lo usé un semestre y está en buen estado. Te lo entrego en el '
+          'campus.',
+      categoryName: categories
+          .firstWhere(
+            (c) => c.slug == summary.category,
+            orElse: () => categories.first,
+          )
+          .name,
+      priceCents: summary.priceCents,
+      condition: summary.condition == 'Nuevo' ? 'new' : 'used',
+      conditionDetail: summary.condition == 'Nuevo' ? null : 'likeNew',
+      stock: summary.stock,
+      status: summary.soldOut ? 'soldOut' : 'active',
+      photoUrls: [?summary.photoUrl],
+      publishedAt: _clock().subtract(Duration(minutes: minutes)),
+      sellerId: summary.sellerName == null ? null : 'demo-${summary.id}',
+      sellerName: summary.sellerName,
     );
   }
 }

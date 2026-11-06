@@ -131,4 +131,20 @@ class FakeProfileRepository implements ProfileRepository {
     visibility: profile.visibility,
     stats: profile.stats,
   );
+
+  /// Perfiles publicos por id (tarjeta del vendedor, HU-11).
+  final Map<String, PublicProfile> publicProfiles = {};
+
+  @override
+  Future<PublicProfile> publicProfile(String id) async {
+    final found = publicProfiles[id];
+    if (found == null) {
+      throw const ApiFailure(
+        code: 'profiles.not_found',
+        message: 'No encontramos ese perfil.',
+        status: 404,
+      );
+    }
+    return found;
+  }
 }

@@ -9,6 +9,22 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
 
+## T24 — Detalle del producto y contexto del chat (06-Nov-2026, SCRUM-28 y SCRUM-30, HU-11 y HU-21)
+
+**Qué se hizo**
+- `ProductScreen` (`Producto` / `Producto-visitante`) en `/producto/:id`:
+  - Inicio lo abre, también para visitantes;
+  - "Mensaje" y "Comprar" llevan al chat;
+  - "Ver" del chat lo abre (HU-21).
+- `ProfileRepository.publicProfile` para la tarjeta de quien vende. La pantalla `Perfil-vendedor` es de HU-05.
+- App `0.5.1+7`. Pruebas: 292.
+
+**Decisiones (con su porqué)**
+- **El visitante no ve quién vende:** la maqueta lo muestra, pero la API lo oculta sin sesión (RNF-05, la misma regla de la vitrina). La tarjeta invita a crear la cuenta.
+
+**Errores a evitar**
+- **La letra de las pruebas es más ancha que Plus Jakarta Sans:** un texto fijo en una `Row` que en el teléfono cabe, en la prueba desborda. Los textos de botones y filas van en `Flexible` con `ellipsis`; además protege a quien usa letra grande. Pasó con "Al entrar, vuelves justo aquí." de la hoja "Crea tu cuenta".
+
 ## T23 — Chat en tiempo real y bandeja (06-Nov-2026, SCRUM-29 y SCRUM-31, HU-20 y HU-22)
 
 **Qué se hizo**

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/avatars.dart';
@@ -23,7 +24,8 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 /// `Chat-Valeria` (HU-20): encabezado con la otra persona, la tarjeta de la
 /// publicacion, los mensajes en tiempo real y la caja para escribir.
 ///
-/// NOTE (HU-21): "En linea" / "Activa hace 5 min" y "Ver" el detalle (HU-11).
+/// HU-21: la tarjeta de la publicacion y "Ver" (abre su detalle, HU-11).
+/// NOTE (HU-05): "En linea" / "Activa hace 5 min" con el perfil publico.
 /// NOTE (HU-27): la calificacion de la otra persona.
 /// NOTE (HU-32): "Resumir acuerdo" con IA.
 /// NOTE (HU-28): reportar desde "Mas opciones".
@@ -126,7 +128,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               _ContextCard(
                 conversation: conversation,
                 preview: preview,
-                onSee: () => _soon('El detalle del producto'),
+                // HU-21: desde el contexto se abre el detalle del elemento.
+                onSee: () {
+                  final id = conversation?.context.id ?? preview?.id;
+                  if (id != null) {
+                    unawaited(context.push(AppRoutes.product(id)));
+                  }
+                },
                 onSummarize: () => _soon('Resumir acuerdo'),
               ),
               Expanded(

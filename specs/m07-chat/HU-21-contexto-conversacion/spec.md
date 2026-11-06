@@ -18,28 +18,27 @@ Jira (SCRUM-30): Como **usuario**, quiero **que la conversación muestre el prod
 RNF que aplican: se confirman al detallar.
 
 ## Diseño
-- Feature `lib/features/chat/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-21. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-21)` (skill `deferred-scope-fakes`).
+- La tarjeta de la publicación en `Chat-Valeria` (HU-20): "PUBLICACIÓN DE VALERIA" (o "TU PUBLICACIÓN"), con nombre, precio y estado **actuales**. Si ya no se puede ver: "Esta publicación ya no está disponible".
+- **"Ver" abre el detalle** (`/producto/:id`, HU-11).
+- La bandeja muestra el contexto en cada fila ("Compra · …" / "Venta · …" con la foto, HU-22).
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-21, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+`GET /api/v1/conversations/{id}` (`context { type, id, title, priceCents, condition, conditionDetail, photo, available }`) y `GET /api/v1/products/{id}` (musubi-api `docs/endpoints.md`).
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- `tool/screenshots_test.dart`: escenas de las pantallas, comparadas con la maqueta en claro y oscuro.
+- `test/features/chat/chat_flow_test.dart`:
+  - la tarjeta "PUBLICACIÓN DE VALERIA" con su precio y estado;
+  - "\"Ver\" abre el detalle de la publicacion (HU-21)".
 
 ## Criterios
-- [ ] Cada conversación muestra el producto, la solicitud o la oferta que la originó.
-- [ ] Desde ese contexto se puede abrir el detalle del elemento.
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] Cada conversación muestra el producto que la originó → la tarjeta del chat y la fila de la bandeja (`chat_flow_test`). Solicitudes y ofertas: `NOTE (HU-16)`.
+- [x] Desde ese contexto se puede abrir el detalle del elemento → "\"Ver\" abre el detalle de la publicacion (HU-21)".
 
 ## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- Contexto de solicitudes y ofertas: `NOTE (HU-16)`.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 06-Nov-2026
+- **Detalle:** 29-Oct-2026: spec ligera (SCRUM-86). 06-Nov-2026 (SCRUM-30): cerrada con el chat (HU-20) y el detalle (HU-11).
