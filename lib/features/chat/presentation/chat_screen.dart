@@ -1,0 +1,912 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:musubi_app/app/router.dart';
+import 'package:musubi_app/core/theme/app_theme.dart';
+import 'package:musubi_app/core/theme/musubi_tokens.dart';
+import 'package:musubi_app/core/widgets/avatars.dart';
+import 'package:musubi_app/core/widgets/feedback_views.dart';
+import 'package:musubi_app/core/widgets/musubi_icon.dart';
+import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_snack.dart';
+import 'package:musubi_app/core/widgets/pressable.dart';
+import 'package:musubi_app/core/widgets/skeleton.dart';
+import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
+import 'package:musubi_app/features/chat/domain/chat_models.dart';
+import 'package:musubi_app/features/chat/presentation/chat_controller.dart';
+import 'package:musubi_app/features/chat/presentation/chat_format.dart';
+import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
+import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+
+/// `Chat-Valeria` (HU-20): encabezado con la otra persona, la tarjeta de la
+/// publicacion, los mensajes en tiempo real y la caja para escribir.
+///
+/// HU-21: la tarjeta de la publicacion y "Ver" (abre su detalle, HU-11).
+/// NOTE (HU-05): "En linea" / "Activa hace 5 min" con el perfil publico.
+/// NOTE (HU-27): la calificacion de la otra persona.
+/// NOTE (HU-32): "Resumir acuerdo" con IA.
+/// NOTE (HU-28): reportar desde "Mas opciones".
+/// NOTE (HU-57): bloquear desde "Mas opciones".
+class ChatScreen extends ConsumerStatefulWidget {
+  const new({required this.target, super.key});
+
+  final ChatTarget target;
+
+  @override
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends ConsumerState<ChatScreen> {
+  final _input = TextEditingController();
+  final _scroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(() {
+      // La lista va invertida: el final del scroll son los mas viejos.
+      if (_scroll.position.extentAfter < 240) {
+        unawaited(
+          ref.read(chatControllerProvider(widget.target).notifier).loadOlder(),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _input.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _soon(String what) => showMusubiSnack(
+    ScaffoldMessenger.of(context),
+    '$what llega muy pronto.',
+    icon: MusubiIcons.clock,
+    tone: SnackTone.info,
+  );
+
+  Future<void> _send() async {
+    final controller = ref.read(chatControllerProvider(widget.target).notifier);
+    final sent = await controller.send(_input.text);
+    if (!mounted) return;
+    if (sent) {
+      _input.clear();
+      return;
+    }
+    final failure = ref.read(chatControllerProvider(widget.target)).sendFailure;
+    if (failure != null) {
+      showMusubiSnack(
+        ScaffoldMessenger.of(context),
+        failure.message,
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    ref.watch(chatConnectionProvider);
+    final state = ref.watch(chatControllerProvider(widget.target));
+    final controller = ref.read(chatControllerProvider(widget.target).notifier);
+    final conversation = state.conversation;
+    final preview = widget.target.product;
+
+    return Scaffold(
+      backgroundColor: c.background,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _Header(
+              counterpart: conversation?.counterpart,
+              fallbackName: preview?.sellerName,
+              onMore: () => _soon('Reportar y bloquear'),
+            ),
+            if (state.ownProduct)
+              Expanded(
+                child: _Notice(
+                  message: state.failure!.message,
+                  onBack: () => context.pop(),
+                ),
+              )
+            else if (state.failure != null && conversation == null)
+              Expanded(
+                child: _Notice(
+                  message: state.failure!.message,
+                  onRetry: controller.load,
+                ),
+              )
+            else ...[
+              _ContextCard(
+                conversation: conversation,
+                preview: preview,
+                // HU-21: desde el contexto se abre el detalle del elemento.
+                onSee: () {
+                  final id = conversation?.context.id ?? preview?.id;
+                  if (id != null) {
+                    unawaited(context.push(AppRoutes.product(id)));
+                  }
+                },
+                onSummarize: () => _soon('Resumir acuerdo'),
+              ),
+              Expanded(
+                child: state.loading && state.messages.isEmpty
+                    ? const _LogSkeleton()
+                    : _Log(
+                        state: state,
+                        myId: controller.myId,
+                        scroll: _scroll,
+                        now: ref.watch(clockProvider)().toLocal(),
+                      ),
+              ),
+              _Composer(
+                input: _input,
+                enabled: conversation != null,
+                sending: state.sending,
+                onSend: _send,
+                onAttach: () => _soon('Enviar fotos'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Regresar, avatar, nombre verificado y "Mas opciones" (borde inferior).
+class _Header extends StatelessWidget {
+  const new({
+    required this.counterpart,
+    required this.fallbackName,
+    required this.onMore,
+  });
+
+  final ChatCounterpart? counterpart;
+  final String? fallbackName;
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final person =
+        counterpart ??
+        (fallbackName == null
+            ? null
+            : ChatCounterpart(id: fallbackName!, name: fallbackName!));
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.divider)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+        child: Row(
+          spacing: 4,
+          children: [
+            Pressable(
+              onTap: () => context.pop(),
+              semanticLabel: 'Regresar',
+              builder: (context, _) => SizedBox.square(
+                dimension: MusubiSizes.minTouch,
+                child: Center(
+                  child: MusubiIcon(
+                    MusubiIcons.chevronLeft,
+                    strokeWidth: 1.9,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+            if (person == null)
+              const SkeletonBox(width: 40, height: 40, radius: 20)
+            else
+              InitialsAvatar(
+                initials: person.initials,
+                size: 40,
+                fontSize: 14,
+                palette: person.palette,
+              ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      spacing: 4,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            person?.name ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: MusubiType.style(
+                              15.5,
+                              weight: FontWeight.w800,
+                              color: c.textPrimary,
+                            ),
+                          ),
+                        ),
+                        // Cada miembro verifico su correo del campus
+                        // (HU-03).
+                        if (person != null) const VerifiedBadge(size: 15),
+                      ],
+                    ),
+                    Text(
+                      'Estudiante verificado de tu campus',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: MusubiType.style(
+                        12,
+                        weight: FontWeight.w600,
+                        color: c.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Pressable(
+              onTap: onMore,
+              semanticLabel: 'Más opciones',
+              builder: (context, _) => SizedBox.square(
+                dimension: MusubiSizes.minTouch,
+                child: Center(
+                  child: MusubiIcon(
+                    MusubiIcons.ellipsis,
+                    size: 22,
+                    strokeWidth: 2.4,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tarjeta de la publicacion ("PUBLICACION DE VALERIA") y "Resumir acuerdo".
+class _ContextCard extends StatelessWidget {
+  const new({
+    required this.conversation,
+    required this.preview,
+    required this.onSee,
+    required this.onSummarize,
+  });
+
+  final Conversation? conversation;
+  final ProductSummary? preview;
+  final VoidCallback onSee;
+  final VoidCallback onSummarize;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final context0 = conversation?.context;
+    final title = context0?.title ?? preview?.title ?? '';
+    final price = context0 != null ? context0.priceCents : preview?.priceCents;
+    final condition = context0?.conditionLabel ?? preview?.condition;
+    final photo = context0?.photoUrl ?? preview?.photoUrl;
+    final available = context0?.available ?? true;
+    final eyebrow = switch (conversation) {
+      Conversation(role: ChatRole.seller) => 'TU PUBLICACIÓN',
+      Conversation(:final counterpart) =>
+        'PUBLICACIÓN DE ${counterpart.firstName.toUpperCase()}',
+      null => 'PUBLICACIÓN',
+    };
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: c.background,
+        border: Border(bottom: BorderSide(color: c.divider)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A1C1C1E),
+            offset: Offset(0, 6),
+            blurRadius: 14,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
+              decoration: BoxDecoration(
+                color: c.brandSoft,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                spacing: 10,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: SizedBox.square(
+                      dimension: 46,
+                      child: ProductPhoto(url: photo, soldOut: !available),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 1,
+                      children: [
+                        Row(
+                          spacing: 4,
+                          children: [
+                            MusubiIcon(
+                              MusubiIcons.megaphone,
+                              size: 11,
+                              strokeWidth: 2.6,
+                              color: c.brandStrongText,
+                            ),
+                            Flexible(
+                              child: Text(
+                                eyebrow,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: MusubiType.style(
+                                  10.5,
+                                  weight: FontWeight.w800,
+                                  em: 0.06,
+                                  color: c.brandStrongText,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: MusubiType.style(
+                            14,
+                            weight: FontWeight.w800,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                        Text.rich(
+                          available && price != null
+                              ? TextSpan(
+                                  children: [
+                                    const TextSpan(text: 'Precio '),
+                                    TextSpan(
+                                      text: formatPrice(price),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    if (condition != null)
+                                      TextSpan(text: ' · $condition'),
+                                  ],
+                                )
+                              : const TextSpan(
+                                  text:
+                                      'Esta publicación ya no está disponible',
+                                ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: MusubiType.style(
+                            12,
+                            weight: FontWeight.w600,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Pressable(
+                    onTap: available ? onSee : null,
+                    semanticLabel: 'Ver la publicación',
+                    builder: (context, _) => SizedBox(
+                      height: MusubiSizes.minTouch,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Center(
+                          child: Text(
+                            'Ver',
+                            style: MusubiType.style(
+                              13.5,
+                              weight: FontWeight.w800,
+                              color: c.brandStrongText,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                spacing: 8,
+                children: [
+                  Flexible(
+                    child: Text(
+                      '¿Ya se pusieron de acuerdo?',
+                      style: MusubiType.style(
+                        12.5,
+                        weight: FontWeight.w600,
+                        color: c.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Pressable(
+                    onTap: onSummarize,
+                    semanticLabel: 'Resumir acuerdo',
+                    builder: (context, _) => SizedBox(
+                      height: MusubiSizes.minTouch,
+                      child: Center(
+                        child: _Glow(
+                          child: Container(
+                            height: 36,
+                            padding: const EdgeInsets.only(left: 12, right: 14),
+                            decoration: BoxDecoration(
+                              color: c.inverse,
+                              borderRadius: BorderRadius.circular(
+                                MusubiSizes.radiusChip,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 7,
+                              children: [
+                                MusubiIcon(
+                                  MusubiIcons.sparkle,
+                                  size: 16,
+                                  color: c.onBrand,
+                                ),
+                                Text(
+                                  'Resumir acuerdo',
+                                  style: MusubiType.style(
+                                    13.5,
+                                    weight: FontWeight.w700,
+                                    color: c.onBrand,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Historial: aviso de inicio, burbujas (las mias a la derecha en rojo) y la
+/// hora debajo de cada grupo. Lista invertida: abre en lo mas nuevo.
+class _Log extends StatelessWidget {
+  const new({
+    required this.state,
+    required this.myId,
+    required this.scroll,
+    required this.now,
+  });
+
+  final ChatState state;
+  final String? myId;
+  final ScrollController scroll;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final messages = state.messages;
+    final role = state.conversation?.role;
+    final first = messages.isEmpty ? now : messages.first.sentAt.toLocal();
+    final opener = role == ChatRole.seller
+        ? 'Conversación sobre tu publicación'
+        : 'Conversación sobre su publicación';
+
+    // Del mas nuevo al mas viejo (lista invertida).
+    final items = <Widget>[];
+    for (var i = messages.length - 1; i >= 0; i--) {
+      final message = messages[i];
+      final mine = message.senderId == myId;
+      final next = i + 1 < messages.length ? messages[i + 1] : null;
+      // Como la maqueta: una hora al final de cada intercambio (5 min sin
+      // mensajes), del lado de quien escribio el ultimo.
+      final lastOfGroup =
+          next == null || next.sentAt.difference(message.sentAt).inMinutes >= 5;
+      if (lastOfGroup) {
+        items.add(
+          _Stamp(text: messageStamp(message.sentAt.toLocal(), now), mine: mine),
+        );
+      }
+      items.add(_Bubble(message: message, mine: mine));
+    }
+    items.add(
+      _Opener(
+        text: messages.isEmpty
+            ? '$opener · Escribe tu primera pregunta'
+            : '$opener · ${dayLabel(first, now)}',
+      ),
+    );
+
+    return ListView.separated(
+      key: const Key('chat-log'),
+      controller: scroll,
+      reverse: true,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (context, index) => items[index],
+    );
+  }
+}
+
+class _Opener extends StatelessWidget {
+  const new({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.sizeOf(context).width * 0.92 - 32,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 6,
+            children: [
+              MusubiIcon(MusubiIcons.tag, size: 14, color: c.textPrimary),
+              Flexible(
+                child: Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  style: MusubiType.style(
+                    12,
+                    weight: FontWeight.w700,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Bubble extends StatelessWidget {
+  const new({required this.message, required this.mine});
+
+  final ChatMessage message;
+  final bool mine;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    const big = Radius.circular(18);
+    const small = Radius.circular(6);
+    return Align(
+      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: (MediaQuery.sizeOf(context).width - 32) * 0.78,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: mine ? c.brand : c.surface,
+            borderRadius: BorderRadius.only(
+              topLeft: big,
+              topRight: big,
+              bottomLeft: mine ? big : small,
+              bottomRight: mine ? small : big,
+            ),
+          ),
+          child: Text(
+            message.text,
+            style: MusubiType.style(
+              15,
+              line: 21,
+              color: mine ? c.onBrand : c.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Stamp extends StatelessWidget {
+  const new({required this.text, required this.mine});
+
+  final String text;
+  final bool mine;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+    child: Padding(
+      padding: EdgeInsets.only(left: mine ? 0 : 4, right: mine ? 4 : 0),
+      child: Text(
+        text,
+        style: MusubiType.style(
+          11.5,
+          weight: FontWeight.w600,
+          color: context.musubi.textSecondary,
+        ),
+      ),
+    ),
+  );
+}
+
+class _LogSkeleton extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) => const SkeletonShimmer(
+    child: Padding(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 14),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        spacing: 8,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: SkeletonBox(width: 220, height: 42, radius: 18),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SkeletonBox(width: 250, height: 42, radius: 18),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Adjuntar, caja "Escribe un mensaje…" y "Enviar".
+class _Composer extends StatelessWidget {
+  const new({
+    required this.input,
+    required this.enabled,
+    required this.sending,
+    required this.onSend,
+    required this.onAttach,
+  });
+
+  final TextEditingController input;
+  final bool enabled;
+  final bool sending;
+  final Future<void> Function() onSend;
+  final VoidCallback onAttach;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: c.background,
+        border: Border(top: BorderSide(color: c.divider)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(12, 8, 12, 8 + (bottom > 0 ? bottom : 22)),
+        child: Row(
+          spacing: 8,
+          children: [
+            Pressable(
+              onTap: onAttach,
+              semanticLabel: 'Adjuntar foto o archivo',
+              builder: (context, _) => Container(
+                width: MusubiSizes.minTouch,
+                height: MusubiSizes.minTouch,
+                decoration: BoxDecoration(
+                  color: c.surface,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: MusubiIcon(
+                  MusubiIcons.plus,
+                  size: 21,
+                  strokeWidth: 2.2,
+                  color: c.textPrimary,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Container(
+                height: MusubiSizes.minTouch,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: c.surface,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                alignment: Alignment.centerLeft,
+                child: TextField(
+                  key: const Key('chat-input'),
+                  controller: input,
+                  enabled: enabled,
+                  maxLength: 1000,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => unawaited(onSend()),
+                  style: MusubiType.style(15.5, color: c.textPrimary),
+                  cursorColor: c.brand,
+                  decoration: InputDecoration(
+                    isCollapsed: true,
+                    border: InputBorder.none,
+                    counterText: '',
+                    hintText: 'Escribe un mensaje…',
+                    hintStyle: MusubiType.style(15.5, color: c.placeholder),
+                    semanticCounterText: '',
+                  ),
+                ),
+              ),
+            ),
+            Pressable(
+              onTap: enabled && !sending ? () => unawaited(onSend()) : null,
+              semanticLabel: 'Enviar',
+              builder: (context, pressed) => Container(
+                width: MusubiSizes.minTouch,
+                height: MusubiSizes.minTouch,
+                decoration: BoxDecoration(
+                  color: pressed ? c.brandPressed : c.brand,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: sending
+                    ? SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: c.onBrand,
+                        ),
+                      )
+                    : MusubiIcon(MusubiIcons.send, size: 20, color: c.onBrand),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Es tu publicación" o un error al abrir, con regresar o reintentar.
+class _Notice extends StatelessWidget {
+  const new({required this.message, this.onBack, this.onRetry});
+
+  final String message;
+  final VoidCallback? onBack;
+  final Future<void> Function()? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final action = onRetry != null ? 'Reintentar' : 'Regresar';
+    return Padding(
+      padding: const EdgeInsets.all(MusubiSizes.space6),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: MusubiSizes.space4,
+        children: [
+          InlineMessage(
+            message: message,
+            kind: onRetry != null
+                ? InlineMessageKind.error
+                : InlineMessageKind.warning,
+          ),
+          Pressable(
+            onTap: onRetry != null ? () => unawaited(onRetry!()) : onBack,
+            semanticLabel: action,
+            builder: (context, _) => SizedBox(
+              height: MusubiSizes.minTouch,
+              child: Center(
+                child: Text(
+                  action,
+                  style: MusubiType.style(
+                    14.5,
+                    weight: FontWeight.w800,
+                    color: c.brandStrongText,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// `Chat-Valeria__glow`: un halo rojo tenue que late detras de "Resumir
+/// acuerdo" (2.4 s, empieza al segundo). Tres ciclos, no sin fin.
+class _Glow extends StatefulWidget {
+  const new({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_Glow> createState() => _GlowState();
+}
+
+class _GlowState extends State<_Glow> with SingleTickerProviderStateMixin {
+  static const _delay = 1000;
+  static const _cycle = 2400;
+  static const _cycles = 3;
+
+  // Un solo controlador con la espera inicial adentro: sin timers sueltos.
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: _delay + _cycle * _cycles),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// 0 sin halo, 1 en la mitad de cada ciclo.
+  double _intensity(double value) {
+    final ms = value * (_delay + _cycle * _cycles) - _delay;
+    if (ms <= 0) return 0;
+    final phase = (ms % _cycle) / _cycle;
+    return Curves.easeInOut.transform(1 - (2 * phase - 1).abs());
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _controller,
+    child: widget.child,
+    builder: (context, child) {
+      // 0 % y 100 %: sin halo; 50 %: 5 px de rgba(215,25,31,.14).
+      final t = _intensity(_controller.value);
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
+          boxShadow: [
+            BoxShadow(
+              color: Color.fromRGBO(215, 25, 31, 0.14 * t),
+              spreadRadius: 5 * t,
+            ),
+          ],
+        ),
+        child: child,
+      );
+    },
+  );
+}

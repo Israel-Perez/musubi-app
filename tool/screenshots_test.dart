@@ -27,6 +27,8 @@ import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
+import 'package:musubi_app/features/chat/domain/chat_models.dart';
+import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/listings/data/photo_picker.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
@@ -41,6 +43,7 @@ import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
 import '../test/helpers/fake_auth_repository.dart';
 import '../test/helpers/fake_catalog_repository.dart';
+import '../test/helpers/fake_chat.dart';
 import '../test/helpers/fake_listings_repository.dart';
 import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_session_api.dart';
@@ -113,6 +116,92 @@ class _FilePicker implements PhotoPicker {
       _photoFiles.take(max).toList();
 }
 
+/// Hora local de la maqueta (los mensajes de "Ayer, 6:40 p. m.").
+DateTime _local(int day, int hour, int minute) =>
+    DateTime(2026, 10, day, hour, minute).toUtc();
+
+/// `Chat-Valeria`: Ana pregunta por la calculadora de Valeria.
+final _chat = FakeChatRepository(
+  conversationValue: const Conversation(
+    id: 'c1',
+    role: ChatRole.buyer,
+    counterpart: valeria,
+    context: ChatContext(
+      id: 'p1',
+      title: 'Calculadora Casio fx-991ES Plus',
+      available: true,
+      priceCents: 45000,
+      condition: 'used',
+      conditionDetail: 'fair',
+      photoUrl: 'asset:assets/products/casio.webp',
+    ),
+  ),
+  messages: [
+    ChatMessage(
+      id: 'm1',
+      conversationId: 'c1',
+      senderId: myId,
+      text: '¡Hola, Valeria! ¿Sigue disponible la calculadora?',
+      sentAt: _local(4, 18, 38),
+    ),
+    ChatMessage(
+      id: 'm2',
+      conversationId: 'c1',
+      senderId: valeria.id,
+      text: 'Claro, sigue disponible. ¿Cuándo la quieres ver?',
+      sentAt: _local(4, 18, 40),
+    ),
+  ],
+  inboxEntries: [
+    InboxEntry(
+      id: 'c2',
+      role: ChatRole.buyer,
+      counterpart: const ChatCounterpart(id: 'u-dh', name: 'Diego Hernández'),
+      contextTitle: 'Calculadora Casio',
+      contextPhotoUrl: 'asset:assets/products/casio.webp',
+      lastSenderId: 'u-dh',
+      lastText:
+          'Perfecto, en la biblioteca. Esta semana tengo libre en las '
+          'tardes.',
+      lastAt: _local(5, 20, 31),
+      unread: 2,
+    ),
+    InboxEntry(
+      id: 'c1',
+      role: ChatRole.buyer,
+      counterpart: valeria,
+      contextTitle: 'Casio fx-991ES Plus',
+      contextPhotoUrl: 'asset:assets/products/casio.webp',
+      lastSenderId: valeria.id,
+      lastText: 'Claro, sigue disponible. ¿Cuándo la quieres ver?',
+      lastAt: _local(4, 18, 40),
+      unread: 0,
+    ),
+    InboxEntry(
+      id: 'c3',
+      role: ChatRole.seller,
+      counterpart: const ChatCounterpart(id: 'u-js', name: 'Jorge Salinas'),
+      contextTitle: 'Cálculo, Stewart',
+      contextPhotoUrl: 'asset:assets/products/calculo.webp',
+      lastSenderId: 'u-js',
+      lastText: r'¿Aceptas $350 por el libro?',
+      lastAt: _local(5, 9, 12).subtract(const Duration(days: 4)),
+      unread: 0,
+    ),
+    InboxEntry(
+      id: 'c4',
+      role: ChatRole.seller,
+      counterpart: const ChatCounterpart(id: 'u-pn', name: 'Paola Núñez'),
+      contextTitle: 'Escuadras y compás',
+      contextPhotoUrl: 'asset:assets/products/compas.webp',
+      lastSenderId: 'u-pn',
+      lastText: '¿Las escuadras traen estuche?',
+      lastAt: _local(5, 9, 12).subtract(const Duration(days: 5)),
+      unread: 0,
+    ),
+  ],
+);
+
 class _InboxStub implements EmailInbox {
   @override
   Future<bool> open() async => true;
@@ -135,7 +224,8 @@ class _Shot {
   Future<void> open({bool wait = true}) async {
     final tokens = member
         ? SessionTokens(
-            accessToken: 'access',
+            // Con forma de JWT: el chat sabe que mensajes son mios (HU-20).
+            accessToken: jwtFor(myId),
             accessExpiresAt: _now.add(const Duration(minutes: 15)),
             refreshToken: 'refresh',
             profile: _ana,
@@ -159,13 +249,24 @@ class _Shot {
             ),
             photoPickerProvider.overrideWithValue(_FilePicker()),
             profileRepositoryProvider.overrideWithValue(
-              FakeProfileRepository(initial: _anaProfile),
+              FakeProfileRepository(initial: _anaProfile)
+                // Tarjeta de quien vende en `Producto` (HU-11).
+                ..publicProfiles['demo-casio-991es'] = const PublicProfile(
+                  id: 'demo-casio-991es',
+                  fullName: 'Valeria Cruz',
+                  careerShortName: 'Arquitectura',
+                  ratingAvg: 4.6,
+                  ratingCount: 18,
+                  sales: 15,
+                ),
             ),
             statusRepositoryProvider.overrideWithValue(
               FakeStatusRepository([const ApiOnline(version: 'v1')]),
             ),
             tokenStoreProvider.overrideWithValue(InMemoryTokenStore(tokens)),
             initialSessionTokensProvider.overrideWithValue(tokens),
+            chatRepositoryProvider.overrideWithValue(_chat),
+            chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
           ],
           child: const MusubiApp(),
         ),
@@ -263,6 +364,10 @@ typedef _Scene = Future<void> Function(_Shot shot);
 
 /// Nombre → (con sesion, como llegar a la pantalla).
 final Map<String, (bool, _Scene)> _scenes = {
+  'chat-valeria': (true, (s) => s.go(AppRoutes.conversation('c1'))),
+  'mensajes': (true, (s) => s.go(AppRoutes.messages)),
+  'producto': (true, (s) => s.go(AppRoutes.product('casio-991es'))),
+  'producto-visitante': (false, (s) => s.go(AppRoutes.product('casio-991es'))),
   'inicio-visitante': (false, (s) async {}),
   'inicio-visitante-scroll1': (false, (s) => s.scroll(650)),
   'inicio-visitante-scroll2': (false, (s) => s.scroll(1300)),

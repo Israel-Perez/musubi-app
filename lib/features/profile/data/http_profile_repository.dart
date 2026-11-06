@@ -143,4 +143,24 @@ class HttpProfileRepository implements ProfileRepository {
       throw ApiFailure.fromDio(error);
     }
   }
+
+  @override
+  Future<PublicProfile> publicProfile(String id) => _guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.publicProfile(id),
+    );
+    final json = _body(response);
+    final stats = json['stats'] as Map<String, dynamic>;
+    final career = json['career'] as Map<String, dynamic>?;
+    final photo = json['photo'] as String?;
+    return PublicProfile(
+      id: json['id'] as String,
+      fullName: json['fullName'] as String,
+      photoUrl: photo == null ? null : mediaUrl(photo, _apiBaseUrl),
+      careerShortName: career?['shortName'] as String?,
+      ratingAvg: (stats['ratingAvg'] as num?)?.toDouble(),
+      ratingCount: (stats['ratingCount'] as num?)?.toInt() ?? 0,
+      sales: (stats['sales'] as num?)?.toInt(),
+    );
+  });
 }

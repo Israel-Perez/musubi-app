@@ -2,11 +2,50 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (03-Nov-2026)
+## Estado actual (06-Nov-2026)
 
-- **En Google Play:** `0.3.0+4` en la prueba cerrada (HU-46), publicada con `release-play`.
+- **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
+- **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
+
+## T24 — Detalle del producto y contexto del chat (06-Nov-2026, SCRUM-28 y SCRUM-30, HU-11 y HU-21)
+
+**Qué se hizo**
+- `ProductScreen` (`Producto` / `Producto-visitante`) en `/producto/:id`:
+  - Inicio lo abre, también para visitantes;
+  - "Mensaje" y "Comprar" llevan al chat;
+  - "Ver" del chat lo abre (HU-21).
+- `ProfileRepository.publicProfile` para la tarjeta de quien vende. La pantalla `Perfil-vendedor` es de HU-05.
+- App `0.5.1+7`. Pruebas: 292.
+
+**Decisiones (con su porqué)**
+- **El visitante no ve quién vende:** la maqueta lo muestra, pero la API lo oculta sin sesión (RNF-05, la misma regla de la vitrina). La tarjeta invita a crear la cuenta.
+
+**Errores a evitar**
+- **La letra de las pruebas es más ancha que Plus Jakarta Sans:** un texto fijo en una `Row` que en el teléfono cabe, en la prueba desborda. Los textos de botones y filas van en `Flexible` con `ellipsis`; además protege a quien usa letra grande. Pasó con "Al entrar, vuelves justo aquí." de la hoja "Crea tu cuenta".
+
+## T23 — Chat en tiempo real y bandeja (06-Nov-2026, SCRUM-29 y SCRUM-31, HU-20 y HU-22)
+
+**Qué se hizo**
+- `lib/features/chat/`:
+  - `Chat-Valeria` (`ChatScreen`) y `Mensajes` (`InboxScreen`);
+  - repositorio HTTP;
+  - `SignalRChatRealtime`, un cliente propio del protocolo JSON de SignalR sobre `dart:io` `WebSocket`.
+- Con sesión, tocar un producto en Inicio abre el chat con quien lo vende (hasta que exista el detalle de HU-11).
+- App `0.5.0+6`. Pruebas: 284.
+
+**Decisiones (con su porqué)**
+- **Sin paquete de SignalR:** la API solo usa WebSockets sin negociar y un evento. Un cliente de ~150 líneas, probado contra un hub real local, evita una dependencia (00-01).
+- **La conexión se enciende al abrir `Mensajes` o un chat:** si se enciende al arrancar la app, todas las pruebas que montan `MusubiApp` necesitan configurar la red (89 fallaron así).
+- **El token se renueva por el `AuthInterceptor`:** renovar en paralelo usa dos veces el refresh token y la API cierra la sesión (02-03).
+- **"Mío" = `senderId` igual al `sub` del access token** (`SessionTokens.userId`): no hace falta pedir el perfil.
+
+**Errores a evitar**
+- **`router.push(...)` termina cuando la pantalla se cierra:** si una prueba lo espera con `await`, se cuelga para siempre. Usa `unawaited`.
+- **Una animación con `Future.delayed` deja un timer pendiente** y la prueba falla al terminar: pon la espera dentro del `AnimationController` (el halo de "Resumir acuerdo").
+- **"Todo miembro…" al inicio de un comentario rompe `flutter_style_todos`:** escribe "Cada miembro…".
+- **La maqueta se captura con `#sesion.<Pantalla>`** (por ejemplo, `#sesion.Chat-Valeria`). Con `#<Pantalla>` abre la portada.
 
 ## T22 — Rechazos de la moderación en Vender (03-Nov-2026, SCRUM-92, musubi-api 02-07)
 

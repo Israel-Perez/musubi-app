@@ -16,4 +16,7 @@ abstract interface class ProfileRepository {
   Future<void> removePhoto();
 
   Future<CareersCatalog> careers();
+
+  /// Perfil publico de otra persona del campus (tarjeta del vendedor, HU-11).
+  Future<PublicProfile> publicProfile(String id);
 }

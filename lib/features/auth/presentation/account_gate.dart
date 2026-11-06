@@ -172,13 +172,18 @@ class AccountGateSheet extends ConsumerWidget {
               spacing: 6,
               children: [
                 MusubiIcon(MusubiIcons.undo2, size: 14, color: c.textSecondary),
-                Text(
-                  'Al entrar, vuelves justo aquí.',
-                  style: MusubiType.style(
-                    12,
-                    weight: FontWeight.w600,
-                    line: 16,
-                    color: c.textSecondary,
+                // Con letra grande se corta antes que desbordar.
+                Flexible(
+                  child: Text(
+                    'Al entrar, vuelves justo aquí.',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: MusubiType.style(
+                      12,
+                      weight: FontWeight.w600,
+                      line: 16,
+                      color: c.textSecondary,
+                    ),
                   ),
                 ),
               ],

@@ -113,6 +113,9 @@ class HomeScreen extends ConsumerWidget {
     void Function(AccountGateMotive) gate,
   ) {
     final filter = ref.watch(catalogFilterProvider);
+    // HU-11: el visitante tambien ve el detalle (HU-48).
+    void open(ProductSummary product) =>
+        unawaited(context.push(AppRoutes.product(product.id), extra: product));
     return [
       // NOTE (HU-49): sin vistas (HU-11) no hay "Populares"; si la vitrina
       // esta vacia, la seccion explica por que.
@@ -125,6 +128,7 @@ class HomeScreen extends ConsumerWidget {
               member: false,
               onSave: () => gate(AccountGateMotive.save),
               onEmptyAction: () => gate(AccountGateMotive.publish),
+              onOpen: open,
             ),
           ),
         ),
@@ -136,6 +140,7 @@ class HomeScreen extends ConsumerWidget {
               feed: feed,
               filter: filter,
               onSave: () => gate(AccountGateMotive.save),
+              onOpen: open,
             ),
           ),
         ),
@@ -162,6 +167,9 @@ class HomeScreen extends ConsumerWidget {
   ) {
     // NOTE (HU-53): guardar desde la vitrina.
     void noop() {}
+    // HU-11: el producto abre su detalle (de ahi, "Mensaje" al chat).
+    void open(ProductSummary product) =>
+        unawaited(context.push(AppRoutes.product(product.id), extra: product));
     void sell() {
       ref.read(sellDraftProvider.notifier).start();
       unawaited(context.push(AppRoutes.sell));
@@ -177,6 +185,7 @@ class HomeScreen extends ConsumerWidget {
               member: true,
               onSave: noop,
               onEmptyAction: sell,
+              onOpen: open,
             ),
           ),
         ),
@@ -196,7 +205,7 @@ class HomeScreen extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.only(top: 26),
-            child: _MemberRecent(feed: feed, onSave: noop),
+            child: _MemberRecent(feed: feed, onSave: noop, onOpen: open),
           ),
         ),
     ];
@@ -542,12 +551,16 @@ class _PopularSection extends ConsumerWidget {
     required this.member,
     required this.onSave,
     required this.onEmptyAction,
+    this.onOpen,
   });
 
   final HomeFeed feed;
   final bool member;
   final VoidCallback onSave;
   final VoidCallback onEmptyAction;
+
+  /// Tocar un producto: su detalle (HU-11).
+  final ValueChanged<ProductSummary>? onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -648,6 +661,9 @@ class _PopularSection extends ConsumerWidget {
                     product: feed.popular[i],
                     member: member,
                     onSave: onSave,
+                    onTap: onOpen == null
+                        ? null
+                        : () => onOpen!(feed.popular[i]),
                   ),
                 ),
             ],
@@ -733,11 +749,19 @@ class _PeriodSwitch extends StatelessWidget {
 
 /// "Recién publicados" de visitante: mosaico de dos columnas y "Filtrar".
 class _RecentMosaic extends StatelessWidget {
-  const new({required this.feed, required this.filter, required this.onSave});
+  const new({
+    required this.feed,
+    required this.filter,
+    required this.onSave,
+    required this.onOpen,
+  });
 
   final HomeFeed feed;
   final CatalogFilter filter;
   final VoidCallback onSave;
+
+  /// Tocar un producto (HU-11).
+  final ValueChanged<ProductSummary> onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -763,6 +787,7 @@ class _RecentMosaic extends StatelessWidget {
           product: product,
           height: tall ? 200 : 156,
           onSave: onSave,
+          onTap: () => onOpen(product),
         ),
       );
       (i.isEven ? left : right).add(tile);
@@ -953,10 +978,13 @@ class _WantedSection extends ConsumerWidget {
 
 /// "Publicaciones recientes" con sesion: cuatro en cuadricula y "Ver todo".
 class _MemberRecent extends ConsumerWidget {
-  const new({required this.feed, required this.onSave});
+  const new({required this.feed, required this.onSave, required this.onOpen});
 
   final HomeFeed feed;
   final VoidCallback onSave;
+
+  /// Tocar un producto: su detalle (HU-11).
+  final ValueChanged<ProductSummary> onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -992,6 +1020,7 @@ class _MemberRecent extends ConsumerWidget {
                           product: product,
                           now: now,
                           onSave: onSave,
+                          onTap: () => onOpen(product),
                         ),
                       ),
                     if (row.length == 1) const Spacer(),

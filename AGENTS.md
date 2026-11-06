@@ -81,7 +81,8 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
   - Para comparar con la maqueta: `flutter test tool/screenshots_test.dart --dart-define=SHOTS=<carpeta>`.
 - **Versión:** `version` de `pubspec.yaml`, alineada con `docs/versionado.md` (lo verifica `test/versioning_test.dart`).
 - **Lineamientos de la materia:** checklist L-NN en `musubi-api/docs/bitacora/lineamientos-materia.md`.
-- Pendientes con dueño: SignalR → HU-20; FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.
+- Chat (HU-20, HU-22): `lib/features/chat/`; tiempo real con `SignalRChatRealtime` (protocolo JSON de SignalR sobre `dart:io`, sin paquete).
+- Pendientes con dueño: FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)
 

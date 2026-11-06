@@ -1,17 +1,24 @@
-# HU-20 — Iniciar una conversación con el vendedor (tareas)
+# HU-20 — Iniciar una conversación con el vendedor (app) (tareas)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Detallar
+- **Estado:** ✅ Hecho (06-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-20)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Datos y tiempo real
+- **Crear:** modelos, `HttpChatRepository` y `SignalRChatRealtime`; `SessionTokens.userId`.
+- **Verificar:** `chat_data_test.dart` (13).
+- **Estado:** ✅ Hecho (06-Nov-2026).
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+## T3 — Pantalla y entrada
+- **Crear:** `ChatScreen`, `ChatController` y las rutas `/chat`; tocar un producto en Inicio.
+- **Verificar:** `chat_flow_test.dart` (grupo "Chat (HU-20)") y la captura `chat-valeria`.
+- **Estado:** ✅ Hecho (06-Nov-2026).
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## Pendientes
+- `NOTE (HU-11)`: "Mensaje" en el detalle del producto.
+- `NOTE (HU-21)`: "En línea".
+- `NOTE (HU-27)`: calificación.
+- `NOTE (HU-28)`: reportar.
+- `NOTE (HU-57)`: bloquear.
+- `NOTE (HU-32)`: "Resumir acuerdo".
+- `NOTE (HU-31)`: avisos push.
+- `NOTE (HU-16)`: chat desde solicitudes y ofertas.
