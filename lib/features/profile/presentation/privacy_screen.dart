@@ -151,7 +151,7 @@ class _SectionLabel extends StatelessWidget {
 /// "Quién te ve" (HU-04): carrera, ventas y en linea. Cada interruptor se
 /// guarda al tocarlo con el aviso de la maqueta; si la API falla regresa a
 /// su estado anterior y lo explica. La API aplica la visibilidad en el
-/// perfil publico (OWASP API3). NOTE (HU-20): "en linea" lo usa el chat.
+/// perfil publico (OWASP API3). NOTE (HU-21): "en linea" lo usa el chat.
 class _WhoSeesYou extends ConsumerWidget {
   const new();
 

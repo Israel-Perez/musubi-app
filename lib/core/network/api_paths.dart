@@ -79,4 +79,25 @@ abstract final class ApiPaths {
 
   /// `GET /api/v1/careers` — fila "M-02" (spec `musubi-api:HU-04`).
   static const careers = '/api/v1/careers';
+
+  /// `GET /api/v1/conversations` (bandeja, HU-22) y `POST` (iniciar desde una
+  /// publicacion, HU-20) — filas "M-07" (specs `musubi-api:HU-20`, `HU-22`).
+  static const conversations = '/api/v1/conversations';
+
+  /// `GET /api/v1/conversations/{id}` — fila "M-07" (spec `musubi-api:HU-20`).
+  static String conversation(String id) =>
+      '$conversations/${Uri.encodeComponent(id)}';
+
+  /// `GET` y `POST /api/v1/conversations/{id}/messages` — filas "M-07"
+  /// (spec `musubi-api:HU-20`).
+  static String conversationMessages(String id) =>
+      '${conversation(id)}/messages';
+
+  /// `POST /api/v1/conversations/{id}/read` — fila "M-07"
+  /// (spec `musubi-api:HU-22`).
+  static String conversationRead(String id) => '${conversation(id)}/read';
+
+  /// `WS /hubs/chat` — fila "M-07" (spec `musubi-api:HU-20`): solo
+  /// WebSockets, sin negociar, con el token en `?access_token=`.
+  static const chatHub = '/hubs/chat';
 }
