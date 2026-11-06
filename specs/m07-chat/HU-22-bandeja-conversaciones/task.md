@@ -1,17 +1,9 @@
-# HU-22 — Bandeja de conversaciones (tareas)
+# HU-22 — Bandeja de conversaciones (app) (tareas)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Pantalla Mensajes
+- **Crear:** `InboxScreen` e `inboxProvider`; la ruta `/mensajes` deja de ser "Muy pronto".
+- **Verificar:** `chat_flow_test.dart` (grupo "Mensajes (HU-22)") y la captura `mensajes`.
+- **Estado:** ✅ Hecho (06-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-22)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
-
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
-
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## Pendientes
+- `NOTE (HU-16)`: filas de solicitudes y ofertas.

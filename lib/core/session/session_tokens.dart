@@ -115,6 +115,11 @@ class SessionTokens {
   /// `null` si la sesion se guardo antes de conocer el perfil.
   final SessionProfile? profile;
 
+  /// Id del usuario: el `sub` del access token (HU-20, para saber que
+  /// mensajes del chat son mios). Solo se lee: la firma la valida la API, que
+  /// es la que decide. `null` si el token no tiene la forma de un JWT.
+  String? get userId => subjectOf(accessToken);
+
   String encode() => jsonEncode({
     'accessToken': accessToken,
     'accessExpiresAt': accessExpiresAt.toUtc().toIso8601String(),
@@ -133,6 +138,22 @@ class SessionTokens {
   @override
   int get hashCode =>
       Object.hash(accessToken, refreshToken, accessExpiresAt, profile);
+
+  /// El `sub` de un JWT sin verificar su firma, o `null`.
+  @visibleForTesting
+  static String? subjectOf(String jwt) {
+    final parts = jwt.split('.');
+    if (parts.length != 3) return null;
+    try {
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      final sub = payload is Map ? payload['sub'] : null;
+      return sub is String && sub.isNotEmpty ? sub : null;
+    } on FormatException {
+      return null;
+    }
+  }
 
   // Nunca imprime los tokens ni datos personales (MASVS-STORAGE).
   @override

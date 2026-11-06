@@ -12,12 +12,16 @@ import 'package:musubi_app/features/auth/presentation/sign_in_screen.dart';
 import 'package:musubi_app/features/auth/presentation/sign_up_screen.dart';
 import 'package:musubi_app/features/auth/presentation/verification_screen.dart';
 import 'package:musubi_app/features/auth/presentation/welcome_screen.dart';
+import 'package:musubi_app/features/chat/presentation/chat_controller.dart';
+import 'package:musubi_app/features/chat/presentation/chat_screen.dart';
+import 'package:musubi_app/features/chat/presentation/inbox_screen.dart';
 import 'package:musubi_app/features/listings/presentation/my_products_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_condition_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_details_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_done_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_photos_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_price_screen.dart';
+import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
@@ -56,6 +60,12 @@ abstract final class AppRoutes {
 
   /// "Publicar lo que necesito" (HU-13).
   static const need = '/necesito';
+
+  /// Chat con quien vende (HU-20): `extra` lleva el `ProductSummary`.
+  static const chat = '/chat';
+
+  /// Una conversacion existente (desde `Mensajes`, HU-22).
+  static String conversation(String id) => '$chat/${Uri.encodeComponent(id)}';
 
   /// Parametro con la ruta a la que se vuelve despues de iniciar sesion.
   static const returnParam = 'desde';
@@ -101,7 +111,11 @@ String? sessionRedirect({
   String? rememberedReturn,
 }) {
   final path = location.path;
-  if (!signedIn && AppRoutes.requiresSession.contains(path)) {
+  final needsSession =
+      AppRoutes.requiresSession.contains(path) ||
+      path == AppRoutes.chat ||
+      path.startsWith('${AppRoutes.chat}/');
+  if (!signedIn && needsSession) {
     return Uri(
       path: AppRoutes.signIn,
       queryParameters: {AppRoutes.returnParam: path},
@@ -164,12 +178,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.messages,
-                // NOTE (HU-22): bandeja de conversaciones.
-                builder: (context, state) => const UpcomingSection(
-                  title: 'Mensajes',
-                  message: 'Aquí estarán tus conversaciones.',
-                  icon: MusubiIcons.messageCircle,
-                ),
+                builder: (context, state) => const InboxScreen(),
               ),
             ],
           ),
@@ -191,6 +200,21 @@ final routerProvider = Provider<GoRouter>((ref) {
           message: 'Aquí podrás decir qué buscas y cuánto quieres pagar.',
           icon: MusubiIcons.megaphone,
           canGoBack: true,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.chat,
+        // Sin la publicacion (enlace directo) no hay con quien hablar.
+        redirect: (context, state) =>
+            state.extra is ProductSummary ? null : AppRoutes.messages,
+        builder: (context, state) => ChatScreen(
+          target: ChatTarget.product(state.extra! as ProductSummary),
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.chat}/:id',
+        builder: (context, state) => ChatScreen(
+          target: ChatTarget.conversation(state.pathParameters['id']!),
         ),
       ),
       GoRoute(

@@ -11,7 +11,7 @@ import 'package:musubi_app/core/session/token_store.dart';
 /// Ejecutar con: flutter run --dart-define-from-file=config/dev.json
 ///
 /// NOTE (02-06): Firebase Crashlytics. NOTE (HU-31): Firebase Messaging.
-/// NOTE (HU-20): cliente SignalR para chat y avisos dentro de la app.
+/// Chat en tiempo real (HU-20): `chatConnectionProvider`, al abrir `Mensajes`.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Falla rapido si la configuracion de compilacion es invalida (01-04).
