@@ -392,6 +392,40 @@ abstract final class MusubiIcons {
     IconPath('m6 6 12 12'),
   ]);
 
+  /// `share` ("Compartir" en `Producto`).
+  static const share = MusubiIconData([
+    IconPath('M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8'),
+    IconPath('m16 6-4-4-4 4'),
+    IconPath('M12 2v13'),
+  ]);
+
+  /// `bookmark` ("Apartar").
+  static const bookmark = MusubiIconData([
+    IconPath('m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'),
+  ]);
+
+  /// `arrow-down` ("Ver parecidos").
+  static const arrowDown = MusubiIconData([
+    IconPath('M12 5v14'),
+    IconPath('m19 12-7 7-7-7'),
+  ]);
+
+  /// `qr-code` ("Apartalo 24 h sin pagar").
+  static const qrCode = MusubiIconData([
+    IconRect(3, 3, 5, 5, radius: 1),
+    IconRect(16, 3, 5, 5, radius: 1),
+    IconRect(3, 16, 5, 5, radius: 1),
+    IconPath('M21 16h-3a2 2 0 0 0-2 2v3'),
+    IconPath('M21 21v.01'),
+    IconPath('M12 7v3a2 2 0 0 1-2 2H7'),
+    IconPath('M3 12h.01'),
+    IconPath('M12 3h.01'),
+    IconPath('M12 16v.01'),
+    IconPath('M16 12h1'),
+    IconPath('M21 12v.01'),
+    IconPath('M12 21v-1'),
+  ]);
+
   /// `ellipsis` ("Mas opciones" del chat).
   static const ellipsis = MusubiIconData([
     IconCircle(12, 12, 1),

@@ -1,17 +1,13 @@
-# HU-11 — Ver el detalle de un producto (tareas)
+# HU-11 — Ver el detalle de un producto (app) (tareas)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Datos
+- **Crear:**
+  - `ProductDetail` y `CatalogRepository.product` (HTTP, de muestra y fake);
+  - `PublicProfile` y `ProfileRepository.publicProfile`;
+  - íconos `share`, `bookmark`, `arrowDown` y `qrCode` de la maqueta.
+- **Estado:** ✅ Hecho (06-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-11)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
-
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
-
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## T2 — Pantalla
+- **Crear:** `ProductScreen` y `/producto/:id`; Inicio abre el detalle; "Ver" del chat (HU-21).
+- **Verificar:** `product_screen_test.dart` (6), `chat_flow_test.dart` y las capturas `producto` y `producto-visitante`.
+- **Estado:** ✅ Hecho (06-Nov-2026).

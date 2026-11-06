@@ -1,4 +1,5 @@
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 
 /// Catalogo publico de la vitrina: se puede leer sin cuenta (HU-48).
 ///
@@ -10,4 +11,7 @@ abstract interface class CatalogRepository {
     required PopularPeriod period,
     CatalogFilter filter = const CatalogFilter(),
   });
+
+  /// Detalle de una publicacion (HU-11). Sin sesion, sin el vendedor.
+  Future<ProductDetail> product(String id);
 }

@@ -23,6 +23,7 @@ import 'package:musubi_app/features/listings/presentation/sell_photos_screen.dar
 import 'package:musubi_app/features/listings/presentation/sell_price_screen.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
+import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/settings_screen.dart';
@@ -63,6 +64,10 @@ abstract final class AppRoutes {
 
   /// Chat con quien vende (HU-20): `extra` lleva el `ProductSummary`.
   static const chat = '/chat';
+
+  /// Detalle de una publicacion (HU-11), publico como la vitrina. `extra`
+  /// puede llevar la tarjeta de Inicio para mostrarla mientras carga.
+  static String product(String id) => '/producto/${Uri.encodeComponent(id)}';
 
   /// Una conversacion existente (desde `Mensajes`, HU-22).
   static String conversation(String id) => '$chat/${Uri.encodeComponent(id)}';
@@ -209,6 +214,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             state.extra is ProductSummary ? null : AppRoutes.messages,
         builder: (context, state) => ChatScreen(
           target: ChatTarget.product(state.extra! as ProductSummary),
+        ),
+      ),
+      GoRoute(
+        path: '/producto/:id',
+        builder: (context, state) => ProductScreen(
+          productId: state.pathParameters['id']!,
+          preview: state.extra is ProductSummary
+              ? state.extra! as ProductSummary
+              : null,
         ),
       ),
       GoRoute(

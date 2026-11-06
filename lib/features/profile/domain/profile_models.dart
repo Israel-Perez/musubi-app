@@ -204,3 +204,31 @@ String monthYear(DateTime date) {
   final local = date.toLocal();
   return '${_months[local.month - 1]} ${local.year}';
 }
+
+/// Perfil publico de otra persona del campus (`GET /profiles/{id}`): lo que
+/// muestra la tarjeta del vendedor en `Producto` (HU-11). La pantalla
+/// `Perfil-vendedor` completa llega con HU-05.
+@immutable
+class PublicProfile {
+  const new({
+    required this.id,
+    required this.fullName,
+    required this.ratingCount,
+    this.photoUrl,
+    this.careerShortName,
+    this.ratingAvg,
+    this.sales,
+  });
+
+  final String id;
+  final String fullName;
+  final String? photoUrl;
+
+  /// `null` si oculta su carrera ("Quien te ve", HU-04).
+  final String? careerShortName;
+  final double? ratingAvg;
+  final int ratingCount;
+
+  /// `null` si oculta sus ventas.
+  final int? sales;
+}

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 
 /// Fake de [CatalogRepository]: responde en orden y registra los periodos y
 /// los filtros.
@@ -33,6 +34,22 @@ class FakeCatalogRepository implements CatalogRepository {
       final Completer<HomeFeed> completer => completer.future,
       _ => throw StateError('Respuesta no soportada: $next'),
     };
+  }
+
+  /// Detalles por id (HU-11). Sin el id: 404 como la API.
+  final Map<String, ProductDetail> details = {};
+
+  @override
+  Future<ProductDetail> product(String id) async {
+    final found = details[id];
+    if (found == null) {
+      throw const ApiFailure(
+        code: 'listings.product_not_found',
+        message: 'Esta publicación ya no está disponible.',
+        status: 404,
+      );
+    }
+    return found;
   }
 }
 

@@ -13,6 +13,7 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
@@ -36,6 +37,23 @@ final _feed = HomeFeed(
       publishedAt: _now.subtract(const Duration(hours: 1)),
     ),
   ],
+);
+
+/// Detalle de la calculadora (HU-11): Valeria la vende.
+final _detail = ProductDetail(
+  id: 'p1',
+  title: 'Calculadora Casio fx-991ES Plus',
+  description: 'La usé un semestre para Cálculo y Física.',
+  categoryName: 'Calculadoras',
+  priceCents: 45000,
+  condition: 'used',
+  conditionDetail: 'fair',
+  stock: 1,
+  status: 'active',
+  photoUrls: const [],
+  publishedAt: _now.subtract(const Duration(days: 2)),
+  sellerId: valeria.id,
+  sellerName: 'Valeria C.',
 );
 
 ChatMessage _message(String id, String text, String sender, int minute) =>
@@ -67,7 +85,7 @@ class ChatHarness {
         overrides: [
           brandSplashEnabledProvider.overrideWithValue(false),
           catalogRepositoryProvider.overrideWithValue(
-            FakeCatalogRepository([_feed]),
+            FakeCatalogRepository([_feed])..details['p1'] = _detail,
           ),
           sessionApiProvider.overrideWithValue(FakeSessionApi()),
           clockProvider.overrideWithValue(() => _now),
@@ -105,13 +123,15 @@ class ChatHarness {
 // (`Mensajes`) contra el repositorio y el tiempo real falsos.
 void main() {
   group('Chat (HU-20)', () {
-    testWidgets('tocar un producto en Inicio abre el chat con quien lo vende', (
+    testWidgets('del producto en Inicio a su detalle y de ahi al chat', (
       tester,
     ) async {
       final harness = ChatHarness(tester);
       await harness.open(AppRoutes.home);
 
       await harness.tap(find.text('Calculadora Casio fx-991ES Plus').first);
+      expect(find.text('Usado · Con detalles'), findsOneWidget);
+      await harness.tap(find.bySemanticsLabel('Enviar mensaje'));
 
       expect(harness.chat.started, ['p1']);
       expect(find.text('Valeria Cruz'), findsOneWidget);
@@ -243,6 +263,21 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Escribe un mensaje…'), findsNothing);
+    });
+
+    testWidgets('"Ver" abre el detalle de la publicacion (HU-21)', (
+      tester,
+    ) async {
+      final harness = ChatHarness(tester);
+      await harness.open(AppRoutes.conversation('c1'));
+
+      await harness.tap(find.bySemanticsLabel('Ver la publicación'));
+
+      expect(find.text('Calculadoras · Publicado hace 2 días'), findsOneWidget);
+      expect(
+        find.text('La usé un semestre para Cálculo y Física.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('sin sesion, un enlace al chat lleva a iniciar sesion', (
