@@ -100,6 +100,22 @@ void main() {
       expect(find.text('Muy pronto'), findsOneWidget);
     });
 
+    testWidgets('la ruta /buscar abre la busqueda (HU-09)', (tester) async {
+      await pumpApp(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MusubiApp)),
+      );
+
+      container.read(routerProvider).go(AppRoutes.search);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('search-input')), findsOneWidget);
+      expect(
+        find.text('Aquí podrás buscar libros, laptops, batas y más.'),
+        findsNothing,
+      );
+    });
+
     testWidgets('el visitante que toca Perfil ve "Crea tu perfil" (HU-48)', (
       tester,
     ) async {

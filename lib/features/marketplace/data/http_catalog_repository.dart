@@ -7,7 +7,7 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 
 /// Vitrina real sobre `GET /api/v1/products` y `GET /api/v1/categories`
-/// (filas "M-03" de `musubi-api/docs/endpoints.md`, HU-48 fase 2).
+/// (fila 73 de `musubi-api/docs/endpoints.md`, HU-48 fase 2 y HU-09).
 ///
 /// Va con el cliente con sesion: sin sesion no lleva token y la API no
 /// devuelve al vendedor (RNF-05); con sesion, si.
@@ -22,6 +22,9 @@ class HttpCatalogRepository implements CatalogRepository {
 
   /// Tarjetas de "Recién publicados" que se piden de una vez.
   static const pageSize = 20;
+
+  /// Tarjetas de una pagina de busqueda (HU-09).
+  static const searchPageSize = 20;
 
   @override
   Future<HomeFeed> homeFeed({
@@ -59,6 +62,31 @@ class HttpCatalogRepository implements CatalogRepository {
       );
     } on DioException catch (error) {
       // Se traduce (no se traga): Inicio decide por el code.
+      throw ApiFailure.fromDio(error);
+    }
+  }
+
+  @override
+  Future<ProductPage> search({required String query, String? cursor}) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiPaths.products,
+        queryParameters: {
+          'q': query.trim(),
+          'limit': searchPageSize,
+          'cursor': ?cursor,
+        },
+      );
+      final page = response.data ?? const <String, dynamic>{};
+      return ProductPage(
+        items: [
+          for (final item in page['items'] as List<dynamic>? ?? const [])
+            productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
+        ],
+        total: (page['total'] as num?)?.toInt() ?? 0,
+        nextCursor: page['nextCursor'] as String?,
+      );
+    } on DioException catch (error) {
       throw ApiFailure.fromDio(error);
     }
   }

@@ -43,8 +43,8 @@ abstract final class ApiPaths {
   /// `GET /api/v1/categories` — fila "M-03" (spec `musubi-api:HU-06`).
   static const categories = '/api/v1/categories';
 
-  /// `GET /api/v1/products` (vitrina publica, HU-48) y `POST` (publicar,
-  /// HU-06) — filas "M-03".
+  /// `GET /api/v1/products` — fila 73 (vitrina publica, HU-48; busqueda,
+  /// HU-09, spec `musubi-api:HU-09`) y `POST` (publicar, HU-06).
   static const products = '/api/v1/products';
 
   /// `POST /api/v1/products/photos` — fila "M-03" (spec `musubi-api:HU-06`).

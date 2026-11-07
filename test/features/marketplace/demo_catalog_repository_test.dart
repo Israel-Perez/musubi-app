@@ -109,6 +109,43 @@ void main() {
     ]);
   });
 
+  // HU-09: la busqueda de muestra aproxima la palabra completa de la API.
+  test(
+    'busqueda de muestra: plural, sin agotados y mas nueva primero',
+    () async {
+      final plural = await repository.search(query: 'calculadoras');
+      final casio = await repository.search(query: 'casio');
+      final soldOut = await repository.search(query: 'audifonos');
+
+      expect(
+        plural.items.map((p) => p.title),
+        contains('Calculadora Casio fx-991ES Plus'),
+      );
+      expect(plural.items.every((p) => !p.soldOut), isTrue);
+      expect(casio.items.first.title, 'Calculadora Casio fx-991LA X');
+      expect(soldOut.items, isEmpty);
+      expect(soldOut.total, 0);
+    },
+  );
+
+  test('busqueda de muestra: coincide por prefijo de palabra', () async {
+    final page = await repository.search(query: 'calc');
+    final infix = await repository.search(query: 'culadora');
+
+    expect(
+      page.items.map((p) => p.title),
+      contains('Calculadora Casio fx-991ES Plus'),
+    );
+    expect(infix.items, isEmpty);
+  });
+
+  test('busqueda de muestra: cursor devuelve una pagina vacia', () async {
+    final page = await repository.search(query: 'casio', cursor: 'next');
+
+    expect(page.items, isEmpty);
+    expect(page.nextCursor, isNull);
+  });
+
   test('pocas piezas: "Último" con 1 y "Quedan 2" con 2 (maqueta)', () {
     ProductSummary withStock(int stock) =>
         ProductSummary(id: 'x', title: 'x', priceCents: 100, stock: stock);

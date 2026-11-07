@@ -353,6 +353,71 @@ class DemoCatalogRepository implements CatalogRepository {
     );
   }
 
+  /// Busqueda de muestra (HU-09): solo disponibles, prefijo de palabra
+  /// (singular/plural) y de la mas nueva a la mas vieja.
+  @override
+  Future<ProductPage> search({required String query, String? cursor}) async {
+    if (cursor != null) return const ProductPage();
+    final terms = _terms(query);
+    if (terms.isEmpty) return const ProductPage();
+    final now = _clock();
+    final items = <ProductSummary>[
+      for (final (product, minutes) in _products)
+        if (!product.soldOut && _matches(product.title, terms))
+          ProductSummary(
+            id: product.id,
+            title: product.title,
+            priceCents: product.priceCents,
+            stock: product.stock,
+            photoUrl: product.photoUrl,
+            views: product.views,
+            category: product.category,
+            condition: product.condition,
+            sellerName: product.sellerName,
+            sellerRating: product.sellerRating,
+            publishedAt: now.subtract(Duration(minutes: minutes)),
+          ),
+    ]..sort((a, b) => b.publishedAt!.compareTo(a.publishedAt!));
+    return ProductPage(items: items, total: items.length);
+  }
+
+  static List<String> _terms(String query) => [
+    for (final word in _fold(query).split(RegExp('[^a-z0-9]+')))
+      if (word.isNotEmpty) _stem(word),
+  ];
+
+  static bool _matches(String title, List<String> terms) {
+    final words = [
+      for (final word in _fold(title).split(RegExp('[^a-z0-9]+')))
+        if (word.isNotEmpty) _stem(word),
+    ];
+    return terms.any((term) => words.any((word) => word.startsWith(term)));
+  }
+
+  /// Aproxima la normalizacion de la API: minusculas sin acentos y plural.
+  static String _stem(String word) {
+    if (word.length > 4 && word.endsWith('es')) {
+      return word.substring(0, word.length - 2);
+    }
+    if (word.length > 4 && word.endsWith('s')) {
+      return word.substring(0, word.length - 1);
+    }
+    return word;
+  }
+
+  static String _fold(String value) {
+    const accents = 'áàäâãéèëêíìïîóòöôõúùüûñç';
+    const plain = 'aaaaaeeeeiiiiooooouuuunc';
+    final lower = value.toLowerCase();
+    final buffer = StringBuffer();
+    for (final code in lower.runes) {
+      final char = String.fromCharCode(code);
+      final index = accents.indexOf(char);
+      buffer.write(index >= 0 ? plain[index] : char);
+    }
+    return buffer.toString();
+  }
+
   /// Detalle de muestra (HU-11) armado con la tarjeta de la vitrina.
   @override
   Future<ProductDetail> product(String id) async {

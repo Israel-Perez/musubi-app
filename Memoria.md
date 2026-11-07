@@ -2,12 +2,42 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (06-Nov-2026)
+## Estado actual (07-Nov-2026)
 
 - **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
+- **Búsqueda (HU-09):** app `0.5.1+7`, implementada contra la rama `SCRUM-26` de la API (`0.5.0-alpha.3`, sin publicar; PR musubi-api#49); 325 pruebas, analyze 0 y critic PASS.
 - **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
+
+## T25 — Buscar productos por palabra clave (07-Nov-2026, SCRUM-26, HU-09)
+
+**Qué se hizo**
+- `/buscar` es `SearchScreen` (`Busqueda` y `Busqueda-vacia` de la maqueta):
+  - campo compacto con búsqueda al escribir (300 ms de retardo) y al enviar, y borrar;
+  - contador, mosaico de dos columnas con `RecentTile` (título en dos líneas) y apertura del detalle;
+  - estados inicial, cargando, vacío y error con "Reintentar";
+  - "Cargar más" con el cursor de la API.
+- `ProductPage` y `CatalogRepository.search`; implementación HTTP sobre la fila 73 (`GET /api/v1/products?q=`) y búsqueda local en `DemoCatalogRepository`.
+- `SearchController` (`AsyncNotifier`) con primera página, paginación y descarte de respuestas atrasadas; el fake del repositorio registra `query` y `cursor`.
+- Pruebas: data HTTP, demo, providers, pantalla y navegación. Total 325.
+
+**Decisiones (con su porqué)**
+- **Buscar mientras se escribe con 300 ms de retardo:** evita una petición por carácter y aprovecha la coincidencia por prefijo de la API (`calc` encuentra `Calculadora`). Enviar consulta de inmediato.
+- **Solo la última búsqueda puede cambiar el estado:** escribir rápido puede dejar respuestas en vuelo; un número de petición descarta las viejas y las tarjetas anteriores se conservan sin parpadeo.
+- **`/buscar` se limpia al salir:** el provider es `autoDispose`; al volver a abrir no se ven resultados viejos ni queda el término en memoria.
+- **`ProductPage` vive en `home_feed.dart`:** la vitrina y la búsqueda comparten la misma forma; no se crea un archivo para una clase de tres campos.
+- **`loadMore` conserva las tarjetas si falla:** la persona no pierde lo que ya ve; el error se avisa con un snack.
+- **Sin filtros ni historial de búsquedas:** los filtros son HU-10 (`NOTE (HU-10)`); no se guarda el historial porque RNF-07 prohíbe persistir `q`. El guardado local de productos es HU-53 (`NOTE (HU-53)`).
+- **El estado vacío no guarda la búsqueda ni avisa:** esas acciones son HU-12 (`NOTE (HU-12)`).
+- **Los agotados no se filtran en la app:** con `q` la API nunca los devuelve.
+
+**Errores a evitar**
+- **No repitas el mismo texto en el campo y en el estado inicial:** `find.text('Busca en tu campus')` encontró dos widgets. El título del estado es "Busca lo que necesitas".
+- **`MusubiIcon` ya mide 24 por defecto:** no pases `size: 24`; el analizador lo marca como redundante.
+- **La búsqueda de muestra coincide por prefijo y solo quita el plural:** quitar también la vocal final ya no representa a la API (`calc` y `calculadora` deben coincidir con `Calculadora`).
+- **Las pruebas de la búsqueda en vivo necesitan avanzar el reloj del `Timer`:** `pump(300 ms)`; sin eso la consulta no sale y la prueba falla por una razón falsa.
+- **Riverpod 3 ya no tiene la clase `AutoDisposeAsyncNotifierProvider`:** `autoDispose` es el parámetro `isAutoDispose: true` del provider.
 
 ## T24 — Detalle del producto y contexto del chat (06-Nov-2026, SCRUM-28 y SCRUM-30, HU-11 y HU-21)
 
