@@ -31,6 +31,7 @@ class MusubiTextField extends StatefulWidget {
     this.onSubmitted,
     this.fieldKey,
     this.prefixIcon,
+    this.prefixText,
     this.suffix,
     this.footer,
     this.sheet = false,
@@ -63,6 +64,9 @@ class MusubiTextField extends StatefulWidget {
 
   /// Icono a la izquierda (sobre de "Correo institucional").
   final MusubiIconData? prefixIcon;
+
+  /// Texto a la izquierda (el `$` de "Mínimo" y "Máximo").
+  final String? prefixText;
 
   /// Elemento a la derecha (palomita de campus detectado).
   final Widget? suffix;
@@ -148,6 +152,11 @@ class _MusubiTextFieldState extends State<MusubiTextField> {
               size: 20,
               strokeWidth: 1.9,
               color: c.textSecondary,
+            ),
+          if (widget.prefixText != null)
+            Text(
+              widget.prefixText!,
+              style: MusubiType.field.copyWith(color: c.textSecondary),
             ),
           Expanded(
             child: TextField(

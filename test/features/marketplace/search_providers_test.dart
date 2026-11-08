@@ -162,4 +162,67 @@ void main() {
     expect(state.items, isEmpty);
     expect(state.hasMore, isFalse);
   });
+
+  // HU-10: filtros combinados con la busqueda.
+  test('aplicar un filtro busca sin texto y lo manda a la API', () async {
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1')], total: 1),
+      ],
+    );
+    final container = containerFor(fake);
+
+    await container
+        .read(searchControllerProvider.notifier)
+        .applyFilter(
+          const CatalogFilter(category: 'libros', minPriceCents: 30000),
+        );
+
+    final state = container.read(searchControllerProvider).value!;
+    expect(state.query, isEmpty);
+    expect(state.filter.category, 'libros');
+    expect(state.filter.minPriceCents, 30000);
+    expect(state.items.single.id, 'p1');
+    expect(state.hasCriteria, isTrue);
+    expect(fake.queries, ['']);
+    expect(fake.searchFilters.single.category, 'libros');
+  });
+
+  test('sin texto ni filtros no llama a la API', () async {
+    final fake = FakeCatalogRepository();
+    final container = containerFor(fake);
+
+    await container
+        .read(searchControllerProvider.notifier)
+        .applyFilter(const CatalogFilter());
+
+    expect(fake.queries, isEmpty);
+    expect(
+      container.read(searchControllerProvider).value!.hasCriteria,
+      isFalse,
+    );
+  });
+
+  test('cargar mas conserva el filtro aplicado', () async {
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1')], total: 2, nextCursor: 'c1'),
+        ProductPage(items: [product('p2')], total: 2),
+      ],
+    );
+    final container = containerFor(fake);
+    final notifier = container.read(searchControllerProvider.notifier);
+
+    await notifier.applyFilter(const CatalogFilter(condition: 'used'));
+    await notifier.loadMore();
+
+    expect(fake.searchFilters.last.condition, 'used');
+    expect(fake.cursors, [null, 'c1']);
+    expect(
+      container.read(searchControllerProvider).value!.items.map((p) => p.id),
+      ['p1', 'p2'],
+    );
+  });
 }

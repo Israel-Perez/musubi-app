@@ -29,27 +29,55 @@ class CatalogCategory {
   int get hashCode => Object.hash(slug, name);
 }
 
-/// Filtro de "Recién publicados" (maqueta `Inicio-visitante`, HU-10):
-/// una categoria (o todas) y "Ocultar agotados".
+/// Filtros del catalogo: "Recién publicados" (maqueta `Inicio-visitante`) y
+/// la busqueda (maqueta `Busqueda-filtros`, HU-10).
 @immutable
 class CatalogFilter {
-  const new({this.category, this.hideSoldOut = false});
+  const new({
+    this.category,
+    this.minPriceCents,
+    this.maxPriceCents,
+    this.condition,
+    this.hideSoldOut = false,
+  });
 
   /// `slug` de la categoria; `null` es "Todo".
   final String? category;
+
+  /// Extremos inclusivos en centavos; cada uno puede venir solo.
+  final int? minPriceCents;
+  final int? maxPriceCents;
+
+  /// `new` o `used`; `null` es "Todos".
+  final String? condition;
   final bool hideSoldOut;
 
+  bool get hasPrice => minPriceCents != null || maxPriceCents != null;
+
   /// Numero de filtros activos (el globo del boton).
-  int get count => (category == null ? 0 : 1) + (hideSoldOut ? 1 : 0);
+  int get count =>
+      (category == null ? 0 : 1) +
+      (hasPrice ? 1 : 0) +
+      (condition == null ? 0 : 1) +
+      (hideSoldOut ? 1 : 0);
 
   @override
   bool operator ==(Object other) =>
       other is CatalogFilter &&
       other.category == category &&
+      other.minPriceCents == minPriceCents &&
+      other.maxPriceCents == maxPriceCents &&
+      other.condition == condition &&
       other.hideSoldOut == hideSoldOut;
 
   @override
-  int get hashCode => Object.hash(category, hideSoldOut);
+  int get hashCode => Object.hash(
+    category,
+    minPriceCents,
+    maxPriceCents,
+    condition,
+    hideSoldOut,
+  );
 }
 
 /// Tarjeta de producto de la vitrina (modelo `products` de musubi-api 02-01).

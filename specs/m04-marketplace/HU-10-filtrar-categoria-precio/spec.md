@@ -46,7 +46,7 @@ RNF que aplican: RNF-07 (regla de la API; el front no persiste), RNF-09 (resulta
   - `SearchController.search` acepta el filtro; `applyFilter(CatalogFilter)` re-consulta el texto actual reiniciando el cursor; `loadMore` repite `state.filter`; `clear` sigue limpiando todo;
   - `searchCategoriesProvider`: `FutureProvider.autoDispose` sobre `categories()`, para la hoja;
   - `searchFilterPreviewProvider`: `FutureProvider.autoDispose.family<int, SearchPreview>` con `SearchPreview { query, filter }`, devuelve el `total`.
-- `presentation/search_filter_sheet.dart`: `showSearchFilterSheet(context, {required query, required filter})` con `showMusubiPanel` + `MusubiPanel` (título y X, como las hojas con acciones de la casa), `Key('search-filter-sheet')`, categorías desde `searchCategoriesProvider`, dos `MusubiTextField` numéricos (`FilteringTextInputFormatter.digitsOnly`), control segmentado de estado (`Key('search-condition')`, patrón de `_Segments` en `inbox_screen.dart`), `MusubiSwitch`, "Limpiar" y CTA con `searchFilterPreviewProvider` en `MusubiPanel.actions`.
+- `presentation/search_filter_sheet.dart`: `showSearchFilterSheet(context)` con `showMusubiPanel` + `MusubiPanel` (título y X, como las hojas con acciones de la casa), `Key('search-filter-sheet')`, categorías desde `searchCategoriesProvider`, dos `MusubiTextField` numéricos (`FilteringTextInputFormatter.digitsOnly`) que convierten pesos a centavos, control segmentado de estado (`Key('search-condition')`, patrón de `_Segments` en `inbox_screen.dart`), `MusubiSwitch`, "Limpiar" y CTA con `searchFilterPreviewProvider` en `MusubiPanel.actions`.
 - `presentation/filter_button.dart`: se extrae el botón con globo que hoy es `_FilterButton` en `home_screen.dart`. Acepta `key`, `count`, `onTap`, `active`, `size` y `semanticLabel`; Inicio conserva 44/"Filtrar" y su look actual (`Key('home-filter')`), y la búsqueda usa 48/"Filtros", fondo rojo claro con `count > 0` (`Key('search-filter')`).
 - `presentation/search_screen.dart`: botón de filtros en la fila superior, apertura de la hoja, vacío con filtros y "Reintentar" con el texto y los filtros aplicados. Recibe `openFilters` (desde `GoRouterState.extra == true`) y abre la hoja en el primer frame.
 - `app/router.dart`: la ruta de `/buscar` pasa `openFilters` desde `state.extra`; `home_screen.dart` conserva su ícono de filtros junto al buscador y lo abre con `extra: true`.
@@ -57,7 +57,7 @@ Decisiones:
 - **Un solo filtro de búsqueda, separado del de Inicio.** `catalogFilterProvider` sigue gobernando "Recién publicados"; la búsqueda usa el filtro dentro de `SearchState`, que es `autoDispose` y muere al salir (RNF-07).
 - **Una categoría.** La fila 73 acepta un `category`; la maqueta permite marcar varias pastillas. Varias categorías exigirían cambiar el contrato.
 - **Categorías desde `/categories`, no desde `homeFeed`.** `/buscar` se abre directo; pedir la vitrina entera solo por el catálogo sería más caro y con más estados.
-- **Precio en pesos y centavos en el borde.** La persona escribe pesos; el repositorio convierte a centavos, igual que `priceCents`. La validación en el cliente evita un viaje con `400`.
+- **Precio en pesos y centavos en el borde.** La persona escribe pesos; la hoja convierte a centavos al armar el `CatalogFilter`, la misma unidad de `priceCents`. La validación en el cliente evita un viaje con `400`.
 - **Filtros aplicados al confirmar, no en cada toque.** La hoja trabaja sobre un borrador; solo el CTA cambia la búsqueda, como la hoja de Inicio.
 - **El preview usa `total`, no `items.length`.** Con `limit=20` una página no refleja el total real; `filterPreviewProvider` de Inicio mide otra cosa y no se reutiliza.
 - **Filtrar sin texto es válido.** La API lo permite y evita una pantalla muerta; el vacío distingue "sin resultados" de "sin filtros".
@@ -66,7 +66,7 @@ Decisiones:
 
 - Fila canónica: [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) → `GET /api/v1/products`, fila 73, con `?category=&q=&minPriceCents=&maxPriceCents=&condition=&hideSoldOut=&cursor=&limit=`. Se enlaza, no se copia.
 - Categorías: misma tabla, `GET /api/v1/categories`, fila 72. Se enlaza la forma; no se copia el DTO.
-- Códigos que distingue la app: los de rango de precio y estado inválidos de la fila 73, red y `5xx`. Catálogo de errores en [`musubi-api/docs/errores.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/errores.md).
+- La app valida rango y estado antes de llamar; si la API responde con error, muestra su mensaje en español y "Reintentar". Catálogo de errores en [`musubi-api/docs/errores.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/errores.md).
 - Semántica de los parámetros: [`musubi-api:HU-10`](https://github.com/Israel-Perez/musubi-api/tree/feature/SCRUM-27-filtrar-categoria-precio/specs/m04-marketplace/HU-10-filtrar-categoria-precio).
 - Orden de dependencia: `musubi-api#49` (HU-09) antes de `musubi-api#50` (HU-10); la app no se fusiona antes que esas filas. Mientras `#50` siga en borrador, la fila 73 con los parámetros nuevos se lee en su rama.
 
@@ -90,26 +90,25 @@ Decisiones:
 - `test/features/marketplace/search_filter_sheet_test.dart`:
   - una sola categoría seleccionada, "Todo" la quita y "Limpiar" reinicia el borrador;
   - cada pastilla y opción del control segmentado expone `Semantics(selected)`;
-  - mínimo mayor que máximo y valor fuera de `$999,999` muestran error y no aplican;
+  - mínimo mayor que máximo y valor fuera de `$999,999` muestran error, no consultan el preview y no aplican;
   - el control segmentado marca una sola opción y Estado y "Ocultar agotados" viajan al filtro;
   - X cierra sin cambiar el filtro aplicado;
-  - el CTA muestra el total del preview, "Ver resultados" mientras carga, "Ver resultados" si el preview falla y aplica al confirmar;
-  - si `/categories` falla, muestra mensaje y "Reintentar"; mientras carga, muestra indicador.
+  - el CTA muestra el total del preview y aplica al confirmar;
+  - si `/categories` falla, muestra mensaje y "Reintentar".
 - `test/features/marketplace/search_screen_test.dart`:
   - botón con globo 0/1/N, fondo gris/rojo claro, anuncio "Filtros" o "Filtros, N activos" y hoja con el texto y el filtro vigentes;
   - aplicar filtro refresca resultados y contador sin perder el texto y sin esperar el retardo de 300 ms;
   - vacío con filtros muestra "Sin resultados para «texto»", el subtítulo de la maqueta y "Quitar filtros";
-  - `invalid_price_range`, `invalid_condition` y `5xx` muestran mensaje y "Reintentar";
+  - `5xx` y sin red muestran mensaje y "Reintentar";
   - filtrar sin texto muestra el catálogo filtrado;
   - al volver y reabrir no conserva texto ni filtros.
-- `test/app/navigation_test.dart`: el ícono de filtros de Inicio abre `/buscar` con la hoja `Busqueda-filtros` visible.
-- `test/features/marketplace/home_screen_test.dart`: sin cambios de comportamiento; comprueba que el botón extraído sigue con `Key('home-filter')` y su globo.
+- `test/features/marketplace/home_screen_test.dart`: el ícono de filtros del buscador abre `/buscar` con la hoja `Busqueda-filtros` visible; el botón extraído sigue con `Key('home-filter')` y su globo.
 - `test/helpers/fake_catalog_repository.dart`: `search` recibe y registra `filter`; `categories()` devuelve el catálogo de prueba.
 
 ## Criterios
 
 - [ ] Tocar "Filtros", elegir "Libros" y aplicar llama a `GET /api/v1/products` con `category=libros` y el texto vigente (`search_filter_sheet_test`, `http_catalog_repository_test`).
-- [ ] El ícono de filtros de Inicio abre `/buscar` con la hoja `Busqueda-filtros` visible (`navigation_test`).
+- [ ] El ícono de filtros de Inicio abre `/buscar` con la hoja `Busqueda-filtros` visible (`home_screen_test`).
 - [ ] Cada pastilla y cada opción del control segmentado se anuncia como seleccionada (`search_filter_sheet_test`).
 - [ ] Con filtros activos el botón del encabezado se ve con fondo rojo claro y anuncia "Filtros, N activos"; sin filtros, gris y "Filtros" (`search_screen_test`).
 - [ ] El estado es un control segmentado: "Usado" envía `condition=used`, "Todos" lo omite y una sola opción queda marcada (`search_filter_sheet_test`).
@@ -137,11 +136,11 @@ Decisiones:
 - **Control segmentado local:** se replica el patrón de `_Segments` de `inbox_screen.dart` dentro de la hoja. Si aparece un tercer control segmentado, se extrae a `lib/core/widgets/`.
 - **Decisión (07-Nov-2026) — sin selector de orden:** "Más relevantes" de `Busqueda` no se implementa; requiere un parámetro de orden que la API no tiene. Se omite hasta que exista esa fila.
 - **La hoja "Filtrar" de Inicio no cambia:** sigue con categoría y agotados; esta HU solo agrega la hoja de `/buscar` y el `extra` del ícono del buscador.
-- **Acciones del vacío:** guardar búsqueda, "avísame" y "Ver opciones" son HU-12 (`NOTE (HU-12)`); "Pídelo a tu campus" es HU-13 (`NOTE (HU-13)`). Aquí solo se ofrece quitar filtros.
+- **Acciones del vacío:** guardar búsqueda, "avísame" y "Ver opciones" son HU-12 (`NOTE (HU-12)`); "Pídelo a tu campus" queda fuera de esta HU (HU-13). Aquí solo se ofrece quitar filtros.
 - **Decisión (07-Nov-2026) — búsquedas recientes:** no se implementan. RNF-07 es regla de persistencia del back; el front no las guarda. Si el PO las pide en memoria, se abre una spec de M-04.
 - **Pastillas de filtros aplicados:** la maqueta deja un manejador `rmfilter` sin pastillas visibles en `Busqueda`; no se agregan.
 - **Historial y filtros guardados:** no existen; RNF-07 prohíbe persistir la búsqueda. El almacenamiento local es HU-53 (`NOTE (HU-53)`).
-- **Notas de código:** los `NOTE (HU-10)` de `search_screen.dart` y `home_screen.dart` los resuelve esta HU; se retiran al implementar T5 y T4.
+- **Notas de código:** no quedan `NOTE (HU-10)`; se retiraron en T4 y T5.
 - **Categorías sin foto en la hoja:** la maqueta usa pastillas de texto; no se cargan fotos.
 - **Categoría desconocida:** la API devuelve página vacía, no `400`; la app solo envía slugs del catálogo.
 - **RNF-09:** el p95 se mide en la API (spec de la contraparte); la app solo muestra la carga.
@@ -149,7 +148,7 @@ Decisiones:
 
 ## Aprobación y Control de Cambios
 
-- **Estado:** 🚧 Borrador
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
 - **Fecha:** 07-Nov-2026
-- **Detalle:** spec detallada antes de implementar. Se acuerdan categoría única, precio en pesos convertido a centavos, condición `new`/`used`, filtros combinados con `q` y preview por `total`. Revisión contra la maqueta `Busqueda-filtros` (07-Nov-2026): botón de 48 con estado rojo claro, hoja con `showMusubiPanel`, estado segmentado, copy del vacío y RNF corregidos (RNF-27/L-04); se documentan las diferencias de la maqueta (varias categorías, deslizante de precio, búsquedas recientes y selector de orden). Queda pendiente la implementación y su evidencia; la contraparte está en la rama apilada de `musubi-api`.
+- **Detalle:** implementada y probada (07-Nov-2026): 345 pruebas en verde, `flutter analyze` sin observaciones y `critic` PASS. Faltan la revisión de un integrante y la prueba manual en el celular. Se acuerdan categoría única, precio en pesos convertido a centavos, condición `new`/`used`, filtros combinados con `q` y preview por `total`. Revisión contra la maqueta `Busqueda-filtros` (07-Nov-2026): botón de 48 con estado rojo claro, hoja con `showMusubiPanel`, estado segmentado, copy del vacío y RNF corregidos (RNF-27/L-04); se documentan las diferencias de la maqueta (varias categorías, deslizante de precio, búsquedas recientes y selector de orden). La contraparte está en la rama apilada de `musubi-api`.

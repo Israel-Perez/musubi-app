@@ -25,6 +25,7 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
+import 'package:musubi_app/features/marketplace/presentation/filter_button.dart';
 import 'package:musubi_app/features/marketplace/presentation/filter_sheet.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
@@ -415,8 +416,9 @@ class _MemberHeader extends StatelessWidget {
                   ),
                 ),
                 Pressable(
-                  // NOTE (HU-10): filtros de la busqueda.
-                  onTap: () => unawaited(context.push(AppRoutes.search)),
+                  key: const Key('home-search-filter'),
+                  onTap: () =>
+                      unawaited(context.push(AppRoutes.search, extra: true)),
                   semanticLabel: 'Filtros',
                   builder: (context, pressed) => Container(
                     width: 52,
@@ -801,8 +803,14 @@ class _RecentMosaic extends StatelessWidget {
           size: 20,
           trailing: feed.categories.isEmpty
               ? null
-              : _FilterButton(
+              : FilterButton(
+                  key: const Key('home-filter'),
                   count: filter.count,
+                  semanticLabel: switch (filter.count) {
+                    0 => 'Filtrar',
+                    1 => 'Filtrar, 1 filtro activo',
+                    final n => 'Filtrar, $n filtros activos',
+                  },
                   onTap: () =>
                       unawaited(showFilterSheet(context, feed.categories)),
                 ),
@@ -840,76 +848,6 @@ class _RecentMosaic extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-/// Boton "Filtrar" de 44 con el globo de filtros activos.
-class _FilterButton extends StatelessWidget {
-  const new({required this.count, required this.onTap});
-
-  final int count;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.musubi;
-    return Pressable(
-      key: const Key('home-filter'),
-      onTap: onTap,
-      semanticLabel: switch (count) {
-        0 => 'Filtrar',
-        1 => 'Filtrar, 1 filtro activo',
-        _ => 'Filtrar, $count filtros activos',
-      },
-      builder: (context, pressed) => SizedBox(
-        width: 44,
-        height: 44,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: pressed ? c.surfacePressed : c.surface,
-                  borderRadius: BorderRadius.circular(MusubiSizes.radiusField),
-                ),
-                child: Center(
-                  child: MusubiIcon(
-                    MusubiIcons.slidersHorizontal,
-                    size: 20,
-                    color: c.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-            if (count > 0)
-              Positioned(
-                top: -5,
-                right: -5,
-                child: Container(
-                  constraints: const BoxConstraints(minWidth: 20),
-                  height: 20,
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  decoration: BoxDecoration(
-                    color: c.brand,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: c.background, width: 2),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$count',
-                    style: MusubiType.style(
-                      10.5,
-                      weight: FontWeight.w800,
-                      color: const Color(0xFFFFFFFF),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }

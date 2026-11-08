@@ -18,16 +18,20 @@ import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
+import 'package:musubi_app/features/marketplace/presentation/filter_button.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+import 'package:musubi_app/features/marketplace/presentation/search_filter_sheet.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_providers.dart';
 
 /// `Busqueda` y `Busqueda-vacia` (HU-09): busca por palabra clave en el
 /// catalogo del campus y abre el detalle de cada resultado (HU-11).
 ///
-/// NOTE (HU-10): el boton y la hoja de filtros de la busqueda.
 /// NOTE (HU-12): guardar la busqueda y avisar en el estado vacio.
 class SearchScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.openFilters = false});
+
+  /// Abre `Busqueda-filtros` al entrar (el icono de filtros de Inicio).
+  final bool openFilters;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -45,7 +49,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focus.requestFocus();
+      if (!mounted) return;
+      _focus.requestFocus();
+      if (widget.openFilters) unawaited(showSearchFilterSheet(context));
     });
   }
 
@@ -60,7 +66,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void _onChanged(String value) {
     _debounce?.cancel();
     if (value.trim().isEmpty) {
-      ref.read(searchControllerProvider.notifier).clear();
+      // Sin texto siguen valiendo los filtros aplicados.
+      unawaited(ref.read(searchControllerProvider.notifier).search(''));
       return;
     }
     _debounce = Timer(_debounceDelay, () => _submit(value));
@@ -74,7 +81,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void _clear() {
     _debounce?.cancel();
     _controller.clear();
-    ref.read(searchControllerProvider.notifier).clear();
+    unawaited(ref.read(searchControllerProvider.notifier).search(''));
     _focus.requestFocus();
   }
 
@@ -100,6 +107,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final session = ref.watch(sessionControllerProvider);
     final signedIn = session is SignedIn;
     final results = ref.watch(searchControllerProvider);
+    final filter = results.value?.filter ?? const CatalogFilter();
     final now = ref.watch(clockProvider)().toLocal();
 
     void open(ProductSummary product) =>
@@ -158,6 +166,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       onClear: _clear,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  FilterButton(
+                    key: const Key('search-filter'),
+                    size: 48,
+                    count: filter.count,
+                    active: filter.count > 0,
+                    semanticLabel: switch (filter.count) {
+                      0 => 'Filtros',
+                      1 => 'Filtros, 1 activo',
+                      final n => 'Filtros, $n activos',
+                    },
+                    onTap: () => unawaited(showSearchFilterSheet(context)),
+                  ),
                 ],
               ),
             ),
@@ -165,6 +186,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: switch (results) {
                 AsyncData(:final value) when value.empty => _EmptyResults(
                   query: value.query,
+                  hasFilters: value.hasFilters,
+                  onClearFilters: () => unawaited(
+                    ref
+                        .read(searchControllerProvider.notifier)
+                        .applyFilter(const CatalogFilter()),
+                  ),
                 ),
                 AsyncData(:final value) when value.items.isEmpty =>
                   const _Prompt(),
@@ -403,9 +430,15 @@ class _Prompt extends StatelessWidget {
 }
 
 class _EmptyResults extends StatelessWidget {
-  const new({required this.query});
+  const new({
+    required this.query,
+    required this.hasFilters,
+    required this.onClearFilters,
+  });
 
   final String query;
+  final bool hasFilters;
+  final VoidCallback onClearFilters;
 
   @override
   Widget build(BuildContext context) {
@@ -434,7 +467,7 @@ class _EmptyResults extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin resultados para «$query»',
+              query.isEmpty ? 'Sin resultados' : 'Sin resultados para «$query»',
               textAlign: TextAlign.center,
               style: MusubiType.style(
                 18,
@@ -445,10 +478,22 @@ class _EmptyResults extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Prueba con otras palabras o publica lo que necesitas.',
+              hasFilters
+                  ? 'Prueba quitando algún filtro o busca con otras palabras.'
+                  : 'Prueba con otras palabras o publica lo que necesitas.',
               textAlign: TextAlign.center,
               style: MusubiType.style(14, line: 20, color: c.textSecondary),
             ),
+            if (hasFilters) ...[
+              const SizedBox(height: MusubiSizes.space4),
+              MusubiButton(
+                label: 'Quitar filtros',
+                kind: MusubiButtonKind.secondary,
+                height: MusubiSizes.buttonHeightSmall,
+                expand: false,
+                onPressed: onClearFilters,
+              ),
+            ],
           ],
         ),
       ),

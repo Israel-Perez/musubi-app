@@ -270,7 +270,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.search,
-        builder: (context, state) => const SearchScreen(),
+        builder: (context, state) =>
+            SearchScreen(openFilters: state.extra == true),
       ),
       GoRoute(
         path: AppRoutes.notifications,

@@ -125,6 +125,22 @@ void main() {
     });
   });
 
+  // HU-10: el icono de filtros del buscador abre `Busqueda-filtros`.
+  testWidgets('el icono de filtros del buscador abre la hoja', (tester) async {
+    await _open(
+      tester,
+      catalog: DemoCatalogRepository(() => _now),
+      session: _session(),
+    );
+
+    await tester.tap(find.byKey(const Key('home-search-filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('search-input')), findsOneWidget);
+    expect(find.byKey(const Key('search-filter-sheet')), findsOneWidget);
+    expect(find.text('Filtros'), findsOneWidget);
+  });
+
   // Letra del sistema 30 % mas grande: nada se desborda (la fuente de las
   // pruebas es mas ancha que Plus Jakarta Sans).
   testWidgets('con letra grande la vitrina no se desborda', (tester) async {

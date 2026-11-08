@@ -80,6 +80,16 @@ void main() {
     );
   });
 
+  test('categorias de la hoja `Busqueda-filtros` (fila 72)', () async {
+    serve();
+
+    final categories = await repository.categories();
+
+    expect(adapter.requests.single.path, ApiPaths.categories);
+    expect(categories.map((c) => c.slug), ['calculadoras', 'electronica']);
+    expect(categories.first.name, 'Calculadoras');
+  });
+
   group('buscar (HU-09)', () {
     test('manda q recortado, limit y cursor; lee la pagina', () async {
       serve(nextCursor: 'next');
@@ -100,6 +110,104 @@ void main() {
       expect(page.total, 48);
       expect(page.nextCursor, 'next');
       expect(page.hasMore, isTrue);
+    });
+
+    test('HU-10: filtros en la consulta y sin q cuando no hay texto', () async {
+      serve();
+
+      await repository.search(
+        query: '   ',
+        filter: const CatalogFilter(
+          category: 'libros',
+          minPriceCents: 30000,
+          maxPriceCents: 70000,
+          condition: 'used',
+          hideSoldOut: true,
+        ),
+      );
+
+      expect(adapter.requests.single.queryParameters, {
+        'category': 'libros',
+        'minPriceCents': 30000,
+        'maxPriceCents': 70000,
+        'condition': 'used',
+        'hideSoldOut': true,
+        'limit': HttpCatalogRepository.searchPageSize,
+      });
+    });
+
+    test('HU-10: filtros y texto viajan juntos', () async {
+      serve();
+
+      await repository.search(
+        query: 'calculadora',
+        filter: const CatalogFilter(minPriceCents: 30000),
+      );
+
+      expect(adapter.requests.single.queryParameters, {
+        'q': 'calculadora',
+        'minPriceCents': 30000,
+        'limit': HttpCatalogRepository.searchPageSize,
+      });
+    });
+
+    test('400 listings.invalid_price_range llega con su code', () async {
+      adapter = FakeHttpAdapter(
+        (_) async => FakeHttpAdapter.json({
+          'code': 'listings.invalid_price_range',
+          'title': 'El precio mínimo no puede ser mayor que el máximo.',
+        }, status: 400),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.search(
+          query: '',
+          filter: const CatalogFilter(
+            minPriceCents: 70000,
+            maxPriceCents: 30000,
+          ),
+        ),
+        throwsA(
+          isA<ApiFailure>().having(
+            (f) => f.code,
+            'code',
+            'listings.invalid_price_range',
+          ),
+        ),
+      );
+    });
+
+    test('400 listings.invalid_condition llega con su code', () async {
+      adapter = FakeHttpAdapter(
+        (_) async => FakeHttpAdapter.json({
+          'code': 'listings.invalid_condition',
+          'title': 'El estado no es válido.',
+        }, status: 400),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.search(
+          query: '',
+          filter: const CatalogFilter(condition: 'broken'),
+        ),
+        throwsA(
+          isA<ApiFailure>().having(
+            (f) => f.code,
+            'code',
+            'listings.invalid_condition',
+          ),
+        ),
+      );
     });
 
     test('400 listings.invalid_query llega con su code', () async {

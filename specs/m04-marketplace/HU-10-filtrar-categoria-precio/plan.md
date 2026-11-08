@@ -20,7 +20,7 @@
    - **Hoja con título y acciones de la casa:** `showMusubiPanel` + `MusubiPanel`, no `showMusubiSheet` suelto, porque lleva título, X, "Limpiar" y CTA.
    - **Estado segmentado local:** se copia el patrón de `_Segments` de `inbox_screen.dart`; si aparece un tercer segmentado, se extrae a `lib/core/widgets/`.
    - **Categorías bajo demanda:** `categories()` reusa la fila 72 para que `/buscar` funcione abierto directo; el mapeo se extrae de `homeFeed` y no se duplica.
-   - **Precio en pesos en la UI y centavos en el repositorio:** misma unidad que `priceCents`; la validación de rango ocurre antes de la petición y el `400` queda como defensa.
+   - **Precio en pesos en la UI y centavos en la hoja:** misma unidad que `priceCents`; la validación de rango ocurre antes de la petición y el `400` queda como defensa.
    - **Borrador en la hoja y aplicación al CTA:** igual que la hoja de Inicio; X no aplica y "Limpiar" solo reinicia el borrador.
    - **Preview por `total`:** el `items.length` de una página de 20 no sirve como cuenta; el preview se pide con el texto vigente y el borrador.
    - **Filtrar sin texto:** el controlador consulta si hay texto o filtros; el estado inicial solo aparece sin ambos.
@@ -42,7 +42,7 @@
    - `flutter test test/features/marketplace/search_providers_test.dart`
    - `flutter test test/features/marketplace/search_filter_sheet_test.dart`
    - `flutter test test/features/marketplace/search_screen_test.dart`
-   - `flutter test test/app/navigation_test.dart`
+   - `flutter test test/features/marketplace/home_screen_test.dart`
    - `flutter test`
    - `dart format --output=none --set-exit-if-changed .` y `flutter analyze --fatal-infos --fatal-warnings` sin cambios.
    - `pwsh scripts/critic-guardrails.ps1` → PASS.

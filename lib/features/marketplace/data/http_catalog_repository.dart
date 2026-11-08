@@ -50,14 +50,7 @@ class HttpCatalogRepository implements CatalogRepository {
           for (final item in page['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
         ],
-        categories: [
-          for (final item in categories.cast<Map<String, dynamic>>())
-            CatalogCategory(
-              slug: item['slug'] as String,
-              name: item['name'] as String,
-              photoUrl: categoryPhoto(item['slug'] as String),
-            ),
-        ],
+        categories: _categories(categories),
         recentTotal: (page['total'] as num?)?.toInt() ?? 0,
       );
     } on DioException catch (error) {
@@ -67,12 +60,21 @@ class HttpCatalogRepository implements CatalogRepository {
   }
 
   @override
-  Future<ProductPage> search({required String query, String? cursor}) async {
+  Future<ProductPage> search({
+    required String query,
+    String? cursor,
+    CatalogFilter filter = const CatalogFilter(),
+  }) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiPaths.products,
         queryParameters: {
-          'q': query.trim(),
+          if (query.trim().isNotEmpty) 'q': query.trim(),
+          'category': ?filter.category,
+          'minPriceCents': ?filter.minPriceCents,
+          'maxPriceCents': ?filter.maxPriceCents,
+          'condition': ?filter.condition,
+          if (filter.hideSoldOut) 'hideSoldOut': true,
           'limit': searchPageSize,
           'cursor': ?cursor,
         },
@@ -90,6 +92,26 @@ class HttpCatalogRepository implements CatalogRepository {
       throw ApiFailure.fromDio(error);
     }
   }
+
+  @override
+  Future<List<CatalogCategory>> categories() async {
+    try {
+      final response = await _dio.get<List<dynamic>>(ApiPaths.categories);
+      return _categories(response.data ?? const []);
+    } on DioException catch (error) {
+      throw ApiFailure.fromDio(error);
+    }
+  }
+
+  /// Filas de `GET /api/v1/categories` (fila 72) con la foto de la maqueta.
+  List<CatalogCategory> _categories(List<dynamic> data) => [
+    for (final item in data.cast<Map<String, dynamic>>())
+      CatalogCategory(
+        slug: item['slug'] as String,
+        name: item['name'] as String,
+        photoUrl: categoryPhoto(item['slug'] as String),
+      ),
+  ];
 
   @override
   Future<ProductDetail> product(String id) async {

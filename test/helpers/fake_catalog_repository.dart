@@ -21,6 +21,7 @@ class FakeCatalogRepository implements CatalogRepository {
   final List<Object> _searchResponses;
   final List<PopularPeriod> periods = [];
   final List<CatalogFilter> filters = [];
+  final List<CatalogFilter> searchFilters = [];
   final List<String> queries = [];
   final List<String?> cursors = [];
 
@@ -43,9 +44,14 @@ class FakeCatalogRepository implements CatalogRepository {
   }
 
   @override
-  Future<ProductPage> search({required String query, String? cursor}) {
+  Future<ProductPage> search({
+    required String query,
+    String? cursor,
+    CatalogFilter filter = const CatalogFilter(),
+  }) {
     queries.add(query);
     cursors.add(cursor);
+    searchFilters.add(filter);
     final next = _searchResponses.length > 1
         ? _searchResponses.removeAt(0)
         : _searchResponses.first;
@@ -55,6 +61,17 @@ class FakeCatalogRepository implements CatalogRepository {
       final Completer<ProductPage> completer => completer.future,
       _ => throw StateError('Respuesta no soportada: $next'),
     };
+  }
+
+  /// Categorias de la hoja (HU-10).
+  List<CatalogCategory> categoriesResponse = const [];
+  ApiFailure? categoriesFailure;
+
+  @override
+  Future<List<CatalogCategory>> categories() async {
+    final failure = categoriesFailure;
+    if (failure != null) throw failure;
+    return categoriesResponse;
   }
 
   /// Detalles por id (HU-11). Sin el id: 404 como la API.

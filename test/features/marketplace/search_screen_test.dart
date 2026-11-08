@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/filter_button.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
@@ -198,6 +199,7 @@ void main() {
 
     expect(find.text('Busca lo que necesitas'), findsOneWidget);
     expect(find.text('Calculadora Casio'), findsNothing);
+    expect(find.bySemanticsLabel('Filtros'), findsOneWidget);
   });
 
   testWidgets('un visitante que guarda ve la hoja de cuenta', (tester) async {
@@ -360,5 +362,78 @@ void main() {
 
     expect(find.text('Busca lo que necesitas'), findsOneWidget);
     expect(find.text('Calculadora Casio'), findsNothing);
+  });
+
+  // HU-10: boton, filtro sin texto y vacio con filtros.
+  FakeCatalogRepository withCategories() =>
+      FakeCatalogRepository(
+          [const HomeFeed()],
+          [
+            ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
+          ],
+        )
+        ..categoriesResponse = const [
+          CatalogCategory(slug: 'libros', name: 'Libros'),
+        ];
+
+  testWidgets('el boton anuncia y aplica el filtro sin texto', (tester) async {
+    final fake = withCategories();
+    await open(tester, fake);
+
+    expect(find.bySemanticsLabel('Filtros'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('search-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Libros'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Ver'));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Filtros, 1 activo'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilterButton>(find.byKey(const Key('search-filter')))
+          .active,
+      isTrue,
+    );
+    expect(find.text('Calculadora Casio'), findsOneWidget);
+    expect(fake.searchFilters.last.category, 'libros');
+
+    await tester.tap(find.byKey(const Key('search-filter')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.bySemanticsLabel('Usado'));
+    await tester.tap(find.bySemanticsLabel('Usado'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Ver'));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Filtros, 2 activos'), findsOneWidget);
+  });
+
+  testWidgets('sin resultados con filtros ofrece quitarlos', (tester) async {
+    final fake =
+        FakeCatalogRepository([const HomeFeed()], [const ProductPage()])
+          ..categoriesResponse = const [
+            CatalogCategory(slug: 'libros', name: 'Libros'),
+          ];
+    await open(tester, fake);
+
+    await tester.tap(find.byKey(const Key('search-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Libros'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Ver'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sin resultados'), findsOneWidget);
+    expect(
+      find.text('Prueba quitando algún filtro o busca con otras palabras.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Quitar filtros'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Busca lo que necesitas'), findsOneWidget);
   });
 }

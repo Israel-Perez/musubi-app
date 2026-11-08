@@ -146,6 +146,53 @@ void main() {
     expect(page.nextCursor, isNull);
   });
 
+  test(
+    'HU-10: la busqueda de muestra aplica categoria, precio y estado',
+    () async {
+      final tech = await repository.search(
+        query: '',
+        filter: const CatalogFilter(category: 'tecnologia'),
+      );
+      final range = await repository.search(
+        query: '',
+        filter: const CatalogFilter(
+          minPriceCents: 300000,
+          maxPriceCents: 600000,
+        ),
+      );
+      final used = await repository.search(
+        query: '',
+        filter: const CatalogFilter(condition: 'used'),
+      );
+      final exact = await repository.search(
+        query: '',
+        filter: const CatalogFilter(minPriceCents: 45000, maxPriceCents: 45000),
+      );
+      final outside = await repository.search(
+        query: '',
+        filter: const CatalogFilter(minPriceCents: 45001, maxPriceCents: 45001),
+      );
+      final minOnly = await repository.search(
+        query: '',
+        filter: const CatalogFilter(minPriceCents: 1180000),
+      );
+      final categories = await repository.categories();
+
+      expect(tech.items.every((p) => p.category == 'tecnologia'), isTrue);
+      expect(
+        range.items.every(
+          (p) => p.priceCents >= 300000 && p.priceCents <= 600000,
+        ),
+        isTrue,
+      );
+      expect(used.items.every((p) => p.condition == 'Usado'), isTrue);
+      expect(exact.items.single.priceCents, 45000);
+      expect(outside.items, isEmpty);
+      expect(minOnly.items.single.priceCents, 1180000);
+      expect(categories.map((c) => c.slug), contains('libros'));
+    },
+  );
+
   test('pocas piezas: "Último" con 1 y "Quedan 2" con 2 (maqueta)', () {
     ProductSummary withStock(int stock) =>
         ProductSummary(id: 'x', title: 'x', priceCents: 100, stock: stock);

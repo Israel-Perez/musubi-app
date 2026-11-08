@@ -14,7 +14,7 @@ class DemoCatalogRepository implements CatalogRepository {
 
   static const _photos = 'asset:assets/products';
 
-  static const categories = [
+  static const sampleCategories = [
     CatalogCategory(
       slug: 'calculadoras',
       name: 'Calculadoras',
@@ -348,22 +348,26 @@ class DemoCatalogRepository implements CatalogRepository {
       popular: popular,
       recent: recent,
       wanted: wanted,
-      categories: categories,
+      categories: sampleCategories,
       recentTotal: 48,
     );
   }
 
-  /// Busqueda de muestra (HU-09): solo disponibles, prefijo de palabra
-  /// (singular/plural) y de la mas nueva a la mas vieja.
+  /// Busqueda de muestra (HU-09 y HU-10): solo disponibles con texto, prefijo
+  /// de palabra (singular/plural), filtros y de la mas nueva a la mas vieja.
   @override
-  Future<ProductPage> search({required String query, String? cursor}) async {
+  Future<ProductPage> search({
+    required String query,
+    String? cursor,
+    CatalogFilter filter = const CatalogFilter(),
+  }) async {
     if (cursor != null) return const ProductPage();
     final terms = _terms(query);
-    if (terms.isEmpty) return const ProductPage();
+    if (terms.isEmpty && filter.count == 0) return const ProductPage();
     final now = _clock();
     final items = <ProductSummary>[
       for (final (product, minutes) in _products)
-        if (!product.soldOut && _matches(product.title, terms))
+        if (_matchesSearch(product, terms, filter))
           ProductSummary(
             id: product.id,
             title: product.title,
@@ -380,6 +384,32 @@ class DemoCatalogRepository implements CatalogRepository {
     ]..sort((a, b) => b.publishedAt!.compareTo(a.publishedAt!));
     return ProductPage(items: items, total: items.length);
   }
+
+  /// Con texto, la API devuelve solo disponibles; sin texto, manda el filtro.
+  static bool _matchesSearch(
+    ProductSummary product,
+    List<String> terms,
+    CatalogFilter filter,
+  ) =>
+      (terms.isEmpty
+          ? (!filter.hideSoldOut || !product.soldOut)
+          : (!product.soldOut && _matches(product.title, terms))) &&
+      (filter.category == null || product.category == filter.category) &&
+      (filter.minPriceCents == null ||
+          product.priceCents >= filter.minPriceCents!) &&
+      (filter.maxPriceCents == null ||
+          product.priceCents <= filter.maxPriceCents!) &&
+      (filter.condition == null || _conditionKey(product) == filter.condition);
+
+  static String? _conditionKey(ProductSummary product) =>
+      switch (product.condition) {
+        'Nuevo' => 'new',
+        'Usado' => 'used',
+        _ => null,
+      };
+
+  @override
+  Future<List<CatalogCategory>> categories() async => sampleCategories;
 
   static List<String> _terms(String query) => [
     for (final word in _fold(query).split(RegExp('[^a-z0-9]+')))
@@ -431,10 +461,10 @@ class DemoCatalogRepository implements CatalogRepository {
       description:
           'Lo usé un semestre y está en buen estado. Te lo entrego en el '
           'campus.',
-      categoryName: categories
+      categoryName: sampleCategories
           .firstWhere(
             (c) => c.slug == summary.category,
-            orElse: () => categories.first,
+            orElse: () => sampleCategories.first,
           )
           .name,
       priceCents: summary.priceCents,

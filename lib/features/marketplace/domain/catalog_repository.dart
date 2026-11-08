@@ -12,9 +12,16 @@ abstract interface class CatalogRepository {
     CatalogFilter filter = const CatalogFilter(),
   });
 
-  /// Busca por palabra clave (HU-09). Con `q`, la API devuelve solo
-  /// disponibles, de la mas nueva a la mas vieja.
-  Future<ProductPage> search({required String query, String? cursor});
+  /// Busca por palabra clave (HU-09) y filtros (HU-10). Con `q`, la API
+  /// devuelve solo disponibles, de la mas nueva a la mas vieja.
+  Future<ProductPage> search({
+    required String query,
+    String? cursor,
+    CatalogFilter filter = const CatalogFilter(),
+  });
+
+  /// Categorias para la hoja `Busqueda-filtros` (fila 72).
+  Future<List<CatalogCategory>> categories();
 
   /// Detalle de una publicacion (HU-11). Sin sesion, sin el vendedor.
   Future<ProductDetail> product(String id);
