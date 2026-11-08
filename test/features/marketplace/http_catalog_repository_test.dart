@@ -88,7 +88,7 @@ void main() {
       expect(request.queryParameters, {
         'q': 'calculadora',
         'hideSoldOut': true,
-        'sort': 'relevant',
+        'sort': 'relevance',
         'limit': searchPageSize,
         'page': 2,
       });
@@ -112,12 +112,12 @@ void main() {
 
       expect(adapter.requests.single.queryParameters, {
         'q': 'calculadora',
-        'category': 'calculadoras,libros',
+        'category': ['calculadoras', 'libros'],
         'minPriceCents': 30000,
         'maxPriceCents': 70000,
         'condition': 'used',
         'hideSoldOut': true,
-        'sort': 'relevant',
+        'sort': 'relevance',
         'limit': searchPageSize,
         'page': 1,
       });

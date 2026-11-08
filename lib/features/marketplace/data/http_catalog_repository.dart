@@ -77,8 +77,7 @@ class HttpCatalogRepository implements CatalogRepository {
         ApiPaths.products,
         queryParameters: {
           'q': query.trim(),
-          if (filter.categories.isNotEmpty)
-            'category': filter.categories.join(','),
+          if (filter.categories.isNotEmpty) 'category': filter.categories,
           'minPriceCents': ?filter.minCents,
           'maxPriceCents': ?filter.maxCents,
           'condition': ?filter.condition.apiValue,

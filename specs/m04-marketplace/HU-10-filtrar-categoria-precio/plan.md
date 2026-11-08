@@ -18,9 +18,9 @@
    - **Un solo lugar para los filtros:** Inicio delega en la hoja de `/buscar`; `CatalogFilter` y `filter_sheet.dart` se retiran.
    - **Precio en pesos en la UI y centavos en la API:** sin flotantes y alineado con `priceCents`.
    - **La API filtra y pagina; la app no:** coincidencias, `total` y páginas salen del back. La vista previa reutiliza la misma consulta.
-   - **Categorías múltiples:** los chips se acumulan y se envían como `category=slug1,slug2`.
+   - **Categorías múltiples:** los chips se acumulan y se envían repitiendo `category`.
    - **“Ocultar agotados” en la búsqueda:** `hideSoldOut=false` incluye los agotados aunque haya `q`.
-   - **Orden en la app:** `relevant`, `recent`, `priceAsc` y `priceDesc`; `relevant` comparte el orden de `recent` hasta que exista puntaje (`NOTE (HU-09)`).
+   - **Orden en la app:** `relevance`, `newest`, `priceAsc` y `priceDesc`; `relevance` comparte el orden de `newest` hasta que exista puntaje (`NOTE (HU-09)`).
    - **Paginación por `page`:** 20 por página; buscar, filtrar u ordenar vuelven a la página 1.
    - **Historial de la sesión:** máximo 5, en memoria (RNF-07).
    - **La X del campo no borra los filtros:** el globo sigue visible; `Limpiar` es la acción explícita.
