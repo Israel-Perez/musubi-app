@@ -6,20 +6,20 @@
 - **Estado:** ✅ Hecho (07-Nov-2026).
 
 ## T2 — Dominio y datos
-- **Crear:** `SearchFilter`, `ProductConditionFilter`, `categories()` y los parámetros de `search`.
+- **Crear:** `SearchFilter` (categorías múltiples), `ProductConditionFilter`, `SearchSort`, `categories()` y `search({query, filter, sort, page})`.
 - **Modificar:** repositorio HTTP, demo y fake.
 - **Verificar:** `http_catalog_repository_test.dart`, `demo_catalog_repository_test.dart`.
 - **Estado:** ✅ Hecho (08-Nov-2026).
 
 ## T3 — Estado
-- **Crear:** `SearchState.filter`, `applyFilter` y `searchPreviewProvider`.
+- **Crear:** `SearchState` (filtro, orden, página), `applyFilter`, `setSort`, `goToPage`, `clear`, `searchHistoryProvider` y `searchPreviewProvider`.
 - **Verificar:** `search_providers_test.dart`.
 - **Estado:** ✅ Hecho (08-Nov-2026).
 
-## T4 — Hoja y pantalla
-- **Crear:** `search_filter_sheet.dart`.
-- **Modificar:** `search_screen.dart` (botón, globo, paso del filtro) y `musubi_text_field.dart` (`prefixText`).
-- **Verificar:** `search_filter_sheet_test.dart`, `search_screen_test.dart`.
+## T4 — Hoja, pantalla e Inicio
+- **Crear:** `search_filter_sheet.dart` (chips en fila, histograma reactivo, slider 0–$2,000+, agotados y toast).
+- **Modificar:** `search_screen.dart` (lista al entrar, globo, cabecera, orden, historial y paginación), `home_screen.dart` (redirige a la hoja) y `musubi_text_field.dart` (`prefixText`).
+- **Verificar:** `search_filter_sheet_test.dart`, `search_screen_test.dart`, `home_screen_test.dart`.
 - **Estado:** ✅ Hecho (08-Nov-2026).
 
 ## T5 — Evidencia y documentación
@@ -28,5 +28,6 @@
 - **Estado:** ✅ Hecho (08-Nov-2026).
 
 ## Pendientes con dueño
-- `NOTE (HU-10)`: selector “Más relevantes” cuando la API tenga orden por relevancia.
-- `NOTE (HU-09)`: con `q` la API excluye agotados; “Ocultar agotados” sigue solo en Inicio.
+- `NOTE (HU-09)`: `relevant` ordena como `recent` hasta que la API calcule puntaje.
+- `NOTE (HU-53)`: el historial de búsquedas vive solo en la sesión; persistirlo es de HU-53.
+- `NOTE (HU-12)`: las acciones del estado vacío (guardar búsqueda) no están en esta HU.

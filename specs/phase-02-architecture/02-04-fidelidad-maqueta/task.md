@@ -23,7 +23,7 @@
 - **Inicio:**
   - visitante y con sesión;
   - estados de carga y de error;
-  - hoja "Filtrar".
+  - botón "Filtrar" que abre la hoja de la búsqueda (HU-10).
 - **Hoja "Crea tu cuenta":** las 9 ilustraciones.
 - **Vitrina de muestra:** `DemoCatalogRepository` con `DEMO_CATALOG` (solo dev).
 - **Verificar:** `home_screen_test.dart`, `demo_catalog_repository_test.dart`, `visitor_flow_test.dart` y `app_config_test.dart`.
@@ -44,7 +44,7 @@
 
 ## Pendientes
 - `NOTE (HU-06)`: retirar o conservar la vitrina de muestra cuando exista el catálogo real.
-- `NOTE (HU-09)`, `NOTE (HU-10)`: Búsqueda y sus filtros (la hoja "Filtrar" ya existe en Inicio).
+- `NOTE (HU-09)`, `NOTE (HU-10)`: Búsqueda y sus filtros (Inicio solo tiene el botón que abre la hoja).
 - `NOTE (HU-15)`: "Se busca" del visitante (`Se-busca-visitante`).
 - `NOTE (HU-31)`: Notificaciones (la campana ya abre `/notificaciones`).
 - `NOTE (HU-04)`: Perfil completo (calificaciones, ventas y apartados).

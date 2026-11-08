@@ -12,9 +12,9 @@
 2. **Decisiones:**
    - **Buscar mientras se escribe con 300 ms de retardo:** evita una petición por carácter y aprovecha la coincidencia por prefijo de la API; enviar consulta de inmediato.
    - **Descartar respuestas atrasadas:** cada `search` lleva un número de petición y solo la última puede cambiar el estado.
-   - **Paginación con cursor y "Cargar más":** no se pierde ningún resultado y la API ya devuelve `nextCursor`.
+   - **Paginación:** HU-10 la pasó a `page` (20 por página); el cursor queda en la API.
    - **Estado en un `AsyncNotifier`:** la pantalla distingue cargando, datos, vacío y error sin mezclar banderas; `loadMore` conserva las tarjetas si falla.
-   - **Sin filtros en esta HU:** `Busqueda-filtros` es de HU-10 y su contador actual cuenta la vitrina, no la búsqueda.
+   - **Filtros, orden e historial:** son de HU-10.
    - **Sin historial local:** RNF-07 prohíbe persistir `q`; el historial queda para HU-53.
    - **Se reutilizan `RecentTile` y `ProductPhoto`:** el mosaico y las tarjetas ya son las de la maqueta; `RecentTile` muestra el título en dos líneas como `Busqueda`.
 

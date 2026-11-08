@@ -266,4 +266,47 @@ void main() {
 
     expect(result?.categories, isEmpty);
   });
+
+  testWidgets('el histograma recolorea las barras del rango', (tester) async {
+    await tester.pumpWidget(
+      app(initial: const SearchFilter(minCents: 40000, maxCents: 60000)),
+    );
+    await tester.pumpAndSettle();
+
+    final colors = tester
+        .widgetList<Container>(
+          find.descendant(
+            of: find.byKey(const Key('price-histogram')),
+            matching: find.byType(Container),
+          ),
+        )
+        .map((bar) => (bar.decoration as BoxDecoration?)?.color)
+        .whereType<Color>()
+        .toList();
+    final counts = <Color, int>{};
+    for (final color in colors) {
+      counts[color] = (counts[color] ?? 0) + 1;
+    }
+
+    expect(colors, hasLength(11));
+    expect(counts.values.toList()..sort(), [2, 9]);
+  });
+
+  testWidgets('sin rango el histograma no resalta barras', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    final colors = tester
+        .widgetList<Container>(
+          find.descendant(
+            of: find.byKey(const Key('price-histogram')),
+            matching: find.byType(Container),
+          ),
+        )
+        .map((bar) => (bar.decoration as BoxDecoration?)?.color)
+        .whereType<Color>()
+        .toSet();
+
+    expect(colors, hasLength(1));
+  });
 }

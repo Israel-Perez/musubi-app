@@ -6,7 +6,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 - **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
 - **Búsqueda (HU-09):** app `0.5.1+7`, implementada contra la rama `SCRUM-26` de la API (`0.5.0-alpha.3`, sin publicar; PR musubi-api#49); 325 pruebas, analyze 0 y critic PASS.
-- **Filtros de búsqueda (HU-10):** app `0.5.1+7` en `feature/SCRUM-27-filtrar-categoria-precio`, apilada sobre la rama de HU-09; necesita la API de HU-10 (misma rama apilada); 349 pruebas, analyze 0 y critic PASS.
+- **Filtros de búsqueda (HU-10):** app `0.5.1+7` en `feature/SCRUM-27-filtrar-categoria-precio`, apilada sobre la rama de HU-09; necesita la API de HU-10 (misma rama apilada); 351 pruebas, analyze 0 y critic PASS.
 - **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
@@ -58,7 +58,8 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 ### Cuarta revisión en el teléfono (08-Nov-2026)
 
 - **Categorías múltiples:** `SearchFilter.categories` es una lista; los chips se suman y se quitan al tocarlos, y la app manda `category=slug1,slug2`. La API divide por comas y usa `In`/`Contains`.
-- Pruebas: 349.
+- Pruebas: 351.
+- **Auditoría de trazabilidad (08-Nov-2026):** se reconciliaron las specs de HU-09 y 02-04 (ya no dicen «Cargar más», cursor ni hoja «Filtrar» en Inicio), se quitaron los `NOTE` obsoletos y se cerraron los huecos de prueba del histograma, el reingreso sin filtros y el término del historial.
 
 ### Tercera revisión en el teléfono (08-Nov-2026)
 

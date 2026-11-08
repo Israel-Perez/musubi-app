@@ -21,11 +21,8 @@ enum ProductConditionFilter {
   };
 }
 
-/// Filtros de `Busqueda-filtros` (HU-10): categoria, rango de precio, estado
-/// y agotados.
-///
-/// Es distinto de `CatalogFilter`: Inicio conserva su hoja de categoria y
-/// "Ocultar agotados".
+/// Filtros de `Busqueda-filtros` (HU-10): categorias, rango de precio, estado
+/// y agotados. Inicio abre esta misma hoja desde su boton `Filtrar`.
 @immutable
 class SearchFilter {
   const new({

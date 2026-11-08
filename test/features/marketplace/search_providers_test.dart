@@ -4,12 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 
-// HU-09: primera pagina, "Cargar mas" y errores de la busqueda.
+// HU-09 y HU-10: paginas, filtros, orden, historial y errores de la busqueda.
 void main() {
   ProductSummary product(String id) =>
       ProductSummary(id: id, title: id, priceCents: 100, stock: 1);
@@ -181,7 +182,7 @@ void main() {
     expect(fake.searchFilters, [const SearchFilter(), filter]);
   });
 
-  test('cargar mas conserva el filtro', () async {
+  test('cambiar de pagina conserva filtro y orden', () async {
     const filter = SearchFilter(categories: ['libros']);
     final fake = FakeCatalogRepository(
       [const HomeFeed()],
@@ -193,11 +194,16 @@ void main() {
     final container = containerFor(fake);
     final notifier = container.read(searchControllerProvider.notifier);
 
-    await notifier.search('casio', filter: filter);
+    await notifier.search('casio', filter: filter, sort: SearchSort.priceDesc);
     await notifier.goToPage(2);
 
     expect(fake.searchFilters, [filter, filter]);
+    expect(fake.sorts, [SearchSort.priceDesc, SearchSort.priceDesc]);
     expect(container.read(searchControllerProvider).value!.filter, filter);
+    expect(
+      container.read(searchControllerProvider).value!.sort,
+      SearchSort.priceDesc,
+    );
   });
 
   test('sin texto, los filtros exploran el catalogo', () async {

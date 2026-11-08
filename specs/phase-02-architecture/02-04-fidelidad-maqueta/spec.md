@@ -12,7 +12,7 @@ Las pantallas de 02-01, HU-01/02/03/47/56 y HU-48 fase 1 usaban piezas de Materi
 
 **Depende de**: `02-01`, `02-03` y HU-48 fase 1.
 
-Maqueta: `Inicio-visitante`, `Visitante-modal`, `Inicio`, `Inicio-cargando`, `Inicio-error`, `Iniciar-sesion`, `Iniciar-sesion-error`, `Registro`, `Registro-error`, `Verificacion`, `Verificacion-lista`, `Aviso-privacidad`, `Perfil` y `Ajustes`. También cubre la hoja "Filtrar" de Recién publicados y el diálogo "¿Cerrar sesión?". Todas en modo claro y oscuro.
+Maqueta: `Inicio-visitante`, `Visitante-modal`, `Inicio`, `Inicio-cargando`, `Inicio-error`, `Iniciar-sesion`, `Iniciar-sesion-error`, `Registro`, `Registro-error`, `Verificacion`, `Verificacion-lista`, `Aviso-privacidad`, `Perfil` y `Ajustes`. También cubre el botón "Filtrar" de Recién publicados (que abre la hoja de la búsqueda, HU-10) y el diálogo "¿Cerrar sesión?". Todas en modo claro y oscuro.
 
 ## Requisitos
 1. **Medidas de la maqueta:**
@@ -45,7 +45,7 @@ Maqueta: `Inicio-visitante`, `Visitante-modal`, `Inicio`, `Inicio-cargando`, `In
      - "Abrir mi correo" abre la app de correo de Android, o avisa si no hay;
      - el sobre flota (`__fly`: 3 px cada 2.6 s, tres vueltas).
    - **Saludo por nombre** en Inicio con sesión ("Hola, Ana"). El perfil de la sesión (`SessionProfile`) se guarda junto a los tokens.
-   - **Hoja "Filtrar"** en Recién publicados: categoría y "Ocultar agotados".
+   - **Botón "Filtrar"** en Recién publicados: navega a la hoja de filtros de la búsqueda (HU-10).
    - **"Publicaciones recientes"** (con sesión) de la más nueva a la más vieja.
    - **Pantalla Ajustes** (`/ajustes`): "Cerrar sesión" pide confirmación en un diálogo.
 6. **Vitrina de muestra** (`DEMO_CATALOG`, solo `dev`): los productos, Populares y "Se busca" de la maqueta, para revisar el diseño en un celular mientras llega HU-06. `AppConfig.parse` la rechaza fuera de dev.
@@ -69,8 +69,8 @@ Maqueta: `Inicio-visitante`, `Visitante-modal`, `Inicio`, `Inicio-cargando`, `In
   - `SessionProfile` se lee de `SessionResponse.user`;
   - una sesión guardada antes de este cambio, sin perfil, sigue siendo válida.
 - **`lib/features/marketplace/`:**
-  - `DemoCatalogRepository` y `CatalogFilter`;
-  - `filter_sheet.dart`;
+  - `DemoCatalogRepository`;
+  - `search_filter_sheet.dart` y `search_sort.dart` (HU-10);
   - las tarjetas y los estados de Inicio.
 - **`lib/features/auth/presentation/`:** `auth_layout.dart`, las 9 ilustraciones de la hoja (`account_gate_art.dart`) y las pantallas de cuenta.
 - **`lib/features/profile/presentation/profile_screen.dart`:** Perfil y Ajustes.
@@ -98,7 +98,7 @@ Ninguno nuevo. El perfil sale de `SessionResponse.user { fullName, email, campus
 - `test/core/widgets/css_dashes_test.dart` (3): empieza y termina con guion, hueco cerca del ideal y línea continua si no caben dos guiones.
 - `test/core/widgets/svg_path_test.dart` (7): comandos absolutos y relativos, números compactos de Lucide, arcos, curvas y que los íconos caben en su cuadro.
 - `test/features/marketplace/home_screen_test.dart` (9):
-  - "Filtrar": categoría y globo "1", "Ocultar agotados" y "Limpiar";
+  - "Filtrar": abre la hoja de la búsqueda con categorías, precio y estado;
   - sin categorías no hay filtro;
   - letra al 130 % sin desbordes;
   - con sesión: saludo con y sin nombre, "Publicaciones recientes" de la más nueva a la más vieja, cargando y sin red.

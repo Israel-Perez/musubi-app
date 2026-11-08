@@ -42,8 +42,8 @@ class SearchState {
       : (total + searchPageSize - 1) ~/ searchPageSize;
 }
 
-/// Busqueda de productos: primera pagina y "Cargar mas" (HU-09), con los
-/// filtros de `Busqueda-filtros` (HU-10).
+/// Busqueda de productos: catalogo completo al entrar y paginas (HU-09), con
+/// los filtros, el orden y el historial de `Busqueda-filtros` (HU-10).
 ///
 /// Sin reintento automatico de Riverpod 3: la pantalla trae "Reintentar".
 final AsyncNotifierProvider<SearchController, SearchState>

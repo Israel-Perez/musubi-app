@@ -165,7 +165,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         unawaited(context.push(AppRoutes.product(product.id), extra: product));
 
     // NOTE (HU-53): guardar un producto desde la busqueda (favoritos); el
-    // historial de busquedas no existe por RNF-07.
+    // historial vive solo en la sesion y no se persiste (RNF-07).
     void save() {
       if (signedIn) return;
       unawaited(
@@ -761,6 +761,7 @@ class _HistoryRow extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final query = history[index];
                 return Pressable(
+                  key: Key('history-$query'),
                   onTap: () => onPick(query),
                   semanticLabel: 'Buscar $query',
                   builder: (context, pressed) => Container(

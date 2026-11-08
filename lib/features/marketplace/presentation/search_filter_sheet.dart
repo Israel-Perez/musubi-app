@@ -29,10 +29,8 @@ Future<SearchFilter?> showSearchFilterSheet(
 /// Tope del control deslizante: $2,000 o mas (sin limite superior).
 const _maxPricePesos = 2000;
 
-/// Hoja de filtros de la busqueda: categoria, rango de precio y estado.
-///
-/// NOTE (HU-10): el orden "Mas relevantes" de la maqueta no se muestra; la API
-/// ordena por fecha. "Ocultar agotados" no aplica con `q` (HU-09).
+/// Hoja de filtros de la busqueda: categorias, rango de precio, estado y
+/// agotados.
 class SearchFilterSheet extends ConsumerStatefulWidget {
   const new({required this.initial, super.key});
 
@@ -597,6 +595,7 @@ class _PriceHistogram extends StatelessWidget {
     final step = _maxPricePesos / _heights.length;
     return ExcludeSemantics(
       child: SizedBox(
+        key: const Key('price-histogram'),
         height: 36,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,

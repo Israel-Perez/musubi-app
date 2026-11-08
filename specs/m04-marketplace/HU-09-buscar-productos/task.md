@@ -17,7 +17,7 @@
 - **Estado:** ✅ Hecho (07-Nov-2026).
 
 ## T4 — Pantalla y ruta
-- **Crear:** `search_screen.dart` con el campo, el contador, el mosaico, los estados y "Cargar más".
+- **Crear:** `search_screen.dart` con el campo, la cabecera, el mosaico y los estados (la paginación por página llegó con HU-10).
 - **Modificar:** `router.dart` para que `/buscar` use la pantalla.
 - **Verificar:** `search_screen_test.dart` y `navigation_test.dart`.
 - **Estado:** ✅ Hecho (07-Nov-2026).
@@ -34,7 +34,7 @@
 - **Estado:** ✅ Hecho (07-Nov-2026): 325/325 pruebas, analyze 0 y critic PASS.
 
 ## Pendientes con dueño
-- `NOTE (HU-10)`: filtros de categoría/precio/condición en la búsqueda.
+- `NOTE (HU-10)`: filtros, orden, historial y paginación por página en la búsqueda.
 - `NOTE (HU-12)`: guardar búsqueda y "avísame" en el estado vacío.
 - `NOTE (HU-53)`: guardar un producto desde la búsqueda (favoritos); no el historial, que RNF-07 prohíbe.
 - `NOTE (HU-09)`: orden por relevancia y coincidencia parcial viven en la API.

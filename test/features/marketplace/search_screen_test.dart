@@ -186,17 +186,35 @@ void main() {
     expect(find.text('Reintentar'), findsOneWidget);
   });
 
-  testWidgets('al volver y reabrir no conserva la busqueda', (tester) async {
-    final fake = FakeCatalogRepository(
-      [const HomeFeed()],
-      [
-        ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
-      ],
-    );
+  testWidgets('al volver y reabrir no conserva busqueda ni filtros', (
+    tester,
+  ) async {
+    final fake =
+        FakeCatalogRepository(
+            [const HomeFeed()],
+            [
+              ProductPage(
+                items: [product('p1', 'Calculadora Casio')],
+                total: 1,
+              ),
+            ],
+          )
+          ..categoriesResponse = const [
+            CatalogCategory(slug: 'calculadoras', name: 'Calculadoras'),
+          ];
     final router = await openRouted(tester, fake);
 
     await submit(tester, 'calculadora');
-    expect(find.text('Calculadora Casio'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('search-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Calculadoras'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ver 1 resultado'));
+    await tester.pumpAndSettle();
+    expect(
+      fake.searchFilters.last,
+      const SearchFilter(categories: ['calculadoras']),
+    );
 
     await tester.tap(find.bySemanticsLabel('Regresar'));
     await tester.pumpAndSettle();
@@ -210,6 +228,7 @@ void main() {
     );
     expect(field.controller!.text, isEmpty);
     expect(fake.queries.last, isEmpty);
+    expect(fake.searchFilters.last, const SearchFilter());
   });
 
   testWidgets('un visitante que guarda ve la hoja de cuenta', (tester) async {
@@ -534,7 +553,7 @@ void main() {
     await open(tester, fake);
 
     await submit(tester, 'casio');
-    expect(find.byKey(const Key('clear-history')), findsOneWidget);
+    expect(find.byKey(const Key('history-casio')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('clear-history')));
     await tester.pumpAndSettle();

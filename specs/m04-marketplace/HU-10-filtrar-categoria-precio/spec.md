@@ -38,10 +38,10 @@ Jira (SCRUM-27): como **comprador**, quiero **filtrar los resultados por categor
 
 ## Diseño
 
-- `domain/search_filter.dart`: `SearchFilter` (con `categories`, `minCents`, `maxCents`, `condition`, `hideSoldOut`), `ProductConditionFilter` (`all`, `newItem`, `used`), con `count`, `isEmpty`, `==`/`hashCode` y `apiValue`.
+- `domain/search_filter.dart`: `SearchFilter` (con `categories`, `minCents`, `maxCents`, `condition`, `hideSoldOut`), con `count`, `isEmpty` y `==`/`hashCode`; `ProductConditionFilter` (`all`, `newItem`, `used`) aporta la etiqueta y el `apiValue`.
 - `domain/search_sort.dart`: `SearchSort` (`relevant`, `recent`, `priceAsc`, `priceDesc`) con su etiqueta y `apiValue`.
-- `domain/catalog_repository.dart`: `search({query, filter, sort, cursor})` y `categories()`.
-- `data/http_catalog_repository.dart`: envía `category`, `minPriceCents`, `maxPriceCents`, `condition`, `hideSoldOut`, `sort`, `q`, `cursor` y `limit`; `categories()` lee fila 72.
+- `domain/catalog_repository.dart`: `search({query, filter, sort, page})` y `categories()`.
+- `data/http_catalog_repository.dart`: envía `category` (varias separadas por coma), `minPriceCents`, `maxPriceCents`, `condition`, `hideSoldOut`, `sort`, `q`, `limit` y `page`; `categories()` lee fila 72.
 - `data/demo_catalog_repository.dart`: búsqueda local con categoría, precio inclusivo, condición y agotados; sin texto devuelve el catálogo filtrado.
 - `presentation/search_providers.dart`: `SearchState.filter`, `sort`, `page` y `pageCount`, `search(query, {filter, sort, page})`, `applyFilter(filter)`, `setSort(sort)`, `goToPage(page)`, `clear()`, `searchHistoryProvider` (5, en memoria) y `searchPreviewProvider` (retardo de 300 ms en la hoja).
 - `presentation/search_filter_sheet.dart`: `showSearchFilterSheet`, `MusubiPanel`, chips en fila, histograma que sigue el rango, `RangeSlider` de dos pulgares (0 a $2,000+), precio, segmented y `Ocultar agotados`; `Limpiar` (con toast) y `Ver N resultados`.
@@ -57,25 +57,25 @@ Decisiones:
 - **`relevant` comparte el orden de `recent`.** La API todavía no calcula puntaje; el orden existe y se documenta (`NOTE (HU-09)`).
 - **“Ocultar agotados” sí va en la búsqueda.** La maqueta lo trae y la API lo acepta: `hideSoldOut=false` incluye los agotados aunque haya `q`. Apagado, el globo lo cuenta como filtro activo.
 - **Explorar con filtros y sin texto.** Antes la hoja solo guardaba el filtro y la pantalla no consultaba; ahora `applyFilter` pide el catálogo filtrado, que es lo que espera quien elige una categoría.
-- **Sin selector de orden.** Jira no lo pide y la API ordena por fecha; “Más relevantes” de la maqueta queda como `NOTE (HU-10)`.
 - **Precio en pesos en la UI y centavos en el contrato.** Evita decimales flotantes y coincide con `priceCents` de la API.
-- **La hoja no filtra en el cliente.** La API decide coincidencias, `total` y cursor; la vista previa usa la misma consulta.
+- **La hoja no filtra en el cliente.** La API decide coincidencias, `total` y páginas; la vista previa usa la misma consulta.
 - **Los filtros viven en el estado de la búsqueda.** Al salir se descartan con el provider; la X no los borra para que el globo siga visible.
 
 ## Contratos
 
 - Fila canónica: [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) → `GET /api/v1/products`, fila 73. Se enlaza, no se copia.
-- Parámetros de esta HU: `category`, `minPriceCents`, `maxPriceCents`, `condition`, `hideSoldOut`, sumados a `q`, `cursor` y `limit`.
-- Errores: `listings.invalid_price_range`, `listings.invalid_condition`, `listings.invalid_query`, `listings.invalid_cursor`, red y `5xx`; la app decide por `code`.
+- Parámetros de esta HU: `category`, `minPriceCents`, `maxPriceCents`, `condition`, `hideSoldOut`, `sort`, sumados a `q`, `limit` y `page`.
+- Errores: `listings.invalid_price_range`, `listings.invalid_condition`, `listings.invalid_query`, `listings.invalid_sort`, `listings.invalid_page`, red y `5xx`; la app decide por `code`.
 - La forma de `ProductPage` no cambia. No hay fixture nuevo.
 
 ## Tests
 
-- `test/features/marketplace/http_catalog_repository_test.dart`: los parámetros van solo cuando existen; `400` de rango y condición llegan como `ApiFailure` con su `code`; `categories()` lee la fila 72.
+- `test/features/marketplace/http_catalog_repository_test.dart`: los parámetros van solo cuando existen; `400` de rango llegan como `ApiFailure` con su `code`; `categories()` lee la fila 72.
 - `test/features/marketplace/demo_catalog_repository_test.dart`: precio inclusivo, categoría, condición y combinación con `q`.
-- `test/features/marketplace/search_providers_test.dart`: `applyFilter` relanza con el `q` actual y explora sin texto; `goToPage` pide esa página; `clear` conserva el filtro y lista el catálogo; la vista previa pide el `total`.
-- `test/features/marketplace/search_screen_test.dart`: lista todo al entrar; botón y globo; abrir la hoja; aplicar categoría/precio/estado; filtrar sin texto muestra publicaciones; cambiar el orden; paginación; historial y su `Limpiar`; mínimo > máximo; CTA con conteo; al reabrir no conserva filtros.
-- `test/features/marketplace/search_filter_sheet_test.dart`: estados de la hoja, chips en fila, control deslizante, interruptor de agotados y validación.
+- `test/features/marketplace/search_providers_test.dart`: `applyFilter` relanza con el `q` actual y explora sin texto; `goToPage` pide esa página y conserva filtro y orden; `clear` conserva el filtro y lista el catálogo.
+- `test/features/marketplace/search_screen_test.dart`: lista todo al entrar; botón y globo; abrir la hoja; aplicar categoría/precio/estado; filtrar sin texto muestra publicaciones; cambiar el orden; paginación; historial (guarda el término) y su `Limpiar`; mínimo > máximo; CTA con conteo; al reabrir no conserva búsqueda ni filtros.
+- `test/features/marketplace/home_screen_test.dart`: el botón `Filtrar` de Inicio abre la hoja de la búsqueda.
+- `test/features/marketplace/search_filter_sheet_test.dart`: estados de la hoja, chips en fila, control deslizante, histograma que recolorea con el rango, interruptor de agotados, toast y validación.
 - `test/helpers/fake_catalog_repository.dart`: registra filtros y responde `categories()`.
 
 ## Criterios
@@ -108,10 +108,9 @@ Decisiones:
 - **Historial:** no se persiste entre sesiones (RNF-07); guardarlo en disco es HU-53.
 - **Tamaño de página:** 20; el API acepta de 1 a 50 y el número de páginas sale del `total`.
 - **Productos agotados en la base de muestra:** no se pueden publicar con la API (stock mínimo 1); el interruptor se prueba con pruebas, no con datos sembrados.
-- **Histograma de precio:** es decorativo (`aria-hidden` en la maqueta); no representa los datos de la consulta.
-- **Filtros de condición y precio en Inicio:** fuera de esta HU; Inicio conserva categoría + agotados.
+- **Histograma de precio:** las alturas son decorativas (`aria-hidden` en la maqueta); solo el color sigue el rango elegido.
 - **Acciones del vacío:** HU-12/HU-13.
-- **Historial o guardado de filtros:** no se persiste.
+- **Filtros en Inicio:** Inicio no tiene hoja propia; su botón `Filtrar` abre la de la búsqueda.
 
 ## Aprobación y Control de Cambios
 
