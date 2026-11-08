@@ -6,7 +6,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 - **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
 - **Búsqueda (HU-09):** app `0.5.1+7`, implementada contra la rama `SCRUM-26` de la API (`0.5.0-alpha.3`, sin publicar; PR musubi-api#49); 325 pruebas, analyze 0 y critic PASS.
-- **Filtros (HU-10):** specs `spec.md`, `plan.md` y `task.md` detalladas y revisadas contra la maqueta `Busqueda-filtros`; implementación pendiente sobre la rama de HU-09. La API está en `musubi-api#50`, apilada sobre `#49`.
+- **Filtros (HU-10):** specs `spec.md`, `plan.md` y `task.md` detalladas y revisadas contra la maqueta `Busqueda-filtros`; draft PR `musubi-app#33` sobre la rama de HU-09. Implementación pendiente. La API está en `musubi-api#50`, apilada sobre `#49`.
 - **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
