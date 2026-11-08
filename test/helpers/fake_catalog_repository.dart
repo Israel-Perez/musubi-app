@@ -8,15 +8,21 @@ import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 /// Fake de [CatalogRepository]: responde en orden y registra los periodos y
 /// los filtros.
 class FakeCatalogRepository implements CatalogRepository {
-  new([List<Object> responses = const [HomeFeed()]])
-    : _responses = [...responses];
+  new([
+    List<Object> responses = const [HomeFeed()],
+    List<Object> searchResponses = const [ProductPage()],
+  ]) : _responses = [...responses],
+       _searchResponses = [...searchResponses];
 
   /// Nunca responde (estado "cargando").
   factory pending() => FakeCatalogRepository([Completer<HomeFeed>()]);
 
   final List<Object> _responses;
+  final List<Object> _searchResponses;
   final List<PopularPeriod> periods = [];
   final List<CatalogFilter> filters = [];
+  final List<String> queries = [];
+  final List<String?> cursors = [];
 
   @override
   Future<HomeFeed> homeFeed({
@@ -32,6 +38,21 @@ class FakeCatalogRepository implements CatalogRepository {
       final HomeFeed feed => Future.value(feed),
       final ApiFailure failure => Future.error(failure),
       final Completer<HomeFeed> completer => completer.future,
+      _ => throw StateError('Respuesta no soportada: $next'),
+    };
+  }
+
+  @override
+  Future<ProductPage> search({required String query, String? cursor}) {
+    queries.add(query);
+    cursors.add(cursor);
+    final next = _searchResponses.length > 1
+        ? _searchResponses.removeAt(0)
+        : _searchResponses.first;
+    return switch (next) {
+      final ProductPage page => Future.value(page),
+      final ApiFailure failure => Future.error(failure),
+      final Completer<ProductPage> completer => completer.future,
       _ => throw StateError('Respuesta no soportada: $next'),
     };
   }

@@ -369,6 +369,26 @@ final Map<String, (bool, _Scene)> _scenes = {
   'producto': (true, (s) => s.go(AppRoutes.product('casio-991es'))),
   'producto-visitante': (false, (s) => s.go(AppRoutes.product('casio-991es'))),
   'inicio-visitante': (false, (s) async {}),
+  'busqueda': (
+    false,
+    (s) async {
+      await s.go(AppRoutes.search);
+      await s.type('search-input', 'calculadora');
+      await s.tester.testTextInput.receiveAction(TextInputAction.search);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await s.settle();
+    },
+  ),
+  'busqueda-vacia': (
+    false,
+    (s) async {
+      await s.go(AppRoutes.search);
+      await s.type('search-input', 'TI-84');
+      await s.tester.testTextInput.receiveAction(TextInputAction.search);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await s.settle();
+    },
+  ),
   'inicio-visitante-scroll1': (false, (s) => s.scroll(650)),
   'inicio-visitante-scroll2': (false, (s) => s.scroll(1300)),
   'inicio-visitante-scroll3': (false, (s) => s.scroll(5000)),

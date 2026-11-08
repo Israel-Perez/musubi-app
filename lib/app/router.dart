@@ -24,6 +24,7 @@ import 'package:musubi_app/features/listings/presentation/sell_price_screen.dart
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
+import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/settings_screen.dart';
@@ -269,13 +270,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.search,
-        // NOTE (HU-09): busqueda y filtros.
-        builder: (context, state) => const UpcomingSection(
-          title: 'Buscar',
-          message: 'Aquí podrás buscar libros, laptops, batas y más.',
-          icon: MusubiIcons.search,
-          canGoBack: true,
-        ),
+        builder: (context, state) => const SearchScreen(),
       ),
       GoRoute(
         path: AppRoutes.notifications,

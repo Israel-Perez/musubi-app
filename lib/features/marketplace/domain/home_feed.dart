@@ -129,6 +129,21 @@ class WantedSummary {
   final DateTime? createdAt;
 }
 
+/// Una pagina del catalogo (`ProductPage` de musubi-api): la vitrina y la
+/// busqueda comparten la forma.
+@immutable
+class ProductPage {
+  const new({this.items = const [], this.total = 0, this.nextCursor});
+
+  final List<ProductSummary> items;
+
+  /// Coincidencias totales, no solo las de esta pagina.
+  final int total;
+  final String? nextCursor;
+
+  bool get hasMore => nextCursor != null;
+}
+
 /// Lo que muestra Inicio.
 @immutable
 class HomeFeed {

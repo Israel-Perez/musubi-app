@@ -13,7 +13,7 @@ void main() {
   late FakeHttpAdapter adapter;
   late HttpCatalogRepository repository;
 
-  void serve({int status = 200}) {
+  void serve({int status = 200, String? nextCursor}) {
     adapter = FakeHttpAdapter(
       (options) async => switch (options.path) {
         ApiPaths.products when status != 200 => FakeHttpAdapter.json({
@@ -22,7 +22,7 @@ void main() {
         }, status: status),
         ApiPaths.products => FakeHttpAdapter.json({
           'items': [productJson()],
-          'nextCursor': null,
+          'nextCursor': nextCursor,
           'total': 48,
         }),
         _ => FakeHttpAdapter.json([
@@ -78,5 +78,112 @@ void main() {
       () => repository.homeFeed(period: PopularPeriod.today),
       throwsA(isA<ApiFailure>()),
     );
+  });
+
+  group('buscar (HU-09)', () {
+    test('manda q recortado, limit y cursor; lee la pagina', () async {
+      serve(nextCursor: 'next');
+
+      final page = await repository.search(
+        query: '  calculadora  ',
+        cursor: 'abc',
+      );
+
+      final request = adapter.requests.single;
+      expect(request.path, ApiPaths.products);
+      expect(request.queryParameters, {
+        'q': 'calculadora',
+        'limit': HttpCatalogRepository.searchPageSize,
+        'cursor': 'abc',
+      });
+      expect(page.items.single.title, startsWith('Calculadora'));
+      expect(page.total, 48);
+      expect(page.nextCursor, 'next');
+      expect(page.hasMore, isTrue);
+    });
+
+    test('400 listings.invalid_query llega con su code', () async {
+      adapter = FakeHttpAdapter(
+        (_) async => FakeHttpAdapter.json({
+          'code': 'listings.invalid_query',
+          'title': 'Escribe al menos una letra o un número.',
+        }, status: 400),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.search(query: '...'),
+        throwsA(
+          isA<ApiFailure>()
+              .having((f) => f.code, 'code', 'listings.invalid_query')
+              .having((f) => f.status, 'status', 400),
+        ),
+      );
+    });
+
+    test('5xx en la busqueda llega como ApiFailure con su status', () async {
+      serve(status: 503);
+
+      expect(
+        () => repository.search(query: 'calculadora'),
+        throwsA(
+          isA<ApiFailure>()
+              .having((f) => f.status, 'status', 503)
+              .having((f) => f.code, 'code', 'server.unavailable'),
+        ),
+      );
+    });
+
+    test('400 listings.invalid_cursor llega con su code', () async {
+      adapter = FakeHttpAdapter(
+        (_) async => FakeHttpAdapter.json({
+          'code': 'listings.invalid_cursor',
+          'title': 'El cursor ya no es válido.',
+        }, status: 400),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.search(query: 'calc', cursor: 'bad'),
+        throwsA(
+          isA<ApiFailure>()
+              .having((f) => f.code, 'code', 'listings.invalid_cursor')
+              .having((f) => f.status, 'status', 400),
+        ),
+      );
+    });
+
+    test('sin red llega como network.offline', () async {
+      adapter = FakeHttpAdapter(
+        (options) async => throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.connectionError,
+        ),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.search(query: 'calculadora'),
+        throwsA(
+          isA<ApiFailure>().having(
+            (f) => f.code,
+            'code',
+            ApiFailure.networkOffline,
+          ),
+        ),
+      );
+    });
   });
 }
