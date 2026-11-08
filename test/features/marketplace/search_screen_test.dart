@@ -419,7 +419,7 @@ void main() {
       fake.searchFilters,
       contains(
         const SearchFilter(
-          category: 'calculadoras',
+          categories: ['calculadoras'],
           minCents: 30000,
           maxCents: 70000,
           condition: ProductConditionFilter.used,
@@ -463,7 +463,7 @@ void main() {
     expect(fake.queries.last, isEmpty);
     expect(
       fake.searchFilters.last,
-      const SearchFilter(category: 'calculadoras'),
+      const SearchFilter(categories: ['calculadoras']),
     );
   });
 

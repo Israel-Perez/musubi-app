@@ -155,7 +155,7 @@ void main() {
 
   test('aplicar filtro relanza con el texto actual y lo guarda', () async {
     const filter = SearchFilter(
-      category: 'calculadoras',
+      categories: ['calculadoras'],
       minCents: 30000,
       maxCents: 70000,
       condition: ProductConditionFilter.used,
@@ -182,7 +182,7 @@ void main() {
   });
 
   test('cargar mas conserva el filtro', () async {
-    const filter = SearchFilter(category: 'libros');
+    const filter = SearchFilter(categories: ['libros']);
     final fake = FakeCatalogRepository(
       [const HomeFeed()],
       [
@@ -201,7 +201,7 @@ void main() {
   });
 
   test('sin texto, los filtros exploran el catalogo', () async {
-    const filter = SearchFilter(category: 'libros');
+    const filter = SearchFilter(categories: ['libros']);
     final fake = FakeCatalogRepository(
       [const HomeFeed()],
       [

@@ -90,7 +90,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
   }
 
   SearchFilter get _current => SearchFilter(
-    category: _draft.category,
+    categories: _draft.categories,
     minCents: _cents(_min),
     maxCents: _cents(_max),
     condition: _draft.condition,
@@ -115,7 +115,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
       if (!mounted) return;
       setState(
         () => _draft = SearchFilter(
-          category: _draft.category,
+          categories: _draft.categories,
           minCents: next.minCents,
           maxCents: next.maxCents,
           condition: _draft.condition,
@@ -135,11 +135,17 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     _onPriceChanged();
   }
 
+  /// Las categorias se suman de a varias: tocar una elegida la quita.
   void _selectCategory(String slug) {
     _priceTimer?.cancel();
     setState(
       () => _draft = SearchFilter(
-        category: _draft.category == slug ? null : slug,
+        categories: _draft.categories.contains(slug)
+            ? [
+                for (final category in _draft.categories)
+                  if (category != slug) category,
+              ]
+            : [..._draft.categories, slug],
         minCents: _cents(_min),
         maxCents: _cents(_max),
         condition: _draft.condition,
@@ -152,7 +158,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     _priceTimer?.cancel();
     setState(
       () => _draft = SearchFilter(
-        category: _draft.category,
+        categories: _draft.categories,
         minCents: _cents(_min),
         maxCents: _cents(_max),
         condition: condition,
@@ -165,7 +171,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     _priceTimer?.cancel();
     setState(
       () => _draft = SearchFilter(
-        category: _draft.category,
+        categories: _draft.categories,
         minCents: _cents(_min),
         maxCents: _cents(_max),
         condition: _draft.condition,
@@ -291,7 +297,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
                 for (final category in items)
                   _CategoryChip(
                     label: category.name,
-                    selected: _draft.category == category.slug,
+                    selected: _draft.categories.contains(category.slug),
                     onTap: () => _selectCategory(category.slug),
                   ),
               ],

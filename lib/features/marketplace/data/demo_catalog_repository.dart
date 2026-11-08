@@ -392,7 +392,8 @@ class DemoCatalogRepository implements CatalogRepository {
   }
 
   static bool _passes(ProductSummary product, SearchFilter filter) =>
-      (filter.category == null || product.category == filter.category) &&
+      (filter.categories.isEmpty ||
+          filter.categories.contains(product.category)) &&
       (filter.minCents == null || product.priceCents >= filter.minCents!) &&
       (filter.maxCents == null || product.priceCents <= filter.maxCents!) &&
       (filter.condition.productLabel == null ||

@@ -103,7 +103,7 @@ void main() {
       await repository.search(
         query: 'calculadora',
         filter: const SearchFilter(
-          category: 'calculadoras',
+          categories: ['calculadoras', 'libros'],
           minCents: 30000,
           maxCents: 70000,
           condition: ProductConditionFilter.used,
@@ -112,7 +112,7 @@ void main() {
 
       expect(adapter.requests.single.queryParameters, {
         'q': 'calculadora',
-        'category': 'calculadoras',
+        'category': 'calculadoras,libros',
         'minPriceCents': 30000,
         'maxPriceCents': 70000,
         'condition': 'used',

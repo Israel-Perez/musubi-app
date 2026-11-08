@@ -133,7 +133,7 @@ void main() {
     final used = await repository.search(
       query: 'calculadora',
       filter: const SearchFilter(
-        category: 'calculadoras',
+        categories: ['calculadoras'],
         minCents: 45000,
         maxCents: 52000,
         condition: ProductConditionFilter.used,
@@ -142,7 +142,7 @@ void main() {
     final brandNew = await repository.search(
       query: 'calculadora',
       filter: const SearchFilter(
-        category: 'calculadoras',
+        categories: ['calculadoras'],
         minCents: 45000,
         maxCents: 52000,
         condition: ProductConditionFilter.newItem,

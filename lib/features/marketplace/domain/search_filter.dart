@@ -29,15 +29,15 @@ enum ProductConditionFilter {
 @immutable
 class SearchFilter {
   const new({
-    this.category,
+    this.categories = const [],
     this.minCents,
     this.maxCents,
     this.condition = ProductConditionFilter.all,
     this.hideSoldOut = true,
   });
 
-  /// `slug` de la categoria; `null` es todas.
-  final String? category;
+  /// `slug` de las categorias elegidas; vacio es todas.
+  final List<String> categories;
 
   /// Precio minimo inclusivo en centavos; `null` es sin limite.
   final int? minCents;
@@ -52,7 +52,7 @@ class SearchFilter {
 
   /// Numero de filtros activos (el globo del boton).
   int get count =>
-      (category == null ? 0 : 1) +
+      (categories.isEmpty ? 0 : 1) +
       (minCents == null && maxCents == null ? 0 : 1) +
       (condition == ProductConditionFilter.all ? 0 : 1) +
       (hideSoldOut ? 0 : 1);
@@ -62,13 +62,18 @@ class SearchFilter {
   @override
   bool operator ==(Object other) =>
       other is SearchFilter &&
-      other.category == category &&
+      listEquals(other.categories, categories) &&
       other.minCents == minCents &&
       other.maxCents == maxCents &&
       other.condition == condition &&
       other.hideSoldOut == hideSoldOut;
 
   @override
-  int get hashCode =>
-      Object.hash(category, minCents, maxCents, condition, hideSoldOut);
+  int get hashCode => Object.hash(
+    Object.hashAll(categories),
+    minCents,
+    maxCents,
+    condition,
+    hideSoldOut,
+  );
 }

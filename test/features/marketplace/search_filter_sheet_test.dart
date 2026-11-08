@@ -144,7 +144,7 @@ void main() {
     expect(
       result,
       const SearchFilter(
-        category: 'calculadoras',
+        categories: ['calculadoras'],
         minCents: 30000,
         maxCents: 70000,
         condition: ProductConditionFilter.used,
@@ -164,7 +164,7 @@ void main() {
                 onPressed: () async {
                   result = await showSearchFilterSheet(
                     context,
-                    initial: const SearchFilter(category: 'libros'),
+                    initial: const SearchFilter(categories: ['libros']),
                   );
                 },
                 child: const Text('Abrir'),
@@ -196,5 +196,74 @@ void main() {
     expect(find.text('Filtros borrados'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('varias categorias se acumulan', (tester) async {
+    SearchFilter? result;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [categoriesProvider.overrideWith((ref) async => categories)],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  result = await showSearchFilterSheet(
+                    context,
+                    initial: const SearchFilter(),
+                  );
+                },
+                child: const Text('Abrir'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Calculadoras'));
+    await tester.tap(find.text('Libros'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ver resultados'));
+    await tester.pumpAndSettle();
+
+    expect(result?.categories, ['calculadoras', 'libros']);
+  });
+
+  testWidgets('tocar la categoria elegida la quita', (tester) async {
+    SearchFilter? result;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [categoriesProvider.overrideWith((ref) async => categories)],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  result = await showSearchFilterSheet(
+                    context,
+                    initial: const SearchFilter(),
+                  );
+                },
+                child: const Text('Abrir'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Calculadoras'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Calculadoras'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ver resultados'));
+    await tester.pumpAndSettle();
+
+    expect(result?.categories, isEmpty);
   });
 }

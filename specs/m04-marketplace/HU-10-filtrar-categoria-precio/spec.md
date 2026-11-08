@@ -16,7 +16,7 @@ Jira (SCRUM-27): como **comprador**, quiero **filtrar los resultados por categor
 
 1. `/buscar` muestra un botón de filtros (`slidersHorizontal`) a la derecha del campo, con globo cuando hay filtros activos.
 2. El botón abre la hoja `Busqueda-filtros`: título, X, categorías, rango de precio, estado y acciones.
-3. La categoría es de selección única; tocar la elegida la quita. Los chips salen de `GET /api/v1/categories`.
+3. Las categorías son de selección múltiple; tocar una elegida la quita. Los chips salen de `GET /api/v1/categories` y se envían como `category=slug1,slug2`.
 4. El precio se elige con el control deslizante de dos pulgares (tope $2,000+, que significa sin límite superior) y se puede escribir en pesos (`Mínimo` y `Máximo`); la app lo convierte a centavos. Los límites son inclusivos y vacío significa sin límite.
 5. El histograma de precio cambia de color según el rango elegido.
 6. Si el mínimo es mayor que el máximo, la hoja muestra el mensaje en español y no aplica ni llama a la API.
@@ -38,7 +38,7 @@ Jira (SCRUM-27): como **comprador**, quiero **filtrar los resultados por categor
 
 ## Diseño
 
-- `domain/search_filter.dart`: `SearchFilter` y `ProductConditionFilter` (`all`, `newItem`, `used`), con `count`, `isEmpty`, `==`/`hashCode` y `apiValue`.
+- `domain/search_filter.dart`: `SearchFilter` (con `categories`, `minCents`, `maxCents`, `condition`, `hideSoldOut`), `ProductConditionFilter` (`all`, `newItem`, `used`), con `count`, `isEmpty`, `==`/`hashCode` y `apiValue`.
 - `domain/search_sort.dart`: `SearchSort` (`relevant`, `recent`, `priceAsc`, `priceDesc`) con su etiqueta y `apiValue`.
 - `domain/catalog_repository.dart`: `search({query, filter, sort, cursor})` y `categories()`.
 - `data/http_catalog_repository.dart`: envía `category`, `minPriceCents`, `maxPriceCents`, `condition`, `hideSoldOut`, `sort`, `q`, `cursor` y `limit`; `categories()` lee fila 72.
@@ -81,6 +81,7 @@ Decisiones:
 ## Criterios
 
 - [ ] Tocar el botón abre `Filtros` con las categorías de la API (`search_filter_sheet_test`).
+- [ ] Elegir `Calculadoras` y `Libros` envía `category=calculadoras,libros` (`http_catalog_repository_test`, `search_filter_sheet_test`).
 - [ ] Elegir `Calculadoras`, mínimo `300` y máximo `700` envía `category=calculadoras`, `minPriceCents=30000`, `maxPriceCents=70000` (`http_catalog_repository_test`, `search_screen_test`).
 - [ ] Elegir `Usado` envía `condition=used`; `Todos` no envía el parámetro (`http_catalog_repository_test`).
 - [ ] Mínimo `800` y máximo `300` muestran el error y no llaman a la API (`search_filter_sheet_test`).
