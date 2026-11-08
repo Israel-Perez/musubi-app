@@ -21,8 +21,7 @@ class SearchState {
     this.sort = SearchSort.relevant,
     this.items = const [],
     this.total = 0,
-    this.nextCursor,
-    this.loadingMore = false,
+    this.page = 1,
   });
 
   /// Texto aplicado (no el que se esta escribiendo).
@@ -31,16 +30,16 @@ class SearchState {
   final SearchSort sort;
   final List<ProductSummary> items;
   final int total;
-  final String? nextCursor;
-  final bool loadingMore;
 
-  bool get hasQuery => query.isNotEmpty;
+  /// Pagina visible (base 1).
+  final int page;
 
-  /// Hay texto o filtros: la pantalla muestra resultados en vez de la
-  /// invitacion a buscar.
-  bool get hasCriteria => hasQuery || !filter.isEmpty;
-  bool get empty => hasCriteria && items.isEmpty;
-  bool get hasMore => nextCursor != null;
+  bool get empty => items.isEmpty;
+
+  /// Paginas que caben en el total ("12 resultados" / 20 por pagina).
+  int get pageCount => total <= searchPageSize
+      ? 1
+      : (total + searchPageSize - 1) ~/ searchPageSize;
 }
 
 /// Busqueda de productos: primera pagina y "Cargar mas" (HU-09), con los
@@ -63,39 +62,36 @@ class SearchController extends AsyncNotifier<SearchState> {
   @override
   SearchState build() => const SearchState();
 
-  /// Busca con texto y filtros. Sin texto pero con filtros, explora el
-  /// catalogo (HU-10); sin ninguno de los dos, vuelve a la invitacion.
+  /// Busca con texto, filtros y orden; sin texto lista todo el catalogo.
   Future<void> search(
     String raw, {
     SearchFilter? filter,
     SearchSort? sort,
+    int page = 1,
   }) async {
     final query = raw.trim();
     final nextFilter = filter ?? state.value?.filter ?? const SearchFilter();
     final nextSort = sort ?? state.value?.sort ?? SearchSort.relevant;
     final request = ++_request;
-    if (query.isEmpty && nextFilter.isEmpty) {
-      state = AsyncData(SearchState(filter: nextFilter, sort: nextSort));
-      return;
-    }
-    // Al escribir se conservan los resultados anteriores; solo la primera
-    // busqueda (o la de los filtros) muestra la pantalla de carga.
-    if (state.value?.items.isEmpty ?? true) {
+    // Al escribir (o cambiar de pagina) se conservan los resultados viejos
+    // solo si ya hay algo que mostrar.
+    if ((state.value?.items.isEmpty ?? true) || state.value?.page != page) {
       state = const AsyncLoading();
     }
     final result = await AsyncValue.guard(() async {
-      final page = await _repository.search(
+      final result = await _repository.search(
         query: query,
         filter: nextFilter,
         sort: nextSort,
+        page: page,
       );
       return SearchState(
         query: query,
         filter: nextFilter,
         sort: nextSort,
-        items: page.items,
-        total: page.total,
-        nextCursor: page.nextCursor,
+        items: result.items,
+        total: result.total,
+        page: page,
       );
     });
     if (request != _request) return;
@@ -118,48 +114,20 @@ class SearchController extends AsyncNotifier<SearchState> {
     await search(current?.query ?? '', filter: current?.filter, sort: sort);
   }
 
-  Future<void> loadMore() async {
+  /// Salta a otra pagina de resultados (la 1 si no hay nada).
+  Future<void> goToPage(int page) async {
     final current = state.value;
-    final cursor = current?.nextCursor;
-    if (current == null || cursor == null || current.loadingMore) return;
-    final request = _request;
-    state = AsyncData(
-      SearchState(
-        query: current.query,
-        filter: current.filter,
-        sort: current.sort,
-        items: current.items,
-        total: current.total,
-        nextCursor: cursor,
-        loadingMore: true,
-      ),
+    if (current == null || page < 1 || page > current.pageCount) return;
+    if (page == current.page) return;
+    await search(
+      current.query,
+      filter: current.filter,
+      sort: current.sort,
+      page: page,
     );
-    try {
-      final page = await _repository.search(
-        query: current.query,
-        filter: current.filter,
-        sort: current.sort,
-        cursor: cursor,
-      );
-      if (request != _request) return;
-      state = AsyncData(
-        SearchState(
-          query: current.query,
-          filter: current.filter,
-          sort: current.sort,
-          items: [...current.items, ...page.items],
-          total: page.total,
-          nextCursor: page.nextCursor,
-        ),
-      );
-    } on Object {
-      if (request == _request) state = AsyncData(current);
-      rethrow;
-    }
   }
 
-  /// Borra el texto y conserva los filtros (el globo sigue visible); si hay
-  /// filtros, vuelve a mostrar el catalogo filtrado.
+  /// Borra el texto y conserva los filtros y el orden; lista el catalogo.
   Future<void> clear() => search('', filter: state.value?.filter);
 }
 

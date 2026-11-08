@@ -25,9 +25,6 @@ class HttpCatalogRepository implements CatalogRepository {
   /// Tarjetas de "Recién publicados" que se piden de una vez.
   static const pageSize = 20;
 
-  /// Tarjetas de una pagina de busqueda (HU-09).
-  static const searchPageSize = 20;
-
   @override
   Future<HomeFeed> homeFeed({required PopularPeriod period}) async {
     try {
@@ -73,7 +70,7 @@ class HttpCatalogRepository implements CatalogRepository {
     required String query,
     SearchFilter filter = const SearchFilter(),
     SearchSort sort = SearchSort.relevant,
-    String? cursor,
+    int page = 1,
   }) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
@@ -88,17 +85,17 @@ class HttpCatalogRepository implements CatalogRepository {
           'hideSoldOut': filter.hideSoldOut,
           'sort': sort.apiValue,
           'limit': searchPageSize,
-          'cursor': ?cursor,
+          'page': page,
         },
       );
-      final page = response.data ?? const <String, dynamic>{};
+      final body = response.data ?? const <String, dynamic>{};
       return ProductPage(
         items: [
-          for (final item in page['items'] as List<dynamic>? ?? const [])
+          for (final item in body['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
         ],
-        total: (page['total'] as num?)?.toInt() ?? 0,
-        nextCursor: page['nextCursor'] as String?,
+        total: (body['total'] as num?)?.toInt() ?? 0,
+        nextCursor: body['nextCursor'] as String?,
       );
     } on DioException catch (error) {
       throw ApiFailure.fromDio(error);

@@ -65,17 +65,24 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('abre con el campo enfocado y la invitacion a buscar', (
+  testWidgets('abre con el campo enfocado y lista todo el catalogo', (
     tester,
   ) async {
-    await open(tester, FakeCatalogRepository());
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
+      ],
+    );
+    await open(tester, fake);
 
     final field = tester.widget<TextField>(
       find.byKey(const Key('search-input')),
     );
     expect(field.focusNode!.hasFocus, isTrue);
     expect(find.text('Busca en tu campus'), findsOneWidget);
-    expect(find.text('Busca lo que necesitas'), findsOneWidget);
+    expect(find.text('Calculadora Casio'), findsOneWidget);
+    expect(fake.queries, ['']);
   });
 
   testWidgets('el boton de regreso vuelve a Inicio', (tester) async {
@@ -120,16 +127,16 @@ void main() {
     await tester.enterText(field, 'calc');
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(fake.queries, isEmpty);
+    expect(fake.queries, ['']);
 
     await tester.pump(const Duration(milliseconds: 150));
     await tester.pumpAndSettle();
 
-    expect(fake.queries, ['calc']);
+    expect(fake.queries, ['', 'calc']);
     expect(find.text('Calculadora Casio'), findsOneWidget);
   });
 
-  testWidgets('borrar el texto vuelve al inicio sin consultar', (tester) async {
+  testWidgets('borrar el texto vuelve a listar el catalogo', (tester) async {
     final fake = FakeCatalogRepository(
       [const HomeFeed()],
       [
@@ -140,10 +147,10 @@ void main() {
 
     await submit(tester, 'calculadora');
     await tester.enterText(find.byKey(const Key('search-input')), '');
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text('Busca lo que necesitas'), findsOneWidget);
-    expect(fake.queries, ['calculadora']);
+    expect(find.text('Calculadora Casio'), findsOneWidget);
+    expect(fake.queries, ['', 'calculadora', '']);
   });
 
   testWidgets('un 400 invalid_query muestra su mensaje y Reintentar', (
@@ -198,8 +205,11 @@ void main() {
     unawaited(router.push(AppRoutes.search));
     await tester.pumpAndSettle();
 
-    expect(find.text('Busca lo que necesitas'), findsOneWidget);
-    expect(find.text('Calculadora Casio'), findsNothing);
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('search-input')),
+    );
+    expect(field.controller!.text, isEmpty);
+    expect(fake.queries.last, isEmpty);
   });
 
   testWidgets('un visitante que guarda ve la hoja de cuenta', (tester) async {
@@ -232,7 +242,7 @@ void main() {
 
     await submit(tester, '  calculadora  ');
 
-    expect(fake.queries, ['calculadora']);
+    expect(fake.queries, ['', 'calculadora']);
     expect(find.text('1 resultado en'), findsOneWidget);
     expect(find.text('UTTT'), findsOneWidget);
     expect(find.text('Calculadora Casio fx-991ES'), findsOneWidget);
@@ -261,6 +271,7 @@ void main() {
     final fake = FakeCatalogRepository(
       [const HomeFeed()],
       [
+        const ProductPage(),
         offlineFailure,
         ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
       ],
@@ -276,12 +287,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Calculadora Casio'), findsOneWidget);
-    expect(fake.queries, ['calculadora', 'calculadora']);
+    expect(fake.queries, ['', 'calculadora', 'calculadora']);
   });
 
   testWidgets('mientras busca muestra el indicador de carga', (tester) async {
     final pending = Completer<ProductPage>();
-    await open(tester, FakeCatalogRepository([const HomeFeed()], [pending]));
+    await open(
+      tester,
+      FakeCatalogRepository([const HomeFeed()], [const ProductPage(), pending]),
+    );
 
     await tester.enterText(find.byKey(const Key('search-input')), 'casio');
     await tester.testTextInput.receiveAction(TextInputAction.search);
@@ -293,76 +307,61 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('Cargar mas agrega la siguiente pagina', (tester) async {
+  testWidgets('la paginacion cambia de pagina', (tester) async {
     final fake = FakeCatalogRepository(
       [const HomeFeed()],
       [
-        ProductPage(
-          items: [product('p1', 'Producto uno')],
-          total: 2,
-          nextCursor: 'c1',
-        ),
-        ProductPage(items: [product('p2', 'Producto dos')], total: 2),
+        const ProductPage(),
+        ProductPage(items: [product('p1', 'Producto uno')], total: 25),
+        ProductPage(items: [product('p2', 'Producto dos')], total: 25),
       ],
     );
     await open(tester, fake);
 
     await submit(tester, 'producto');
-    expect(find.text('2 resultados en'), findsOneWidget);
+    expect(find.text('25 resultados en'), findsOneWidget);
     expect(find.text('Producto uno'), findsOneWidget);
 
-    await tester.tap(find.text('Cargar más'));
+    await tester.tap(find.byKey(const Key('page-2')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Producto uno'), findsOneWidget);
     expect(find.text('Producto dos'), findsOneWidget);
-    expect(fake.cursors, [null, 'c1']);
+    expect(fake.pages.skip(1), [1, 2]);
   });
 
-  testWidgets('si falla cargar mas, conserva las tarjetas y avisa', (
-    tester,
-  ) async {
+  testWidgets('si falla la pagina siguiente muestra el error', (tester) async {
     final fake = FakeCatalogRepository(
       [const HomeFeed()],
       [
-        ProductPage(
-          items: [product('p1', 'Producto uno')],
-          total: 2,
-          nextCursor: 'c1',
-        ),
+        const ProductPage(),
+        ProductPage(items: [product('p1', 'Producto uno')], total: 25),
         Object(),
       ],
     );
     await open(tester, fake);
 
     await submit(tester, 'producto');
-    await tester.tap(find.text('Cargar más'));
+    await tester.tap(find.byKey(const Key('page-2')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Producto uno'), findsOneWidget);
-    expect(
-      find.text('No pudimos cargar más resultados. Inténtalo de nuevo.'),
-      findsOneWidget,
-    );
+    expect(find.text('No pudimos buscar'), findsOneWidget);
   });
 
-  testWidgets('borrar la busqueda vuelve al estado inicial', (tester) async {
-    await open(
-      tester,
-      FakeCatalogRepository(
-        [const HomeFeed()],
-        [
-          ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
-        ],
-      ),
+  testWidgets('borrar la busqueda vuelve a listar el catalogo', (tester) async {
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
+      ],
     );
+    await open(tester, fake);
 
     await submit(tester, 'calculadora');
     await tester.tap(find.bySemanticsLabel('Borrar búsqueda'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Busca lo que necesitas'), findsOneWidget);
-    expect(find.text('Calculadora Casio'), findsNothing);
+    expect(find.text('Calculadora Casio'), findsOneWidget);
+    expect(fake.queries.last, isEmpty);
   });
 
   testWidgets('el boton de filtros abre la hoja con las categorias', (

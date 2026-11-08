@@ -123,11 +123,10 @@ void main() {
     expect(infix.items, isEmpty);
   });
 
-  test('busqueda de muestra: cursor devuelve una pagina vacia', () async {
-    final page = await repository.search(query: 'casio', cursor: 'next');
+  test('busqueda de muestra: la pagina 2 viene vacia', () async {
+    final page = await repository.search(query: 'casio', page: 2);
 
     expect(page.items, isEmpty);
-    expect(page.nextCursor, isNull);
   });
 
   test('busqueda de muestra: categoria, precio inclusivo y estado', () async {

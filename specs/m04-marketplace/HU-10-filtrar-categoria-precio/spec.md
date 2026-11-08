@@ -23,17 +23,18 @@ Jira (SCRUM-27): como **comprador**, quiero **filtrar los resultados por categor
 7. El estado es `Todos`, `Nuevo` o `Usado`; se envía como `condition` (`null`, `new`, `used`).
 8. `Ocultar agotados` (encendido por defecto) se envía como `hideSoldOut`; apagado muestra también los agotados.
 9. El globo cuenta categoría + rango de precio + estado + agotados visibles (máximo 4).
-10. Aplicar los filtros relanza la búsqueda con el texto actual; sin texto, muestra el catálogo filtrado. Conserva el descarte de respuestas atrasadas y no pierde las tarjetas mientras llega la nueva.
-11. `Cargar más` conserva los filtros, el orden y el cursor; el `total` y la paginación los decide la API.
-12. El CTA dice `Ver N resultados` con una vista previa (300 ms de retardo), también sin texto si hay filtros. Si la vista previa falla, dice `Ver resultados`; sin texto ni filtros, no consulta.
-13. La cabecera de resultados dice `N resultados en` con la píldora `UTTT`, como la maqueta, y a la derecha el orden actual (`Más relevantes`).
-14. El orden se elige en una hoja `Ordenar por` con `Más relevantes`, `Más recientes`, `Menor precio` y `Mayor precio`; al cambiarlo se relanza la búsqueda con el texto y los filtros actuales.
-15. `/buscar` guarda hasta 5 búsquedas de la sesión (sin persistirlas, RNF-07): chips tocables y `Limpiar` a la derecha, visibles arriba de los resultados.
-16. El botón `Filtrar` de Inicio abre `/buscar` con la hoja de filtros abierta.
-17. `Limpiar` en la hoja avisa con un toast `Filtros borrados`.
-18. Al salir de `/buscar` se limpia todo (`autoDispose`). La X del campo borra el texto y conserva los filtros (vuelve a mostrar el catálogo filtrado); `Limpiar` de la hoja borra los filtros.
-19. Las categorías se acomodan en fila, con varias por renglón, como la maqueta.
-20. Sin regresiones: formato, análisis, pruebas y critic en verde.
+10. Al entrar a `/buscar` se listan todas las publicaciones (sin texto ni filtros) y se conserva el descarte de respuestas atrasadas.
+11. Aplicar los filtros relanza la búsqueda con el texto actual; sin texto, muestra el catálogo filtrado.
+12. Los resultados se paginan por número de página (`page`, 20 por página) con flechas y números; `Limpiar`, un filtro o un orden vuelven a la página 1. `total` y páginas los decide la API.
+13. El CTA dice `Ver N resultados` con una vista previa (300 ms de retardo), también sin texto si hay filtros. Si la vista previa falla, dice `Ver resultados`; sin texto ni filtros, no consulta.
+14. La cabecera de resultados dice `N resultados en` con la píldora `UTTT`, como la maqueta, y a la derecha el orden actual (`Más relevantes`).
+15. El orden se elige en una hoja `Ordenar por` con `Más relevantes`, `Más recientes`, `Menor precio` y `Mayor precio`; al cambiarlo se relanza la búsqueda con el texto y los filtros actuales.
+16. `/buscar` guarda hasta 5 búsquedas de la sesión (sin persistirlas, RNF-07): chips tocables y `Limpiar` a la derecha, visibles arriba de los resultados.
+17. El botón `Filtrar` de Inicio abre `/buscar` con la hoja de filtros abierta.
+18. `Limpiar` en la hoja avisa con un toast `Filtros borrados`.
+19. Al salir de `/buscar` se limpia todo (`autoDispose`). La X del campo borra el texto y conserva los filtros (vuelve a mostrar el catálogo filtrado); `Limpiar` de la hoja borra los filtros.
+20. Las categorías se acomodan en fila, con varias por renglón, como la maqueta.
+21. Sin regresiones: formato, análisis, pruebas y critic en verde.
 
 ## Diseño
 
@@ -42,9 +43,9 @@ Jira (SCRUM-27): como **comprador**, quiero **filtrar los resultados por categor
 - `domain/catalog_repository.dart`: `search({query, filter, sort, cursor})` y `categories()`.
 - `data/http_catalog_repository.dart`: envía `category`, `minPriceCents`, `maxPriceCents`, `condition`, `hideSoldOut`, `sort`, `q`, `cursor` y `limit`; `categories()` lee fila 72.
 - `data/demo_catalog_repository.dart`: búsqueda local con categoría, precio inclusivo, condición y agotados; sin texto devuelve el catálogo filtrado.
-- `presentation/search_providers.dart`: `SearchState.filter`, `sort` y `hasCriteria`, `search(query, {filter, sort})`, `applyFilter(filter)`, `setSort(sort)`, `clear()`, `searchHistoryProvider` (5, en memoria) y `searchPreviewProvider` (retardo de 300 ms en la hoja).
+- `presentation/search_providers.dart`: `SearchState.filter`, `sort`, `page` y `pageCount`, `search(query, {filter, sort, page})`, `applyFilter(filter)`, `setSort(sort)`, `goToPage(page)`, `clear()`, `searchHistoryProvider` (5, en memoria) y `searchPreviewProvider` (retardo de 300 ms en la hoja).
 - `presentation/search_filter_sheet.dart`: `showSearchFilterSheet`, `MusubiPanel`, chips en fila, histograma que sigue el rango, `RangeSlider` de dos pulgares (0 a $2,000+), precio, segmented y `Ocultar agotados`; `Limpiar` (con toast) y `Ver N resultados`.
-- `presentation/search_screen.dart`: botón con globo, apertura de la hoja (también con `?filtros=1` desde Inicio), cabecera con píldora `UTTT`, hoja `Ordenar por`, historial de la sesión y paso de filtro/orden a `search`/`loadMore`.
+- `presentation/search_screen.dart`: lista todo al entrar, botón con globo, apertura de la hoja (también con `?filtros=1` desde Inicio), cabecera con píldora `UTTT`, hoja `Ordenar por`, historial de la sesión y paginación por página debajo de la cuadrícula.
 - `presentation/home_screen.dart`: el botón `Filtrar` navega a `/buscar?filtros=1`; Inicio deja de tener hoja de filtros propia.
 - `presentation/home_providers.dart`: `categoriesProvider` (`FutureProvider.autoDispose`).
 - `core/widgets/musubi_text_field.dart`: `prefixText` opcional para el `$` de los precios.
@@ -72,8 +73,8 @@ Decisiones:
 
 - `test/features/marketplace/http_catalog_repository_test.dart`: los parámetros van solo cuando existen; `400` de rango y condición llegan como `ApiFailure` con su `code`; `categories()` lee la fila 72.
 - `test/features/marketplace/demo_catalog_repository_test.dart`: precio inclusivo, categoría, condición y combinación con `q`.
-- `test/features/marketplace/search_providers_test.dart`: `applyFilter` relanza con el `q` actual y explora sin texto; `loadMore` conserva el filtro y el orden; `clear` conserva el filtro; la vista previa pide el `total`.
-- `test/features/marketplace/search_screen_test.dart`: botón y globo; abrir la hoja; aplicar categoría/precio/estado; filtrar sin texto muestra publicaciones; cambiar el orden; historial y su `Limpiar`; mínimo > máximo; CTA con conteo; al reabrir no conserva filtros.
+- `test/features/marketplace/search_providers_test.dart`: `applyFilter` relanza con el `q` actual y explora sin texto; `goToPage` pide esa página; `clear` conserva el filtro y lista el catálogo; la vista previa pide el `total`.
+- `test/features/marketplace/search_screen_test.dart`: lista todo al entrar; botón y globo; abrir la hoja; aplicar categoría/precio/estado; filtrar sin texto muestra publicaciones; cambiar el orden; paginación; historial y su `Limpiar`; mínimo > máximo; CTA con conteo; al reabrir no conserva filtros.
 - `test/features/marketplace/search_filter_sheet_test.dart`: estados de la hoja, chips en fila, control deslizante, interruptor de agotados y validación.
 - `test/helpers/fake_catalog_repository.dart`: registra filtros y responde `categories()`.
 
@@ -84,7 +85,8 @@ Decisiones:
 - [ ] Elegir `Usado` envía `condition=used`; `Todos` no envía el parámetro (`http_catalog_repository_test`).
 - [ ] Mínimo `800` y máximo `300` muestran el error y no llaman a la API (`search_filter_sheet_test`).
 - [ ] Aplicar filtros conserva el `q` actual y una respuesta atrasada no pisa la nueva (`search_providers_test`).
-- [ ] `Cargar más` envía el mismo filtro (`search_providers_test`).
+- [ ] Al entrar a `/buscar` se listan todas las publicaciones (`search_screen_test`, `search_providers_test`).
+- [ ] La paginación pide `page=1` al buscar y `page=2` al tocar `2`, conservando filtros y orden (`search_screen_test`, `search_providers_test`, `http_catalog_repository_test`).
 - [ ] Al salir y reabrir `/buscar` no quedan filtros (`search_screen_test`).
 - [ ] Elegir una categoría sin texto muestra sus publicaciones (`search_screen_test`, `search_providers_test`).
 - [ ] Apagar `Ocultar agotados` aplica `hideSoldOut=false` (`search_filter_sheet_test`, `http_catalog_repository_test`).
@@ -103,6 +105,7 @@ Decisiones:
 
 - **“Más relevantes”:** la API lo acepta pero ordena igual que `recent` hasta que exista puntaje (`NOTE (HU-09)`).
 - **Historial:** no se persiste entre sesiones (RNF-07); guardarlo en disco es HU-53.
+- **Tamaño de página:** 20; el API acepta de 1 a 50 y el número de páginas sale del `total`.
 - **Productos agotados en la base de muestra:** no se pueden publicar con la API (stock mínimo 1); el interruptor se prueba con pruebas, no con datos sembrados.
 - **Histograma de precio:** es decorativo (`aria-hidden` en la maqueta); no representa los datos de la consulta.
 - **Filtros de condición y precio en Inicio:** fuera de esta HU; Inicio conserva categoría + agotados.

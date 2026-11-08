@@ -25,7 +25,7 @@ class FakeCatalogRepository implements CatalogRepository {
   final List<String> queries = [];
   final List<SearchFilter> searchFilters = [];
   final List<SearchSort> sorts = [];
-  final List<String?> cursors = [];
+  final List<int> pages = [];
 
   /// Categorias que devuelve `categories()`.
   List<CatalogCategory> categoriesResponse = const [];
@@ -49,12 +49,12 @@ class FakeCatalogRepository implements CatalogRepository {
     required String query,
     SearchFilter filter = const SearchFilter(),
     SearchSort sort = SearchSort.relevant,
-    String? cursor,
+    int page = 1,
   }) {
     queries.add(query);
     searchFilters.add(filter);
     sorts.add(sort);
-    cursors.add(cursor);
+    pages.add(page);
     final next = _searchResponses.length > 1
         ? _searchResponses.removeAt(0)
         : _searchResponses.first;

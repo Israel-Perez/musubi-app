@@ -116,10 +116,13 @@ class ProductPage {
 
   /// Coincidencias totales, no solo las de esta pagina.
   final int total;
-  final String? nextCursor;
 
-  bool get hasMore => nextCursor != null;
+  /// Cursor de la API; la busqueda del app usa `page` (HU-10).
+  final String? nextCursor;
 }
+
+/// Resultados por pagina de la busqueda (fila 73 de la API).
+const searchPageSize = 20;
 
 /// Lo que muestra Inicio.
 @immutable

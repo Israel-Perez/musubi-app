@@ -55,6 +55,12 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Toast al limpiar filtros:** `Filtros borrados` como aviso flotante dentro del `Overlay` raíz; un `SnackBar` del `ScaffoldMessenger` queda debajo de la hoja modal y no se ve.
 - Pruebas: 347.
 
+### Tercera revisión en el teléfono (08-Nov-2026)
+
+- **La búsqueda lista todo al entrar:** `initState` pide el catálogo sin texto; se retiró la pantalla de invitación y `hasCriteria`.
+- **Paginación por número de página:** la API acepta `page` (base 1, ignora `cursor`, `skip = (page-1)*limit`) y `400 listings.invalid_page`; la app muestra flechas y números debajo de la cuadrícula. `Cargar más`, `nextCursor`, `loadingMore` y `hasMore` salen del estado.
+- Pruebas: 347.
+
 ## T25 — Buscar productos por palabra clave (07-Nov-2026, SCRUM-26, HU-09)
 
 **Qué se hizo**

@@ -16,7 +16,7 @@ abstract interface class CatalogRepository {
     required String query,
     SearchFilter filter = const SearchFilter(),
     SearchSort sort = SearchSort.relevant,
-    String? cursor,
+    int page = 1,
   });
 
   /// Categorias del campus para los chips de `Busqueda-filtros`.

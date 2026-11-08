@@ -356,9 +356,9 @@ class DemoCatalogRepository implements CatalogRepository {
     required String query,
     SearchFilter filter = const SearchFilter(),
     SearchSort sort = SearchSort.relevant,
-    String? cursor,
+    int page = 1,
   }) async {
-    if (cursor != null) return const ProductPage();
+    if (page > 1) return const ProductPage();
     final terms = _terms(query);
     final now = _clock();
     final items =

@@ -78,13 +78,10 @@ void main() {
   });
 
   group('buscar (HU-09)', () {
-    test('manda q recortado, limit y cursor; lee la pagina', () async {
+    test('manda q recortado, limit y pagina; lee la pagina', () async {
       serve(nextCursor: 'next');
 
-      final page = await repository.search(
-        query: '  calculadora  ',
-        cursor: 'abc',
-      );
+      final page = await repository.search(query: '  calculadora  ', page: 2);
 
       final request = adapter.requests.single;
       expect(request.path, ApiPaths.products);
@@ -92,13 +89,12 @@ void main() {
         'q': 'calculadora',
         'hideSoldOut': true,
         'sort': 'relevant',
-        'limit': HttpCatalogRepository.searchPageSize,
-        'cursor': 'abc',
+        'limit': searchPageSize,
+        'page': 2,
       });
       expect(page.items.single.title, startsWith('Calculadora'));
       expect(page.total, 48);
       expect(page.nextCursor, 'next');
-      expect(page.hasMore, isTrue);
     });
 
     test('los filtros de HU-10 van en la consulta', () async {
@@ -122,7 +118,8 @@ void main() {
         'condition': 'used',
         'hideSoldOut': true,
         'sort': 'relevant',
-        'limit': HttpCatalogRepository.searchPageSize,
+        'limit': searchPageSize,
+        'page': 1,
       });
     });
 
@@ -221,7 +218,7 @@ void main() {
       );
 
       expect(
-        () => repository.search(query: 'calc', cursor: 'bad'),
+        () => repository.search(query: 'calc', page: 0),
         throwsA(
           isA<ApiFailure>()
               .having((f) => f.code, 'code', 'listings.invalid_cursor')
