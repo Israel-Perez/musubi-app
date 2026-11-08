@@ -34,6 +34,7 @@ class MusubiTextField extends StatefulWidget {
     this.suffix,
     this.footer,
     this.sheet = false,
+    this.multiline = false,
   });
 
   final String label;
@@ -73,6 +74,10 @@ class MusubiTextField extends StatefulWidget {
   /// Dentro de una hoja con titulo (`.s-field`): la etiqueta hereda la linea
   /// de 22 del cuerpo de la hoja y la separacion es de 6.
   final bool sheet;
+
+  /// Caja de varias lineas (`.s-field textarea`): 96 de alto, relleno de
+  /// `12 14` y linea de 22 ("Cuentanos que paso", HU-28).
+  final bool multiline;
 
   @override
   State<MusubiTextField> createState() => _MusubiTextFieldState();
@@ -120,10 +125,16 @@ class _MusubiTextFieldState extends State<MusubiTextField> {
           )
         : widget.suffix;
 
+    final multiline = widget.multiline;
+    final fieldStyle = multiline
+        ? MusubiType.field.copyWith(height: 22 / 16)
+        : MusubiType.field;
     final box = AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      height: MusubiSizes.fieldHeight,
-      padding: EdgeInsets.only(left: 14, right: widget.obscure ? 4 : 14),
+      height: multiline ? 96 : MusubiSizes.fieldHeight,
+      padding: multiline
+          ? const EdgeInsets.symmetric(horizontal: 14, vertical: 12)
+          : EdgeInsets.only(left: 14, right: widget.obscure ? 4 : 14),
       decoration: BoxDecoration(
         color: c.background,
         borderRadius: BorderRadius.circular(MusubiSizes.radiusField),
@@ -158,20 +169,28 @@ class _MusubiTextFieldState extends State<MusubiTextField> {
               obscureText: _hidden,
               enableSuggestions: !widget.obscure,
               autocorrect: !widget.obscure,
-              keyboardType: widget.keyboardType,
+              keyboardType: multiline
+                  ? TextInputType.multiline
+                  : widget.keyboardType,
               textInputAction: widget.textInputAction,
               autofillHints: widget.autofillHints,
               inputFormatters: widget.inputFormatters,
               onChanged: widget.onChanged,
               onSubmitted: widget.onSubmitted,
+              maxLines: multiline ? null : 1,
+              expands: multiline,
+              textAlignVertical: multiline ? TextAlignVertical.top : null,
+              textCapitalization: multiline
+                  ? TextCapitalization.sentences
+                  : TextCapitalization.none,
               cursorColor: c.brand,
-              style: MusubiType.field.copyWith(
+              style: fieldStyle.copyWith(
                 color: c.textPrimary,
                 letterSpacing: _hidden ? 1.6 : null,
               ),
               decoration: InputDecoration.collapsed(
                 hintText: widget.hint,
-                hintStyle: MusubiType.field.copyWith(color: c.placeholder),
+                hintStyle: fieldStyle.copyWith(color: c.placeholder),
               ),
             ),
           ),

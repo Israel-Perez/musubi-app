@@ -38,6 +38,8 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
+import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
@@ -46,6 +48,7 @@ import '../test/helpers/fake_catalog_repository.dart';
 import '../test/helpers/fake_chat.dart';
 import '../test/helpers/fake_listings_repository.dart';
 import '../test/helpers/fake_profile_repository.dart';
+import '../test/helpers/fake_reputation.dart';
 import '../test/helpers/fake_session_api.dart';
 import '../test/helpers/fake_status_repository.dart';
 import '../test/helpers/in_memory_token_store.dart';
@@ -267,6 +270,18 @@ class _Shot {
             initialSessionTokensProvider.overrideWithValue(tokens),
             chatRepositoryProvider.overrideWithValue(_chat),
             chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
+            // HU-57: Diego bloqueado, como `APP.blocked` de la maqueta.
+            reputationRepositoryProvider.overrideWithValue(
+              FakeReputationRepository(
+                blockedUsers: [
+                  BlockedUser(
+                    id: 'diego',
+                    name: 'Diego Hernández',
+                    blockedAt: _now,
+                  ),
+                ],
+              ),
+            ),
           ],
           child: const MusubiApp(),
         ),
@@ -363,7 +378,55 @@ class _Shot {
 typedef _Scene = Future<void> Function(_Shot shot);
 
 /// Nombre → (con sesion, como llegar a la pantalla).
+/// Elige una opcion de una hoja: se marca, se cierra a los 160 ms y la
+/// maqueta abre lo siguiente 240 ms despues.
+Future<void> _pick(_Shot s, String label) async {
+  await s.tester.tap(find.text(label).last, warnIfMissed: false);
+  await s.tester.pump(const Duration(milliseconds: 200));
+  await s.settle();
+  await s.tester.pump(const Duration(milliseconds: 300));
+  await s.settle();
+}
+
+/// `chatMoreSheet` sobre `Chat-Valeria` (HU-28, HU-57).
+Future<void> _chatMore(_Shot s) async {
+  await s.go(AppRoutes.conversation('c1'));
+  await s.tap(find.bySemanticsLabel('Más opciones'));
+}
+
 final Map<String, (bool, _Scene)> _scenes = {
+  'chat-mas': (true, _chatMore),
+  'chat-bloquear': (
+    true,
+    (s) async {
+      await _chatMore(s);
+      await _pick(s, 'Bloquear a Valeria');
+    },
+  ),
+  'reportar': (
+    true,
+    (s) async {
+      await _chatMore(s);
+      await _pick(s, 'Reportar');
+    },
+  ),
+  'reportar-detalle': (
+    true,
+    (s) async {
+      await _chatMore(s);
+      await _pick(s, 'Reportar');
+      await _pick(s, 'Me pidió pagar fuera de Musubi');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await s.settle();
+    },
+  ),
+  'bloqueados': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.accountPrivacy);
+      await s.tap(find.byKey(const Key('privacy-blocked')));
+    },
+  ),
   'chat-valeria': (true, (s) => s.go(AppRoutes.conversation('c1'))),
   'mensajes': (true, (s) => s.go(AppRoutes.messages)),
   'producto': (true, (s) => s.go(AppRoutes.product('casio-991es'))),

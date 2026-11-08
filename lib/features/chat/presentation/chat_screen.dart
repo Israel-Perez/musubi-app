@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
+import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/avatars.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
+import 'package:musubi_app/core/widgets/musubi_dialog.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_panel.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/skeleton.dart';
@@ -20,16 +23,19 @@ import 'package:musubi_app/features/chat/presentation/chat_format.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
+import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 
 /// `Chat-Valeria` (HU-20): encabezado con la otra persona, la tarjeta de la
 /// publicacion, los mensajes en tiempo real y la caja para escribir.
 ///
 /// HU-21: la tarjeta de la publicacion y "Ver" (abre su detalle, HU-11).
-/// NOTE (HU-05): "En linea" / "Activa hace 5 min" con el perfil publico.
+/// "Mas opciones" (`chatMoreSheet`): "Bloquear a …" (HU-57) y "Reportar"
+/// (HU-28); con un bloqueo, un aviso en lugar de la caja de texto.
+/// NOTE (HU-05): "Ver perfil" y "En linea" / "Activa hace 5 min".
+/// NOTE (HU-31): "Silenciar conversación" (sin avisos push no hay que callar).
 /// NOTE (HU-27): la calificacion de la otra persona.
 /// NOTE (HU-32): "Resumir acuerdo" con IA.
-/// NOTE (HU-28): reportar desde "Mas opciones".
-/// NOTE (HU-57): bloquear desde "Mas opciones".
 class ChatScreen extends ConsumerStatefulWidget {
   const new({required this.target, super.key});
 
@@ -89,6 +95,102 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  /// `chatMoreSheet`: "Ver perfil", "Silenciar conversación", "Bloquear a …"
+  /// y "Reportar".
+  Future<void> _more(Conversation conversation) async {
+    final person = conversation.counterpart;
+    final picked = await showMusubiPanel<String>(
+      context,
+      builder: (context) => MusubiPanel(
+        key: const Key('chat-more'),
+        title: person.name,
+        bodyInset: 12,
+        child: MusubiOptions<String>(
+          plain: true,
+          options: [
+            const MusubiOption(
+              value: 'profile',
+              label: 'Ver perfil',
+              icon: MusubiIcons.user,
+            ),
+            const MusubiOption(
+              value: 'mute',
+              label: 'Silenciar conversación',
+              icon: MusubiIcons.bellOff,
+            ),
+            MusubiOption(
+              value: 'block',
+              label: 'Bloquear a ${person.firstName}',
+              icon: MusubiIcons.ban,
+            ),
+            const MusubiOption(
+              value: 'report',
+              label: 'Reportar',
+              icon: MusubiIcons.flag,
+            ),
+          ],
+          onPick: (value) => Navigator.of(context).pop(value),
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    switch (picked) {
+      case 'profile':
+        _soon('El perfil de ${person.firstName}');
+      case 'mute':
+        _soon('Silenciar conversaciones');
+      case 'block':
+        // La maqueta abre el dialogo 240 ms despues (`later(240, ...)`).
+        await Future<void>.delayed(const Duration(milliseconds: 240));
+        if (mounted) await _block(person);
+      case 'report':
+        await Future<void>.delayed(const Duration(milliseconds: 240));
+        if (!mounted) return;
+        await showReportSheet(
+          context,
+          target: UserReport(
+            userId: person.id,
+            conversationId: conversation.id,
+          ),
+        );
+    }
+  }
+
+  Future<void> _block(ChatCounterpart person) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showMusubiDialog(
+      context,
+      icon: MusubiIcons.ban,
+      title: '¿Bloquear a ${person.firstName}?',
+      message:
+          'No podrá escribirte ni ver tus publicaciones. Puedes desbloquearlo '
+          'en Ajustes.',
+      confirmLabel: 'Bloquear',
+      danger: true,
+      confirmKey: const Key('block-confirm'),
+    );
+    if (!confirmed || !mounted) return;
+    try {
+      await ref
+          .read(chatControllerProvider(widget.target).notifier)
+          .blockCounterpart();
+      _input.clear();
+      showMusubiSnack(
+        messenger,
+        'Bloqueaste a ${person.firstName}',
+        icon: MusubiIcons.ban,
+        tone: SnackTone.warn,
+      );
+    } on ApiFailure catch (failure) {
+      showMusubiSnack(
+        messenger,
+        failure.message,
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
@@ -108,7 +210,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             _Header(
               counterpart: conversation?.counterpart,
               fallbackName: preview?.sellerName,
-              onMore: () => _soon('Reportar y bloquear'),
+              onMore: conversation == null
+                  ? null
+                  : () => unawaited(_more(conversation)),
             ),
             if (state.ownProduct)
               Expanded(
@@ -147,13 +251,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         now: ref.watch(clockProvider)().toLocal(),
                       ),
               ),
-              _Composer(
-                input: _input,
-                enabled: conversation != null,
-                sending: state.sending,
-                onSend: _send,
-                onAttach: () => _soon('Enviar fotos'),
-              ),
+              if (conversation != null && !conversation.canReply)
+                const _BlockedNotice()
+              else
+                _Composer(
+                  input: _input,
+                  enabled: conversation != null,
+                  sending: state.sending,
+                  onSend: _send,
+                  onAttach: () => _soon('Enviar fotos'),
+                ),
             ],
           ],
         ),
@@ -172,7 +279,9 @@ class _Header extends StatelessWidget {
 
   final ChatCounterpart? counterpart;
   final String? fallbackName;
-  final VoidCallback onMore;
+
+  /// `null` mientras carga la conversacion.
+  final VoidCallback? onMore;
 
   @override
   Widget build(BuildContext context) {
@@ -208,8 +317,10 @@ class _Header extends StatelessWidget {
             if (person == null)
               const SkeletonBox(width: 40, height: 40, radius: 20)
             else
-              InitialsAvatar(
+              // Su foto de perfil o, sin foto, sus iniciales.
+              ProfileAvatar(
                 initials: person.initials,
+                photoUrl: person.photoUrl,
                 size: 40,
                 fontSize: 14,
                 palette: person.palette,
@@ -793,6 +904,49 @@ class _Composer extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// En lugar de la caja de texto cuando hay un bloqueo entre los dos (HU-57):
+/// mismo borde y alto que el compositor. No dice quien bloqueo.
+class _BlockedNotice extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return DecoratedBox(
+      key: const Key('chat-blocked'),
+      decoration: BoxDecoration(
+        color: c.background,
+        border: Border(top: BorderSide(color: c.divider)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 8, 20, 8 + (bottom > 0 ? bottom : 22)),
+        child: SizedBox(
+          height: MusubiSizes.minTouch,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 8,
+            children: [
+              MusubiIcon(MusubiIcons.ban, size: 18, color: c.textSecondary),
+              Flexible(
+                child: Text(
+                  'No puedes responder a esta conversación.',
+                  textAlign: TextAlign.center,
+                  style: MusubiType.style(
+                    14,
+                    weight: FontWeight.w600,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

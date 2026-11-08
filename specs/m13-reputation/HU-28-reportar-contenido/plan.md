@@ -1,10 +1,12 @@
-# plan.md — HU-28 Reportar contenido o usuarios sospechosos (borrador)
+# HU-28 — Reportar contenido o usuarios sospechosos (app, plan)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
+## Decisiones
+- **Una sola función `showReportSheet(target)`:** la maqueta usa la misma `reportSheet` desde el chat y desde Ajustes; solo cambia lo que se reporta.
+- **Los tiempos de la maqueta:** la opción se marca y se cierra a los 160 ms (`MusubiOptions`) y la siguiente hoja abre 240 ms después (`later(240)`).
+- **Error en la hoja, no en un aviso:** así no se pierde lo que se escribió.
+- **Texto honesto bajo la caja:** el "chat de soporte" de la maqueta no existe; el equipo responde por correo.
 
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+## Archivos
+- **Nuevos:** `lib/features/reputation/{domain,data,presentation}/…` e íconos `flag` y `circleHelp`.
+- **Cambian:** `MusubiTextField` (`multiline`), `settings_screen.dart` ("Reportar un problema") y `chat_screen.dart` ("Más opciones").
+- **Pruebas:** `http_reputation_repository_test.dart`, `reputation_flow_test.dart` y `test/helpers/fake_reputation.dart`.

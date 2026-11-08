@@ -1,46 +1,52 @@
 # HU-28 — Reportar contenido o usuarios sospechosos (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-28 / SCRUM-57 / Sprint 5 (23 nov – 4 dic 2026) / M-13 / [musubi-api:HU-28](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m13-reputation/HU-28-reportar-contenido)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-28 / SCRUM-57 / Sprint 3 (adelantada del S5: requisito de Google Play) / M-13 / [musubi-api:HU-28](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m13-reputation/HU-28-reportar-contenido)
 
 ## Contexto
 Jira (SCRUM-57): Como **usuario**, quiero **reportar una publicación, solicitud o usuario sospechoso**, para **mantener segura la comunidad**.
 
-- Maqueta: sin pantalla propia. Se diseña con la guía de estilo de la maqueta; el lineamiento 4 permite agregar, nunca quitar.
+- Google Play exige reportar y bloquear en apps con contenido de usuarios (el chat). Va junto con HU-57.
+- Maqueta: `reportSheet`, desde el chat (`chatMoreSheet` → "Reportar") y desde Ajustes (`aj-reportar`, "Reportar un problema").
 - Trazabilidad: RF-37 · CU-20 · RN-23, RN-27.
-- Origen: Propuesta inicial §11.
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-05`, `HU-11`.
+**Depende de:** `02-04` (piezas de la maqueta), `HU-20` (chat) y la API `musubi-api:HU-28` (`POST /api/v1/reports`).
 
 ## Requisitos
-1. Se puede reportar una publicación, solicitud, oferta, mensaje o usuario, indicando el motivo.
-2. El reporte llega a la revisión del administrador (HU-39).
-
-RNF que aplican: se confirman al detallar.
+1. **R1 · Motivo:** la hoja "Reportar un problema" muestra los cinco motivos de la maqueta con su ícono (`flag`, o `help` en "Otro problema"). Debajo va la nota "Tu reporte es confidencial. El equipo de Musubi lo revisa en menos de 24 horas.".
+2. **R2 · Detalle:** al elegir el motivo, 240 ms después se abre la hoja con:
+   - el motivo como título;
+   - "Cuéntanos qué pasó" (opcional, hasta 1000 caracteres; caja de 96 como `.s-field textarea`);
+   - "Enviar reporte" y "Cancelar".
+3. **R3 · Desde el chat:** reporta a la otra persona con la conversación (`targetType: user`). Desde Ajustes es un problema general.
+4. **R4 · Resultado:**
+   - al enviar, la hoja se cierra con el aviso "Recibimos tu reporte. Te escribimos en menos de 24 h.";
+   - si falla, la hoja sigue abierta y el mensaje de la API aparece bajo la caja.
 
 ## Diseño
-- Feature `lib/features/reputation/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-28. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-28)` (skill `deferred-scope-fakes`).
+- `lib/features/reputation/` (M-13): `ReputationRepository` y `HttpReputationRepository`, `ReportReason`, `ReportTarget` (`GeneralReport` / `UserReport`) y `showReportSheet` (`report_sheet.dart`).
+- `MusubiTextField(multiline: true)` dibuja la caja de varias líneas de la maqueta.
+- Íconos nuevos `flag` y `circleHelp` (Lucide de la maqueta).
+- **Diferencia con la maqueta:** el texto bajo la caja dice "Si tienes capturas, el equipo te las pedirá por correo.". El de la maqueta remite a un "chat de soporte" que no existe.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-28, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Fila `POST /api/v1/reports` de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (`ApiPaths.reports`).
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- Widget tests de las pantallas nuevas (sin escena de maqueta).
+- `test/features/reputation/http_reputation_repository_test.dart`: la forma de la petición (`user` con conversación y `general` sin id ni detalle vacío) y el error como `ApiFailure`.
+- `test/features/reputation/reputation_flow_test.dart`: desde el chat, desde Ajustes y la hoja que sigue abierta con el error.
+- Captura `reportar` y `reportar-detalle` (`tool/screenshots_test.dart`) comparada con la maqueta.
 
 ## Criterios
-- [ ] Se puede reportar una publicación, solicitud, oferta, mensaje o usuario, indicando el motivo.
-- [ ] El reporte llega a la revisión del administrador (HU-39).
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] Se reporta a la persona desde el chat y un problema desde Ajustes, con el motivo (R1–R3).
+- [x] El aviso de recibido y el error en la hoja (R4).
+- [x] `dart format` sin cambios · `flutter analyze` sin observaciones · `flutter test` 100 % · critic PASS.
 
 ## Límites
-- Decisión pendiente (Jira): Se ubica en Sprint 5 junto con el módulo de administración y moderación.
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- Reportar una publicación desde su detalle (`Producto`) queda para cuando la maqueta lo tenga. La API ya acepta `product`.
+- `NOTE (HU-39)`: "Centro de ayuda".
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 29-Oct-2026 (borrador) · 08-Nov-2026 (implementación)
+- **Detalle:** se adelanta al S3 por Google Play; el texto bajo la caja cambia porque el "chat de soporte" no existe.
