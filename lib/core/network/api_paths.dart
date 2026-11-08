@@ -109,4 +109,15 @@ abstract final class ApiPaths {
   /// HU-05 lo amplia): perfil publico, con sesion.
   static String publicProfile(String id) =>
       '/api/v1/profiles/${Uri.encodeComponent(id)}';
+
+  /// `POST /api/v1/reports` — fila "M-13" (spec `musubi-api:HU-28`).
+  static const reports = '/api/v1/reports';
+
+  /// `GET` y `POST /api/v1/blocks` — filas "M-13" (spec `musubi-api:HU-57`).
+  static const blocks = '/api/v1/blocks';
+
+  /// `DELETE /api/v1/blocks/{userId}` — fila "M-13"
+  /// (spec `musubi-api:HU-57`).
+  static String block(String userId) =>
+      '$blocks/${Uri.encodeComponent(userId)}';
 }

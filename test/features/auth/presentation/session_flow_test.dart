@@ -58,6 +58,14 @@ class Harness {
   }
 
   Future<void> tapText(String text) async {
+    // Una lista perezosa no construye lo que esta fuera de la pantalla.
+    if (find.text(text).evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        find.text(text),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
     await tester.ensureVisible(find.text(text).last);
     // El desplazamiento se pinta en el siguiente cuadro: sin el, el toque usa
     // la posicion anterior.

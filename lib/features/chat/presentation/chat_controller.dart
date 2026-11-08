@@ -8,6 +8,7 @@ import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 
 /// Que conversacion abrir: una existente (desde `Mensajes`) o la de una
 /// publicacion (desde Inicio; la API devuelve la que ya existia).
@@ -173,9 +174,27 @@ class ChatController extends Notifier<ChatState> {
       return true;
     } on ApiFailure catch (failure) {
       if (!ref.mounted) return false;
-      state = state.copyWith(sending: false, sendFailure: failure);
+      // HU-57: la otra persona bloqueo (o la bloquee en otro dispositivo).
+      final blocked = failure.code == 'chat.blocked';
+      state = state.copyWith(
+        sending: false,
+        sendFailure: failure,
+        conversation: blocked ? conversation.blocked() : null,
+      );
       return false;
     }
+  }
+
+  /// "Bloquear a …" (HU-57): bloquea a la otra persona y cambia la caja de
+  /// texto por el aviso. Lanza `ApiFailure` si no se pudo.
+  Future<void> blockCounterpart() async {
+    final conversation = state.conversation;
+    if (conversation == null) return;
+    await ref
+        .read(reputationRepositoryProvider)
+        .block(conversation.counterpart.id);
+    if (!ref.mounted) return;
+    state = state.copyWith(conversation: conversation.blocked());
   }
 
   /// Mi id (el `sub` del token), para saber que burbujas son mias.

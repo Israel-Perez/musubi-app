@@ -18,9 +18,11 @@ import 'package:musubi_app/features/auth/presentation/delete_account.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/settings_row.dart';
+import 'package:musubi_app/features/reputation/presentation/blocked_users_sheet.dart';
+import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 
 /// `Privacidad` (maqueta; HU-04 y HU-46): el resumen rojo, "Quién te ve",
-/// "Tus datos" y "Eliminar mi cuenta". NOTE (HU-28): usuarios bloqueados.
+/// "Tus datos" ("Usuarios bloqueados", HU-57) y "Eliminar mi cuenta".
 /// "Descargar mis datos" no tiene HU todavia.
 class PrivacyScreen extends StatelessWidget {
   const new({super.key});
@@ -107,10 +109,16 @@ class PrivacyScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: c.border),
                   ),
-                  child: SettingsRow(
-                    icon: MusubiIcons.fileText,
-                    title: 'Aviso de privacidad',
-                    onTap: () => unawaited(context.push(AppRoutes.privacy)),
+                  child: Column(
+                    children: [
+                      const _BlockedUsersRow(),
+                      Container(height: 1, color: c.divider),
+                      SettingsRow(
+                        icon: MusubiIcons.fileText,
+                        title: 'Aviso de privacidad',
+                        onTap: () => unawaited(context.push(AppRoutes.privacy)),
+                      ),
+                    ],
                   ),
                 ),
                 const Padding(
@@ -122,6 +130,28 @@ class PrivacyScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "Usuarios bloqueados" (HU-57): cuantos ("Ninguno" sin bloqueos) y abre la
+/// hoja para desbloquear.
+class _BlockedUsersRow extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(blockedUsersProvider).value?.length;
+    return SettingsRow(
+      key: const Key('privacy-blocked'),
+      icon: MusubiIcons.ban,
+      title: 'Usuarios bloqueados',
+      value: switch (count) {
+        null => null,
+        0 => 'Ninguno',
+        final n => '$n',
+      },
+      onTap: () => unawaited(showBlockedUsersSheet(context)),
     );
   }
 }

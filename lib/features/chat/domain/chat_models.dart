@@ -20,10 +20,13 @@ enum ChatRole {
 /// La otra persona de la conversacion.
 @immutable
 class ChatCounterpart {
-  const new({required this.id, required this.name});
+  const new({required this.id, required this.name, this.photoUrl});
 
   final String id;
   final String name;
+
+  /// URL completa de su foto de perfil, o `null` (se ven sus iniciales).
+  final String? photoUrl;
 
   /// "Valeria Cruz" → "VC" (como la maqueta).
   String get initials => initialsOf(name);
@@ -81,12 +84,27 @@ class Conversation {
     required this.role,
     required this.counterpart,
     required this.context,
+    this.canReply = true,
   });
 
   final String id;
   final ChatRole role;
   final ChatCounterpart counterpart;
   final ChatContext context;
+
+  /// `false` si hay un bloqueo entre los dos (HU-57): en lugar de la caja de
+  /// texto se ve un aviso. La API no dice quien bloqueo.
+  final bool canReply;
+
+  /// La misma conversacion sin poder responder (al bloquear o al recibir
+  /// `chat.blocked`).
+  Conversation blocked() => Conversation(
+    id: id,
+    role: role,
+    counterpart: counterpart,
+    context: context,
+    canReply: false,
+  );
 }
 
 /// Un mensaje de texto. Tambien es lo que llega por el hub (`messageCreated`).

@@ -91,6 +91,8 @@ class HttpChatRepository implements ChatRepository {
       id: json['id'] as String,
       role: ChatRole.parse(json['role']),
       counterpart: _counterpart(json['counterpart']),
+      // Una API anterior a HU-57 no lo manda: se puede responder.
+      canReply: json['canReply'] as bool? ?? true,
       context: ChatContext(
         id: context['id'] as String,
         title: context['title'] as String,
@@ -120,11 +122,13 @@ class HttpChatRepository implements ChatRepository {
     );
   }
 
-  static ChatCounterpart _counterpart(Object? json) {
+  ChatCounterpart _counterpart(Object? json) {
     final map = json! as Map<String, dynamic>;
+    final photo = map['photo'] as String?;
     return ChatCounterpart(
       id: map['id'] as String,
       name: map['name'] as String,
+      photoUrl: photo == null ? null : mediaUrl(photo, _apiBaseUrl),
     );
   }
 

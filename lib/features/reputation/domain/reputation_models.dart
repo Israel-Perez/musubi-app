@@ -1,0 +1,73 @@
+import 'package:flutter/foundation.dart';
+import 'package:musubi_app/core/session/session_tokens.dart';
+import 'package:musubi_app/core/widgets/musubi_icon.dart';
+import 'package:musubi_app/core/widgets/musubi_icons.dart';
+
+// Reportar (HU-28) y bloquear (HU-57). Forma canonica: filas "M-13" de
+// musubi-api `docs/endpoints.md`; aqui solo lo que usa la app.
+
+/// Motivos de la maqueta (`REPORT_REASONS`), en su orden.
+enum ReportReason {
+  payment('payment', 'El pago no llegó o no coincide'),
+  notAsDescribed('not_as_described', 'El producto no es como se describió'),
+  noShow('no_show', 'La otra persona no llegó a la entrega'),
+  offPlatform('off_platform', 'Me pidió pagar fuera de Musubi'),
+  other('other', 'Otro problema');
+
+  new(this.code, this.label);
+
+  /// Valor de la API.
+  final String code;
+
+  /// Texto de la maqueta.
+  final String label;
+
+  /// `help` para "Otro problema" y `flag` para los demas (maqueta).
+  MusubiIconData get icon =>
+      this == other ? MusubiIcons.circleHelp : MusubiIcons.flag;
+}
+
+/// Lo que se reporta.
+@immutable
+sealed class ReportTarget {
+  const new();
+}
+
+/// "Reportar un problema" desde Ajustes.
+final class GeneralReport extends ReportTarget {
+  const new();
+}
+
+/// "Reportar" desde el chat: la otra persona y la conversacion.
+final class UserReport extends ReportTarget {
+  const new({required this.userId, this.conversationId});
+
+  final String userId;
+  final String? conversationId;
+}
+
+/// Una persona en "Usuarios bloqueados".
+@immutable
+class BlockedUser {
+  const new({
+    required this.id,
+    required this.name,
+    required this.blockedAt,
+    this.photoUrl,
+  });
+
+  final String id;
+  final String name;
+  final DateTime blockedAt;
+
+  /// URL completa de su foto de perfil, o `null` (se ven sus iniciales).
+  final String? photoUrl;
+
+  String get initials => initialsOf(name);
+
+  /// Nombre de pila ("Diego").
+  String get firstName => name.trim().split(RegExp(r'\s+')).first;
+
+  /// Pareja de colores de sus iniciales: la misma que en el chat.
+  int get palette => id.codeUnits.fold(0, (sum, unit) => sum + unit) % 5;
+}

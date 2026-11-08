@@ -19,12 +19,14 @@ import 'package:musubi_app/features/profile/presentation/personal_data_sheet.dar
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/settings_row.dart';
+import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
+import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 
 /// `Ajustes` (HU-04): la tarjeta de la cuenta abre "Datos personales";
 /// "Correo institucional", "Cambiar contraseña", "Privacidad · Quién te ve",
-/// ayuda y legal, "Cerrar sesión" y la version. Lo que aun no existe no se
-/// muestra: NOTE (HU-55) "Cuenta para recibir pagos", NOTE (HU-54) modo
-/// noche y avisos, NOTE (HU-28) "Centro de ayuda" y "Reportar un problema".
+/// "Reportar un problema" (HU-28), legal, "Cerrar sesión" y la version. Lo
+/// que aun no existe no se muestra: NOTE (HU-55) "Cuenta para recibir pagos",
+/// NOTE (HU-54) modo noche y avisos, NOTE (HU-39) "Centro de ayuda".
 class SettingsScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -145,6 +147,13 @@ class SettingsScreen extends ConsumerWidget {
                 const _SectionLabel('Ayuda'),
                 _Group(
                   children: [
+                    SettingsRow(
+                      key: const Key('settings-report'),
+                      icon: MusubiIcons.flag,
+                      title: 'Reportar un problema',
+                      onTap: () =>
+                          openReportSheet(context, const GeneralReport()),
+                    ),
                     SettingsRow(
                       icon: MusubiIcons.fileText,
                       title: 'Aviso de privacidad',

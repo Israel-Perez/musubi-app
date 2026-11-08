@@ -63,12 +63,16 @@ class ProfileAvatar extends StatelessWidget {
     this.photoUrl,
     this.fontSize,
     this.uploading = false,
+    this.palette = 4,
   });
 
   final String initials;
   final double size;
   final String? photoUrl;
   final double? fontSize;
+
+  /// Colores de las iniciales (ver [InitialsAvatar.palette]).
+  final int palette;
 
   /// Mientras se sube una foto nueva: velo con el arco que gira.
   final bool uploading;
@@ -79,6 +83,7 @@ class ProfileAvatar extends StatelessWidget {
       initials: initials,
       size: size,
       fontSize: fontSize,
+      palette: palette,
     );
     final url = photoUrl;
     final avatar = url == null

@@ -241,8 +241,10 @@ class _Row extends StatelessWidget {
           child: Row(
             spacing: 12,
             children: [
-              InitialsAvatar(
+              // Su foto de perfil o, sin foto, sus iniciales.
+              ProfileAvatar(
                 initials: entry.counterpart.initials,
+                photoUrl: entry.counterpart.photoUrl,
                 size: 48,
                 fontSize: 16,
                 palette: entry.counterpart.palette,

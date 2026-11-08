@@ -28,6 +28,19 @@ abstract final class MusubiIcons {
     IconPath('m4.9 4.9 14.2 14.2'),
   ]);
 
+  /// `flag` (reportar, HU-28).
+  static const flag = MusubiIconData([
+    IconPath('M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'),
+    IconPath('M4 22v-7'),
+  ]);
+
+  /// `help` ("Otro problema", HU-28).
+  static const circleHelp = MusubiIconData([
+    IconCircle(12, 12, 10),
+    IconPath('M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'),
+    IconPath('M12 17h.01'),
+  ]);
+
   /// `bell`.
   static const bell = MusubiIconData([
     IconPath('M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'),
