@@ -2,6 +2,7 @@ import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 
 /// Vitrina de muestra con los productos ficticios de la maqueta
 /// (`Inicio-visitante`): solo con `DEMO_CATALOG=true` en `dev`, para revisar
@@ -298,10 +299,7 @@ class DemoCatalogRepository implements CatalogRepository {
   ];
 
   @override
-  Future<HomeFeed> homeFeed({
-    required PopularPeriod period,
-    CatalogFilter filter = const CatalogFilter(),
-  }) async {
+  Future<HomeFeed> homeFeed({required PopularPeriod period}) async {
     final now = _clock();
     ProductSummary timed((ProductSummary, int) entry, {int? views}) {
       final (p, minutes) = entry;
@@ -326,13 +324,7 @@ class DemoCatalogRepository implements CatalogRepository {
       for (final (id, views) in _ranking[period]!)
         if (!byId(id).$1.soldOut) timed(byId(id), views: views),
     ];
-    final category = filter.category;
-    final recent = [
-      for (final entry in _products)
-        if ((category == null || entry.$1.category == category) &&
-            (!filter.hideSoldOut || !entry.$1.soldOut))
-          timed(entry),
-    ];
+    final recent = [for (final entry in _products) timed(entry)];
     final wanted = [
       for (final (w, minutes) in _wanted)
         WantedSummary(
@@ -349,7 +341,6 @@ class DemoCatalogRepository implements CatalogRepository {
       popular: popular,
       recent: recent,
       wanted: wanted,
-      categories: demoCategories,
       recentTotal: 48,
     );
   }
@@ -364,30 +355,39 @@ class DemoCatalogRepository implements CatalogRepository {
   Future<ProductPage> search({
     required String query,
     SearchFilter filter = const SearchFilter(),
+    SearchSort sort = SearchSort.relevant,
     String? cursor,
   }) async {
     if (cursor != null) return const ProductPage();
     final terms = _terms(query);
     final now = _clock();
-    final items = <ProductSummary>[
-      for (final (product, minutes) in _products)
-        if ((!filter.hideSoldOut || !product.soldOut) &&
-            (terms.isEmpty || _matches(product.title, terms)) &&
-            _passes(product, filter))
-          ProductSummary(
-            id: product.id,
-            title: product.title,
-            priceCents: product.priceCents,
-            stock: product.stock,
-            photoUrl: product.photoUrl,
-            views: product.views,
-            category: product.category,
-            condition: product.condition,
-            sellerName: product.sellerName,
-            sellerRating: product.sellerRating,
-            publishedAt: now.subtract(Duration(minutes: minutes)),
+    final items =
+        <ProductSummary>[
+          for (final (product, minutes) in _products)
+            if ((!filter.hideSoldOut || !product.soldOut) &&
+                (terms.isEmpty || _matches(product.title, terms)) &&
+                _passes(product, filter))
+              ProductSummary(
+                id: product.id,
+                title: product.title,
+                priceCents: product.priceCents,
+                stock: product.stock,
+                photoUrl: product.photoUrl,
+                views: product.views,
+                category: product.category,
+                condition: product.condition,
+                sellerName: product.sellerName,
+                sellerRating: product.sellerRating,
+                publishedAt: now.subtract(Duration(minutes: minutes)),
+              ),
+        ]..sort(switch (sort) {
+          // "Mas relevantes" usa la fecha hasta que exista puntaje.
+          SearchSort.priceAsc => (a, b) => a.priceCents.compareTo(b.priceCents),
+          SearchSort.priceDesc => (a, b) => b.priceCents.compareTo(
+            a.priceCents,
           ),
-    ]..sort((a, b) => b.publishedAt!.compareTo(a.publishedAt!));
+          _ => (a, b) => b.publishedAt!.compareTo(a.publishedAt!),
+        });
     return ProductPage(items: items, total: items.length);
   }
 

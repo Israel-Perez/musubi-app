@@ -6,7 +6,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 - **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
 - **Búsqueda (HU-09):** app `0.5.1+7`, implementada contra la rama `SCRUM-26` de la API (`0.5.0-alpha.3`, sin publicar; PR musubi-api#49); 325 pruebas, analyze 0 y critic PASS.
-- **Filtros de búsqueda (HU-10):** app `0.5.1+7` en `feature/SCRUM-27-filtrar-categoria-precio`, apilada sobre la rama de HU-09; necesita la API de HU-10 (misma rama apilada); 346 pruebas, analyze 0 y critic PASS.
+- **Filtros de búsqueda (HU-10):** app `0.5.1+7` en `feature/SCRUM-27-filtrar-categoria-precio`, apilada sobre la rama de HU-09; necesita la API de HU-10 (misma rama apilada); 347 pruebas, analyze 0 y critic PASS.
 - **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
@@ -44,6 +44,16 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **La API distingue “sin parámetro” de “pedir agotados”:** `hideSoldOut` pasó a `bool?`; ausente mantiene HU-09 (con `q` solo disponibles) y `false` explícito los incluye. Los repositorios obedecen `IncludeSoldOut` y el servicio resuelve el valor por defecto.
 - **Con la X del campo se vuelve al catálogo filtrado,** no a la invitación: `clear()` relanza la búsqueda sin texto si hay filtros.
 - Pruebas nuevas: chips en fila, slider e interruptor, filtro sin texto, `hideSoldOut=false` en la consulta. Total 346.
+
+### Segunda revisión en el teléfono (08-Nov-2026)
+
+- **Tope del control deslizante en $2,000+:** el tope significa "sin límite superior"; el histograma se colorea según el rango elegido.
+- **Orden de resultados:** `sort` nuevo en la API (`recent`, `relevant`, `priceAsc`, `priceDesc`) con cursor `precio:id`; el dropdown `Ordenar por` vive en la cabecera. `relevant` == `recent` hasta que exista puntaje (`NOTE (HU-09)`).
+- **Cabecera como la maqueta:** `N resultados en` + píldora `UTTT` a la izquierda y el orden a la derecha.
+- **Historial de búsquedas:** máximo 5, en memoria de la sesión (RNF-07), chips tocables y `Limpiar` a la derecha.
+- **Inicio delega los filtros:** el botón `Filtrar` abre `/buscar?filtros=1`; se retiran `filter_sheet.dart`, `catalogFilterProvider`, `CatalogFilter`, `filterPreviewProvider` y la carga de categorías de la vitrina (una petición menos).
+- **Toast al limpiar filtros:** `Filtros borrados` como aviso flotante dentro del `Overlay` raíz; un `SnackBar` del `ScaffoldMessenger` queda debajo de la hoja modal y no se ve.
+- Pruebas: 347.
 
 ## T25 — Buscar productos por palabra clave (07-Nov-2026, SCRUM-26, HU-09)
 

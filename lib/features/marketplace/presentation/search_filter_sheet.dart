@@ -26,6 +26,9 @@ Future<SearchFilter?> showSearchFilterSheet(
   builder: (_) => SearchFilterSheet(initial: initial),
 );
 
+/// Tope del control deslizante: $2,000 o mas (sin limite superior).
+const _maxPricePesos = 2000;
+
 /// Hoja de filtros de la busqueda: categoria, rango de precio y estado.
 ///
 /// NOTE (HU-10): el orden "Mas relevantes" de la maqueta no se muestra; la API
@@ -65,9 +68,6 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     super.dispose();
   }
 
-  /// Tope de la maqueta: $999,999 (RN-04 en la API).
-  static const _maxPesos = 999999;
-
   int? _pesos(TextEditingController controller) {
     final text = controller.text.trim();
     return text.isEmpty ? null : int.tryParse(text);
@@ -81,8 +81,8 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
   /// Posiciones del control deslizante; si el texto no cuadra, se ordenan.
   RangeValues get _range {
     double value(TextEditingController controller) =>
-        (_pesos(controller) ?? (controller == _min ? 0 : _maxPesos))
-            .clamp(0, _maxPesos)
+        (_pesos(controller) ?? (controller == _min ? 0 : _maxPricePesos))
+            .clamp(0, _maxPricePesos)
             .toDouble();
     final start = value(_min);
     final end = value(_max);
@@ -131,7 +131,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     final start = values.start.round();
     final end = values.end.round();
     _min.text = start == 0 ? '' : '$start';
-    _max.text = end == _maxPesos ? '' : '$end';
+    _max.text = end == _maxPricePesos ? '' : '$end';
     _onPriceChanged();
   }
 
@@ -181,6 +181,47 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     setState(() {
       _draft = const SearchFilter();
       _priceError = null;
+    });
+    _toast('Filtros borrados');
+  }
+
+  /// Aviso flotante sobre la hoja (la del `ScaffoldMessenger` queda debajo).
+  void _toast(String message) {
+    final c = context.musubi;
+    final entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: 24,
+        right: 24,
+        bottom: 120,
+        child: IgnorePointer(
+          child: Center(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: c.textPrimary,
+                borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: Text(
+                  message,
+                  style: MusubiType.style(
+                    14,
+                    weight: FontWeight.w700,
+                    color: c.background,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(entry);
+    Timer(const Duration(seconds: 2), () {
+      if (entry.mounted) entry.remove();
     });
   }
 
@@ -288,7 +329,10 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
           const SizedBox(height: 22),
           const _Legend('Rango de precio'),
           const SizedBox(height: 8),
-          const _PriceHistogram(),
+          _PriceHistogram(
+            from: _range.start,
+            to: _pesos(_max) == null ? double.infinity : _range.end,
+          ),
           const SizedBox(height: 2),
           SliderTheme(
             data: SliderThemeData(
@@ -303,7 +347,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
             child: RangeSlider(
               key: const Key('filter-price-slider'),
               values: _range,
-              max: _maxPesos.toDouble(),
+              max: _maxPricePesos.toDouble(),
               onChanged: _onRangeChanged,
             ),
           ),
@@ -521,7 +565,11 @@ class _ConditionSegment extends StatelessWidget {
 /// Histograma decorativo de la maqueta (`aria-hidden`): no representa los
 /// datos de la consulta.
 class _PriceHistogram extends StatelessWidget {
-  const new();
+  const new({required this.from, required this.to});
+
+  /// Rango elegido en pesos; las barras dentro cambian de color.
+  final double from;
+  final double to;
 
   static const _heights = [
     8.0,
@@ -540,6 +588,7 @@ class _PriceHistogram extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
+    final step = _maxPricePesos / _heights.length;
     return ExcludeSemantics(
       child: SizedBox(
         height: 36,
@@ -555,7 +604,7 @@ class _PriceHistogram extends StatelessWidget {
                     child: Container(
                       height: height,
                       decoration: BoxDecoration(
-                        color: index >= 2 && index <= 6
+                        color: index * step < to && (index + 1) * step > from
                             ? c.brandSoftBorder
                             : c.border,
                         borderRadius: BorderRadius.circular(3),

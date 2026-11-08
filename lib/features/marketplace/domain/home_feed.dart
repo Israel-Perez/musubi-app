@@ -29,29 +29,6 @@ class CatalogCategory {
   int get hashCode => Object.hash(slug, name);
 }
 
-/// Filtro de "Recién publicados" (maqueta `Inicio-visitante`, HU-10):
-/// una categoria (o todas) y "Ocultar agotados".
-@immutable
-class CatalogFilter {
-  const new({this.category, this.hideSoldOut = false});
-
-  /// `slug` de la categoria; `null` es "Todo".
-  final String? category;
-  final bool hideSoldOut;
-
-  /// Numero de filtros activos (el globo del boton).
-  int get count => (category == null ? 0 : 1) + (hideSoldOut ? 1 : 0);
-
-  @override
-  bool operator ==(Object other) =>
-      other is CatalogFilter &&
-      other.category == category &&
-      other.hideSoldOut == hideSoldOut;
-
-  @override
-  int get hashCode => Object.hash(category, hideSoldOut);
-}
-
 /// Tarjeta de producto de la vitrina (modelo `products` de musubi-api 02-01).
 @immutable
 class ProductSummary {
@@ -151,16 +128,12 @@ class HomeFeed {
     this.popular = const [],
     this.recent = const [],
     this.wanted = const [],
-    this.categories = const [],
     this.recentTotal = 0,
   });
 
   final List<ProductSummary> popular;
   final List<ProductSummary> recent;
   final List<WantedSummary> wanted;
-
-  /// Categorias para "Filtrar" (sin categorias no se muestra el filtro).
-  final List<CatalogCategory> categories;
 
   /// Total de recien publicados ("Ver todo lo nuevo · 48 productos").
   final int recentTotal;

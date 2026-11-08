@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
 /// Llave de la vista previa del CTA de `Busqueda-filtros`: texto y filtro
@@ -17,6 +18,7 @@ class SearchState {
   const new({
     this.query = '',
     this.filter = const SearchFilter(),
+    this.sort = SearchSort.relevant,
     this.items = const [],
     this.total = 0,
     this.nextCursor,
@@ -26,6 +28,7 @@ class SearchState {
   /// Texto aplicado (no el que se esta escribiendo).
   final String query;
   final SearchFilter filter;
+  final SearchSort sort;
   final List<ProductSummary> items;
   final int total;
   final String? nextCursor;
@@ -62,12 +65,17 @@ class SearchController extends AsyncNotifier<SearchState> {
 
   /// Busca con texto y filtros. Sin texto pero con filtros, explora el
   /// catalogo (HU-10); sin ninguno de los dos, vuelve a la invitacion.
-  Future<void> search(String raw, {SearchFilter? filter}) async {
+  Future<void> search(
+    String raw, {
+    SearchFilter? filter,
+    SearchSort? sort,
+  }) async {
     final query = raw.trim();
     final nextFilter = filter ?? state.value?.filter ?? const SearchFilter();
+    final nextSort = sort ?? state.value?.sort ?? SearchSort.relevant;
     final request = ++_request;
     if (query.isEmpty && nextFilter.isEmpty) {
-      state = AsyncData(SearchState(filter: nextFilter));
+      state = AsyncData(SearchState(filter: nextFilter, sort: nextSort));
       return;
     }
     // Al escribir se conservan los resultados anteriores; solo la primera
@@ -76,10 +84,15 @@ class SearchController extends AsyncNotifier<SearchState> {
       state = const AsyncLoading();
     }
     final result = await AsyncValue.guard(() async {
-      final page = await _repository.search(query: query, filter: nextFilter);
+      final page = await _repository.search(
+        query: query,
+        filter: nextFilter,
+        sort: nextSort,
+      );
       return SearchState(
         query: query,
         filter: nextFilter,
+        sort: nextSort,
         items: page.items,
         total: page.total,
         nextCursor: page.nextCursor,
@@ -87,12 +100,22 @@ class SearchController extends AsyncNotifier<SearchState> {
     });
     if (request != _request) return;
     state = result;
+    if (query.isNotEmpty) {
+      ref.read(searchHistoryProvider.notifier).add(query);
+    }
   }
 
   /// Aplica los filtros y relanza la busqueda con el texto actual. Sin texto,
   /// explora el catalogo con esos filtros.
   Future<void> applyFilter(SearchFilter filter) async {
     await search(state.value?.query ?? '', filter: filter);
+  }
+
+  /// Cambia el orden y relanza la busqueda con el texto y los filtros actuales.
+  Future<void> setSort(SearchSort sort) async {
+    final current = state.value;
+    if (current?.sort == sort) return;
+    await search(current?.query ?? '', filter: current?.filter, sort: sort);
   }
 
   Future<void> loadMore() async {
@@ -104,6 +127,7 @@ class SearchController extends AsyncNotifier<SearchState> {
       SearchState(
         query: current.query,
         filter: current.filter,
+        sort: current.sort,
         items: current.items,
         total: current.total,
         nextCursor: cursor,
@@ -114,6 +138,7 @@ class SearchController extends AsyncNotifier<SearchState> {
       final page = await _repository.search(
         query: current.query,
         filter: current.filter,
+        sort: current.sort,
         cursor: cursor,
       );
       if (request != _request) return;
@@ -121,6 +146,7 @@ class SearchController extends AsyncNotifier<SearchState> {
         SearchState(
           query: current.query,
           filter: current.filter,
+          sort: current.sort,
           items: [...current.items, ...page.items],
           total: page.total,
           nextCursor: page.nextCursor,
@@ -135,6 +161,26 @@ class SearchController extends AsyncNotifier<SearchState> {
   /// Borra el texto y conserva los filtros (el globo sigue visible); si hay
   /// filtros, vuelve a mostrar el catalogo filtrado.
   Future<void> clear() => search('', filter: state.value?.filter);
+}
+
+/// Busquedas de esta sesion, la mas reciente primero (maximo 5). No se
+/// persiste: RNF-07 prohibe guardar el texto de busqueda.
+final NotifierProvider<SearchHistory, List<String>> searchHistoryProvider =
+    NotifierProvider<SearchHistory, List<String>>(SearchHistory.new);
+
+class SearchHistory extends Notifier<List<String>> {
+  static const max = 5;
+
+  @override
+  List<String> build() => const [];
+
+  void add(String query) {
+    final text = query.trim();
+    if (text.isEmpty) return;
+    state = [text, ...state.where((item) => item != text)].take(max).toList();
+  }
+
+  void clear() => state = const [];
 }
 
 /// Cuantos resultados darian el texto y el filtro borrador

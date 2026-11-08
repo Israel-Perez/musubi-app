@@ -12,12 +12,14 @@ import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_panel.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_filter_sheet.dart';
@@ -47,7 +49,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focus.requestFocus();
+      if (!mounted) return;
+      // HU-10: desde el boton de filtros de Inicio se abre la hoja directo.
+      final openFilters =
+          GoRouter.maybeOf(context)?.state.uri.queryParameters['filtros'] ==
+          '1';
+      if (openFilters) {
+        unawaited(_openFilters());
+      } else {
+        _focus.requestFocus();
+      }
     });
   }
 
@@ -85,6 +96,35 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final chosen = await showSearchFilterSheet(context, initial: initial);
     if (!mounted || chosen == null) return;
     await ref.read(searchControllerProvider.notifier).applyFilter(chosen);
+  }
+
+  Future<void> _pickSort() async {
+    final current =
+        ref.read(searchControllerProvider).value?.sort ?? SearchSort.relevant;
+    final picked = await showMusubiPanel<SearchSort>(
+      context,
+      builder: (context) => MusubiPanel(
+        key: const Key('search-sort-sheet'),
+        title: 'Ordenar por',
+        bodyInset: 12,
+        child: MusubiOptions<SearchSort>(
+          selected: current,
+          options: [
+            for (final option in SearchSort.values)
+              MusubiOption(value: option, label: option.label),
+          ],
+          onPick: (option) => Navigator.of(context).pop(option),
+        ),
+      ),
+    );
+    if (!mounted || picked == null) return;
+    await ref.read(searchControllerProvider.notifier).setSort(picked);
+  }
+
+  void _searchFor(String query) {
+    _controller.text = query;
+    _controller.selection = TextSelection.collapsed(offset: query.length);
+    _submit(query);
   }
 
   void _clear() {
@@ -180,6 +220,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ],
               ),
             ),
+            _HistoryRow(onPick: _searchFor),
             Expanded(
               child: switch (results) {
                 AsyncData(:final value) when value.empty => _EmptyResults(
@@ -193,6 +234,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   onOpen: open,
                   onSave: save,
                   onLoadMore: _loadMore,
+                  onSort: _pickSort,
                 ),
                 AsyncError(:final error) => _SearchError(
                   failure: error is ApiFailure ? error : null,
@@ -303,6 +345,7 @@ class _Results extends StatelessWidget {
     required this.onOpen,
     required this.onSave,
     required this.onLoadMore,
+    required this.onSort,
   });
 
   final SearchState state;
@@ -310,25 +353,36 @@ class _Results extends StatelessWidget {
   final ValueChanged<ProductSummary> onOpen;
   final VoidCallback onSave;
   final VoidCallback onLoadMore;
+  final VoidCallback onSort;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.musubi;
     final count = state.total == 0 ? state.items.length : state.total;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-          child: Text(
-            count == 1
-                ? '1 resultado en ${DefaultCampus.shortName}'
-                : '$count resultados en ${DefaultCampus.shortName}',
-            style: MusubiType.style(
-              13,
-              weight: FontWeight.w600,
-              color: c.textSecondary,
-            ),
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Row(
+                  spacing: 6,
+                  children: [
+                    Text(
+                      count == 1 ? '1 resultado en' : '$count resultados en',
+                      style: MusubiType.style(
+                        13,
+                        weight: FontWeight.w600,
+                        color: context.musubi.textSecondary,
+                      ),
+                    ),
+                    const _CampusPill(),
+                  ],
+                ),
+              ),
+              _SortButton(label: state.sort.label, onTap: onSort),
+            ],
           ),
         ),
         Expanded(
@@ -510,6 +564,174 @@ class _SearchError extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Pildora del campus de la maqueta: icono de birrete en circulo rojo + UTTT.
+class _CampusPill extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Container(
+      height: 26,
+      padding: const EdgeInsets.only(left: 3, right: 9),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 5,
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(color: c.brand, shape: BoxShape.circle),
+            child: const Center(
+              child: MusubiIcon(
+                MusubiIcons.graduationCap,
+                size: 12,
+                strokeWidth: 2.4,
+                color: Color(0xFFFFFFFF),
+              ),
+            ),
+          ),
+          Text(
+            DefaultCampus.shortName,
+            style: MusubiType.style(
+              12.5,
+              weight: FontWeight.w800,
+              color: c.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Más relevantes ⌄" de la maqueta: abre los ordenes de la busqueda.
+class _SortButton extends StatelessWidget {
+  const new({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Pressable(
+      key: const Key('search-sort'),
+      onTap: onTap,
+      semanticLabel: 'Ordenar por $label',
+      builder: (context, pressed) => Container(
+        height: MusubiSizes.minTouch,
+        padding: const EdgeInsets.only(left: 8, right: 4),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 4,
+          children: [
+            Text(
+              label,
+              style: MusubiType.style(
+                13.5,
+                weight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+            MusubiIcon(
+              MusubiIcons.chevronDown,
+              size: 16,
+              strokeWidth: 2.2,
+              color: c.textPrimary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Busquedas recientes de la sesion: chips tocables y "Limpiar" a la derecha.
+class _HistoryRow extends ConsumerWidget {
+  const new({required this.onPick});
+
+  final ValueChanged<String> onPick;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.musubi;
+    final history = ref.watch(searchHistoryProvider);
+    if (history.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      height: 44,
+      child: Row(
+        children: [
+          Expanded(
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(20, 6, 8, 6),
+              itemCount: history.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final query = history[index];
+                return Pressable(
+                  onTap: () => onPick(query),
+                  semanticLabel: 'Buscar $query',
+                  builder: (context, pressed) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: pressed ? c.surfacePressed : c.surface,
+                      borderRadius: BorderRadius.circular(
+                        MusubiSizes.radiusChip,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 6,
+                      children: [
+                        MusubiIcon(
+                          MusubiIcons.clock,
+                          size: 14,
+                          color: c.textSecondary,
+                        ),
+                        Text(
+                          query,
+                          style: MusubiType.style(
+                            13,
+                            weight: FontWeight.w600,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Pressable(
+            key: const Key('clear-history'),
+            onTap: ref.read(searchHistoryProvider.notifier).clear,
+            semanticLabel: 'Limpiar historial',
+            builder: (context, pressed) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Text(
+                'Limpiar',
+                style: MusubiType.style(
+                  13,
+                  weight: FontWeight.w700,
+                  color: pressed ? c.textPrimary : c.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

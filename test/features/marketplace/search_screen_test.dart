@@ -8,6 +8,7 @@ import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
@@ -232,7 +233,8 @@ void main() {
     await submit(tester, '  calculadora  ');
 
     expect(fake.queries, ['calculadora']);
-    expect(find.text('1 resultado en UTTT'), findsOneWidget);
+    expect(find.text('1 resultado en'), findsOneWidget);
+    expect(find.text('UTTT'), findsOneWidget);
     expect(find.text('Calculadora Casio fx-991ES'), findsOneWidget);
   });
 
@@ -306,7 +308,7 @@ void main() {
     await open(tester, fake);
 
     await submit(tester, 'producto');
-    expect(find.text('2 resultados en UTTT'), findsOneWidget);
+    expect(find.text('2 resultados en'), findsOneWidget);
     expect(find.text('Producto uno'), findsOneWidget);
 
     await tester.tap(find.text('Cargar más'));
@@ -499,5 +501,45 @@ void main() {
       findsOneWidget,
     );
     expect(fake.searchFilters.length, callsBefore);
+  });
+
+  testWidgets('el orden cambia y se manda a la API', (tester) async {
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
+      ],
+    );
+    await open(tester, fake);
+    await submit(tester, 'calculadora');
+
+    expect(find.text('Más relevantes'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('search-sort')));
+    await tester.pumpAndSettle();
+    expect(find.text('Ordenar por'), findsOneWidget);
+
+    await tester.tap(find.text('Menor precio'));
+    await tester.pumpAndSettle();
+
+    expect(fake.sorts.last, SearchSort.priceAsc);
+    expect(find.text('Menor precio'), findsOneWidget);
+  });
+
+  testWidgets('guarda y limpia el historial de busquedas', (tester) async {
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
+      ],
+    );
+    await open(tester, fake);
+
+    await submit(tester, 'casio');
+    expect(find.byKey(const Key('clear-history')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('clear-history')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('clear-history')), findsNothing);
   });
 }

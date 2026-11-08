@@ -7,7 +7,6 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
-import 'package:musubi_app/core/widgets/musubi_controls.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
@@ -85,41 +84,19 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('elige una categoria: titulo y globo de 1 filtro', (
+    testWidgets('el boton de Inicio abre los filtros de la busqueda', (
       tester,
     ) async {
       await openFilter(tester);
-      expect(find.text('Filtrar'), findsOneWidget);
-      expect(find.text('Ver 14 productos'), findsOneWidget);
 
-      await tester.tap(find.text('Laboratorio'));
-      await tester.pumpAndSettle();
-      expect(find.text('Ver 3 productos'), findsOneWidget);
-
-      await tester.tap(find.text('Ver 3 productos'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Filtrar'), findsNothing);
-      expect(find.text('Laboratorio'), findsOneWidget);
-      expect(find.text('1'), findsOneWidget);
+      // HU-10: la hoja vive en /buscar y se abre directo desde Inicio.
+      expect(find.text('Filtros'), findsOneWidget);
+      expect(find.text('Calculadoras'), findsOneWidget);
+      expect(find.text('Ocultar agotados'), findsOneWidget);
     });
 
-    testWidgets('Ocultar agotados y Limpiar', (tester) async {
-      await openFilter(tester);
-
-      await tester.tap(find.byType(MusubiSwitch));
-      await tester.pumpAndSettle();
-      expect(find.text('Ver 12 productos'), findsOneWidget);
-
-      await tester.tap(find.text('Limpiar'));
-      await tester.pumpAndSettle();
-      expect(find.text('Ver 14 productos'), findsOneWidget);
-    });
-
-    testWidgets('sin categorias del catalogo no hay boton de filtro', (
-      tester,
-    ) async {
-      await _open(tester, catalog: FakeCatalogRepository([sampleFeed]));
+    testWidgets('sin publicaciones no hay boton de filtro', (tester) async {
+      await _open(tester, catalog: FakeCatalogRepository([const HomeFeed()]));
 
       expect(find.byKey(const Key('home-filter')), findsNothing);
     });

@@ -52,7 +52,8 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
 
-    expect(find.byType(RangeSlider), findsOneWidget);
+    final slider = tester.widget<RangeSlider>(find.byType(RangeSlider));
+    expect(slider.max, 2000);
     expect(find.text('Ocultar agotados'), findsOneWidget);
   });
 
@@ -180,7 +181,20 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Ver resultados'));
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 3));
 
     expect(result, const SearchFilter());
+  });
+
+  testWidgets('limpiar avisa con un toast', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Limpiar'));
+    await tester.pump();
+
+    expect(find.text('Filtros borrados'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 3));
   });
 }
