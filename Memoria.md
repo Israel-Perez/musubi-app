@@ -2,10 +2,11 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (06-Nov-2026)
+## Estado actual (08-Nov-2026)
 
+- **En Google Play:** `0.5.1+7` en la prueba cerrada (chat, bandeja y detalle del producto).
+- **El chat no enviaba mensajes en producción (08-Nov-2026):** la API respondía `503 moderation.unavailable` porque el plan gratuito de AWS no incluye Translate ni Comprehend. La API `0.5.0-alpha.4` modera el texto con un léxico local (musubi-api, SCRUM-92). La app no cambia: ya muestra el mensaje del `503` y el del `422 moderation.text_rejected`. Fila sincronizada en `docs/versionado.md`.
 - **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
-- **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
 
