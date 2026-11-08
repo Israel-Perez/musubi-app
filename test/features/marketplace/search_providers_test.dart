@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_providers.dart';
 
@@ -142,6 +143,72 @@ void main() {
     final state = container.read(searchControllerProvider).value!;
     expect(state.query, 'calcu');
     expect(state.items.single.id, 'p2');
+  });
+
+  test('aplicar filtro relanza con el texto actual y lo guarda', () async {
+    const filter = SearchFilter(
+      category: 'calculadoras',
+      minCents: 30000,
+      maxCents: 70000,
+      condition: ProductConditionFilter.used,
+    );
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1')], total: 1),
+        ProductPage(items: [product('p2')], total: 1),
+      ],
+    );
+    final container = containerFor(fake);
+    final notifier = container.read(searchControllerProvider.notifier);
+
+    await notifier.search('casio');
+    await notifier.applyFilter(filter);
+
+    final state = container.read(searchControllerProvider).value!;
+    expect(state.query, 'casio');
+    expect(state.filter, filter);
+    expect(state.items.single.id, 'p2');
+    expect(fake.queries, ['casio', 'casio']);
+    expect(fake.searchFilters, [const SearchFilter(), filter]);
+  });
+
+  test('cargar mas conserva el filtro', () async {
+    const filter = SearchFilter(category: 'libros');
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1')], total: 2, nextCursor: 'c1'),
+        ProductPage(items: [product('p2')], total: 2),
+      ],
+    );
+    final container = containerFor(fake);
+    final notifier = container.read(searchControllerProvider.notifier);
+
+    await notifier.search('casio', filter: filter);
+    await notifier.loadMore();
+
+    expect(fake.searchFilters, [filter, filter]);
+    expect(container.read(searchControllerProvider).value!.filter, filter);
+  });
+
+  test('limpiar conserva el filtro', () async {
+    const filter = SearchFilter(condition: ProductConditionFilter.used);
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1')], total: 1),
+      ],
+    );
+    final container = containerFor(fake);
+    final notifier = container.read(searchControllerProvider.notifier);
+
+    await notifier.search('casio', filter: filter);
+    notifier.clear();
+
+    final state = container.read(searchControllerProvider).value!;
+    expect(state.query, isEmpty);
+    expect(state.filter, filter);
   });
 
   test('limpiar vuelve al estado inicial', () async {

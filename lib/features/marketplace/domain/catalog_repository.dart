@@ -1,5 +1,6 @@
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 
 /// Catalogo publico de la vitrina: se puede leer sin cuenta (HU-48).
 ///
@@ -12,9 +13,16 @@ abstract interface class CatalogRepository {
     CatalogFilter filter = const CatalogFilter(),
   });
 
-  /// Busca por palabra clave (HU-09). Con `q`, la API devuelve solo
-  /// disponibles, de la mas nueva a la mas vieja.
-  Future<ProductPage> search({required String query, String? cursor});
+  /// Busca por palabra clave (HU-09) con los filtros de la hoja
+  /// `Busqueda-filtros` (HU-10). Con `q`, la API devuelve solo disponibles.
+  Future<ProductPage> search({
+    required String query,
+    SearchFilter filter = const SearchFilter(),
+    String? cursor,
+  });
+
+  /// Categorias del campus para los chips de `Busqueda-filtros`.
+  Future<List<CatalogCategory>> categories();
 
   /// Detalle de una publicacion (HU-11). Sin sesion, sin el vendedor.
   Future<ProductDetail> product(String id);

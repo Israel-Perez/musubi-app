@@ -4,6 +4,7 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/marketplace/data/http_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 
 import '../../helpers/fake_http_adapter.dart';
 import '../listings/http_listings_repository_test.dart' show productJson;
@@ -80,6 +81,16 @@ void main() {
     );
   });
 
+  test('categories lee la fila 72', () async {
+    serve();
+
+    final categories = await repository.categories();
+
+    expect(categories.map((c) => c.slug), ['calculadoras', 'electronica']);
+    expect(categories.first.name, 'Calculadoras');
+    expect(categories.first.photoUrl, 'asset:assets/products/casio.webp');
+  });
+
   group('buscar (HU-09)', () {
     test('manda q recortado, limit y cursor; lee la pagina', () async {
       serve(nextCursor: 'next');
@@ -100,6 +111,55 @@ void main() {
       expect(page.total, 48);
       expect(page.nextCursor, 'next');
       expect(page.hasMore, isTrue);
+    });
+
+    test('los filtros de HU-10 van en la consulta', () async {
+      serve();
+
+      await repository.search(
+        query: 'calculadora',
+        filter: const SearchFilter(
+          category: 'calculadoras',
+          minCents: 30000,
+          maxCents: 70000,
+          condition: ProductConditionFilter.used,
+        ),
+      );
+
+      expect(adapter.requests.single.queryParameters, {
+        'q': 'calculadora',
+        'category': 'calculadoras',
+        'minPriceCents': 30000,
+        'maxPriceCents': 70000,
+        'condition': 'used',
+        'limit': HttpCatalogRepository.searchPageSize,
+      });
+    });
+
+    test('400 listings.invalid_price_range llega con su code', () async {
+      adapter = FakeHttpAdapter(
+        (_) async => FakeHttpAdapter.json({
+          'code': 'listings.invalid_price_range',
+          'title': 'Elige un rango de precio válido.',
+        }, status: 400),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.search(
+          query: 'calculadora',
+          filter: const SearchFilter(minCents: 80000, maxCents: 30000),
+        ),
+        throwsA(
+          isA<ApiFailure>()
+              .having((f) => f.code, 'code', 'listings.invalid_price_range')
+              .having((f) => f.status, 'status', 400),
+        ),
+      );
     });
 
     test('400 listings.invalid_query llega con su code', () async {

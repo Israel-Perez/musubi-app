@@ -5,6 +5,7 @@ import 'package:musubi_app/features/marketplace/data/product_json.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 
 /// Vitrina real sobre `GET /api/v1/products` y `GET /api/v1/categories`
 /// (fila 73 de `musubi-api/docs/endpoints.md`, HU-48 fase 2 y HU-09).
@@ -50,14 +51,7 @@ class HttpCatalogRepository implements CatalogRepository {
           for (final item in page['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
         ],
-        categories: [
-          for (final item in categories.cast<Map<String, dynamic>>())
-            CatalogCategory(
-              slug: item['slug'] as String,
-              name: item['name'] as String,
-              photoUrl: categoryPhoto(item['slug'] as String),
-            ),
-        ],
+        categories: _categoriesFrom(categories),
         recentTotal: (page['total'] as num?)?.toInt() ?? 0,
       );
     } on DioException catch (error) {
@@ -67,12 +61,39 @@ class HttpCatalogRepository implements CatalogRepository {
   }
 
   @override
-  Future<ProductPage> search({required String query, String? cursor}) async {
+  Future<List<CatalogCategory>> categories() async {
+    try {
+      final response = await _dio.get<List<dynamic>>(ApiPaths.categories);
+      return _categoriesFrom(response.data ?? const []);
+    } on DioException catch (error) {
+      throw ApiFailure.fromDio(error);
+    }
+  }
+
+  static List<CatalogCategory> _categoriesFrom(List<dynamic> data) => [
+    for (final item in data.cast<Map<String, dynamic>>())
+      CatalogCategory(
+        slug: item['slug'] as String,
+        name: item['name'] as String,
+        photoUrl: categoryPhoto(item['slug'] as String),
+      ),
+  ];
+
+  @override
+  Future<ProductPage> search({
+    required String query,
+    SearchFilter filter = const SearchFilter(),
+    String? cursor,
+  }) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiPaths.products,
         queryParameters: {
           'q': query.trim(),
+          'category': ?filter.category,
+          'minPriceCents': ?filter.minCents,
+          'maxPriceCents': ?filter.maxCents,
+          'condition': ?filter.condition.apiValue,
           'limit': searchPageSize,
           'cursor': ?cursor,
         },

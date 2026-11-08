@@ -17,8 +17,10 @@ import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+import 'package:musubi_app/features/marketplace/presentation/search_filter_sheet.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_providers.dart';
 
 /// `Busqueda` y `Busqueda-vacia` (HU-09): busca por palabra clave en el
@@ -68,7 +70,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   void _submit(String value) {
     _debounce?.cancel();
-    unawaited(ref.read(searchControllerProvider.notifier).search(value));
+    final filter =
+        ref.read(searchControllerProvider).value?.filter ??
+        const SearchFilter();
+    unawaited(
+      ref.read(searchControllerProvider.notifier).search(value, filter: filter),
+    );
+  }
+
+  Future<void> _openFilters() async {
+    final initial =
+        ref.read(searchControllerProvider).value?.filter ??
+        const SearchFilter();
+    final chosen = await showSearchFilterSheet(context, initial: initial);
+    if (!mounted || chosen == null) return;
+    await ref.read(searchControllerProvider.notifier).applyFilter(chosen);
   }
 
   void _clear() {
@@ -100,6 +116,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final session = ref.watch(sessionControllerProvider);
     final signedIn = session is SignedIn;
     final results = ref.watch(searchControllerProvider);
+    final filter = results.value?.filter ?? const SearchFilter();
     final now = ref.watch(clockProvider)().toLocal();
 
     void open(ProductSummary product) =>
@@ -158,6 +175,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       onClear: _clear,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  _SearchFilterButton(count: filter.count, onTap: _openFilters),
                 ],
               ),
             ),
@@ -485,6 +504,81 @@ class _SearchError extends StatelessWidget {
               expand: false,
               onPressed: onRetry,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Boton de filtros de `Busqueda` (48 x 48) con el globo de activos.
+class _SearchFilterButton extends StatelessWidget {
+  const new({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final active = count > 0;
+    return Pressable(
+      key: const Key('search-filter'),
+      onTap: onTap,
+      semanticLabel: switch (count) {
+        0 => 'Filtrar',
+        1 => 'Filtrar, 1 filtro activo',
+        _ => 'Filtrar, $count filtros activos',
+      },
+      builder: (context, pressed) => SizedBox(
+        width: 48,
+        height: 48,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: pressed
+                      ? c.surfacePressed
+                      : active
+                      ? c.brandSoft
+                      : c.surface,
+                  borderRadius: BorderRadius.circular(MusubiSizes.radiusField),
+                ),
+                child: Center(
+                  child: MusubiIcon(
+                    MusubiIcons.slidersHorizontal,
+                    size: 20,
+                    color: active ? c.brandStrongText : c.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+            if (active)
+              Positioned(
+                top: -5,
+                right: -5,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 20),
+                  height: 20,
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: c.brand,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: c.background, width: 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$count',
+                    style: MusubiType.style(
+                      10.5,
+                      weight: FontWeight.w800,
+                      color: const Color(0xFFFFFFFF),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

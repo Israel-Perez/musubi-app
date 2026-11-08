@@ -4,14 +4,37 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 ## Estado actual (08-Nov-2026)
 
-- **Reportar y bloquear (HU-28 y HU-57, rama `feature/SCRUM-57-reportar-bloquear`):** en un PR, contra la API `0.5.0-alpha.6` (musubi-api#52). **No se sube a Google Play por cada HU:** el usuario prefiere juntar varias HU antes de publicar.
-
-- **En Google Play:** `0.5.1+7` en la prueba cerrada (chat, bandeja y detalle del producto).
-- **El chat no enviaba mensajes en producción (08-Nov-2026):** la API respondía `503 moderation.unavailable` porque el plan gratuito de AWS no incluye Translate ni Comprehend. La API `0.5.0-alpha.4` modera el texto con un léxico local (musubi-api, SCRUM-92). La app no cambia: ya muestra el mensaje del `503` y el del `422 moderation.text_rejected`. Fila sincronizada en `docs/versionado.md`.
 - **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
-- **Búsqueda (HU-09):** app `0.5.1+7` contra la API `0.5.0-alpha.5` (PR musubi-api#49, sin desplegar); 325 pruebas, analyze 0 y critic PASS. Antes de subirla a Google Play hay que subir el `versionCode` (`0.5.1+7` ya está publicada).
+- **Búsqueda (HU-09):** app `0.5.1+7`, implementada contra la rama `SCRUM-26` de la API (`0.5.0-alpha.3`, sin publicar; PR musubi-api#49); 325 pruebas, analyze 0 y critic PASS.
+- **Filtros de búsqueda (HU-10):** app `0.5.1+7` en `feature/SCRUM-27-filtrar-categoria-precio`, apilada sobre la rama de HU-09; necesita la API de HU-10 (misma rama apilada); 340 pruebas, analyze 0 y critic PASS, sin commit todavía.
+- **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
+
+## T26 — Filtrar productos por categoría, precio y estado (08-Nov-2026, SCRUM-27, HU-10)
+
+**Qué se hizo**
+- Botón de filtros (`slidersHorizontal`) a la derecha del campo de `Busqueda`, con globo del número de filtros activos (máximo 3).
+- Hoja `Busqueda-filtros` (`search_filter_sheet.dart`): chips de categoría desde `GET /api/v1/categories`, mínimo y máximo en pesos con `$`, histograma decorativo, segmentado `Todos`/`Nuevo`/`Usado`, `Limpiar` y `Ver N resultados` (vista previa con 300 ms de retardo).
+- `SearchFilter` y `ProductConditionFilter` en `domain/search_filter.dart`, separados de `CatalogFilter` de Inicio.
+- `CatalogRepository.search` acepta `filter`; `categories()` nuevo en la interfaz, HTTP y demo. El HTTP manda `category`, `minPriceCents`, `maxPriceCents` y `condition` solo cuando existen.
+- `SearchState.filter`, `applyFilter` y `searchPreviewProvider`; `categoriesProvider` en `home_providers.dart`; `prefixText` en `MusubiTextField`.
+- Pruebas: data HTTP (parámetros, `400` de rango), demo (filtros locales), providers (`applyFilter`, `loadMore`, `clear`), pantalla y hoja. Total 340.
+
+**Decisiones (con su porqué)**
+- **`SearchFilter` separado de `CatalogFilter`:** Inicio conserva categoría + "Ocultar agotados"; un solo modelo obligaba a que la búsqueda mostrara un interruptor sin efecto.
+- **Precio en pesos en la UI y centavos en el contrato:** sin decimales flotantes y alineado con `priceCents`; los límites son inclusivos y vacío es sin límite.
+- **La API filtra; la app no:** coincidencias, `total` y cursor salen del back; la vista previa del CTA usa la misma consulta, así el número no miente.
+- **Sin "Ocultar agotados" en la búsqueda:** con `q` la API nunca devuelve agotados (HU-09); el interruptor sería un no-op.
+- **Sin "Más relevantes":** Jira no lo pide y la API ordena por fecha (`NOTE (HU-10)`).
+- **Los filtros viven en el estado de la búsqueda:** se descartan al salir con el `autoDispose`; la X del campo borra el texto pero conserva los filtros, y `Limpiar` es la acción explícita.
+- **Validación local antes de llamar:** mínimo mayor que máximo no aplica ni consulta; la API vuelve a validar (`listings.invalid_price_range`).
+- **Cambiar categoría o estado cancela el retardo del precio:** si no, el temporizador pisaba la selección con el borrador anterior (lo detectó la prueba de pantalla).
+
+**Errores a evitar**
+- **El borrador del precio se pisaba:** `Timer` + `setState` guardaba el `SearchFilter` completo; hay que mezclar solo `minCents`/`maxCents` sobre `_draft` y cancelar el temporizador al tocar otra opción.
+- **`categoriesProvider` necesita tipo explícito:** el analizador pide la anotación (`FutureProvider<List<CatalogCategory>>`) por la regla `specify_nonobvious_property_types`.
+- **El filtro puede llegar después de las teclas:** al escribir precio y tocar `Usado` antes del retardo, el selector debe leer `_cents(_min)`/`_cents(_max)`, no el `_draft` viejo.
 
 ## T25 — Buscar productos por palabra clave (07-Nov-2026, SCRUM-26, HU-09)
 
@@ -41,30 +64,6 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **La búsqueda de muestra coincide por prefijo y solo quita el plural:** quitar también la vocal final ya no representa a la API (`calc` y `calculadora` deben coincidir con `Calculadora`).
 - **Las pruebas de la búsqueda en vivo necesitan avanzar el reloj del `Timer`:** `pump(300 ms)`; sin eso la consulta no sale y la prueba falla por una razón falsa.
 - **Riverpod 3 ya no tiene la clase `AutoDisposeAsyncNotifierProvider`:** `autoDispose` es el parámetro `isAutoDispose: true` del provider.
-
-## T25 — Reportar y bloquear + foto en el chat (08-Nov-2026, SCRUM-57 y SCRUM-95, HU-28 y HU-57)
-
-**Qué se hizo**
-- `lib/features/reputation/` (M-13): reportar (`showReportSheet`: motivos de la maqueta y "Cuéntanos qué pasó") y "Usuarios bloqueados" (`showBlockedUsersSheet`).
-- Chat:
-  - "Más opciones" con las cuatro opciones de `chatMoreSheet`;
-  - "Bloquear a …" con el diálogo de la maqueta;
-  - aviso "No puedes responder a esta conversación." en lugar de la caja si `canReply` es `false` o un envío responde `chat.blocked`.
-- Ajustes → "Reportar un problema". Privacidad → "Usuarios bloqueados" (número o "Ninguno").
-- La foto de perfil de la otra persona en el encabezado del chat y en la bandeja (`ProfileAvatar` con `palette`). Antes solo iniciales; lo pidió el usuario.
-- `MusubiTextField(multiline: true)` (`.s-field textarea`) e íconos `flag` y `circleHelp`.
-- 5 escenas nuevas en `tool/screenshots_test.dart`, comparadas con capturas de la maqueta.
-- 340 pruebas, analyze 0, critic PASS.
-
-**Decisiones (con su porqué)**
-- **El texto bajo "Cuéntanos qué pasó" cambia:** la maqueta remite a un "chat de soporte" que no existe; el equipo responde por correo.
-- **"Ver perfil" y "Silenciar" se muestran con "llega muy pronto":** están en la maqueta (lineamiento 4) y dependen de HU-05 y HU-31.
-- **El aviso no dice quién bloqueó:** la API solo manda `canReply`.
-
-**Errores a evitar**
-- **`pumpAndSettle` no espera un `Future.delayed` sin cuadros pendientes:** después de elegir una opción (160 ms) y antes de la siguiente hoja (240 ms) hay que hacer `pump(Duration)` (helper `pick`).
-- **Una fila nueva en Ajustes deja "Cerrar sesión" fuera de la pantalla de prueba:** la lista es perezosa y no lo construye. `tapText` ahora hace `scrollUntilVisible`.
-- **Las funciones de la maqueta están dentro de un cierre:** para capturar una hoja con Edge sin interfaz hay que simular toques (`button.click()`), no llamar `chatMoreSheet()`.
 
 ## T24 — Detalle del producto y contexto del chat (06-Nov-2026, SCRUM-28 y SCRUM-30, HU-11 y HU-21)
 

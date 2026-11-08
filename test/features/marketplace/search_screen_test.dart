@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
@@ -360,5 +361,112 @@ void main() {
 
     expect(find.text('Busca lo que necesitas'), findsOneWidget);
     expect(find.text('Calculadora Casio'), findsNothing);
+  });
+
+  testWidgets('el boton de filtros abre la hoja con las categorias', (
+    tester,
+  ) async {
+    final fake = FakeCatalogRepository()
+      ..categoriesResponse = const [
+        CatalogCategory(slug: 'calculadoras', name: 'Calculadoras'),
+      ];
+    await open(tester, fake);
+
+    await tester.tap(find.byKey(const Key('search-filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Filtros'), findsOneWidget);
+    expect(find.text('Calculadoras'), findsOneWidget);
+  });
+
+  testWidgets('aplicar categoria, precio y estado relanza la busqueda', (
+    tester,
+  ) async {
+    final fake =
+        FakeCatalogRepository(
+            [const HomeFeed()],
+            [
+              ProductPage(
+                items: [product('p1', 'Calculadora Casio')],
+                total: 1,
+              ),
+              ProductPage(
+                items: [product('p2', 'Calculadora Casio')],
+                total: 1,
+              ),
+            ],
+          )
+          ..categoriesResponse = const [
+            CatalogCategory(slug: 'calculadoras', name: 'Calculadoras'),
+          ];
+    await open(tester, fake);
+    await submit(tester, 'calculadora');
+
+    await tester.tap(find.byKey(const Key('search-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Calculadoras'));
+    await tester.enterText(find.byKey(const Key('filter-min')), '300');
+    await tester.enterText(find.byKey(const Key('filter-max')), '700');
+    await tester.tap(find.text('Usado'));
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Ver 1 resultado'));
+    await tester.pumpAndSettle();
+
+    expect(
+      fake.searchFilters,
+      contains(
+        const SearchFilter(
+          category: 'calculadoras',
+          minCents: 30000,
+          maxCents: 70000,
+          condition: ProductConditionFilter.used,
+        ),
+      ),
+    );
+    expect(fake.queries.last, 'calculadora');
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('search-filter')),
+        matching: find.text('3'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('un precio minimo mayor que el maximo no se aplica', (
+    tester,
+  ) async {
+    final fake =
+        FakeCatalogRepository(
+            [const HomeFeed()],
+            [
+              ProductPage(
+                items: [product('p1', 'Calculadora Casio')],
+                total: 1,
+              ),
+            ],
+          )
+          ..categoriesResponse = const [
+            CatalogCategory(slug: 'calculadoras', name: 'Calculadoras'),
+          ];
+    await open(tester, fake);
+    await submit(tester, 'calculadora');
+
+    await tester.tap(find.byKey(const Key('search-filter')));
+    await tester.pumpAndSettle();
+    final callsBefore = fake.searchFilters.length;
+    await tester.enterText(find.byKey(const Key('filter-min')), '800');
+    await tester.enterText(find.byKey(const Key('filter-max')), '300');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ver resultados'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('El máximo debe ser mayor o igual que el mínimo.'),
+      findsOneWidget,
+    );
+    expect(fake.searchFilters.length, callsBefore);
   });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 
 // SCRUM-82: la vitrina de muestra (solo dev) reproduce los datos de la
 // maqueta `Inicio-visitante` para revisar el diseno en un celular.
@@ -144,6 +145,39 @@ void main() {
 
     expect(page.items, isEmpty);
     expect(page.nextCursor, isNull);
+  });
+
+  test('busqueda de muestra: categoria, precio inclusivo y estado', () async {
+    final used = await repository.search(
+      query: 'calculadora',
+      filter: const SearchFilter(
+        category: 'calculadoras',
+        minCents: 45000,
+        maxCents: 52000,
+        condition: ProductConditionFilter.used,
+      ),
+    );
+    final brandNew = await repository.search(
+      query: 'calculadora',
+      filter: const SearchFilter(
+        category: 'calculadoras',
+        minCents: 45000,
+        maxCents: 52000,
+        condition: ProductConditionFilter.newItem,
+      ),
+    );
+
+    expect(used.items.map((p) => p.title), ['Calculadora Casio fx-991ES Plus']);
+    expect(brandNew.items.map((p) => p.title), [
+      'Calculadora Casio fx-991LA X',
+    ]);
+  });
+
+  test('categories devuelve las del campus', () async {
+    final categories = await repository.categories();
+
+    expect(categories.map((c) => c.slug), contains('calculadoras'));
+    expect(categories, hasLength(5));
   });
 
   test('pocas piezas: "Último" con 1 y "Quedan 2" con 2 (maqueta)', () {
