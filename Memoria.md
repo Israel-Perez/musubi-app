@@ -6,7 +6,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 - **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
 - **Búsqueda (HU-09):** app `0.5.1+7`, implementada contra la rama `SCRUM-26` de la API (`0.5.0-alpha.3`, sin publicar; PR musubi-api#49); 325 pruebas, analyze 0 y critic PASS.
-- **Filtros (HU-10):** specs `spec.md`, `plan.md` y `task.md` detalladas; implementación pendiente sobre la rama de HU-09. La API está en `musubi-api#50`, apilada sobre `#49`.
+- **Filtros (HU-10):** specs `spec.md`, `plan.md` y `task.md` detalladas y revisadas contra la maqueta `Busqueda-filtros`; implementación pendiente sobre la rama de HU-09. La API está en `musubi-api#50`, apilada sobre `#49`.
 - **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
@@ -17,6 +17,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - Se detallaron `specs/m04-marketplace/HU-10-filtrar-categoria-precio/spec.md`, `plan.md` y `task.md` contra la fila 73 de `musubi-api/docs/endpoints.md` y la spec de la contraparte (`musubi-api#50`).
 - La hoja `Busqueda-filtros` se especifica con categorías en pastillas (desde `GET /api/v1/categories`, fila 72), precio en pesos convertido a centavos, estado `new`/`used`, "Ocultar agotados", "Limpiar" y CTA con el `total` real.
 - Se acuerda que los filtros viven en `SearchState` (no en `catalogFilterProvider`), que se aplican al confirmar y que permiten filtrar sin texto.
+- Revisión contra la maqueta `Busqueda-filtros` (07-Nov-2026): botón de 48 con fondo rojo claro, hoja con `showMusubiPanel`, estado segmentado y CTA con el `total`; las diferencias de la maqueta (varias categorías y deslizante de precio) quedan en `Límites`.
 
 **Decisiones (con su porqué)**
 - **Filtro propio de la búsqueda:** Inicio y `/buscar` tienen filtros distintos; compartir `catalogFilterProvider` haría que aplicar uno cambiara la vitrina y dificultaría limpiar al salir (RNF-07).
