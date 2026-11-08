@@ -6,7 +6,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 - **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
 - **Búsqueda (HU-09):** app `0.5.1+7`, implementada contra la rama `SCRUM-26` de la API (`0.5.0-alpha.3`, sin publicar; PR musubi-api#49); 325 pruebas, analyze 0 y critic PASS.
-- **Filtros de búsqueda (HU-10):** app `0.5.1+7` en `feature/SCRUM-27-filtrar-categoria-precio`, apilada sobre la rama de HU-09; necesita la API de HU-10 (misma rama apilada); 340 pruebas, analyze 0 y critic PASS, sin commit todavía.
+- **Filtros de búsqueda (HU-10):** app `0.5.1+7` en `feature/SCRUM-27-filtrar-categoria-precio`, apilada sobre la rama de HU-09; necesita la API de HU-10 (misma rama apilada); 346 pruebas, analyze 0 y critic PASS.
 - **En Google Play:** `0.4.0+5` en la prueba cerrada.
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
@@ -35,6 +35,15 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **El borrador del precio se pisaba:** `Timer` + `setState` guardaba el `SearchFilter` completo; hay que mezclar solo `minCents`/`maxCents` sobre `_draft` y cancelar el temporizador al tocar otra opción.
 - **`categoriesProvider` necesita tipo explícito:** el analizador pide la anotación (`FutureProvider<List<CatalogCategory>>`) por la regla `specify_nonobvious_property_types`.
 - **El filtro puede llegar después de las teclas:** al escribir precio y tocar `Usado` antes del retardo, el selector debe leer `_cents(_min)`/`_cents(_max)`, no el `_draft` viejo.
+
+### Corrección tras revisar en el teléfono (08-Nov-2026)
+
+- **Los chips de categoría salían uno por renglón:** `Container(alignment: center)` dentro de un `Wrap` se estiraba al ancho disponible. Se cambió por `Padding(vertical: 3)` + el chip de 38: el toque sigue en 44 y la fila se acomoda como la maqueta.
+- **Faltaban el control deslizante de precio y `Ocultar agotados`:** la maqueta los trae y la primera versión los había diferido. Se agregó el `RangeSlider` de dos pulgares (`_ThumbShape` dibuja el círculo blanco con borde rojo) y el interruptor; apagado manda `hideSoldOut=false`.
+- **Elegir una categoría sin texto no mostraba nada:** `applyFilter` solo guardaba el filtro. Ahora busca el catálogo con los filtros aunque `q` vaya vacío; la API ya lo soporta (`q=` es la vitrina) y la vista previa cuenta igual.
+- **La API distingue “sin parámetro” de “pedir agotados”:** `hideSoldOut` pasó a `bool?`; ausente mantiene HU-09 (con `q` solo disponibles) y `false` explícito los incluye. Los repositorios obedecen `IncludeSoldOut` y el servicio resuelve el valor por defecto.
+- **Con la X del campo se vuelve al catálogo filtrado,** no a la invitación: `clear()` relanza la búsqueda sin texto si hay filtros.
+- Pruebas nuevas: chips en fila, slider e interruptor, filtro sin texto, `hideSoldOut=false` en la consulta. Total 346.
 
 ## T25 — Buscar productos por palabra clave (07-Nov-2026, SCRUM-26, HU-09)
 

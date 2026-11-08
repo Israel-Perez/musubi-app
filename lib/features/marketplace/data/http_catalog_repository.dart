@@ -94,6 +94,8 @@ class HttpCatalogRepository implements CatalogRepository {
           'minPriceCents': ?filter.minCents,
           'maxPriceCents': ?filter.maxCents,
           'condition': ?filter.condition.apiValue,
+          // HU-10: la busqueda oculta los agotados salvo que se pidan.
+          'hideSoldOut': filter.hideSoldOut,
           'limit': searchPageSize,
           'cursor': ?cursor,
         },

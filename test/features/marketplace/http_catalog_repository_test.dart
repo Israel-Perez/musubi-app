@@ -104,6 +104,7 @@ void main() {
       expect(request.path, ApiPaths.products);
       expect(request.queryParameters, {
         'q': 'calculadora',
+        'hideSoldOut': true,
         'limit': HttpCatalogRepository.searchPageSize,
         'cursor': 'abc',
       });
@@ -132,8 +133,20 @@ void main() {
         'minPriceCents': 30000,
         'maxPriceCents': 70000,
         'condition': 'used',
+        'hideSoldOut': true,
         'limit': HttpCatalogRepository.searchPageSize,
       });
+    });
+
+    test('apagar Ocultar agotados manda hideSoldOut=false', () async {
+      serve();
+
+      await repository.search(
+        query: 'calculadora',
+        filter: const SearchFilter(hideSoldOut: false),
+      );
+
+      expect(adapter.requests.single.queryParameters['hideSoldOut'], isFalse);
     });
 
     test('400 listings.invalid_price_range llega con su code', () async {

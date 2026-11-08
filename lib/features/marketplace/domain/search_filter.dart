@@ -21,7 +21,8 @@ enum ProductConditionFilter {
   };
 }
 
-/// Filtros de `Busqueda-filtros` (HU-10): categoria, rango de precio y estado.
+/// Filtros de `Busqueda-filtros` (HU-10): categoria, rango de precio, estado
+/// y agotados.
 ///
 /// Es distinto de `CatalogFilter`: Inicio conserva su hoja de categoria y
 /// "Ocultar agotados".
@@ -32,6 +33,7 @@ class SearchFilter {
     this.minCents,
     this.maxCents,
     this.condition = ProductConditionFilter.all,
+    this.hideSoldOut = true,
   });
 
   /// `slug` de la categoria; `null` es todas.
@@ -45,11 +47,15 @@ class SearchFilter {
 
   final ProductConditionFilter condition;
 
+  /// `true` oculta los agotados; por defecto, como la maqueta.
+  final bool hideSoldOut;
+
   /// Numero de filtros activos (el globo del boton).
   int get count =>
       (category == null ? 0 : 1) +
       (minCents == null && maxCents == null ? 0 : 1) +
-      (condition == ProductConditionFilter.all ? 0 : 1);
+      (condition == ProductConditionFilter.all ? 0 : 1) +
+      (hideSoldOut ? 0 : 1);
 
   bool get isEmpty => count == 0;
 
@@ -59,8 +65,10 @@ class SearchFilter {
       other.category == category &&
       other.minCents == minCents &&
       other.maxCents == maxCents &&
-      other.condition == condition;
+      other.condition == condition &&
+      other.hideSoldOut == hideSoldOut;
 
   @override
-  int get hashCode => Object.hash(category, minCents, maxCents, condition);
+  int get hashCode =>
+      Object.hash(category, minCents, maxCents, condition, hideSoldOut);
 }

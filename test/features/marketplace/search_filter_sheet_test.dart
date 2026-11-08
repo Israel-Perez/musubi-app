@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:musubi_app/core/widgets/musubi_controls.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
@@ -32,6 +33,62 @@ void main() {
     expect(find.text('Todos'), findsOneWidget);
     expect(find.text('Nuevo'), findsOneWidget);
     expect(find.text('Usado'), findsOneWidget);
+  });
+
+  testWidgets('las categorias van en fila, no apiladas', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    final first = tester.getTopLeft(find.text('Calculadoras'));
+    final second = tester.getTopLeft(find.text('Libros'));
+
+    expect(second.dy, first.dy);
+    expect(second.dx, greaterThan(first.dx));
+  });
+
+  testWidgets('tiene el control deslizante de precio y el interruptor', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RangeSlider), findsOneWidget);
+    expect(find.text('Ocultar agotados'), findsOneWidget);
+  });
+
+  testWidgets('apagar Ocultar agotados se aplica al filtro', (tester) async {
+    SearchFilter? result;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [categoriesProvider.overrideWith((ref) async => categories)],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  result = await showSearchFilterSheet(
+                    context,
+                    initial: const SearchFilter(),
+                  );
+                },
+                child: const Text('Abrir'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byType(MusubiSwitch));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(MusubiSwitch));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ver resultados'));
+    await tester.pumpAndSettle();
+
+    expect(result?.hideSoldOut, isFalse);
   });
 
   testWidgets('un minimo mayor que el maximo muestra el error', (tester) async {

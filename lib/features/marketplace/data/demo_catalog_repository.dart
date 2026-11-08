@@ -358,8 +358,8 @@ class DemoCatalogRepository implements CatalogRepository {
   Future<List<CatalogCategory>> categories() async => demoCategories;
 
   /// Busqueda de muestra (HU-09) con los filtros de `Busqueda-filtros`
-  /// (HU-10): solo disponibles, prefijo de palabra (singular/plural), precio
-  /// inclusivo y estado.
+  /// (HU-10): prefijo de palabra (singular/plural), categoria, precio inclusivo,
+  /// estado y agotados. Sin texto, solo filtros: explora el catalogo.
   @override
   Future<ProductPage> search({
     required String query,
@@ -368,12 +368,11 @@ class DemoCatalogRepository implements CatalogRepository {
   }) async {
     if (cursor != null) return const ProductPage();
     final terms = _terms(query);
-    if (terms.isEmpty) return const ProductPage();
     final now = _clock();
     final items = <ProductSummary>[
       for (final (product, minutes) in _products)
-        if (!product.soldOut &&
-            _matches(product.title, terms) &&
+        if ((!filter.hideSoldOut || !product.soldOut) &&
+            (terms.isEmpty || _matches(product.title, terms)) &&
             _passes(product, filter))
           ProductSummary(
             id: product.id,

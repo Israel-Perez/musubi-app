@@ -192,6 +192,28 @@ void main() {
     expect(container.read(searchControllerProvider).value!.filter, filter);
   });
 
+  test('sin texto, los filtros exploran el catalogo', () async {
+    const filter = SearchFilter(category: 'libros');
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1')], total: 1),
+      ],
+    );
+    final container = containerFor(fake);
+    final notifier = container.read(searchControllerProvider.notifier);
+
+    await notifier.applyFilter(filter);
+
+    final state = container.read(searchControllerProvider).value!;
+    expect(state.query, isEmpty);
+    expect(state.filter, filter);
+    expect(state.items.single.id, 'p1');
+    expect(state.hasCriteria, isTrue);
+    expect(fake.queries, ['']);
+    expect(fake.searchFilters, [filter]);
+  });
+
   test('limpiar conserva el filtro', () async {
     const filter = SearchFilter(condition: ProductConditionFilter.used);
     final fake = FakeCatalogRepository(
@@ -204,7 +226,7 @@ void main() {
     final notifier = container.read(searchControllerProvider.notifier);
 
     await notifier.search('casio', filter: filter);
-    notifier.clear();
+    await notifier.clear();
 
     final state = container.read(searchControllerProvider).value!;
     expect(state.query, isEmpty);
@@ -222,7 +244,7 @@ void main() {
     final notifier = container.read(searchControllerProvider.notifier);
 
     await notifier.search('casio');
-    notifier.clear();
+    await notifier.clear();
 
     final state = container.read(searchControllerProvider).value!;
     expect(state.query, isEmpty);

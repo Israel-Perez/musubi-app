@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
+import 'package:musubi_app/core/widgets/musubi_controls.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_panel.dart';
@@ -64,11 +65,28 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     super.dispose();
   }
 
-  int? _cents(TextEditingController controller) {
+  /// Tope de la maqueta: $999,999 (RN-04 en la API).
+  static const _maxPesos = 999999;
+
+  int? _pesos(TextEditingController controller) {
     final text = controller.text.trim();
-    if (text.isEmpty) return null;
-    final pesos = int.tryParse(text);
+    return text.isEmpty ? null : int.tryParse(text);
+  }
+
+  int? _cents(TextEditingController controller) {
+    final pesos = _pesos(controller);
     return pesos == null ? null : pesos * 100;
+  }
+
+  /// Posiciones del control deslizante; si el texto no cuadra, se ordenan.
+  RangeValues get _range {
+    double value(TextEditingController controller) =>
+        (_pesos(controller) ?? (controller == _min ? 0 : _maxPesos))
+            .clamp(0, _maxPesos)
+            .toDouble();
+    final start = value(_min);
+    final end = value(_max);
+    return start <= end ? RangeValues(start, end) : RangeValues(end, start);
   }
 
   SearchFilter get _current => SearchFilter(
@@ -76,6 +94,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     minCents: _cents(_min),
     maxCents: _cents(_max),
     condition: _draft.condition,
+    hideSoldOut: _draft.hideSoldOut,
   );
 
   String? _validate(SearchFilter filter) {
@@ -100,9 +119,20 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
           minCents: next.minCents,
           maxCents: next.maxCents,
           condition: _draft.condition,
+          hideSoldOut: _draft.hideSoldOut,
         ),
       );
     });
+  }
+
+  /// El control deslizante escribe el precio en los campos y refresca la
+  /// vista previa (mismo retardo de 300 ms).
+  void _onRangeChanged(RangeValues values) {
+    final start = values.start.round();
+    final end = values.end.round();
+    _min.text = start == 0 ? '' : '$start';
+    _max.text = end == _maxPesos ? '' : '$end';
+    _onPriceChanged();
   }
 
   void _selectCategory(String slug) {
@@ -113,6 +143,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
         minCents: _cents(_min),
         maxCents: _cents(_max),
         condition: _draft.condition,
+        hideSoldOut: _draft.hideSoldOut,
       ),
     );
   }
@@ -125,6 +156,20 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
         minCents: _cents(_min),
         maxCents: _cents(_max),
         condition: condition,
+        hideSoldOut: _draft.hideSoldOut,
+      ),
+    );
+  }
+
+  void _toggleSoldOut(bool hide) {
+    _priceTimer?.cancel();
+    setState(
+      () => _draft = SearchFilter(
+        category: _draft.category,
+        minCents: _cents(_min),
+        maxCents: _cents(_max),
+        condition: _draft.condition,
+        hideSoldOut: hide,
       ),
     );
   }
@@ -160,7 +205,7 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
     final preview = ref
         .watch(searchPreviewProvider((query: query, filter: _draft)))
         .value;
-    final cta = query.isEmpty
+    final cta = query.isEmpty && _draft.isEmpty
         ? 'Ver resultados'
         : _priceError != null || preview == null
         ? 'Ver resultados'
@@ -244,7 +289,25 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
           const _Legend('Rango de precio'),
           const SizedBox(height: 8),
           const _PriceHistogram(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
+          SliderTheme(
+            data: SliderThemeData(
+              trackHeight: 4,
+              activeTrackColor: c.brand,
+              inactiveTrackColor: c.border,
+              overlayColor: c.brandSoft,
+              rangeThumbShape: _ThumbShape(fill: c.background, border: c.brand),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 22),
+              showValueIndicator: ShowValueIndicator.never,
+            ),
+            child: RangeSlider(
+              key: const Key('filter-price-slider'),
+              values: _range,
+              max: _maxPesos.toDouble(),
+              onChanged: _onRangeChanged,
+            ),
+          ),
+          const SizedBox(height: 6),
           Row(
             spacing: 12,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,6 +355,34 @@ class _SearchFilterSheetState extends ConsumerState<SearchFilterSheet> {
             value: _draft.condition,
             onChanged: _selectCondition,
           ),
+          const SizedBox(height: 16),
+          Container(
+            height: 52,
+            padding: const EdgeInsets.fromLTRB(14, 0, 4, 0),
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(MusubiSizes.radiusButton),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Ocultar agotados',
+                    style: MusubiType.style(
+                      14.5,
+                      weight: FontWeight.w700,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                ),
+                MusubiSwitch(
+                  value: _draft.hideSoldOut,
+                  onChanged: _toggleSoldOut,
+                  semanticLabel: 'Ocultar agotados',
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -328,9 +419,8 @@ class _CategoryChip extends StatelessWidget {
       onTap: onTap,
       semanticLabel: label,
       selected: selected,
-      builder: (context, _) => Container(
-        height: MusubiSizes.minTouch,
-        alignment: Alignment.center,
+      builder: (context, _) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
         child: Container(
           height: 38,
           padding: EdgeInsets.only(left: selected ? 12 : 14, right: 14),
@@ -478,5 +568,49 @@ class _PriceHistogram extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Pulgar de la maqueta: circulo blanco de 26 con borde rojo de 2.
+class _ThumbShape extends RangeSliderThumbShape {
+  const new({required this.fill, required this.border});
+
+  final Color fill;
+  final Color border;
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(26, 26);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required SliderThemeData sliderTheme,
+    bool isDiscrete = false,
+    bool isEnabled = true,
+    bool isOnTop = true,
+    TextDirection textDirection = TextDirection.ltr,
+    Thumb thumb = Thumb.start,
+    bool isPressed = false,
+  }) {
+    context.canvas
+      ..drawCircle(
+        center.translate(0, 1),
+        13,
+        Paint()
+          ..color = const Color(0x331C1C1E)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      )
+      ..drawCircle(center, 13, Paint()..color = fill)
+      ..drawCircle(
+        center,
+        12,
+        Paint()
+          ..color = border
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
   }
 }

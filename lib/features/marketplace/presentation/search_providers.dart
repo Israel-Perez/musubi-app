@@ -32,7 +32,11 @@ class SearchState {
   final bool loadingMore;
 
   bool get hasQuery => query.isNotEmpty;
-  bool get empty => hasQuery && items.isEmpty;
+
+  /// Hay texto o filtros: la pantalla muestra resultados en vez de la
+  /// invitacion a buscar.
+  bool get hasCriteria => hasQuery || !filter.isEmpty;
+  bool get empty => hasCriteria && items.isEmpty;
   bool get hasMore => nextCursor != null;
 }
 
@@ -56,17 +60,19 @@ class SearchController extends AsyncNotifier<SearchState> {
   @override
   SearchState build() => const SearchState();
 
+  /// Busca con texto y filtros. Sin texto pero con filtros, explora el
+  /// catalogo (HU-10); sin ninguno de los dos, vuelve a la invitacion.
   Future<void> search(String raw, {SearchFilter? filter}) async {
     final query = raw.trim();
     final nextFilter = filter ?? state.value?.filter ?? const SearchFilter();
     final request = ++_request;
-    if (query.isEmpty) {
+    if (query.isEmpty && nextFilter.isEmpty) {
       state = AsyncData(SearchState(filter: nextFilter));
       return;
     }
     // Al escribir se conservan los resultados anteriores; solo la primera
-    // busqueda muestra la pantalla de carga.
-    if ((state.value?.query ?? '').isEmpty) {
+    // busqueda (o la de los filtros) muestra la pantalla de carga.
+    if (state.value?.items.isEmpty ?? true) {
       state = const AsyncLoading();
     }
     final result = await AsyncValue.guard(() async {
@@ -83,15 +89,10 @@ class SearchController extends AsyncNotifier<SearchState> {
     state = result;
   }
 
-  /// Aplica los filtros y relanza la busqueda con el texto actual. Sin texto
-  /// solo guarda el filtro para que el globo lo muestre.
+  /// Aplica los filtros y relanza la busqueda con el texto actual. Sin texto,
+  /// explora el catalogo con esos filtros.
   Future<void> applyFilter(SearchFilter filter) async {
-    final query = state.value?.query ?? '';
-    if (query.isEmpty) {
-      state = AsyncData(SearchState(filter: filter));
-      return;
-    }
-    await search(query, filter: filter);
+    await search(state.value?.query ?? '', filter: filter);
   }
 
   Future<void> loadMore() async {
@@ -131,20 +132,16 @@ class SearchController extends AsyncNotifier<SearchState> {
     }
   }
 
-  /// Borra el texto y conserva los filtros (el globo sigue visible).
-  void clear() {
-    _request++;
-    state = AsyncData(
-      SearchState(filter: state.value?.filter ?? const SearchFilter()),
-    );
-  }
+  /// Borra el texto y conserva los filtros (el globo sigue visible); si hay
+  /// filtros, vuelve a mostrar el catalogo filtrado.
+  Future<void> clear() => search('', filter: state.value?.filter);
 }
 
-/// Cuantos resultados daria el filtro borrador con el texto actual
-/// ("Ver 12 resultados"). Sin texto no consulta.
+/// Cuantos resultados darian el texto y el filtro borrador
+/// ("Ver 12 resultados"). Sin texto ni filtros no consulta.
 final FutureProviderFamily<int, SearchPreview> searchPreviewProvider =
     FutureProvider.autoDispose.family<int, SearchPreview>((ref, args) async {
-      if (args.query.isEmpty) return 0;
+      if (args.query.isEmpty && args.filter.isEmpty) return 0;
       final page = await ref
           .watch(catalogRepositoryProvider)
           .search(query: args.query, filter: args.filter);

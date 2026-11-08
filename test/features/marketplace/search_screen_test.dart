@@ -435,6 +435,37 @@ void main() {
     );
   });
 
+  testWidgets('filtrar sin texto muestra las publicaciones', (tester) async {
+    final fake =
+        FakeCatalogRepository(
+            [const HomeFeed()],
+            [
+              ProductPage(
+                items: [product('p1', 'Calculadora Casio')],
+                total: 1,
+              ),
+            ],
+          )
+          ..categoriesResponse = const [
+            CatalogCategory(slug: 'calculadoras', name: 'Calculadoras'),
+          ];
+    await open(tester, fake);
+
+    await tester.tap(find.byKey(const Key('search-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Calculadoras'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ver 1 resultado'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Calculadora Casio'), findsOneWidget);
+    expect(fake.queries.last, isEmpty);
+    expect(
+      fake.searchFilters.last,
+      const SearchFilter(category: 'calculadoras'),
+    );
+  });
+
   testWidgets('un precio minimo mayor que el maximo no se aplica', (
     tester,
   ) async {

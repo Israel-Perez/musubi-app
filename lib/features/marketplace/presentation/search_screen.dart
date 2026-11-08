@@ -62,7 +62,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void _onChanged(String value) {
     _debounce?.cancel();
     if (value.trim().isEmpty) {
-      ref.read(searchControllerProvider.notifier).clear();
+      unawaited(ref.read(searchControllerProvider.notifier).clear());
       return;
     }
     _debounce = Timer(_debounceDelay, () => _submit(value));
@@ -90,7 +90,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void _clear() {
     _debounce?.cancel();
     _controller.clear();
-    ref.read(searchControllerProvider.notifier).clear();
+    unawaited(ref.read(searchControllerProvider.notifier).clear());
     _focus.requestFocus();
   }
 
@@ -185,7 +185,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 AsyncData(:final value) when value.empty => _EmptyResults(
                   query: value.query,
                 ),
-                AsyncData(:final value) when value.items.isEmpty =>
+                AsyncData(:final value) when !value.hasCriteria =>
                   const _Prompt(),
                 AsyncData(:final value) => _Results(
                   state: value,
@@ -453,7 +453,9 @@ class _EmptyResults extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin resultados para «$query»',
+              query.isEmpty
+                  ? 'Sin resultados con estos filtros'
+                  : 'Sin resultados para «$query»',
               textAlign: TextAlign.center,
               style: MusubiType.style(
                 18,
@@ -464,7 +466,9 @@ class _EmptyResults extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Prueba con otras palabras o publica lo que necesitas.',
+              query.isEmpty
+                  ? 'Prueba con otros filtros.'
+                  : 'Prueba con otras palabras o publica lo que necesitas.',
               textAlign: TextAlign.center,
               style: MusubiType.style(14, line: 20, color: c.textSecondary),
             ),
