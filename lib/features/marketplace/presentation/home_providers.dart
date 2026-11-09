@@ -18,6 +18,14 @@ final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
       : HttpCatalogRepository(ref.watch(dioProvider), config.apiBaseUrl);
 });
 
+/// Categorias del campus para los chips de `Busqueda-filtros` (HU-10).
+/// Sin el reintento automatico de Riverpod 3: la hoja ofrece reintentar.
+final FutureProvider<List<CatalogCategory>> categoriesProvider =
+    FutureProvider.autoDispose<List<CatalogCategory>>(
+      (ref) => ref.watch(catalogRepositoryProvider).categories(),
+      retry: (_, _) => null,
+    );
+
 /// Periodo elegido en "Populares" (Hoy por defecto).
 final popularPeriodProvider =
     NotifierProvider<PopularPeriodNotifier, PopularPeriod>(

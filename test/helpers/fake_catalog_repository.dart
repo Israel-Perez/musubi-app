@@ -4,6 +4,8 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 
 /// Fake de [CatalogRepository]: responde en orden y registra los periodos y
 /// los filtros.
@@ -22,7 +24,12 @@ class FakeCatalogRepository implements CatalogRepository {
   final List<PopularPeriod> periods = [];
   final List<CatalogFilter> filters = [];
   final List<String> queries = [];
-  final List<String?> cursors = [];
+  final List<SearchFilter> searchFilters = [];
+  final List<SearchSort> sorts = [];
+  final List<int> pages = [];
+
+  /// Categorias que devuelve `categories()`.
+  List<CatalogCategory> categoriesResponse = const [];
 
   @override
   Future<HomeFeed> homeFeed({
@@ -43,9 +50,16 @@ class FakeCatalogRepository implements CatalogRepository {
   }
 
   @override
-  Future<ProductPage> search({required String query, String? cursor}) {
+  Future<ProductPage> search({
+    required String query,
+    SearchFilter filter = const SearchFilter(),
+    SearchSort sort = SearchSort.relevant,
+    int page = 1,
+  }) {
     queries.add(query);
-    cursors.add(cursor);
+    searchFilters.add(filter);
+    sorts.add(sort);
+    pages.add(page);
     final next = _searchResponses.length > 1
         ? _searchResponses.removeAt(0)
         : _searchResponses.first;
@@ -56,6 +70,9 @@ class FakeCatalogRepository implements CatalogRepository {
       _ => throw StateError('Respuesta no soportada: $next'),
     };
   }
+
+  @override
+  Future<List<CatalogCategory>> categories() async => categoriesResponse;
 
   /// Detalles por id (HU-11). Sin el id: 404 como la API.
   final Map<String, ProductDetail> details = {};

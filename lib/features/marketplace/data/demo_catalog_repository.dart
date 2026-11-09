@@ -1,6 +1,8 @@
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 
 /// Vitrina de muestra con los productos ficticios de la maqueta
 /// (`Inicio-visitante`): solo con `DEMO_CATALOG=true` en `dev`, para revisar
@@ -14,7 +16,7 @@ class DemoCatalogRepository implements CatalogRepository {
 
   static const _photos = 'asset:assets/products';
 
-  static const categories = [
+  static const demoCategories = [
     CatalogCategory(
       slug: 'calculadoras',
       name: 'Calculadoras',
@@ -348,38 +350,64 @@ class DemoCatalogRepository implements CatalogRepository {
       popular: popular,
       recent: recent,
       wanted: wanted,
-      categories: categories,
+      categories: demoCategories,
       recentTotal: 48,
     );
   }
 
-  /// Busqueda de muestra (HU-09): solo disponibles, prefijo de palabra
-  /// (singular/plural) y de la mas nueva a la mas vieja.
   @override
-  Future<ProductPage> search({required String query, String? cursor}) async {
-    if (cursor != null) return const ProductPage();
+  Future<List<CatalogCategory>> categories() async => demoCategories;
+
+  /// Busqueda de muestra (HU-09) con los filtros de `Busqueda-filtros`
+  /// (HU-10): prefijo de palabra (singular/plural), categoria, precio inclusivo,
+  /// estado y agotados. Sin texto, solo filtros: explora el catalogo.
+  @override
+  Future<ProductPage> search({
+    required String query,
+    SearchFilter filter = const SearchFilter(),
+    SearchSort sort = SearchSort.relevant,
+    int page = 1,
+  }) async {
+    if (page > 1) return const ProductPage();
     final terms = _terms(query);
-    if (terms.isEmpty) return const ProductPage();
     final now = _clock();
-    final items = <ProductSummary>[
-      for (final (product, minutes) in _products)
-        if (!product.soldOut && _matches(product.title, terms))
-          ProductSummary(
-            id: product.id,
-            title: product.title,
-            priceCents: product.priceCents,
-            stock: product.stock,
-            photoUrl: product.photoUrl,
-            views: product.views,
-            category: product.category,
-            condition: product.condition,
-            sellerName: product.sellerName,
-            sellerRating: product.sellerRating,
-            publishedAt: now.subtract(Duration(minutes: minutes)),
+    final items =
+        <ProductSummary>[
+          for (final (product, minutes) in _products)
+            if ((!filter.hideSoldOut || !product.soldOut) &&
+                (terms.isEmpty || _matches(product.title, terms)) &&
+                _passes(product, filter))
+              ProductSummary(
+                id: product.id,
+                title: product.title,
+                priceCents: product.priceCents,
+                stock: product.stock,
+                photoUrl: product.photoUrl,
+                views: product.views,
+                category: product.category,
+                condition: product.condition,
+                sellerName: product.sellerName,
+                sellerRating: product.sellerRating,
+                publishedAt: now.subtract(Duration(minutes: minutes)),
+              ),
+        ]..sort(switch (sort) {
+          // "Mas relevantes" usa la fecha hasta que exista puntaje.
+          SearchSort.priceAsc => (a, b) => a.priceCents.compareTo(b.priceCents),
+          SearchSort.priceDesc => (a, b) => b.priceCents.compareTo(
+            a.priceCents,
           ),
-    ]..sort((a, b) => b.publishedAt!.compareTo(a.publishedAt!));
+          _ => (a, b) => b.publishedAt!.compareTo(a.publishedAt!),
+        });
     return ProductPage(items: items, total: items.length);
   }
+
+  static bool _passes(ProductSummary product, SearchFilter filter) =>
+      (filter.categories.isEmpty ||
+          filter.categories.contains(product.category)) &&
+      (filter.minCents == null || product.priceCents >= filter.minCents!) &&
+      (filter.maxCents == null || product.priceCents <= filter.maxCents!) &&
+      (filter.condition.productLabel == null ||
+          product.condition == filter.condition.productLabel);
 
   static List<String> _terms(String query) => [
     for (final word in _fold(query).split(RegExp('[^a-z0-9]+')))
@@ -431,10 +459,10 @@ class DemoCatalogRepository implements CatalogRepository {
       description:
           'Lo usé un semestre y está en buen estado. Te lo entrego en el '
           'campus.',
-      categoryName: categories
+      categoryName: demoCategories
           .firstWhere(
             (c) => c.slug == summary.category,
-            orElse: () => categories.first,
+            orElse: () => demoCategories.first,
           )
           .name,
       priceCents: summary.priceCents,

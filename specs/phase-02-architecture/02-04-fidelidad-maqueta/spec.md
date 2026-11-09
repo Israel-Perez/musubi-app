@@ -12,7 +12,7 @@ Las pantallas de 02-01, HU-01/02/03/47/56 y HU-48 fase 1 usaban piezas de Materi
 
 **Depende de**: `02-01`, `02-03` y HU-48 fase 1.
 
-Maqueta: `Inicio-visitante`, `Visitante-modal`, `Inicio`, `Inicio-cargando`, `Inicio-error`, `Iniciar-sesion`, `Iniciar-sesion-error`, `Registro`, `Registro-error`, `Verificacion`, `Verificacion-lista`, `Aviso-privacidad`, `Perfil` y `Ajustes`. También cubre la hoja "Filtrar" de Recién publicados y el diálogo "¿Cerrar sesión?". Todas en modo claro y oscuro.
+Maqueta: `Inicio-visitante`, `Visitante-modal`, `Inicio`, `Inicio-cargando`, `Inicio-error`, `Iniciar-sesion`, `Iniciar-sesion-error`, `Registro`, `Registro-error`, `Verificacion`, `Verificacion-lista`, `Aviso-privacidad`, `Perfil` y `Ajustes`. También cubre la hoja "Filtrar" de Recién publicados (categoría y "Ocultar agotados", HU-10) y el diálogo "¿Cerrar sesión?". Todas en modo claro y oscuro.
 
 ## Requisitos
 1. **Medidas de la maqueta:**
@@ -45,7 +45,7 @@ Maqueta: `Inicio-visitante`, `Visitante-modal`, `Inicio`, `Inicio-cargando`, `In
      - "Abrir mi correo" abre la app de correo de Android, o avisa si no hay;
      - el sobre flota (`__fly`: 3 px cada 2.6 s, tres vueltas).
    - **Saludo por nombre** en Inicio con sesión ("Hola, Ana"). El perfil de la sesión (`SessionProfile`) se guarda junto a los tokens.
-   - **Hoja "Filtrar"** en Recién publicados: categoría y "Ocultar agotados".
+   - **Hoja "Filtrar"** en Recién publicados: categoría y "Ocultar agotados", con el globo del conteo (HU-10).
    - **"Publicaciones recientes"** (con sesión) de la más nueva a la más vieja.
    - **Pantalla Ajustes** (`/ajustes`): "Cerrar sesión" pide confirmación en un diálogo.
 6. **Vitrina de muestra** (`DEMO_CATALOG`, solo `dev`): los productos, Populares y "Se busca" de la maqueta, para revisar el diseño en un celular mientras llega HU-06. `AppConfig.parse` la rechaza fuera de dev.
@@ -70,7 +70,7 @@ Maqueta: `Inicio-visitante`, `Visitante-modal`, `Inicio`, `Inicio-cargando`, `In
   - una sesión guardada antes de este cambio, sin perfil, sigue siendo válida.
 - **`lib/features/marketplace/`:**
   - `DemoCatalogRepository` y `CatalogFilter`;
-  - `filter_sheet.dart`;
+  - `filter_sheet.dart` (Inicio) y `search_filter_sheet.dart` + `search_sort.dart` (búsqueda, HU-10);
   - las tarjetas y los estados de Inicio.
 - **`lib/features/auth/presentation/`:** `auth_layout.dart`, las 9 ilustraciones de la hoja (`account_gate_art.dart`) y las pantallas de cuenta.
 - **`lib/features/profile/presentation/profile_screen.dart`:** Perfil y Ajustes.

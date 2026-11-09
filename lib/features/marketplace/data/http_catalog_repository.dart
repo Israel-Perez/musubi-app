@@ -5,6 +5,8 @@ import 'package:musubi_app/features/marketplace/data/product_json.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 
 /// Vitrina real sobre `GET /api/v1/products` y `GET /api/v1/categories`
 /// (fila 73 de `musubi-api/docs/endpoints.md`, HU-48 fase 2 y HU-09).
@@ -22,9 +24,6 @@ class HttpCatalogRepository implements CatalogRepository {
 
   /// Tarjetas de "Recién publicados" que se piden de una vez.
   static const pageSize = 20;
-
-  /// Tarjetas de una pagina de busqueda (HU-09).
-  static const searchPageSize = 20;
 
   @override
   Future<HomeFeed> homeFeed({
@@ -50,14 +49,7 @@ class HttpCatalogRepository implements CatalogRepository {
           for (final item in page['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
         ],
-        categories: [
-          for (final item in categories.cast<Map<String, dynamic>>())
-            CatalogCategory(
-              slug: item['slug'] as String,
-              name: item['name'] as String,
-              photoUrl: categoryPhoto(item['slug'] as String),
-            ),
-        ],
+        categories: _categoriesFrom(categories),
         recentTotal: (page['total'] as num?)?.toInt() ?? 0,
       );
     } on DioException catch (error) {
@@ -67,24 +59,55 @@ class HttpCatalogRepository implements CatalogRepository {
   }
 
   @override
-  Future<ProductPage> search({required String query, String? cursor}) async {
+  Future<List<CatalogCategory>> categories() async {
+    try {
+      final response = await _dio.get<List<dynamic>>(ApiPaths.categories);
+      return _categoriesFrom(response.data ?? const []);
+    } on DioException catch (error) {
+      throw ApiFailure.fromDio(error);
+    }
+  }
+
+  static List<CatalogCategory> _categoriesFrom(List<dynamic> data) => [
+    for (final item in data.cast<Map<String, dynamic>>())
+      CatalogCategory(
+        slug: item['slug'] as String,
+        name: item['name'] as String,
+        photoUrl: categoryPhoto(item['slug'] as String),
+      ),
+  ];
+
+  @override
+  Future<ProductPage> search({
+    required String query,
+    SearchFilter filter = const SearchFilter(),
+    SearchSort sort = SearchSort.relevant,
+    int page = 1,
+  }) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiPaths.products,
         queryParameters: {
           'q': query.trim(),
+          if (filter.categories.isNotEmpty) 'category': filter.categories,
+          'minPriceCents': ?filter.minCents,
+          'maxPriceCents': ?filter.maxCents,
+          'condition': ?filter.condition.apiValue,
+          // HU-10: la busqueda oculta los agotados salvo que se pidan.
+          'hideSoldOut': filter.hideSoldOut,
+          'sort': sort.apiValue,
           'limit': searchPageSize,
-          'cursor': ?cursor,
+          'page': page,
         },
       );
-      final page = response.data ?? const <String, dynamic>{};
+      final body = response.data ?? const <String, dynamic>{};
       return ProductPage(
         items: [
-          for (final item in page['items'] as List<dynamic>? ?? const [])
+          for (final item in body['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
         ],
-        total: (page['total'] as num?)?.toInt() ?? 0,
-        nextCursor: page['nextCursor'] as String?,
+        total: (body['total'] as num?)?.toInt() ?? 0,
+        nextCursor: body['nextCursor'] as String?,
       );
     } on DioException catch (error) {
       throw ApiFailure.fromDio(error);

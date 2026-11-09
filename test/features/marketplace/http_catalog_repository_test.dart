@@ -4,6 +4,8 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/marketplace/data/http_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 
 import '../../helpers/fake_http_adapter.dart';
 import '../listings/http_listings_repository_test.dart' show productJson;
@@ -51,9 +53,14 @@ void main() {
     // "Populares" (HU-49) y "Se busca" (HU-15) llegan con sus HU.
     expect(feed.popular, isEmpty);
     expect(feed.wanted, isEmpty);
+
+    final products = adapter.requests.firstWhere(
+      (r) => r.path == ApiPaths.products,
+    );
+    expect(products.queryParameters, {'limit': HttpCatalogRepository.pageSize});
   });
 
-  test('el filtro va en la consulta', () async {
+  test('el filtro de Inicio va en la consulta', () async {
     serve();
 
     await repository.homeFeed(
@@ -80,26 +87,105 @@ void main() {
     );
   });
 
+  test('categories lee la fila 72', () async {
+    serve();
+
+    final categories = await repository.categories();
+
+    expect(categories.map((c) => c.slug), ['calculadoras', 'electronica']);
+    expect(categories.first.name, 'Calculadoras');
+    expect(categories.first.photoUrl, 'asset:assets/products/casio.webp');
+  });
+
   group('buscar (HU-09)', () {
-    test('manda q recortado, limit y cursor; lee la pagina', () async {
+    test('manda q recortado, limit y pagina; lee la pagina', () async {
       serve(nextCursor: 'next');
 
-      final page = await repository.search(
-        query: '  calculadora  ',
-        cursor: 'abc',
-      );
+      final page = await repository.search(query: '  calculadora  ', page: 2);
 
       final request = adapter.requests.single;
       expect(request.path, ApiPaths.products);
       expect(request.queryParameters, {
         'q': 'calculadora',
-        'limit': HttpCatalogRepository.searchPageSize,
-        'cursor': 'abc',
+        'hideSoldOut': true,
+        'sort': 'relevance',
+        'limit': searchPageSize,
+        'page': 2,
       });
       expect(page.items.single.title, startsWith('Calculadora'));
       expect(page.total, 48);
       expect(page.nextCursor, 'next');
-      expect(page.hasMore, isTrue);
+    });
+
+    test('los filtros de HU-10 van en la consulta', () async {
+      serve();
+
+      await repository.search(
+        query: 'calculadora',
+        filter: const SearchFilter(
+          categories: ['calculadoras', 'libros'],
+          minCents: 30000,
+          maxCents: 70000,
+          condition: ProductConditionFilter.used,
+        ),
+      );
+
+      expect(adapter.requests.single.queryParameters, {
+        'q': 'calculadora',
+        'category': ['calculadoras', 'libros'],
+        'minPriceCents': 30000,
+        'maxPriceCents': 70000,
+        'condition': 'used',
+        'hideSoldOut': true,
+        'sort': 'relevance',
+        'limit': searchPageSize,
+        'page': 1,
+      });
+    });
+
+    test('el orden elegido va como sort', () async {
+      serve();
+
+      await repository.search(query: 'calculadora', sort: SearchSort.priceAsc);
+
+      expect(adapter.requests.single.queryParameters['sort'], 'priceAsc');
+    });
+
+    test('apagar Ocultar agotados manda hideSoldOut=false', () async {
+      serve();
+
+      await repository.search(
+        query: 'calculadora',
+        filter: const SearchFilter(hideSoldOut: false),
+      );
+
+      expect(adapter.requests.single.queryParameters['hideSoldOut'], isFalse);
+    });
+
+    test('400 listings.invalid_price_range llega con su code', () async {
+      adapter = FakeHttpAdapter(
+        (_) async => FakeHttpAdapter.json({
+          'code': 'listings.invalid_price_range',
+          'title': 'Elige un rango de precio válido.',
+        }, status: 400),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.search(
+          query: 'calculadora',
+          filter: const SearchFilter(minCents: 80000, maxCents: 30000),
+        ),
+        throwsA(
+          isA<ApiFailure>()
+              .having((f) => f.code, 'code', 'listings.invalid_price_range')
+              .having((f) => f.status, 'status', 400),
+        ),
+      );
     });
 
     test('400 listings.invalid_query llega con su code', () async {
@@ -152,7 +238,7 @@ void main() {
       );
 
       expect(
-        () => repository.search(query: 'calc', cursor: 'bad'),
+        () => repository.search(query: 'calc', page: 0),
         throwsA(
           isA<ApiFailure>()
               .having((f) => f.code, 'code', 'listings.invalid_cursor')
