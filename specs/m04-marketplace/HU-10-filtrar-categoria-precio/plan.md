@@ -9,13 +9,13 @@
    - `lib/features/marketplace/presentation/search_providers.dart`: `SearchState` (filtro, orden, página), `applyFilter`, `setSort`, `goToPage`, `clear`, `searchHistoryProvider` y vista previa.
    - `lib/features/marketplace/presentation/search_filter_sheet.dart`: hoja de filtros con histograma reactivo, slider 0–$2,000+, interruptor de agotados y toast.
    - `lib/features/marketplace/presentation/search_screen.dart`: lista todo al entrar, botón y globo, cabecera con píldora, orden, historial y paginación.
-   - `lib/features/marketplace/presentation/home_screen.dart`: el botón `Filtrar` navega a `/buscar?filtros=1`.
+   - `lib/features/marketplace/presentation/home_screen.dart`: hoja `Filtrar` de Inicio (`CatalogFilter`, globo y título por categoría).
    - `lib/features/marketplace/presentation/home_providers.dart`: `categoriesProvider`.
    - `lib/core/widgets/musubi_text_field.dart`: `prefixText` opcional.
    - Pruebas: `test/helpers/fake_catalog_repository.dart`, `http_catalog_repository_test`, `demo_catalog_repository_test`, `search_providers_test`, `search_screen_test`, `search_filter_sheet_test`, `home_screen_test`.
 
 2. **Decisiones:**
-   - **Un solo lugar para los filtros:** Inicio delega en la hoja de `/buscar`; `CatalogFilter` y `filter_sheet.dart` se retiran.
+   - **Dos hojas, dos propósitos:** Inicio conserva `CatalogFilter` y `filter_sheet.dart` (categoría y agotados, con globo); la búsqueda tiene precio, estado y orden.
    - **Precio en pesos en la UI y centavos en la API:** sin flotantes y alineado con `priceCents`.
    - **La API filtra y pagina; la app no:** coincidencias, `total` y páginas salen del back. La vista previa reutiliza la misma consulta.
    - **Categorías múltiples:** los chips se acumulan y se envían repitiendo `category`.

@@ -18,7 +18,7 @@
 
 ## T4 — Hoja, pantalla e Inicio
 - **Crear:** `search_filter_sheet.dart` (chips en fila, histograma reactivo, slider 0–$2,000+, agotados y toast).
-- **Modificar:** `search_screen.dart` (lista al entrar, globo, cabecera, orden, historial y paginación), `home_screen.dart` (redirige a la hoja) y `musubi_text_field.dart` (`prefixText`).
+- **Modificar:** `search_screen.dart` (lista al entrar, globo, cabecera, orden, historial y paginación), `home_screen.dart` (hoja `Filtrar` de Inicio con globo) y `musubi_text_field.dart` (`prefixText`).
 - **Verificar:** `search_filter_sheet_test.dart`, `search_screen_test.dart`, `home_screen_test.dart`.
 - **Estado:** ✅ Hecho (08-Nov-2026).
 

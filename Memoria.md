@@ -11,7 +11,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Búsqueda (HU-09):** app `0.5.1+7` contra la API `0.5.0-alpha.5` (PR musubi-api#49, sin desplegar); 325 pruebas, analyze 0 y critic PASS. Antes de subirla a Google Play hay que subir el `versionCode` (`0.5.1+7` ya está publicada).
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
-- **Filtros de búsqueda (HU-10):** app en `feature/SCRUM-27-filtrar-categoria-precio`, contra la API del PR musubi-api#53 (`page` 1 a 50, `category` repetido, `sort`); 366 pruebas, analyze 0 y critic PASS. Matriz compartida actualizada a API `0.5.0-alpha.7` / esquema 9. Sin publicar.
+- **Filtros de búsqueda (HU-10):** app en `feature/SCRUM-27-filtrar-categoria-precio`, contra la API del PR musubi-api#53 (`page` 1 a 50, `category` repetido, `sort`); 369 pruebas, analyze 0 y critic PASS. Hoja "Filtrar" de Inicio restaurada (lineamiento 4). Matriz compartida actualizada a API `0.5.0-alpha.7` / esquema 9. Sin publicar.
 
 ## T26 — Filtrar productos por categoría, precio y estado (08-Nov-2026, SCRUM-27, HU-10)
 
@@ -60,6 +60,13 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 - **Al entrar se listan todas las publicaciones**; se retiró la invitación y `hasCriteria`.
 - **Paginación por `page`** (20 por página) con flechas y números; `Cargar más`, `nextCursor`, `loadingMore` y `hasMore` salieron del estado.
+
+### Revisión 5 — hoja "Filtrar" de Inicio restaurada (08-Nov-2026)
+
+- **El revisor la señaló:** el lineamiento 4 no permite quitar funciones de la maqueta, y la escena `filtro` de `tool/screenshots_test.dart` seguía esperando la hoja de Inicio.
+- **Se restauró `filter_sheet.dart`, `CatalogFilter`, `catalogFilterProvider`, `filterPreviewProvider`, el globo del conteo, el título por categoría y el filtro del feed.** La búsqueda conserva su hoja con precio, estado y orden; el parámetro `?filtros=1` se retiró por no tener llamador.
+- Escena `filtro` verificada con `SHOTS` y `ONLY=filtro`: abre la hoja de Inicio.
+- Pruebas: 369.
 
 ### Revisión 4 — categorías múltiples y cierre documental (08-Nov-2026)
 

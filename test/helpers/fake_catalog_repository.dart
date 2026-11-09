@@ -22,6 +22,7 @@ class FakeCatalogRepository implements CatalogRepository {
   final List<Object> _responses;
   final List<Object> _searchResponses;
   final List<PopularPeriod> periods = [];
+  final List<CatalogFilter> filters = [];
   final List<String> queries = [];
   final List<SearchFilter> searchFilters = [];
   final List<SearchSort> sorts = [];
@@ -31,8 +32,12 @@ class FakeCatalogRepository implements CatalogRepository {
   List<CatalogCategory> categoriesResponse = const [];
 
   @override
-  Future<HomeFeed> homeFeed({required PopularPeriod period}) {
+  Future<HomeFeed> homeFeed({
+    required PopularPeriod period,
+    CatalogFilter filter = const CatalogFilter(),
+  }) {
     periods.add(period);
+    filters.add(filter);
     final next = _responses.length > 1
         ? _responses.removeAt(0)
         : _responses.first;

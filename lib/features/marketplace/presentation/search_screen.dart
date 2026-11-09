@@ -52,15 +52,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (!mounted) return;
       // HU-10: al entrar se listan todas las publicaciones.
       unawaited(ref.read(searchControllerProvider.notifier).search(''));
-      // HU-10: desde el boton de filtros de Inicio se abre la hoja directo.
-      final openFilters =
-          GoRouter.maybeOf(context)?.state.uri.queryParameters['filtros'] ==
-          '1';
-      if (openFilters) {
-        unawaited(_openFilters());
-      } else {
-        _focus.requestFocus();
-      }
+      _focus.requestFocus();
     });
   }
 

@@ -26,18 +26,30 @@ class HttpCatalogRepository implements CatalogRepository {
   static const pageSize = 20;
 
   @override
-  Future<HomeFeed> homeFeed({required PopularPeriod period}) async {
+  Future<HomeFeed> homeFeed({
+    required PopularPeriod period,
+    CatalogFilter filter = const CatalogFilter(),
+  }) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        ApiPaths.products,
-        queryParameters: {'limit': pageSize},
-      );
-      final page = response.data ?? const <String, dynamic>{};
+      final responses = await Future.wait([
+        _dio.get<Map<String, dynamic>>(
+          ApiPaths.products,
+          queryParameters: {
+            'category': ?filter.category,
+            if (filter.hideSoldOut) 'hideSoldOut': true,
+            'limit': pageSize,
+          },
+        ),
+        _dio.get<List<dynamic>>(ApiPaths.categories),
+      ]);
+      final page = responses[0].data as Map<String, dynamic>? ?? const {};
+      final categories = responses[1].data as List<dynamic>? ?? const [];
       return HomeFeed(
         recent: [
           for (final item in page['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
         ],
+        categories: _categoriesFrom(categories),
         recentTotal: (page['total'] as num?)?.toInt() ?? 0,
       );
     } on DioException catch (error) {

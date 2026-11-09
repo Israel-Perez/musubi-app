@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
@@ -39,6 +40,20 @@ class PopularPeriodNotifier extends Notifier<PopularPeriod> {
   void select(PopularPeriod period) => state = period;
 }
 
+/// Filtro aplicado a "Recién publicados" (Todo por defecto).
+final catalogFilterProvider =
+    NotifierProvider<CatalogFilterNotifier, CatalogFilter>(
+      CatalogFilterNotifier.new,
+    );
+
+class CatalogFilterNotifier extends Notifier<CatalogFilter> {
+  @override
+  CatalogFilter build() => const CatalogFilter();
+
+  // ignore: use_setters_to_change_properties, se lee como accion de la UI.
+  void apply(CatalogFilter filter) => state = filter;
+}
+
 /// Vitrina de Inicio. Para reintentar: `ref.invalidate(homeFeedProvider)`.
 ///
 /// Sin el reintento automatico de Riverpod 3: si falla, se ve `Inicio-error`
@@ -47,6 +62,25 @@ final FutureProvider<HomeFeed> homeFeedProvider =
     FutureProvider.autoDispose<HomeFeed>(
       (ref) => ref
           .watch(catalogRepositoryProvider)
-          .homeFeed(period: ref.watch(popularPeriodProvider)),
+          .homeFeed(
+            period: ref.watch(popularPeriodProvider),
+            filter: ref.watch(catalogFilterProvider),
+          ),
+      retry: (_, _) => null,
+    );
+
+/// Cuantos productos veria la persona con el filtro que esta eligiendo
+/// ("Ver 6 productos").
+final FutureProviderFamily<int, CatalogFilter> filterPreviewProvider =
+    FutureProvider.autoDispose.family<int, CatalogFilter>(
+      (ref, filter) async =>
+          (await ref
+                  .watch(catalogRepositoryProvider)
+                  .homeFeed(
+                    period: ref.watch(popularPeriodProvider),
+                    filter: filter,
+                  ))
+              .recent
+              .length,
       retry: (_, _) => null,
     );

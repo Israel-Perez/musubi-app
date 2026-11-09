@@ -299,7 +299,10 @@ class DemoCatalogRepository implements CatalogRepository {
   ];
 
   @override
-  Future<HomeFeed> homeFeed({required PopularPeriod period}) async {
+  Future<HomeFeed> homeFeed({
+    required PopularPeriod period,
+    CatalogFilter filter = const CatalogFilter(),
+  }) async {
     final now = _clock();
     ProductSummary timed((ProductSummary, int) entry, {int? views}) {
       final (p, minutes) = entry;
@@ -324,7 +327,13 @@ class DemoCatalogRepository implements CatalogRepository {
       for (final (id, views) in _ranking[period]!)
         if (!byId(id).$1.soldOut) timed(byId(id), views: views),
     ];
-    final recent = [for (final entry in _products) timed(entry)];
+    final category = filter.category;
+    final recent = [
+      for (final entry in _products)
+        if ((category == null || entry.$1.category == category) &&
+            (!filter.hideSoldOut || !entry.$1.soldOut))
+          timed(entry),
+    ];
     final wanted = [
       for (final (w, minutes) in _wanted)
         WantedSummary(
@@ -341,6 +350,7 @@ class DemoCatalogRepository implements CatalogRepository {
       popular: popular,
       recent: recent,
       wanted: wanted,
+      categories: demoCategories,
       recentTotal: 48,
     );
   }

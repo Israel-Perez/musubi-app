@@ -30,7 +30,7 @@ Jira (SCRUM-27): como **comprador**, quiero **filtrar los resultados por categor
 14. La cabecera de resultados dice `N resultados en` con la píldora `UTTT`, como la maqueta, y a la derecha el orden actual (`Más relevantes`).
 15. El orden se elige en una hoja `Ordenar por` con `Más relevantes`, `Más recientes`, `Menor precio` y `Mayor precio`; al cambiarlo se relanza la búsqueda con el texto y los filtros actuales.
 16. `/buscar` guarda hasta 5 búsquedas de la sesión (sin persistirlas, RNF-07): chips tocables y `Limpiar` a la derecha, visibles arriba de los resultados.
-17. El botón `Filtrar` de Inicio abre `/buscar` con la hoja de filtros abierta.
+17. Inicio conserva su propia hoja `Filtrar` (categoría y "Ocultar agotados", con el globo del conteo), como la maqueta; la búsqueda tiene la suya con precio, estado y orden.
 18. `Limpiar` en la hoja avisa con un toast `Filtros borrados`.
 19. Al salir de `/buscar` se limpia todo (`autoDispose`). La X del campo borra el texto y conserva los filtros (vuelve a mostrar el catálogo filtrado); `Limpiar` de la hoja borra los filtros.
 20. Las categorías se acomodan en fila, con varias por renglón, como la maqueta.
@@ -45,14 +45,14 @@ Jira (SCRUM-27): como **comprador**, quiero **filtrar los resultados por categor
 - `data/demo_catalog_repository.dart`: búsqueda local con categoría, precio inclusivo, condición y agotados; sin texto devuelve el catálogo filtrado.
 - `presentation/search_providers.dart`: `SearchState.filter`, `sort`, `page` y `pageCount`, `search(query, {filter, sort, page})`, `applyFilter(filter)`, `setSort(sort)`, `goToPage(page)`, `clear()`, `searchHistoryProvider` (5, en memoria) y `searchPreviewProvider` (retardo de 300 ms en la hoja).
 - `presentation/search_filter_sheet.dart`: `showSearchFilterSheet`, `MusubiPanel`, chips en fila, histograma que sigue el rango, `RangeSlider` de dos pulgares (0 a $2,000+), precio, segmented y `Ocultar agotados`; `Limpiar` (con toast) y `Ver N resultados`.
-- `presentation/search_screen.dart`: lista todo al entrar, botón con globo, apertura de la hoja (también con `?filtros=1` desde Inicio), cabecera con píldora `UTTT`, hoja `Ordenar por`, historial de la sesión y paginación por página debajo de la cuadrícula.
-- `presentation/home_screen.dart`: el botón `Filtrar` navega a `/buscar?filtros=1`; Inicio deja de tener hoja de filtros propia.
+- `presentation/search_screen.dart`: lista todo al entrar, botón con globo, apertura de la hoja, cabecera con píldora `UTTT`, hoja `Ordenar por`, historial de la sesión y paginación por página debajo de la cuadrícula.
+- `presentation/home_screen.dart`: la hoja `Filtrar` de Recién publicados (categoría + "Ocultar agotados", globo del conteo) y su hoja `filter_sheet.dart`; el filtro viaja a `homeFeed`.
 - `presentation/home_providers.dart`: `categoriesProvider` (`FutureProvider.autoDispose`).
 - `core/widgets/musubi_text_field.dart`: `prefixText` opcional para el `$` de los precios.
 
 Decisiones:
 
-- **Inicio delega los filtros a la búsqueda.** Un solo lugar (la hoja de `/buscar`) evita dos juegos de filtros; `CatalogFilter` y su hoja se retiran.
+- **Dos hojas, dos propósitos.** Inicio filtra la vitrina (categoría y agotados, lineamiento 4 y maqueta); la búsqueda filtra resultados (categorías múltiples, precio, estado y orden). Comparten el botón y el lenguaje visual, no el estado.
 - **Historial solo de la sesión.** RNF-07 prohíbe persistir el texto de búsqueda; se guardan hasta 5 en memoria y se borran al cerrar la app.
 - **`relevance` comparte el orden de `newest`.** La API todavía no calcula puntaje; el orden existe y se documenta (`NOTE (HU-09)`).
 - **“Ocultar agotados” sí va en la búsqueda.** La maqueta lo trae y la API lo acepta: `hideSoldOut=false` incluye los agotados aunque haya `q`. Apagado, el globo lo cuenta como filtro activo.
@@ -74,7 +74,7 @@ Decisiones:
 - `test/features/marketplace/demo_catalog_repository_test.dart`: precio inclusivo, categoría, condición y combinación con `q`.
 - `test/features/marketplace/search_providers_test.dart`: `applyFilter` relanza con el `q` actual y explora sin texto; `goToPage` pide esa página y conserva filtro y orden; `clear` conserva el filtro y lista el catálogo.
 - `test/features/marketplace/search_screen_test.dart`: lista todo al entrar; botón y globo; abrir la hoja; aplicar categoría/precio/estado; filtrar sin texto muestra publicaciones; cambiar el orden; paginación; historial (guarda el término) y su `Limpiar`; mínimo > máximo; CTA con conteo; al reabrir no conserva búsqueda ni filtros.
-- `test/features/marketplace/home_screen_test.dart`: el botón `Filtrar` de Inicio abre la hoja de la búsqueda.
+- `test/features/marketplace/home_screen_test.dart`: la hoja `Filtrar` de Inicio elige categoría, muestra el globo, oculta agotados y limpia.
 - `test/features/marketplace/search_filter_sheet_test.dart`: estados de la hoja, chips en fila, control deslizante, histograma que recolorea con el rango, interruptor de agotados, toast y validación.
 - `test/helpers/fake_catalog_repository.dart`: registra filtros y responde `categories()`.
 
@@ -95,7 +95,7 @@ Decisiones:
 - [ ] El control deslizante llega a $2,000+ y el histograma cambia de color con el rango (`search_filter_sheet_test`).
 - [ ] Elegir `Menor precio` manda `sort=priceAsc` y la cabecera lo muestra (`search_screen_test`, `http_catalog_repository_test`).
 - [ ] Buscar guarda el término en el historial y `Limpiar` lo vacía (`search_screen_test`).
-- [ ] `Filtrar` de Inicio abre la hoja de la búsqueda (`home_screen_test`).
+- [ ] La hoja `Filtrar` de Inicio filtra la vitrina y muestra el globo del conteo (`home_screen_test`).
 - [ ] `Limpiar` de la hoja avisa `Filtros borrados` (`search_filter_sheet_test`).
 - [ ] `dart format --output=none --set-exit-if-changed .` sin cambios.
 - [ ] `flutter analyze --fatal-infos --fatal-warnings` sin observaciones.
@@ -110,7 +110,7 @@ Decisiones:
 - **Productos agotados en la base de muestra:** no se pueden publicar con la API (stock mínimo 1); el interruptor se prueba con pruebas, no con datos sembrados.
 - **Histograma de precio:** las alturas son decorativas (`aria-hidden` en la maqueta); solo el color sigue el rango elegido.
 - **Acciones del vacío:** HU-12/HU-13.
-- **Filtros en Inicio:** Inicio no tiene hoja propia; su botón `Filtrar` abre la de la búsqueda.
+- **Filtros de Inicio:** solo categoría y agotados; precio y estado viven en la búsqueda.
 
 ## Aprobación y Control de Cambios
 

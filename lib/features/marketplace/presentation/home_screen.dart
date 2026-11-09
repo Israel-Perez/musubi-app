@@ -25,6 +25,7 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
+import 'package:musubi_app/features/marketplace/presentation/filter_sheet.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
@@ -111,13 +112,14 @@ class HomeScreen extends ConsumerWidget {
     HomeFeed feed,
     void Function(AccountGateMotive) gate,
   ) {
+    final filter = ref.watch(catalogFilterProvider);
     // HU-11: el visitante tambien ve el detalle (HU-48).
     void open(ProductSummary product) =>
         unawaited(context.push(AppRoutes.product(product.id), extra: product));
     return [
       // NOTE (HU-49): sin vistas (HU-11) no hay "Populares"; si la vitrina
       // esta vacia, la seccion explica por que.
-      if (feed.popular.isNotEmpty || feed.recent.isEmpty)
+      if (feed.popular.isNotEmpty || (feed.recent.isEmpty && filter.count == 0))
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.only(top: 12),
@@ -130,12 +132,13 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ),
-      if (feed.recent.isNotEmpty)
+      if (feed.recent.isNotEmpty || filter.count > 0)
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.only(top: 22),
             child: _RecentMosaic(
               feed: feed,
+              filter: filter,
               onSave: () => gate(AccountGateMotive.save),
               onOpen: open,
             ),
@@ -412,9 +415,8 @@ class _MemberHeader extends StatelessWidget {
                   ),
                 ),
                 Pressable(
-                  // HU-10: los filtros viven en la busqueda.
-                  onTap: () =>
-                      unawaited(context.push('${AppRoutes.search}?filtros=1')),
+                  // NOTE (HU-10): filtros de la busqueda.
+                  onTap: () => unawaited(context.push(AppRoutes.search)),
                   semanticLabel: 'Filtros',
                   builder: (context, pressed) => Container(
                     width: 52,
@@ -747,9 +749,15 @@ class _PeriodSwitch extends StatelessWidget {
 
 /// "Recién publicados" de visitante: mosaico de dos columnas y "Filtrar".
 class _RecentMosaic extends StatelessWidget {
-  const new({required this.feed, required this.onSave, required this.onOpen});
+  const new({
+    required this.feed,
+    required this.filter,
+    required this.onSave,
+    required this.onOpen,
+  });
 
   final HomeFeed feed;
+  final CatalogFilter filter;
   final VoidCallback onSave;
 
   /// Tocar un producto (HU-11).
@@ -757,6 +765,15 @@ class _RecentMosaic extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.musubi;
+    final category = filter.category;
+    final title = category == null
+        ? 'Recién publicados'
+        : feed.categories
+                  .where((option) => option.slug == category)
+                  .firstOrNull
+                  ?.name ??
+              'Recién publicados';
     final left = <Widget>[];
     final right = <Widget>[];
     // El mosaico de la maqueta muestra hasta 6.
@@ -780,45 +797,58 @@ class _RecentMosaic extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionTitle(
-          title: 'Recién publicados',
+          title: title,
           size: 20,
-          trailing: _FilterButton(
-            onTap: () =>
-                unawaited(context.push('${AppRoutes.search}?filtros=1')),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: MusubiSizes.space3,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: MusubiSizes.space4,
-                  children: left,
+          trailing: feed.categories.isEmpty
+              ? null
+              : _FilterButton(
+                  count: filter.count,
+                  onTap: () =>
+                      unawaited(showFilterSheet(context, feed.categories)),
                 ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: MusubiSizes.space4,
-                  children: right,
-                ),
-              ),
-            ],
-          ),
         ),
+        if (feed.recent.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Text(
+              'No hay productos con ese filtro.',
+              style: MusubiType.body.copyWith(color: c.textSecondary),
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: MusubiSizes.space3,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: MusubiSizes.space4,
+                    children: left,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: MusubiSizes.space4,
+                    children: right,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
 }
 
-/// Boton "Filtrar" de 44: abre los filtros de la busqueda (HU-10).
+/// Boton "Filtrar" de 44 con el globo de filtros activos.
 class _FilterButton extends StatelessWidget {
-  const new({required this.onTap});
+  const new({required this.count, required this.onTap});
 
+  final int count;
   final VoidCallback onTap;
 
   @override
@@ -827,21 +857,57 @@ class _FilterButton extends StatelessWidget {
     return Pressable(
       key: const Key('home-filter'),
       onTap: onTap,
-      semanticLabel: 'Filtrar',
-      builder: (context, pressed) => SizedBox.square(
-        dimension: 44,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: pressed ? c.surfacePressed : c.surface,
-            borderRadius: BorderRadius.circular(MusubiSizes.radiusField),
-          ),
-          child: Center(
-            child: MusubiIcon(
-              MusubiIcons.slidersHorizontal,
-              size: 20,
-              color: c.textPrimary,
+      semanticLabel: switch (count) {
+        0 => 'Filtrar',
+        1 => 'Filtrar, 1 filtro activo',
+        _ => 'Filtrar, $count filtros activos',
+      },
+      builder: (context, pressed) => SizedBox(
+        width: 44,
+        height: 44,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: pressed ? c.surfacePressed : c.surface,
+                  borderRadius: BorderRadius.circular(MusubiSizes.radiusField),
+                ),
+                child: Center(
+                  child: MusubiIcon(
+                    MusubiIcons.slidersHorizontal,
+                    size: 20,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
             ),
-          ),
+            if (count > 0)
+              Positioned(
+                top: -5,
+                right: -5,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 20),
+                  height: 20,
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: c.brand,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: c.background, width: 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$count',
+                    style: MusubiType.style(
+                      10.5,
+                      weight: FontWeight.w800,
+                      color: const Color(0xFFFFFFFF),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

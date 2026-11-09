@@ -40,7 +40,7 @@ void main() {
     );
   }
 
-  test('recien publicados y el total', () async {
+  test('recien publicados, categorias con su foto y el total', () async {
     serve();
 
     final feed = await repository.homeFeed(period: PopularPeriod.today);
@@ -48,6 +48,8 @@ void main() {
     expect(feed.recent.single.title, startsWith('Calculadora'));
     expect(feed.recent.single.sellerName, 'Ana R.');
     expect(feed.recentTotal, 48);
+    expect(feed.categories.map((c) => c.slug), ['calculadoras', 'electronica']);
+    expect(feed.categories.first.photoUrl, 'asset:assets/products/casio.webp');
     // "Populares" (HU-49) y "Se busca" (HU-15) llegan con sus HU.
     expect(feed.popular, isEmpty);
     expect(feed.wanted, isEmpty);
@@ -56,6 +58,24 @@ void main() {
       (r) => r.path == ApiPaths.products,
     );
     expect(products.queryParameters, {'limit': HttpCatalogRepository.pageSize});
+  });
+
+  test('el filtro de Inicio va en la consulta', () async {
+    serve();
+
+    await repository.homeFeed(
+      period: PopularPeriod.today,
+      filter: const CatalogFilter(category: 'libros', hideSoldOut: true),
+    );
+
+    final products = adapter.requests.firstWhere(
+      (r) => r.path == ApiPaths.products,
+    );
+    expect(products.queryParameters, {
+      'category': 'libros',
+      'hideSoldOut': true,
+      'limit': HttpCatalogRepository.pageSize,
+    });
   });
 
   test('un error llega como ApiFailure', () async {

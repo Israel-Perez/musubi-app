@@ -42,8 +42,25 @@ void main() {
       ]);
       expect(feed.recent[4].stockLabel, isNull);
       expect(feed.recent[4].soldOut, isTrue);
+      expect(feed.categories, hasLength(5));
       expect(feed.recentTotal, 48);
     });
+  });
+
+  test('filtro: una categoria y ocultar agotados', () async {
+    final tech = await repository.homeFeed(
+      period: PopularPeriod.today,
+      filter: const CatalogFilter(category: 'tecnologia'),
+    );
+    final available = await repository.homeFeed(
+      period: PopularPeriod.today,
+      filter: const CatalogFilter(category: 'tecnologia', hideSoldOut: true),
+    );
+
+    expect(tech.recent.every((p) => p.category == 'tecnologia'), isTrue);
+    expect(tech.recent.any((p) => p.soldOut), isTrue);
+    expect(available.recent.any((p) => p.soldOut), isFalse);
+    expect(available.recent.length, lessThan(tech.recent.length));
   });
 
   test('"hace 20 min" se cuenta desde el reloj de la app', () async {
