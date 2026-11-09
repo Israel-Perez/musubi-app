@@ -11,7 +11,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Búsqueda (HU-09):** app `0.5.1+7` contra la API `0.5.0-alpha.5` (PR musubi-api#49, sin desplegar); 325 pruebas, analyze 0 y critic PASS. Antes de subirla a Google Play hay que subir el `versionCode` (`0.5.1+7` ya está publicada).
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
-- **Filtros de búsqueda (HU-10):** app en `feature/SCRUM-27-filtrar-categoria-precio`, contra la API del PR musubi-api#53 (`page`, `category` repetido, `sort`); 366 pruebas, analyze 0 y critic PASS. Sin publicar.
+- **Filtros de búsqueda (HU-10):** app en `feature/SCRUM-27-filtrar-categoria-precio`, contra la API del PR musubi-api#53 (`page` 1 a 50, `category` repetido, `sort`); 366 pruebas, analyze 0 y critic PASS. Matriz compartida actualizada a API `0.5.0-alpha.7` / esquema 9. Sin publicar.
 
 ## T26 — Filtrar productos por categoría, precio y estado (08-Nov-2026, SCRUM-27, HU-10)
 
