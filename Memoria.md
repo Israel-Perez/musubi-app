@@ -4,11 +4,10 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 ## Estado actual (09-Nov-2026)
 
-- **En Google Play:** `0.5.1+7` en la prueba cerrada (chat, bandeja y detalle del producto).
-- **En `main`, sin publicar (siguiente lote):** búsqueda (HU-09), filtros y orden (HU-10), reportar y bloquear + foto en el chat (HU-28 y HU-57), solicitudes de compra (HU-13), el tablero "Se busca" (HU-15), "Yo tengo este producto" (HU-16) y elegir ofertas (HU-17). **No se sube a Google Play por cada HU:** el usuario prefiere juntar varias. Antes de publicar el lote:
-  - subir el `versionCode` (`0.5.1+7` ya está publicada);
-  - actualizar "Seguridad de los datos" en Play Console (mensajes, reportes, bloqueos y solicitudes de compra).
-- **API en producción:** `0.5.0-alpha.8`, esquema 10 (`infra-up` del 09-Nov-2026). En `main` hay más versiones sin desplegar (HU-15 a HU-17, hasta `0.5.0-alpha.11`, esquema 12). La matriz está en `docs/versionado.md`.
+- **En Google Play:** `0.6.0+8` enviada a la prueba cerrada el 09-Nov-2026 (SCRUM-87), con el lote de búsqueda (HU-09), filtros y orden (HU-10), reportar y bloquear + foto en el chat (HU-28 y HU-57), solicitudes de compra (HU-13), el tablero "Se busca" (HU-15), "Yo tengo este producto" (HU-16) y elegir ofertas (HU-17). La anterior era `0.5.1+7`.
+  - Notas de la versión en `docs/play/whatsnew/whatsnew-es-419`; la descripción completa nueva y "Seguridad de los datos" (mensajes, solicitudes, ofertas, reportes y bloqueos) están en `docs/play/README.md` y **se pegan a mano en Play Console**: el workflow solo sube el AAB y las notas.
+  - El siguiente lote vuelve a subir el `versionCode` (`0.6.0+8` ya está usada).
+- **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
 - **Siguiente:** HU-14 (editar, cerrar y cancelar la solicitud) y luego Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
 - **Pendiente con dueño:** la rama `feature/SCRUM-24-editar-eliminar-publicaciones` (HU-07, Kazumi) tiene conflictos; no se toca sin el OK del usuario.
 
