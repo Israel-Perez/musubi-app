@@ -214,7 +214,7 @@ class _InboxStub implements EmailInbox {
 }
 
 /// `Se-busca` (`REQUESTS` de la maqueta): nombre completo y carrera.
-final _memberBoard = [
+final List<WantedRequest> _memberBoard = [
   boardWanted(
     neededBy: DateTime(2026, 10, 5),
     createdAt: _now.subtract(const Duration(minutes: 20)),
@@ -248,7 +248,7 @@ final _memberBoard = [
 ];
 
 /// `Se-busca-visitante`: solo el nombre corto.
-final _visitorBoard = [
+final List<WantedRequest> _visitorBoard = [
   boardWanted(
     title: 'Bata de laboratorio talla M',
     neededBy: DateTime(2026, 10, 5),
