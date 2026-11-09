@@ -2,8 +2,9 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (08-Nov-2026)
+## Estado actual (09-Nov-2026)
 
+- **Solicitudes de compra (HU-13, rama `feature/SCRUM-35-solicitudes-compra`):** en un PR, contra la API `0.5.0-alpha.7` (musubi-api#54). Sin subir el `versionCode`: va en el siguiente lote para Google Play.
 - **Reportar y bloquear (HU-28 y HU-57, rama `feature/SCRUM-57-reportar-bloquear`):** en un PR, contra la API `0.5.0-alpha.6` (musubi-api#52). **No se sube a Google Play por cada HU:** el usuario prefiere juntar varias HU antes de publicar.
 
 - **En Google Play:** `0.5.1+7` en la prueba cerrada (chat, bandeja y detalle del producto).
@@ -12,6 +13,30 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Búsqueda (HU-09):** app `0.5.1+7` contra la API `0.5.0-alpha.5` (PR musubi-api#49, sin desplegar); 325 pruebas, analyze 0 y critic PASS. Antes de subirla a Google Play hay que subir el `versionCode` (`0.5.1+7` ya está publicada).
 - **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
+
+## T26 — Publicar lo que necesito y Mis solicitudes (09-Nov-2026, SCRUM-35, HU-13)
+
+**Qué se hizo**
+- `lib/features/purchase_requests/` (M-05):
+  - `Necesidad-1`…`Necesidad-3` con un borrador en memoria (`needDraftProvider`);
+  - `Necesidad-publicada` con las coincidencias de la búsqueda (HU-09), primero las que caben en el presupuesto;
+  - `Mis-solicitudes` (Activas/Cerradas y "Cambiar").
+- Perfil: renglón "Mis solicitudes" ("N activas · N ofertas") y Privacidad en un renglón aparte.
+- `SellStepLayout` con `steps`, `heading`, `onSave` y `top`; ícono `target`; `longDate`.
+- 5 escenas en `tool/screenshots_test.dart`, comparadas con la maqueta. 352 pruebas, analyze 0, critic PASS.
+
+**Decisiones (con su porqué)**
+- **La carpeta es `purchase_requests` y las clases `Wanted*`:** `docs/modulos.md` fija la carpeta de M-05; las clases se llaman como en la API.
+- **"Elegir fecha" abre las fechas de la maqueta (`NEED_DATES`):** lunes, miércoles y viernes de la semana que entra y el lunes siguiente. El calendario de Material no es parte del sistema visual.
+- **Mis solicitudes está en la rama de Perfil:** la maqueta la muestra con la barra de pestañas. Desde "Ver mi solicitud" no hay nada atrás, así que "Regresar" lleva a Perfil.
+- **La cantidad siempre se ve (pedido del usuario):** en la vista previa y el boleto publicado ("vie 9 oct · 2 piezas") y, si es más de una, en Mis solicitudes y en "Cambiar". El script de la maqueta la quitaba al redibujar.
+- **"Compara las ofertas" queda vacío hasta HU-16/HU-17**, aunque la tarjeta diga "3 ofertas" con datos de muestra.
+
+**Errores a evitar**
+- **`Center` dentro de un `Wrap` ocupa todo el ancho:** los chips salían apilados y centrados. Usa `Center(widthFactor: 1)`.
+- **Un `<legend>` de `<fieldset>` no respeta el `padding-top`:** el navegador lo pega al bloque de arriba y deja el relleno debajo. Mide la captura, no el CSS.
+- **Con la fuente Ahem de las pruebas, una fila con textos largos se desborda:** usa `Flexible`/`FittedBox` donde la maqueta corta con `ellipsis`.
+- **`context.pop()` falla si la pantalla se abrió con `go`:** revisa `canPop()`.
 
 ## T25 — Buscar productos por palabra clave (07-Nov-2026, SCRUM-26, HU-09)
 
