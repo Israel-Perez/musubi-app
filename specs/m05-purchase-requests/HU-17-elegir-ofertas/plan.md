@@ -1,10 +1,15 @@
-# plan.md — HU-17 Ver y elegir ofertas recibidas (borrador)
+# HU-17 — Ver y elegir ofertas recibidas (app, plan)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
+## Decisiones
+- **"Deshacer" sin endpoint propio:** la oferta se esconde al confirmar y la API se llama cuando termina el aviso de 4 s; "Deshacer" cancela el temporizador. Si se sale antes, el rechazo se envía al desmontar la sección.
+- **"Recomendadas" en la app:** las aceptadas primero, luego las que caben en el presupuesto, mejor reputación y menor precio. Son pocas ofertas por solicitud (RN-14).
+- **Etiquetas:** "Mejor reputación" va en la oferta con mejor promedio, si hay con quién comparar; "Menor precio", en la más barata; "Aceptada", en la elegida.
+- **El saludo queda escrito, no enviado:** la persona lo manda o lo cambia; la maqueta lo deja listo.
+- **Una oferta no tiene "Ver":** no siempre hay publicación (oferta directa).
 
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+## Archivos
+- **Nuevos:** `presentation/received_offers.dart` y `test/features/purchase_requests/received_offers_test.dart`.
+- **Cambian:**
+  - `offer_models.dart`, `wanted_repository.dart`, `http_wanted_repository.dart`, `wanted_providers.dart`, `my_wanted_screen.dart` y `offer_sheet.dart`;
+  - `chat_models.dart`, `http_chat_repository.dart`, `chat_screen.dart` y `router.dart`;
+  - `api_paths.dart`, `tool/screenshots_test.dart` y `test/helpers/fake_wanted.dart`.

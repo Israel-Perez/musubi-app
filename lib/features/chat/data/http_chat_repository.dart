@@ -97,6 +97,7 @@ class HttpChatRepository implements ChatRepository {
         id: context['id'] as String,
         title: context['title'] as String,
         available: context['available'] as bool? ?? false,
+        type: context['type'] as String? ?? 'product',
         priceCents: (context['priceCents'] as num?)?.toInt(),
         condition: context['condition'] as String?,
         conditionDetail: context['conditionDetail'] as String?,

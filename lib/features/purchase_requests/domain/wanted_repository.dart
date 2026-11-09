@@ -24,4 +24,16 @@ abstract interface class WantedRepository {
 
   /// "Enviar oferta" (HU-16): la crea o la reemplaza (RN-14).
   Future<WantedOffer> sendOffer(String requestId, NewOffer offer);
+
+  /// "Compara las ofertas" (HU-17): las de mi solicitud.
+  Future<List<ReceivedOffer>> receivedOffers(String requestId);
+
+  /// "Rechazar" (HU-17).
+  Future<void> rejectOffer(String requestId, String offerId);
+
+  /// "Aceptar oferta" (HU-17): devuelve la conversacion con quien ofrece.
+  Future<String> acceptOffer(String requestId, String offerId);
+
+  /// "Abrir chat" (HU-17): la conversacion con quien ofrece, sin decidir.
+  Future<String> offerChat(String requestId, String offerId);
 }

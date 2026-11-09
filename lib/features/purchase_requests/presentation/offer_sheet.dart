@@ -384,15 +384,25 @@ class _OfferSheetState extends ConsumerState<OfferSheet> {
                 ),
                 child: MusubiButton(
                   key: const Key('offer-send'),
-                  label: _existing == null
-                      ? 'Enviar oferta'
-                      : 'Actualizar oferta',
+                  // HU-17: una oferta elegida o rechazada ya no se cambia.
+                  label: switch (_existing?.status) {
+                    OfferStatus.accepted => '$first eligió tu oferta',
+                    OfferStatus.rejected => '$first rechazó tu oferta',
+                    OfferStatus.sent => 'Actualizar oferta',
+                    null => 'Enviar oferta',
+                  },
                   icon: MusubiIcons.send,
                   iconSize: 19,
                   fontSize: 16,
                   loading: _sending,
                   loadingLabel: 'Enviando oferta…',
-                  onPressed: _loading || _uploading ? null : _send,
+                  onPressed:
+                      _loading ||
+                          _uploading ||
+                          (_existing?.status ?? OfferStatus.sent) !=
+                              OfferStatus.sent
+                      ? null
+                      : _send,
                 ),
               ),
             ],
