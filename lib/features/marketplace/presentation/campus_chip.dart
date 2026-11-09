@@ -20,20 +20,36 @@ abstract final class DefaultCampus {
 
 /// Chip "UTTT" junto al logo. Visitante: con flecha, abre la hoja del campus
 /// ("Estás explorando la UTTT"). Con sesion: la insignia de verificado y no
-/// se toca (maqueta `Inicio`).
+/// se toca (maqueta `Inicio`). [onBrand] es la version sobre el rojo de
+/// `Se-busca-visitante` (fondo `#B9141A`, circulo blanco y texto blanco).
 class CampusChip extends StatelessWidget {
-  const new({required this.signedIn, super.key});
+  const new({
+    required this.signedIn,
+    super.key,
+    this.onBrand = false,
+    this.returnTo = AppRoutes.home,
+  });
 
   final bool signedIn;
+  final bool onBrand;
+
+  /// A donde vuelve el visitante al crear su cuenta desde la hoja.
+  final String returnTo;
 
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
+    final ink = onBrand ? c.onBrand : c.textPrimary;
     Widget chip({bool pressed = false}) => Container(
       height: 34,
       padding: EdgeInsets.only(left: 4, right: signedIn ? 10 : 9),
       decoration: BoxDecoration(
-        color: pressed ? c.surfacePressed : c.surface,
+        color: switch ((onBrand, pressed)) {
+          (true, true) => c.brandPressed,
+          (true, false) => c.brandDeep,
+          (false, true) => c.surfacePressed,
+          (false, false) => c.surface,
+        },
         borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
       ),
       child: Row(
@@ -43,13 +59,16 @@ class CampusChip extends StatelessWidget {
           Container(
             width: 26,
             height: 26,
-            decoration: BoxDecoration(color: c.brand, shape: BoxShape.circle),
-            child: const Center(
+            decoration: BoxDecoration(
+              color: onBrand ? c.onBrand : c.brand,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
               child: MusubiIcon(
                 MusubiIcons.graduationCap,
                 size: 15,
                 strokeWidth: 2.2,
-                color: Color(0xFFFFFFFF),
+                color: onBrand ? c.brand : c.onBrand,
               ),
             ),
           ),
@@ -60,7 +79,7 @@ class CampusChip extends StatelessWidget {
               weight: FontWeight.w800,
               line: 16,
               em: 0.02,
-              color: c.textPrimary,
+              color: ink,
             ),
           ),
           if (signedIn)
@@ -70,7 +89,7 @@ class CampusChip extends StatelessWidget {
               MusubiIcons.chevronDown,
               size: 14,
               strokeWidth: 2.6,
-              color: c.textSecondary,
+              color: onBrand ? c.onBrand : c.textSecondary,
             ),
         ],
       ),
@@ -90,7 +109,7 @@ class CampusChip extends StatelessWidget {
         showAccountGate(
           context,
           motive: AccountGateMotive.campus,
-          returnTo: AppRoutes.home,
+          returnTo: returnTo,
         ),
       ),
       builder: (context, pressed) => SizedBox(

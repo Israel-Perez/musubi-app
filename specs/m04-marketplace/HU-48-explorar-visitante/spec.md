@@ -68,7 +68,7 @@ Ninguno todavía. El catálogo público llega con HU-06 y su fila en `musubi-api
 
 ## Límites
 - Hasta HU-06 la vitrina está vacía: no hay productos que mostrar. La excepción es la vitrina de muestra de dev (`DEMO_CATALOG`, 02-04).
-- El detalle del producto (`Producto-visitante`), "Recién publicados" con filtro de categorías y "Se busca" completo llegan en la fase 2.
+- El detalle del producto (`Producto-visitante`), "Recién publicados" con filtro de categorías y "Se busca" completo llegan en la fase 2. "Se busca" (`Se-busca-visitante` y la fila de Inicio) quedó con `musubi-app:HU-15` (09-Nov-2026).
 - Campus único (UTTT) para visitantes. `NOTE (HU-48)`: elegir campus cuando haya más comunidades (RNF-21).
 
 ## Aprobación y Control de Cambios

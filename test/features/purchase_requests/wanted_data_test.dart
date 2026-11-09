@@ -4,6 +4,7 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/purchase_requests/data/http_wanted_repository.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
@@ -22,7 +23,12 @@ Map<String, Object?> wantedJson({String status = 'active'}) => {
   'expiresAt': '2026-11-14T06:00:00Z',
   'status': status,
   'offersCount': 3,
-  'requester': {'id': '6716a0000000000000000001', 'name': 'Ana R.'},
+  'requester': {
+    'id': '6716a0000000000000000001',
+    'name': 'Ana R.',
+    'photo': null,
+    'career': null,
+  },
   'createdAt': '2026-11-09T12:00:00Z',
 };
 
@@ -37,6 +43,7 @@ void main() {
     repository = HttpWantedRepository(
       Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
         ..httpClientAdapter = adapter,
+      Uri.parse('https://api.musubi.example'),
     );
   }
 
@@ -114,6 +121,109 @@ void main() {
         ),
       ),
     );
+  });
+
+  group('tablero Se busca (HU-15)', () {
+    test(
+      'manda los filtros de la hoja y la lupa como la fila de la API',
+      () async {
+        serve(
+          (_) =>
+              FakeHttpAdapter.json({'items': <Object>[], 'nextCursor': null}),
+        );
+
+        await repository.board(
+          filter: const WantedBoardFilter(
+            categories: [
+              CatalogCategory(slug: 'laboratorio', name: 'Laboratorio'),
+              CatalogCategory(slug: 'libros', name: 'Libros'),
+            ],
+            budget: WantedBudget.from300To1000,
+            deadline: WantedDeadline.thisWeek,
+            query: '  bata ',
+          ),
+          cursor: 'r-laptop',
+          limit: 20,
+        );
+
+        final request = adapter.requests.single;
+        expect((request.method, request.path), ('GET', ApiPaths.wanted));
+        expect(request.queryParameters, {
+          'category': ['laboratorio', 'libros'],
+          'minBudgetCents': 30000,
+          'maxBudgetCents': 100000,
+          'neededWithinDays': 7,
+          'q': 'bata',
+          'cursor': 'r-laptop',
+          'limit': 20,
+        });
+      },
+    );
+
+    test('sin filtros no manda nada de mas', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({'items': <Object>[], 'nextCursor': null}),
+      );
+
+      await repository.board();
+
+      expect(adapter.requests.single.queryParameters, isEmpty);
+      expect(const WantedBoardFilter().count, 0);
+      expect(
+        const WantedBoardFilter(
+          budget: WantedBudget.over1000,
+          deadline: WantedDeadline.within3,
+        ).count,
+        2,
+      );
+      expect(const WantedBoardFilter(query: 'bata').narrowed, isTrue);
+    });
+
+    test('con sesion trae nombre, foto y carrera; el visitante no', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'items': [
+            {
+              ...wantedJson(),
+              'requester': {
+                'id': 'u1',
+                'name': 'Fernanda Ortiz',
+                'photo': '/media/avatars/u1.webp',
+                'career': 'QFB',
+              },
+            },
+            {
+              ...wantedJson(),
+              'neededBy': null,
+              'requester': {
+                'id': null,
+                'name': 'Fernanda O.',
+                'photo': null,
+                'career': null,
+              },
+            },
+          ],
+          'nextCursor': 'abc',
+        }),
+      );
+
+      final page = await repository.board();
+
+      final member = page.items.first;
+      expect(
+        (member.requesterId, member.requesterName, member.requesterCareer),
+        ('u1', 'Fernanda Ortiz', 'QFB'),
+      );
+      expect(
+        member.requesterPhotoUrl,
+        'https://api.musubi.example/media/avatars/u1.webp',
+      );
+      final visitor = page.items.last;
+      expect(visitor.requesterId, isNull);
+      expect(visitor.requesterPhotoUrl, isNull);
+      expect(visitor.neededBy, isNull);
+      expect(page.nextCursor, 'abc');
+    });
   });
 
   group('fechas rapidas de Necesidad-3', () {

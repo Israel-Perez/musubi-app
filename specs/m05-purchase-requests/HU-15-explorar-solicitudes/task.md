@@ -1,17 +1,21 @@
-# HU-15 — Explorar solicitudes publicadas (tareas)
+# HU-15 — Explorar solicitudes publicadas (app, tareas)
 
 ## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-15)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Datos
+- **Crear:** `WantedRepository.board`, `WantedBoardFilter` y la fila "Se busca" de Inicio.
+- **Verificar:** `wanted_data_test.dart` y `http_catalog_repository_test.dart`.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
 ## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+- **Crear:** `Se-busca` (lupa, "Filtrar solicitudes" y sus tres hojas) y `Se-busca-visitante`.
+- **Verificar:** `wanted_board_test.dart`, `navigation_test.dart` y capturas contra la maqueta.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## T4 — Documentación
+- **Estado:** ✅ Hecho (09-Nov-2026): trazabilidad, versionado (sección compartida), AGENTS y Memoria.
+
+## Pendientes
+- `NOTE (HU-16)` y `NOTE (HU-18)`.
+- Probar en el celular con la API `0.5.0-alpha.9`.

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
@@ -9,9 +10,12 @@ import 'package:musubi_app/features/purchase_requests/data/http_wanted_repositor
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_repository.dart';
 
-/// Solicitudes de compra (HU-13), con sesion. En pruebas, un fake.
+/// Solicitudes de compra (HU-13) y el tablero (HU-15). En pruebas, un fake.
 final wantedRepositoryProvider = Provider<WantedRepository>(
-  (ref) => HttpWantedRepository(ref.watch(dioProvider)),
+  (ref) => HttpWantedRepository(
+    ref.watch(dioProvider),
+    ref.watch(appConfigProvider).apiBaseUrl,
+  ),
 );
 
 /// "Mis solicitudes". Se vuelve a pedir al abrir la pantalla.

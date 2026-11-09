@@ -112,7 +112,7 @@ class WantedSummary {
     required this.id,
     required this.title,
     required this.budgetCents,
-    required this.neededBy,
+    this.neededBy,
     this.category,
     this.categoryName,
     this.createdAt,
@@ -121,7 +121,9 @@ class WantedSummary {
   final String id;
   final String title;
   final int budgetCents;
-  final DateTime neededBy;
+
+  /// Para cuando la necesita, o `null` si no eligio fecha ("Sin fecha").
+  final DateTime? neededBy;
 
   /// `slug` de la categoria (elige el icono del boleto).
   final String? category;

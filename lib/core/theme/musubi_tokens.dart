@@ -37,6 +37,10 @@ class MusubiColors extends ThemeExtension<MusubiColors> {
   /// Rojo claro: boletos "Se busca", ilustraciones y halo del foco.
   Color get brandSoft => _pick(0xFFFDECEC, 0xFF3A1517);
 
+  /// Rojo profundo sobre el rojo de marca: chip del campus y pasos de
+  /// `Se-busca-visitante` (igual en oscuro).
+  Color get brandDeep => const Color(0xFFB9141A);
+
   /// Rojo muy claro: boleto "Se busca" mientras carga.
   Color get brandFaint => _pick(0xFFFDF3F3, 0xFF2A1719);
   Color get onBrand => const Color(0xFFFFFFFF);

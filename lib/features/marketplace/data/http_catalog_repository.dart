@@ -14,8 +14,9 @@ import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 /// Va con el cliente con sesion: sin sesion no lleva token y la API no
 /// devuelve al vendedor (RNF-05); con sesion, si.
 ///
+/// "Se busca" sale del tablero (`GET /api/v1/wanted`, HU-15).
+///
 /// NOTE (HU-49): "Populares" llega con las vistas del detalle (HU-11).
-/// NOTE (HU-15): "Se busca" llega con las solicitudes.
 class HttpCatalogRepository implements CatalogRepository {
   new(this._dio, this._apiBaseUrl);
 
@@ -25,12 +26,17 @@ class HttpCatalogRepository implements CatalogRepository {
   /// Tarjetas de "Recién publicados" que se piden de una vez.
   static const pageSize = 20;
 
+  /// Boletos de "Se busca" en Inicio (la fila se desliza de lado).
+  static const wantedCount = 6;
+
   @override
   Future<HomeFeed> homeFeed({
     required PopularPeriod period,
     CatalogFilter filter = const CatalogFilter(),
   }) async {
     try {
+      // "Se busca" nunca falla (ver _wanted); productos y categorias si.
+      final wantedFuture = _wanted();
       final responses = await Future.wait([
         _dio.get<Map<String, dynamic>>(
           ApiPaths.products,
@@ -42,6 +48,7 @@ class HttpCatalogRepository implements CatalogRepository {
         ),
         _dio.get<List<dynamic>>(ApiPaths.categories),
       ]);
+      final wanted = await wantedFuture;
       final page = responses[0].data as Map<String, dynamic>? ?? const {};
       final categories = responses[1].data as List<dynamic>? ?? const [];
       return HomeFeed(
@@ -49,6 +56,7 @@ class HttpCatalogRepository implements CatalogRepository {
           for (final item in page['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
         ],
+        wanted: wanted,
         categories: _categoriesFrom(categories),
         recentTotal: (page['total'] as num?)?.toInt() ?? 0,
       );
@@ -56,6 +64,41 @@ class HttpCatalogRepository implements CatalogRepository {
       // Se traduce (no se traga): Inicio decide por el code.
       throw ApiFailure.fromDio(error);
     }
+  }
+
+  /// "Se busca" de Inicio. Es una seccion secundaria: si el tablero no
+  /// responde, Inicio se muestra sin ella ("Nadie ha pedido nada todavía")
+  /// en lugar de caer entero.
+  Future<List<WantedSummary>> _wanted() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiPaths.wanted,
+        queryParameters: {'limit': wantedCount},
+      );
+      return [
+        for (final item
+            in (response.data?['items'] as List<dynamic>? ?? const [])
+                .cast<Map<String, dynamic>>())
+          _wantedSummary(item),
+      ];
+    } on DioException {
+      return const [];
+    }
+  }
+
+  static WantedSummary _wantedSummary(Map<String, dynamic> json) {
+    final category = json['category'] as Map<String, dynamic>? ?? const {};
+    final neededBy = json['neededBy'] as String?;
+    return WantedSummary(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      budgetCents: (json['budgetCents'] as num).toInt(),
+      // "2026-11-13": un dia del campus, sin zona.
+      neededBy: neededBy == null ? null : DateTime.parse(neededBy),
+      category: category['slug'] as String?,
+      categoryName: category['name'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String).toUtc(),
+    );
   }
 
   @override

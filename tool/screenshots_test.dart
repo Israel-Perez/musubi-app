@@ -213,6 +213,77 @@ class _InboxStub implements EmailInbox {
   Future<bool> open() async => true;
 }
 
+/// `Se-busca` (`REQUESTS` de la maqueta): nombre completo y carrera.
+final _memberBoard = [
+  boardWanted(
+    neededBy: DateTime(2026, 10, 5),
+    createdAt: _now.subtract(const Duration(minutes: 20)),
+  ),
+  boardWanted(
+    id: 'r-laptop',
+    title: 'Laptop para programación con 16 GB de RAM',
+    category: 'laptops',
+    categoryName: 'Laptops',
+    budgetCents: 1200000,
+    neededBy: DateTime(2026, 10, 15),
+    requester: 'Mariana López',
+    requesterId: 'u-ml',
+    career: 'Ing. en Software',
+    offers: 2,
+    createdAt: _now.subtract(const Duration(hours: 1)),
+  ),
+  boardWanted(
+    id: 'r-fisica',
+    title: 'Física Universitaria, Sears-Zemansky',
+    category: 'libros',
+    categoryName: 'Libros',
+    budgetCents: 40000,
+    neededBy: DateTime(2026, 10, 9),
+    requester: 'Luis Martínez',
+    requesterId: 'u-lm',
+    career: 'Actuaría',
+    offers: 1,
+    createdAt: _now.subtract(const Duration(hours: 3)),
+  ),
+];
+
+/// `Se-busca-visitante`: solo el nombre corto.
+final _visitorBoard = [
+  boardWanted(
+    title: 'Bata de laboratorio talla M',
+    neededBy: DateTime(2026, 10, 5),
+    requester: 'Fernanda O.',
+    requesterId: null,
+    career: null,
+    createdAt: _now.subtract(const Duration(minutes: 20)),
+  ),
+  boardWanted(
+    id: 'r-laptop',
+    title: 'Laptop para programación con 16 GB de RAM',
+    category: 'laptops',
+    categoryName: 'Laptops',
+    budgetCents: 1200000,
+    neededBy: DateTime(2026, 10, 15),
+    requester: 'Mariana L.',
+    requesterId: null,
+    career: null,
+    offers: 2,
+    createdAt: _now.subtract(const Duration(hours: 1)),
+  ),
+  boardWanted(
+    id: 'r-anatomia',
+    title: 'Anatomía de Moore, 8a edición',
+    category: 'libros',
+    categoryName: 'Libros',
+    budgetCents: 60000,
+    neededBy: DateTime(2026, 10, 9),
+    requester: 'Andrea R.',
+    requesterId: null,
+    career: null,
+    createdAt: _now.subtract(const Duration(hours: 3)),
+  ),
+];
+
 /// La app con la vitrina de muestra, lista para tomar capturas.
 class _Shot {
   new(this.tester, {required this.member, CatalogRepository? catalog})
@@ -285,9 +356,11 @@ class _Shot {
                 ],
               ),
             ),
-            // `Mis-solicitudes`: 2 activas y 4 cerradas (HU-13).
+            // `Mis-solicitudes`: 2 activas y 4 cerradas (HU-13); el tablero
+            // de `Se-busca` y `Se-busca-visitante` (HU-15).
             wantedRepositoryProvider.overrideWithValue(
               FakeWantedRepository(
+                board: member ? _memberBoard : _visitorBoard,
                 mine: [
                   sampleWanted(offers: 3, neededBy: DateTime(2026, 10, 9)),
                   sampleWanted(id: 'w2', title: 'Bata de laboratorio talla M'),
@@ -602,6 +675,29 @@ final Map<String, (bool, _Scene)> _scenes = {
   'necesidad-3': (true, (s) => _needTo(s, 3)),
   'necesidad-publicada': (true, (s) => _needTo(s, 4)),
   'mis-solicitudes': (true, (s) => s.go(AppRoutes.myWanted)),
+  'se-busca': (true, (s) => s.go(AppRoutes.wanted)),
+  'se-busca-filtros': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.wanted);
+      await s.tap(find.byKey(const Key('wanted-filter')));
+    },
+  ),
+  'se-busca-lupa': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.wanted);
+      await s.tap(find.byKey(const Key('wanted-search')));
+    },
+  ),
+  'se-busca-visitante': (false, (s) => s.go(AppRoutes.wanted)),
+  'se-busca-visitante-scroll': (
+    false,
+    (s) async {
+      await s.go(AppRoutes.wanted);
+      await s.scroll(5000);
+    },
+  ),
   'cerrar-sesion': (
     true,
     (s) async {

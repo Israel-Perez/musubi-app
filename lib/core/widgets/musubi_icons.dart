@@ -186,6 +186,19 @@ abstract final class MusubiIcons {
     IconPath('M6 12.5V16a6 3 0 0 0 12 0v-3.5'),
   ]);
 
+  /// `handshake` ("Se lo vendes", `Se-busca-visitante`).
+  static const handshake = MusubiIconData([
+    IconPath('m11 17 2 2a1 1 0 1 0 3-3'),
+    IconPath(
+      'm14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 '
+      '1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 '
+      '1.42.25L21 4',
+    ),
+    IconPath('m21 3 1 11h-2'),
+    IconPath('M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3'),
+    IconPath('M3 4h8'),
+  ]);
+
   /// `hand`.
   static const hand = MusubiIconData([
     IconPath('M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2'),
@@ -462,7 +475,16 @@ abstract final class MusubiIcons {
     IconPath('m21.85 2.15-10.94 10.93'),
   ]);
 
-  /// `sparkle` ("Resumir acuerdo", HU-32).
+  /// `arrow-down-up` ("Presupuesto" de "Filtrar solicitudes", HU-15).
+  static const arrowDownUp = MusubiIconData([
+    IconPath('m3 16 4 4 4-4'),
+    IconPath('M7 20V4'),
+    IconPath('m21 8-4-4-4 4'),
+    IconPath('M17 4v16'),
+  ]);
+
+  /// `sparkle` ("Resumir acuerdo", HU-32; "Categoría" de "Filtrar
+  /// solicitudes", HU-15).
   static const sparkle = MusubiIconData([
     IconPath(
       'M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 '

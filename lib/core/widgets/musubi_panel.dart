@@ -246,25 +246,82 @@ class _MusubiOptionsState<T> extends State<MusubiOptions<T>> {
   }
 
   @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (final option in widget.options)
+        _OptionRow<T>(
+          option: option,
+          on: option.value == _selected,
+          mark: widget.plain ? null : BoxShape.circle,
+          onTap: () => _tap(option.value),
+        ),
+    ],
+  );
+}
+
+/// Lista de varias opciones (`UI.options` con `multi`): la marca es un cuadro
+/// de radio 8 (`.opt-multi .opt-mark`) y no cierra la hoja; la confirma la
+/// accion del [MusubiPanel] ("Ver solicitudes"). Quien la usa guarda
+/// [selected].
+class MusubiMultiOptions<T> extends StatelessWidget {
+  const new({
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+    super.key,
+  });
+
+  final List<MusubiOption<T>> options;
+  final Set<T> selected;
+  final ValueChanged<Set<T>> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (final option in options)
+        _OptionRow<T>(
+          option: option,
+          on: selected.contains(option.value),
+          mark: BoxShape.rectangle,
+          onTap: () => onChanged(
+            selected.contains(option.value)
+                ? ({...selected}..remove(option.value))
+                : {...selected, option.value},
+          ),
+        ),
+    ],
+  );
+}
+
+/// Fila de 56 de `.opts`: icono opcional, etiqueta (800 si esta elegida),
+/// linea pequena y la marca: circulo ([BoxShape.circle]), cuadro
+/// ([BoxShape.rectangle]) o ninguna (`null`, `.opt-plain`).
+class _OptionRow<T> extends StatelessWidget {
+  const new({
+    required this.option,
+    required this.on,
+    required this.mark,
+    required this.onTap,
+    super.key,
+  });
+
+  final MusubiOption<T> option;
+  final bool on;
+  final BoxShape? mark;
+  final VoidCallback onTap;
+
+  @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final option in widget.options)
-          _row(c, option, option.value == _selected),
-      ],
-    );
-  }
-
-  Widget _row(MusubiColors c, MusubiOption<T> option, bool on) {
     final ink = option.danger ? c.dangerText : c.textPrimary;
     return Semantics(
-      inMutuallyExclusiveGroup: !widget.plain,
-      checked: widget.plain ? null : on,
+      inMutuallyExclusiveGroup: mark == BoxShape.circle,
+      checked: mark == null ? null : on,
       child: Pressable(
         key: ValueKey('option-${option.value}'),
-        onTap: () => _tap(option.value),
+        onTap: onTap,
         semanticLabel: option.label,
         builder: (context, pressed) => Container(
           constraints: const BoxConstraints(minHeight: 56),
@@ -314,14 +371,17 @@ class _MusubiOptionsState<T> extends State<MusubiOptions<T>> {
                   ],
                 ),
               ),
-              if (!widget.plain)
+              if (mark != null)
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
                     color: on ? c.brand : null,
-                    shape: BoxShape.circle,
+                    shape: mark!,
+                    borderRadius: mark == BoxShape.rectangle
+                        ? BorderRadius.circular(8)
+                        : null,
                     border: on ? null : Border.all(color: c.border, width: 2),
                   ),
                   child: on

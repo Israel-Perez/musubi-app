@@ -69,7 +69,7 @@ void main() {
 
     expect(timeAgo(laptop.publishedAt!, now), 'hace 20 min');
     expect(timeAgo(feed.wanted.first.createdAt!, now), 'hace 20 min');
-    expect(shortDate(feed.wanted.first.neededBy), 'lun 5 oct');
+    expect(shortDate(feed.wanted.first.neededBy!), 'lun 5 oct');
   });
 
   test('con sesion, lo mas nuevo primero (maqueta Inicio)', () async {
