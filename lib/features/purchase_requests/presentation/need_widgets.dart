@@ -614,7 +614,10 @@ class ActivePill extends StatelessWidget {
   }
 }
 
+/// "1 pieza" / "3 piezas".
+String piecesText(int quantity) =>
+    '$quantity ${quantity == 1 ? 'pieza' : 'piezas'}';
+
 /// "vie 9 oct · 1 pieza" / "Sin fecha · 2 piezas".
 String needWhenLine(DateTime? day, int quantity) =>
-    '${day == null ? 'Sin fecha' : shortDate(day)} · '
-    '$quantity ${quantity == 1 ? 'pieza' : 'piezas'}';
+    '${day == null ? 'Sin fecha' : shortDate(day)} · ${piecesText(quantity)}';

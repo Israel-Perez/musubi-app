@@ -136,9 +136,8 @@ class NeedDoneScreen extends ConsumerWidget {
                       title: wanted.title,
                       budgetCents: wanted.budgetCents,
                       dateCaption: 'Lo necesitas',
-                      when: wanted.neededBy == null
-                          ? 'Sin fecha'
-                          : shortDate(wanted.neededBy!),
+                      // Cuántas piezas busca, igual que en la vista previa.
+                      when: needWhenLine(wanted.neededBy, wanted.quantity),
                       published: true,
                     ),
                   ),

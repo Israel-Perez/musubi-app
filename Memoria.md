@@ -29,7 +29,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **La carpeta es `purchase_requests` y las clases `Wanted*`:** `docs/modulos.md` fija la carpeta de M-05; las clases se llaman como en la API.
 - **"Elegir fecha" abre las fechas de la maqueta (`NEED_DATES`):** lunes, miércoles y viernes de la semana que entra y el lunes siguiente. El calendario de Material no es parte del sistema visual.
 - **Mis solicitudes está en la rama de Perfil:** la maqueta la muestra con la barra de pestañas. Desde "Ver mi solicitud" no hay nada atrás, así que "Regresar" lleva a Perfil.
-- **La vista previa conserva "· 1 pieza":** está en el HTML de la maqueta; su script la quita al redibujar.
+- **La cantidad siempre se ve (pedido del usuario):** en la vista previa y el boleto publicado ("vie 9 oct · 2 piezas") y, si es más de una, en Mis solicitudes y en "Cambiar". El script de la maqueta la quitaba al redibujar.
 - **"Compara las ofertas" queda vacío hasta HU-16/HU-17**, aunque la tarjeta diga "3 ofertas" con datos de muestra.
 
 **Errores a evitar**

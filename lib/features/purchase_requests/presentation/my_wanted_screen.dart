@@ -51,6 +51,7 @@ class _MyWantedScreenState extends ConsumerState<MyWantedScreen> {
                 sub: [
                   'Hasta ${formatPrice(r.budgetCents)}',
                   if (r.neededBy case final day?) shortDate(day),
+                  if (r.quantity > 1) piecesText(r.quantity),
                 ].join(' · '),
               ),
           ],
@@ -387,6 +388,13 @@ class _SelectedCard extends StatelessWidget {
               ),
               if (request.neededBy case final day?)
                 _IconText(MusubiIcons.calendar, shortDate(day), small),
+              // Una pieza es lo normal; más de una se dice.
+              if (request.quantity > 1)
+                _IconText(
+                  MusubiIcons.shoppingBag,
+                  piecesText(request.quantity),
+                  small,
+                ),
               _IconText(
                 MusubiIcons.hand,
                 request.offersCount == 1

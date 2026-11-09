@@ -185,6 +185,8 @@ void main() {
       // Necesidad-publicada: lo que cabe en el presupuesto primero.
       expect(find.text('¡Tu solicitud está publicada!'), findsOneWidget);
       expect(find.text('Activa'), findsOneWidget);
+      // La cantidad elegida se ve en el boleto publicado.
+      expect(find.text('vie 13 nov · 2 piezas'), findsOneWidget);
       expect(find.text('Ya coinciden con lo que buscas'), findsOneWidget);
       expect(find.text('Dentro de tu presupuesto'), findsOneWidget);
       expect(find.text('Arriba de tu presupuesto'), findsOneWidget);
@@ -198,6 +200,7 @@ void main() {
       expect(find.text('Activas (1)'), findsOneWidget);
       expect(find.text('Calculadora Casio fx-991ES Plus'), findsOneWidget);
       expect(find.text('Aún no hay ofertas'), findsOneWidget);
+      expect(find.text('2 piezas'), findsOneWidget);
 
       // Sin nada atras, "Regresar" lleva a Perfil.
       await h.tap(find.bySemanticsLabel('Regresar'));
@@ -286,6 +289,8 @@ void main() {
     expect(find.text('Cerradas (1)'), findsOneWidget);
     expect(find.text('3 ofertas'), findsOneWidget);
     expect(find.text('vie 13 nov'), findsOneWidget);
+    // Una pieza es lo normal: no se dice.
+    expect(find.text('1 pieza'), findsNothing);
 
     await h.tap(find.byKey(const Key('my-wanted-change-button')));
     await h.tap(find.text('Bata de laboratorio talla M').last);

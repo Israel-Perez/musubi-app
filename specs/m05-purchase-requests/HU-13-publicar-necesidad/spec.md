@@ -26,13 +26,13 @@ Jira (SCRUM-35): Como **comprador**, quiero **publicar una solicitud indicando e
    - La vista previa "Así la verá tu comunidad" es el boleto "Se busca".
 4. **R4 · Campos pendientes (RN-09):** sin producto, categoría o presupuesto, la app señala el campo y no avanza. Si la API rechaza (moderación, `wanted.invalid_*`, `too_many_active`), avisa con su mensaje y se queda en el paso 3.
 5. **R5 · Publicada (`Necesidad-publicada`):**
-   - el boleto con "Activa";
+   - el boleto con "Activa" y cuántas piezas busca ("vie 9 oct · 2 piezas");
    - "Avisando a vendedores con productos parecidos…";
    - "Ya coinciden con lo que buscas": primero lo que cabe en el presupuesto y luego lo de arriba;
    - "Inicio" y "Ver mi solicitud".
 6. **R6 · Mis solicitudes (`Mis-solicitudes`):**
    - pestañas "Activas (N)" y "Cerradas (N)";
-   - la solicitud elegida, con "Cambiar" (hoja con las demás);
+   - la solicitud elegida, con "Cambiar" (hoja con las demás); si busca más de una pieza, lo dice ("2 piezas");
    - "Compara las ofertas" vacío hasta HU-16.
    - Va con la barra de pestañas y Perfil activo; sin nada atrás, "Regresar" lleva a Perfil.
 7. **R7 · Perfil:** el renglón "Mis solicitudes" con "N activas · N ofertas" (o "Ninguna activa").
@@ -45,7 +45,7 @@ Jira (SCRUM-35): Como **comprador**, quiero **publicar una solicitud indicando e
 - `SellStepLayout` se reutiliza con `steps`, `heading`, `onSave` y `top` (los pasos de Vender no cambian).
 - Ícono nuevo `target` (aviso de coincidencias); `longDate` ("Lunes 12 de octubre") junto a `shortDate`.
 - **Diferencias con la maqueta:**
-  - la vista previa del paso 3 dice "vie 9 oct · 1 pieza", como el HTML de la maqueta (su script quita la cantidad al redibujar);
+  - la cantidad (1 a 10) se ve en la vista previa, en el boleto publicado y, si es más de una, en Mis solicitudes. El script de la maqueta la quita al redibujar la vista previa; el usuario pidió que siempre se vea cuántas piezas se buscan (09-Nov-2026);
   - en `Mis-solicitudes`, "Recomendadas" y las tarjetas de oferta llegan con HU-16 y HU-17.
 
 ## Contratos
