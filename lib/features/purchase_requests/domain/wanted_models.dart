@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-// Solicitudes de compra "Se busca" (HU-13). Forma canonica: filas "M-05" de
-// musubi-api `docs/endpoints.md`; aqui solo lo que muestra la app.
+// Solicitudes de compra "Se busca" (HU-13, HU-15). Forma canonica: filas
+// "M-05" de musubi-api `docs/endpoints.md`; aqui solo lo que muestra la app.
 
 /// Estado de una solicitud.
 enum WantedStatus {
@@ -43,6 +43,9 @@ class WantedRequest {
     this.features = const [],
     this.neededBy,
     this.offersCount = 0,
+    this.requesterId,
+    this.requesterPhotoUrl,
+    this.requesterCareer,
   });
 
   final String id;
@@ -59,8 +62,18 @@ class WantedRequest {
   final WantedStatus status;
   final int offersCount;
 
-  /// Nombre corto de quien busca ("Ana R.").
+  /// Quien busca: nombre corto ("Ana R.") en "Mis solicitudes" y para un
+  /// visitante; completo ("Fernanda Ortiz") en el tablero con sesion.
   final String requesterName;
+
+  /// Id de quien busca; `null` para un visitante (RNF-05).
+  final String? requesterId;
+
+  /// Foto de quien busca (tablero con sesion), o `null`: iniciales.
+  final String? requesterPhotoUrl;
+
+  /// Carrera corta ("Ing. Software") si la muestra (tablero con sesion).
+  final String? requesterCareer;
   final DateTime createdAt;
 
   bool get isActive => status == WantedStatus.active;

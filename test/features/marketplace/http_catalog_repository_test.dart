@@ -15,9 +15,34 @@ void main() {
   late FakeHttpAdapter adapter;
   late HttpCatalogRepository repository;
 
-  void serve({int status = 200, String? nextCursor}) {
+  void serve({int status = 200, String? nextCursor, int wantedStatus = 200}) {
     adapter = FakeHttpAdapter(
       (options) async => switch (options.path) {
+        ApiPaths.wanted when wantedStatus != 200 => FakeHttpAdapter.json({
+          'title': 'Sin conexión',
+          'code': 'server.unavailable',
+        }, status: wantedStatus),
+        ApiPaths.wanted => FakeHttpAdapter.json({
+          'items': [
+            {
+              'id': 'r1',
+              'title': 'Bata de laboratorio talla M',
+              'category': {'slug': 'laboratorio', 'name': 'Laboratorio'},
+              'budgetCents': 30000,
+              'neededBy': '2026-11-13',
+              'createdAt': '2026-11-09T12:00:00Z',
+            },
+            {
+              'id': 'r2',
+              'title': 'Física Universitaria',
+              'category': {'slug': 'libros', 'name': 'Libros'},
+              'budgetCents': 40000,
+              'neededBy': null,
+              'createdAt': '2026-11-09T11:00:00Z',
+            },
+          ],
+          'nextCursor': null,
+        }),
         ApiPaths.products when status != 200 => FakeHttpAdapter.json({
           'title': 'Sin conexión',
           'code': 'server.unavailable',
@@ -50,9 +75,21 @@ void main() {
     expect(feed.recentTotal, 48);
     expect(feed.categories.map((c) => c.slug), ['calculadoras', 'electronica']);
     expect(feed.categories.first.photoUrl, 'asset:assets/products/casio.webp');
-    // "Populares" (HU-49) y "Se busca" (HU-15) llegan con sus HU.
+    // "Populares" llega con HU-49.
     expect(feed.popular, isEmpty);
-    expect(feed.wanted, isEmpty);
+    // "Se busca" sale del tablero (HU-15).
+    expect(feed.wanted.map((w) => (w.id, w.category)), [
+      ('r1', 'laboratorio'),
+      ('r2', 'libros'),
+    ]);
+    expect(feed.wanted.first.neededBy, DateTime(2026, 11, 13));
+    expect(feed.wanted.last.neededBy, isNull);
+    final wanted = adapter.requests.firstWhere(
+      (r) => r.path == ApiPaths.wanted,
+    );
+    expect(wanted.queryParameters, {
+      'limit': HttpCatalogRepository.wantedCount,
+    });
 
     final products = adapter.requests.firstWhere(
       (r) => r.path == ApiPaths.products,
@@ -76,6 +113,15 @@ void main() {
       'hideSoldOut': true,
       'limit': HttpCatalogRepository.pageSize,
     });
+  });
+
+  test('si el tablero falla, Inicio sale sin "Se busca"', () async {
+    serve(wantedStatus: 503);
+
+    final feed = await repository.homeFeed(period: PopularPeriod.today);
+
+    expect(feed.wanted, isEmpty);
+    expect(feed.recent, hasLength(1));
   });
 
   test('un error llega como ApiFailure', () async {

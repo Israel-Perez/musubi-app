@@ -34,6 +34,7 @@ import 'package:musubi_app/features/purchase_requests/presentation/need_budget_s
 import 'package:musubi_app/features/purchase_requests/presentation/need_details_screen.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_done_screen.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_product_screen.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/wanted_board_screen.dart';
 
 /// Rutas de la app (02-01). Cada modulo reemplaza su seccion al implementar su
 /// HU; los nombres en espanol coinciden con la maqueta.
@@ -189,12 +190,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.wanted,
-                // NOTE (HU-15): tablero "Se busca".
-                builder: (context, state) => const UpcomingSection(
-                  title: 'Se busca',
-                  message: 'Aquí verás lo que buscan en tu campus.',
-                  icon: MusubiIcons.megaphone,
-                ),
+                builder: (context, state) => const WantedBoardScreen(),
               ),
             ],
           ),

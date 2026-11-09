@@ -727,7 +727,7 @@ class WantedTicket extends StatelessWidget {
                     color: c.textPrimary,
                   ),
                   Text(
-                    shortDate(wanted.neededBy),
+                    _day(wanted.neededBy),
                     style: MusubiType.style(
                       14,
                       weight: FontWeight.w700,
@@ -756,7 +756,7 @@ class WantedTicket extends StatelessWidget {
                   color: c.textPrimary,
                 ),
                 Text(
-                  shortDate(wanted.neededBy),
+                  _day(wanted.neededBy),
                   style: MusubiType.style(
                     12.5,
                     weight: FontWeight.w700,
@@ -830,6 +830,8 @@ class WantedTicket extends StatelessWidget {
     ),
   );
 }
+
+String _day(DateTime? day) => day == null ? 'Sin fecha' : shortDate(day);
 
 /// Linea punteada del boleto con sus muescas (circulos del color del fondo
 /// a los lados). Ocupa el ancho del boleto, fuera de su relleno.

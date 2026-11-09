@@ -6,10 +6,12 @@ import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/shell/musubi_bottom_bar.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
 import '../helpers/fake_status_repository.dart';
+import '../helpers/fake_wanted.dart';
 import '../helpers/in_memory_token_store.dart';
 
 // 02-01: barra de 5 pestanas de la maqueta y guardia de sesion.
@@ -63,6 +65,9 @@ void main() {
             ),
             tokenStoreProvider.overrideWithValue(InMemoryTokenStore(tokens)),
             initialSessionTokensProvider.overrideWithValue(tokens),
+            wantedRepositoryProvider.overrideWithValue(
+              FakeWantedRepository(board: [boardWanted()]),
+            ),
           ],
           child: const MusubiApp(),
         ),
@@ -93,11 +98,13 @@ void main() {
       await tester.tap(tab('Se busca'));
       await tester.pumpAndSettle();
 
+      // HU-15: `Se-busca-visitante` con el tablero del campus.
+      expect(find.text('Tu campus lo pide. Tú lo tienes.'), findsOneWidget);
       expect(
-        find.text('Aquí verás lo que buscan en tu campus.'),
+        find.text('Bata de laboratorio talla M, manga larga'),
         findsOneWidget,
       );
-      expect(find.text('Muy pronto'), findsOneWidget);
+      expect(find.text('Muy pronto'), findsNothing);
     });
 
     testWidgets('la ruta /buscar abre la busqueda (HU-09)', (tester) async {

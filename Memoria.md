@@ -14,6 +14,26 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
 - **Filtros de búsqueda (HU-10):** app en `feature/SCRUM-27-filtrar-categoria-precio`, contra la API del PR musubi-api#53 (`page` 1 a 50, `category` repetido, `sort`); 369 pruebas, analyze 0 y critic PASS. Hoja "Filtrar" de Inicio restaurada (lineamiento 4). Matriz compartida en API `0.5.0-alpha.8` / esquema 10 (renumerada el 09-Nov-2026: HU-13 entró antes con `alpha.7`). Sin publicar.
 
+## T29 — Tablero "Se busca" (09-Nov-2026, SCRUM-37, HU-15)
+
+**Qué se hizo**
+- La pestaña "Se busca" deja de ser un aviso: con sesión `Se-busca` (lupa, "Filtrar solicitudes" con Categoría, Presupuesto y Fecha límite, y el número de filtros) y sin sesión `Se-busca-visitante` (encabezado rojo, tres pasos, "Lo que se busca hoy" y "¿Necesitas algo?"). Con eso queda el "Se busca" que le faltaba a HU-48.
+- `GET /api/v1/wanted` (API `0.5.0-alpha.9`) con páginas al llegar al final; la fila "Se busca" de Inicio sale del mismo tablero.
+- Piezas nuevas de 02-04: `MusubiMultiOptions` (marca cuadrada y "Ver solicitudes"), `CampusChip(onBrand:)`, íconos `handshake` y `arrowDownUp` y el token `brandDeep`.
+- Tests 396 · analyze 0 · critic PASS. Capturas contra la maqueta: título a 77 pt, primer boleto a 114 pt (maqueta 115) y "Lo que se busca hoy" a 333 pt en las dos.
+- `pubspec.yaml` sigue en `0.5.1+7`: va en el lote de Google Play (HU-09, HU-10, HU-13, HU-15, HU-28 y HU-57).
+
+**Decisiones (con su porqué)**
+- **Nombre completo y carrera solo con sesión:** así lo muestran `Se-busca` y `Se-busca-visitante`; el visitante recibe el nombre corto (RNF-05).
+- **"Otro" al final de Categoría:** una solicitud puede ser de "Otro" (HU-13) aunque la maqueta no lo liste.
+- **"Se busca" de Inicio es secundaria:** si el tablero falla, Inicio sale sin ella en vez de mostrar el error completo.
+- **"Yo tengo este producto" con sesión avisa "Muy pronto…":** la oferta es HU-16 (`NOTE (HU-16)`), que sigue en el Sprint 4.
+
+**Errores a evitar**
+- **La letra de prueba es más ancha:** un `Row` con título, chip y botones se desborda en los widget tests; el título va en `Flexible` + `FittedBox`.
+- **Las hojas eligen 160 ms después y la siguiente abre 240 ms después:** en los tests, tras tocar una opción hay que avanzar el reloj antes de `pumpAndSettle`.
+- **`(a, b).wait` envuelve el error en `ParallelWaitError`:** Inicio dejó de recibir `ApiFailure`; se volvió a `Future.wait` con el tablero aparte.
+
 ## T26 — Filtrar productos por categoría, precio y estado (08-Nov-2026, SCRUM-27, HU-10)
 
 > Las revisiones del 08-Nov corrigieron el alcance inicial: donde esta entrada diga
