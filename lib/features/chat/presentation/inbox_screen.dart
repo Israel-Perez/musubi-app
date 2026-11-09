@@ -23,7 +23,8 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 /// `Mensajes` (HU-22): mis conversaciones por actividad reciente, con Todos,
 /// Compras y Ventas y los no leidos. Se actualiza sola al llegar un mensaje.
 ///
-/// NOTE (HU-16): filas de solicitudes y ofertas ("Tu solicitud", "Tu oferta").
+/// NOTE (HU-17): filas de solicitudes y ofertas ("Tu solicitud", "Tu oferta"):
+/// la conversacion nace cuando quien busca abre el chat desde una oferta.
 class InboxScreen extends ConsumerStatefulWidget {
   const new({super.key});
 

@@ -34,6 +34,7 @@ import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
+import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
@@ -214,7 +215,7 @@ class _InboxStub implements EmailInbox {
 }
 
 /// `Se-busca` (`REQUESTS` de la maqueta): nombre completo y carrera.
-final _memberBoard = [
+final List<WantedRequest> _memberBoard = [
   boardWanted(
     neededBy: DateTime(2026, 10, 5),
     createdAt: _now.subtract(const Duration(minutes: 20)),
@@ -248,7 +249,7 @@ final _memberBoard = [
 ];
 
 /// `Se-busca-visitante`: solo el nombre corto.
-final _visitorBoard = [
+final List<WantedRequest> _visitorBoard = [
   boardWanted(
     title: 'Bata de laboratorio talla M',
     neededBy: DateTime(2026, 10, 5),
@@ -281,6 +282,43 @@ final _visitorBoard = [
     requesterId: null,
     career: null,
     createdAt: _now.subtract(const Duration(hours: 3)),
+  ),
+];
+
+/// Mis publicaciones de `Yo-tengo-vincular` (HU-16).
+const List<OwnListing> _myListings = [
+  OwnListing(
+    product: ProductSummary(
+      id: 'p-bata',
+      title: 'Bata de laboratorio blanca, talla M',
+      priceCents: 25000,
+      stock: 1,
+      condition: 'Usado',
+      photoUrl: 'asset:assets/products/bata.webp',
+    ),
+    status: ListingStatus.active,
+  ),
+  OwnListing(
+    product: ProductSummary(
+      id: 'p-stewart',
+      title: 'Cálculo de una variable, Stewart',
+      priceCents: 38000,
+      stock: 1,
+      condition: 'Usado',
+      photoUrl: 'asset:assets/products/calculo.webp',
+    ),
+    status: ListingStatus.active,
+  ),
+  OwnListing(
+    product: ProductSummary(
+      id: 'p-escuadras',
+      title: 'Juego de escuadras y compás',
+      priceCents: 18000,
+      stock: 1,
+      condition: 'Nuevo',
+      photoUrl: 'asset:assets/products/compas.webp',
+    ),
+    status: ListingStatus.active,
   ),
 ];
 
@@ -322,7 +360,7 @@ class _Shot {
             listingsRepositoryProvider.overrideWithValue(
               FakeListingsRepository(
                 range: const PriceRange(lowCents: 38000, highCents: 52000),
-              ),
+              )..own = _myListings,
             ),
             photoPickerProvider.overrideWithValue(_FilePicker()),
             profileRepositoryProvider.overrideWithValue(
@@ -690,6 +728,9 @@ final Map<String, (bool, _Scene)> _scenes = {
       await s.tap(find.byKey(const Key('wanted-search')));
     },
   ),
+  'yo-tengo-vincular': (true, (s) => _offerTo(s, 1)),
+  'yo-tengo-oferta': (true, (s) => _offerTo(s, 2)),
+  'yo-tengo-enviada': (true, (s) => _offerTo(s, 3)),
   'se-busca-visitante': (false, (s) => s.go(AppRoutes.wanted)),
   'se-busca-visitante-scroll': (
     false,
@@ -752,6 +793,31 @@ Future<void> _sellTo(_Shot s, int step) async {
 }
 
 /// Necesidad-1…3 → Necesidad-publicada con los datos del prototipo (HU-13).
+/// "Yo tengo este producto" (HU-16): 1 vincular, 2 oferta directa y 3
+/// enviada (con la bata, como la maqueta).
+Future<void> _offerTo(_Shot s, int step) async {
+  await s.go(AppRoutes.wanted);
+  await s.tap(find.text('Yo tengo este producto'));
+  await s.type(
+    'offer-message',
+    '¡Hola! Tengo una bata talla M casi nueva. Te la llevo al edificio de '
+        'laboratorios.',
+  );
+  FocusManager.instance.primaryFocus?.unfocus();
+  await s.settle();
+  if (step == 2) {
+    await s.tap(find.byKey(const ValueKey('segment-OfferKind.direct')));
+    await s.type(
+      'offer-description',
+      'Bata blanca de algodón, talla M. La usé dos semestres, sin manchas.',
+    );
+    await s.type('offer-price', '280');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await s.settle();
+  }
+  if (step == 3) await s.tap(find.byKey(const Key('offer-send')));
+}
+
 Future<void> _needTo(_Shot s, int step) async {
   final tester = s.tester;
   Future<void> calm() async {

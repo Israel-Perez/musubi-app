@@ -19,7 +19,7 @@ import 'package:musubi_app/features/purchase_requests/presentation/wanted_provid
 
 /// `Necesidad-publicada` (HU-13): la solicitud activa y lo que ya coincide en
 /// el campus (busqueda HU-09), lo que cabe en el presupuesto primero.
-/// NOTE (HU-16): el aviso "Diego tiene lo que buscas" llega con las ofertas.
+/// NOTE (HU-17): el aviso "Diego tiene lo que buscas" llega con las ofertas.
 class NeedDoneScreen extends ConsumerWidget {
   const new({required this.request, super.key});
 

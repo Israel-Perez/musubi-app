@@ -9,6 +9,7 @@ import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
+import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
@@ -18,6 +19,7 @@ import 'package:musubi_app/features/purchase_requests/presentation/wanted_provid
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
+import '../../helpers/fake_listings_repository.dart';
 import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/fake_wanted.dart';
@@ -104,6 +106,9 @@ class BoardHarness {
           chatRepositoryProvider.overrideWithValue(FakeChatRepository()),
           chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
           wantedRepositoryProvider.overrideWithValue(wanted),
+          listingsRepositoryProvider.overrideWithValue(
+            FakeListingsRepository(),
+          ),
         ],
         child: const MusubiApp(),
       ),
@@ -308,7 +313,7 @@ void main() {
       expect(find.text('Fernanda Ortiz'), findsOneWidget);
     });
 
-    testWidgets('Yo tengo este producto avisa que llega pronto (HU-16)', (
+    testWidgets('Yo tengo este producto abre la oferta (HU-16)', (
       tester,
     ) async {
       final h = BoardHarness(tester);
@@ -316,10 +321,8 @@ void main() {
 
       await h.tap(find.text('Yo tengo este producto').first);
 
-      expect(
-        find.text('Muy pronto podrás ofrecerlo desde aquí.'),
-        findsOneWidget,
-      );
+      expect(find.text('Fernanda busca'), findsOneWidget);
+      expect(find.byKey(const Key('offer-send')), findsOneWidget);
     });
   });
 

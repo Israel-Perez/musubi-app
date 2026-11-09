@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/marketplace/data/product_json.dart';
+import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_repository.dart';
@@ -61,6 +62,31 @@ class HttpWantedRepository implements WantedRepository {
     ];
   });
 
+  @override
+  Future<WantedOffer?> myOffer(String requestId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiPaths.myOffer(requestId),
+      );
+      return offerFromJson(response.data ?? const {}, _apiBaseUrl);
+    } on DioException catch (error) {
+      final failure = ApiFailure.fromDio(error);
+      // Aun no ofrezco: la hoja empieza vacia.
+      if (failure.code == 'offers.not_found') return null;
+      throw failure;
+    }
+  }
+
+  @override
+  Future<WantedOffer> sendOffer(String requestId, NewOffer offer) =>
+      _guard(() async {
+        final response = await _dio.put<Map<String, dynamic>>(
+          ApiPaths.myOffer(requestId),
+          data: offer.toJson(),
+        );
+        return offerFromJson(response.data ?? const {}, _apiBaseUrl);
+      });
+
   static Future<T> _guard<T>(Future<T> Function() call) async {
     try {
       return await call();
@@ -100,5 +126,26 @@ WantedRequest wantedFromJson(Map<String, dynamic> json, {Uri? apiBaseUrl}) {
         : mediaUrl(photo, apiBaseUrl),
     requesterCareer: requester['career'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String).toUtc(),
+  );
+}
+
+/// Un `OfferResponse` de la API.
+WantedOffer offerFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
+  final photo = json['photo'] as String?;
+  return WantedOffer(
+    id: json['id'] as String,
+    requestId: json['requestId'] as String,
+    kind: OfferKind.parse(json['kind']),
+    productId: json['productId'] as String?,
+    title: json['title'] as String,
+    priceCents: (json['priceCents'] as num).toInt(),
+    condition: json['condition'] as String? ?? 'used',
+    photoUrl: photo == null ? null : mediaUrl(photo, apiBaseUrl),
+    // La ruta es `/media/...`; la llave, sin la diagonal.
+    photoKey: photo != null && photo.startsWith('/')
+        ? photo.substring(1)
+        : photo,
+    message: json['message'] as String?,
+    overBudget: json['overBudget'] as bool? ?? false,
   );
 }

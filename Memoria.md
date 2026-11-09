@@ -14,6 +14,30 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
 - **Filtros de búsqueda (HU-10):** app en `feature/SCRUM-27-filtrar-categoria-precio`, contra la API del PR musubi-api#53 (`page` 1 a 50, `category` repetido, `sort`); 369 pruebas, analyze 0 y critic PASS. Hoja "Filtrar" de Inicio restaurada (lineamiento 4). Matriz compartida en API `0.5.0-alpha.8` / esquema 10 (renumerada el 09-Nov-2026: HU-13 entró antes con `alpha.7`). Sin publicar.
 
+## T30 — "Yo tengo este producto" (09-Nov-2026, SCRUM-38, HU-16)
+
+**Qué se hizo**
+- El boleto de `Se-busca` abre la hoja "Yo tengo este producto" (`Yo-tengo-vincular` y `Yo-tengo-oferta`):
+  - vincular una de mis publicaciones disponibles con un mensaje opcional;
+  - u ofrecer sin publicar: descripción, precio, Nuevo/Usado y foto opcional;
+  - aviso "dentro" o "arriba" de su presupuesto.
+- Sin publicaciones solo hay oferta directa. Si ya ofrecí, abre con mi oferta y "Actualizar oferta" (RN-14).
+- `Yo-tengo-enviada` con "Ir a mensajes" y "Seguir viendo solicitudes"; el tablero vuelve a pedirse y suma la oferta.
+- `myOffer`/`sendOffer` sobre `GET`/`PUT /wanted/{id}/offers/mine` (API `0.5.0-alpha.10`).
+- `CssDashedBorderPainter` pasó a `core/widgets/css_dashes.dart`.
+- Tests 405 · analyze 0 · critic PASS. Capturas contra la maqueta: hoja a 90 pt y título a 130 pt; "¡Oferta enviada!" a 383 pt (maqueta 382).
+- Fix aparte (#40): el CI de `main` falló en `analyze` tras HU-15 por dos listas sin tipo en `tool/screenshots_test.dart`.
+
+**Decisiones (con su porqué)**
+- **Una hoja con pestañas:** la maqueta cambia de pantalla sin cerrar la hoja; en la app es un selector.
+- **La foto se conserva al editar:** la app guarda la llave que trae la respuesta (`/media/...` sin la diagonal).
+- **"Ir a mensajes" solo abre la bandeja:** la conversación de una oferta la abre quien busca (HU-17); las notas viejas de HU-16 sobre "Compara las ofertas" y la bandeja pasaron a HU-17.
+
+**Errores a evitar**
+- **Corre `flutter analyze` después del último cambio, también en `tool/`:** las escenas nuevas de HU-15 se agregaron después del último análisis y rompieron el CI de `main`.
+- **`(a, b).wait` lanza `ParallelWaitError`, que es un `Error`:** para dos cargas a la vez usa `Future.wait<Object?>` y atrapa `ApiFailure`.
+- **Los constructores con nombre se escriben `const new listing(...)`:** `new.listing` no compila en Dart 3.13.
+
 ## T29 — Tablero "Se busca" (09-Nov-2026, SCRUM-37, HU-15)
 
 **Qué se hizo**

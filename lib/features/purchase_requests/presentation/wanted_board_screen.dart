@@ -26,6 +26,8 @@ import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/offer_sheet.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_board_cards.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_board_providers.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
@@ -75,24 +77,21 @@ class _WantedBoardScreenState extends ConsumerState<WantedBoardScreen> {
     );
   }
 
-  void _offer(bool signedIn) {
+  Future<void> _offer(WantedRequest request, {required bool signedIn}) async {
     if (!signedIn) {
-      unawaited(
-        showAccountGate(
-          context,
-          motive: AccountGateMotive.offer,
-          returnTo: AppRoutes.wanted,
-        ),
+      await showAccountGate(
+        context,
+        motive: AccountGateMotive.offer,
+        returnTo: AppRoutes.wanted,
       );
       return;
     }
-    // NOTE (HU-16): "Yo tengo este producto" abre `Yo-tengo-vincular` u
-    // `Yo-tengo-oferta`.
-    showMusubiSnack(
-      ScaffoldMessenger.of(context),
-      'Muy pronto podrás ofrecerlo desde aquí.',
-      icon: MusubiIcons.hand,
-    );
+    // HU-16: "Yo tengo este producto" y, al enviar, "¡Oferta enviada!".
+    final offer = await showOfferSheet(context, request);
+    if (offer == null || !mounted) return;
+    // La solicitud suma la oferta ("2 ofertas"); la lista se queda visible.
+    ref.invalidate(wantedBoardProvider);
+    await showOfferSentSheet(context, request: request, offer: offer);
   }
 
   bool _onScroll(ScrollNotification notification) {
@@ -278,12 +277,12 @@ class _WantedBoardScreenState extends ConsumerState<WantedBoardScreen> {
                 ? WantedBoardCard(
                     request: request,
                     now: now,
-                    onOffer: () => _offer(true),
+                    onOffer: () => unawaited(_offer(request, signedIn: true)),
                   )
                 : WantedVisitorCard(
                     request: request,
                     now: now,
-                    onOffer: () => _offer(false),
+                    onOffer: () => unawaited(_offer(request, signedIn: false)),
                   ),
           );
         },

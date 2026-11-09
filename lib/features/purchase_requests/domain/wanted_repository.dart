@@ -1,3 +1,4 @@
+import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 
@@ -17,4 +18,10 @@ abstract interface class WantedRepository {
 
   /// "Mis solicitudes", de la mas nueva a la mas vieja.
   Future<List<WantedRequest>> mine();
+
+  /// Mi oferta a una solicitud (HU-16), o `null` si aun no ofrezco.
+  Future<WantedOffer?> myOffer(String requestId);
+
+  /// "Enviar oferta" (HU-16): la crea o la reemplaza (RN-14).
+  Future<WantedOffer> sendOffer(String requestId, NewOffer offer);
 }
