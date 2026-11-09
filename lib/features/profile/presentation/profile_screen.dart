@@ -21,6 +21,7 @@ import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 /// Quien tiene la sesion, para pintar el nombre mientras carga el perfil.
 SessionProfile? sessionProfile(WidgetRef ref) =>
@@ -30,10 +31,10 @@ SessionProfile? sessionProfile(WidgetRef ref) =>
     };
 
 /// Pestana Perfil (maqueta `Perfil`, HU-04): foto o iniciales, nombre,
-/// "UTTT · carrera · periodo", "Verificada", estadisticas y mosaicos. El
-/// engrane abre `Ajustes`. Lo que aun no existe no se muestra:
-/// NOTE (HU-52) "Mis apartados", NOTE (HU-14) "Mis solicitudes",
-/// NOTE (HU-53) "Favoritos" y NOTE (HU-25) "Mis pedidos".
+/// "UTTT · carrera · periodo", "Verificada", estadisticas y mosaicos ("Mis
+/// solicitudes", HU-13). El engrane abre `Ajustes`. Lo que aun no existe no
+/// se muestra: NOTE (HU-52) "Mis apartados", NOTE (HU-53) "Favoritos" y
+/// NOTE (HU-25) "Mis pedidos".
 class ProfileScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -78,6 +79,7 @@ class ProfileScreen extends ConsumerWidget {
             AsyncData(:final value) => [
               _StatsRow(stats: value.stats),
               const _Tiles(),
+              const _PrivacyRow(),
             ],
             AsyncError(:final error) when me == null => [
               Padding(
@@ -318,6 +320,17 @@ class _Tiles extends ConsumerWidget {
         .value
         ?.where((l) => l.status == ListingStatus.active)
         .length;
+    final requests = ref
+        .watch(myWantedProvider)
+        .value
+        ?.where((r) => r.isActive)
+        .toList();
+    final wanted = requests == null
+        ? null
+        : (
+            requests.length,
+            requests.fold<int>(0, (sum, r) => sum + r.offersCount),
+          );
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       // La fila de la cuadricula estira los dos mosaicos a la misma altura.
@@ -341,11 +354,19 @@ class _Tiles extends ConsumerWidget {
             ),
             Expanded(
               child: _Tile(
-                key: const Key('tile-privacy'),
-                icon: MusubiIcons.shieldCheck,
-                title: 'Privacidad',
-                subtitle: 'Tus datos',
-                onTap: () => unawaited(context.push(AppRoutes.accountPrivacy)),
+                key: const Key('tile-my-wanted'),
+                icon: MusubiIcons.megaphone,
+                iconColor: context.musubi.brand,
+                title: 'Mis solicitudes',
+                subtitle: switch (wanted) {
+                  null => ' ',
+                  (0, _) => 'Ninguna activa',
+                  (final n, 0) => n == 1 ? '1 activa' : '$n activas',
+                  (final n, final offers) =>
+                    '${n == 1 ? '1 activa' : '$n activas'} · '
+                        '${offers == 1 ? '1 oferta' : '$offers ofertas'}',
+                },
+                onTap: () => unawaited(context.push(AppRoutes.myWanted)),
               ),
             ),
           ],
@@ -355,6 +376,31 @@ class _Tiles extends ConsumerWidget {
   }
 }
 
+/// Segunda fila de mosaicos: "Privacidad" (NOTE (HU-53): "Favoritos" va antes).
+class _PrivacyRow extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+    child: Row(
+      spacing: 10,
+      children: [
+        Expanded(
+          child: _Tile(
+            key: const Key('tile-privacy'),
+            icon: MusubiIcons.shieldCheck,
+            title: 'Privacidad',
+            subtitle: 'Tus datos',
+            onTap: () => unawaited(context.push(AppRoutes.accountPrivacy)),
+          ),
+        ),
+        const Expanded(child: SizedBox.shrink()),
+      ],
+    ),
+  );
+}
+
 class _Tile extends StatelessWidget {
   const new({
     required this.icon,
@@ -362,9 +408,13 @@ class _Tile extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     super.key,
+    this.iconColor,
   });
 
   final MusubiIconData icon;
+
+  /// Color del icono (rojo en "Mis solicitudes").
+  final Color? iconColor;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -385,7 +435,12 @@ class _Tile extends StatelessWidget {
         child: Row(
           spacing: 10,
           children: [
-            MusubiIcon(icon, size: 22, strokeWidth: 1.9, color: c.textPrimary),
+            MusubiIcon(
+              icon,
+              size: 22,
+              strokeWidth: 1.9,
+              color: iconColor ?? c.textPrimary,
+            ),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

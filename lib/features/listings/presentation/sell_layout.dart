@@ -38,9 +38,10 @@ void showSellSnack(
   duration: duration,
 );
 
-/// Pantalla de un paso de "Vender un producto" (maqueta `Vender-1…4`):
-/// cerrar, titulo y "Guardar"; barra de 4 pasos; "Paso N de 4 · X"; titulo;
-/// contenido con scroll y las acciones fijas abajo.
+/// Pantalla de un paso de "Vender un producto" (maqueta `Vender-1…4`) y de
+/// "Publicar lo que necesito" (`Necesidad-1…3`, HU-13): cerrar, titulo y
+/// "Guardar"; barra de pasos; "Paso N de M · X"; titulo; contenido con scroll
+/// y las acciones fijas abajo.
 class SellStepLayout extends ConsumerWidget {
   const new({
     required this.step,
@@ -50,10 +51,27 @@ class SellStepLayout extends ConsumerWidget {
     required this.actions,
     super.key,
     this.subtitle,
+    this.steps = 4,
+    this.heading = 'Vender un producto',
+    this.onSave,
+    this.top,
   });
 
-  /// 1 a 4.
+  /// 1 a [steps].
   final int step;
+
+  /// Pasos del flujo: 4 al vender, 3 al pedir.
+  final int steps;
+
+  /// Titulo del encabezado.
+  final String heading;
+
+  /// "Guardar"; por defecto guarda el borrador de venta.
+  final VoidCallback? onSave;
+
+  /// Lo que va entre la barra de pasos y "Paso N" ("Así funciona" en
+  /// `Necesidad-1`).
+  final Widget? top;
 
   /// "Fotos", "Detalles", "Precio", "Último paso".
   final String label;
@@ -73,20 +91,23 @@ class SellStepLayout extends ConsumerWidget {
           SafeArea(
             bottom: false,
             child: _SellHeader(
+              heading: heading,
               onClose: () => context.go(AppRoutes.home),
-              onSave: () {
-                ref.read(sellDraftProvider.notifier).save();
-                showSellSnack(
-                  context,
-                  'Borrador guardado. Lo terminas cuando quieras desde '
-                  'Publicar.',
-                );
-              },
+              onSave:
+                  onSave ??
+                  () {
+                    ref.read(sellDraftProvider.notifier).save();
+                    showSellSnack(
+                      context,
+                      'Borrador guardado. Lo terminas cuando quieras desde '
+                      'Publicar.',
+                    );
+                  },
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-            child: SellProgress(step: step),
+            child: SellProgress(step: step, total: steps),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -94,13 +115,14 @@ class SellStepLayout extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ?top,
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 6,
                       children: [
-                        Eyebrow('Paso $step de 4 · $label'),
+                        Eyebrow('Paso $step de $steps · $label'),
                         Semantics(
                           header: true,
                           child: Text(
@@ -146,8 +168,13 @@ class SellStepLayout extends ConsumerWidget {
 }
 
 class _SellHeader extends StatelessWidget {
-  const new({required this.onClose, required this.onSave});
+  const new({
+    required this.heading,
+    required this.onClose,
+    required this.onSave,
+  });
 
+  final String heading;
   final VoidCallback onClose;
   final VoidCallback onSave;
 
@@ -175,7 +202,7 @@ class _SellHeader extends StatelessWidget {
           ),
           Flexible(
             child: Text(
-              'Vender un producto',
+              heading,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: MusubiType.style(
@@ -209,23 +236,24 @@ class _SellHeader extends StatelessWidget {
   }
 }
 
-/// Barra de 4 pasos (`role=progressbar`): los anteriores en rojo y el actual
+/// Barra de pasos (`role=progressbar`): los anteriores en rojo y el actual
 /// se llena en 0.6 s.
 class SellProgress extends StatelessWidget {
-  const new({required this.step, super.key});
+  const new({required this.step, super.key, this.total = 4});
 
   final int step;
+  final int total;
 
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
     final animate = !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
     return Semantics(
-      label: 'Paso $step de 4',
+      label: 'Paso $step de $total',
       child: Row(
         spacing: 6,
         children: [
-          for (var i = 1; i <= 4; i++)
+          for (var i = 1; i <= total; i++)
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(2),

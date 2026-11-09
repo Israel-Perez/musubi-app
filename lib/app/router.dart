@@ -28,6 +28,12 @@ import 'package:musubi_app/features/marketplace/presentation/search_screen.dart'
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/settings_screen.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/my_wanted_screen.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/need_budget_screen.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/need_details_screen.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/need_done_screen.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/need_product_screen.dart';
 
 /// Rutas de la app (02-01). Cada modulo reemplaza su seccion al implementar su
 /// HU; los nombres en espanol coinciden con la maqueta.
@@ -62,6 +68,18 @@ abstract final class AppRoutes {
 
   /// "Publicar lo que necesito" (HU-13).
   static const need = '/necesito';
+
+  /// `Necesidad-2`.
+  static const needDetails = '/necesito/detalles';
+
+  /// `Necesidad-3`.
+  static const needBudget = '/necesito/presupuesto';
+
+  /// `Necesidad-publicada`.
+  static const needDone = '/necesito/listo';
+
+  /// `Mis-solicitudes` (HU-13).
+  static const myWanted = '/mis-solicitudes';
 
   /// Chat con quien vende (HU-20): `extra` lleva el `ProductSummary`.
   static const chat = '/chat';
@@ -194,18 +212,33 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.profile,
                 builder: (context, state) => const ProfileScreen(),
               ),
+              // Con la barra y Perfil activo, como `Mis-solicitudes` (HU-13).
+              GoRoute(
+                path: AppRoutes.myWanted,
+                builder: (context, state) => const MyWantedScreen(),
+              ),
             ],
           ),
         ],
       ),
       GoRoute(
         path: AppRoutes.need,
-        // NOTE (HU-13): publicar una necesidad (`Necesidad-1…3`).
-        builder: (context, state) => const UpcomingSection(
-          title: 'Lo que necesito',
-          message: 'Aquí podrás decir qué buscas y cuánto quieres pagar.',
-          icon: MusubiIcons.megaphone,
-          canGoBack: true,
+        builder: (context, state) => const NeedProductScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.needDetails,
+        builder: (context, state) => const NeedDetailsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.needBudget,
+        builder: (context, state) => const NeedBudgetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.needDone,
+        builder: (context, state) => NeedDoneScreen(
+          request: state.extra is WantedRequest
+              ? state.extra! as WantedRequest
+              : null,
         ),
       ),
       GoRoute(
