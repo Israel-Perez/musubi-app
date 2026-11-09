@@ -1,17 +1,19 @@
-# HU-13 — Publicar una necesidad de compra (tareas)
+# HU-13 — Publicar una necesidad de compra (app, tareas)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Datos
+- **Crear:** `WantedRepository`, `HttpWantedRepository`, `ApiPaths.wanted` y `ApiPaths.myWanted`.
+- **Verificar:** `wanted_data_test.dart`.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-13)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Publicar lo que necesito
+- **Crear:** `Necesidad-1`…`Necesidad-3` y `Necesidad-publicada` con el borrador y las coincidencias.
+- **Verificar:** `need_flow_test.dart` y las capturas `necesidad-*`.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+## T3 — Mis solicitudes
+- **Crear:** `Mis-solicitudes` (pestañas y Cambiar) y el renglón de Perfil.
+- **Verificar:** `need_flow_test.dart` y la captura `mis-solicitudes`.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## Pendientes
+- Prueba en el celular con la API `0.5.0-alpha.7` desplegada.

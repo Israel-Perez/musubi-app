@@ -110,6 +110,12 @@ abstract final class ApiPaths {
   static String publicProfile(String id) =>
       '/api/v1/profiles/${Uri.encodeComponent(id)}';
 
+  /// `POST /api/v1/wanted` — fila "M-05" (spec `musubi-api:HU-13`).
+  static const wanted = '/api/v1/wanted';
+
+  /// `GET /api/v1/wanted/mine` — fila "M-05" (spec `musubi-api:HU-13`).
+  static const myWanted = '$wanted/mine';
+
   /// `POST /api/v1/reports` — fila "M-13" (spec `musubi-api:HU-28`).
   static const reports = '/api/v1/reports';
 

@@ -83,6 +83,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - **Lineamientos de la materia:** checklist L-NN en `musubi-api/docs/bitacora/lineamientos-materia.md`.
 - Chat (HU-20, HU-22): `lib/features/chat/`; tiempo real con `SignalRChatRealtime` (protocolo JSON de SignalR sobre `dart:io`, sin paquete).
 - Reportar y bloquear (HU-28, HU-57): `lib/features/reputation/`; `showReportSheet` desde el chat y Ajustes, `showBlockedUsersSheet` desde Privacidad; con un bloqueo, el chat cambia la caja de texto por un aviso (`Conversation.canReply`).
+- Solicitudes de compra (HU-13): `lib/features/purchase_requests/` (clases `Wanted*`, como en la API); los pasos reutilizan `SellStepLayout` (`steps`, `heading`, `onSave`, `top`) y Mis solicitudes vive en la rama de Perfil.
 - Pendientes con dueño: FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)

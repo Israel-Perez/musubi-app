@@ -221,6 +221,35 @@ const _months = [
 String shortDate(DateTime date) =>
     '${_days[date.weekday - 1]} ${date.day} ${_months[date.month - 1]}';
 
+const _longDays = [
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+  'Domingo',
+];
+const _longMonths = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
+
+/// "Lunes 12 de octubre".
+String longDate(DateTime date) =>
+    '${_longDays[date.weekday - 1]} ${date.day} de '
+    '${_longMonths[date.month - 1]}';
+
 /// "hace 20 min", "hace 3 h", "ayer", "hace 5 días" (`whenText` de la
 /// maqueta).
 String timeAgo(DateTime then, DateTime now) {

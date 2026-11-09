@@ -38,6 +38,8 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
@@ -51,6 +53,7 @@ import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_reputation.dart';
 import '../test/helpers/fake_session_api.dart';
 import '../test/helpers/fake_status_repository.dart';
+import '../test/helpers/fake_wanted.dart';
 import '../test/helpers/in_memory_token_store.dart';
 
 const _out = String.fromEnvironment('SHOTS');
@@ -279,6 +282,17 @@ class _Shot {
                     name: 'Diego Hernández',
                     blockedAt: _now,
                   ),
+                ],
+              ),
+            ),
+            // `Mis-solicitudes`: 2 activas y 4 cerradas (HU-13).
+            wantedRepositoryProvider.overrideWithValue(
+              FakeWantedRepository(
+                mine: [
+                  sampleWanted(offers: 3, neededBy: DateTime(2026, 10, 9)),
+                  sampleWanted(id: 'w2', title: 'Bata de laboratorio talla M'),
+                  for (var i = 3; i <= 6; i++)
+                    sampleWanted(id: 'w$i', status: WantedStatus.closed),
                 ],
               ),
             ),
@@ -583,6 +597,11 @@ final Map<String, (bool, _Scene)> _scenes = {
   'vender-3': (true, (s) => _sellTo(s, 3)),
   'vender-4': (true, (s) => _sellTo(s, 4)),
   'vender-listo': (true, (s) => _sellTo(s, 5)),
+  'necesidad-1': (true, (s) => _needTo(s, 1)),
+  'necesidad-2': (true, (s) => _needTo(s, 2)),
+  'necesidad-3': (true, (s) => _needTo(s, 3)),
+  'necesidad-publicada': (true, (s) => _needTo(s, 4)),
+  'mis-solicitudes': (true, (s) => s.go(AppRoutes.myWanted)),
   'cerrar-sesion': (
     true,
     (s) async {
@@ -634,6 +653,45 @@ Future<void> _sellTo(_Shot s, int step) async {
   await s.tap(find.text('Continuar'));
   if (step < 5) return;
   await s.tap(find.byKey(const Key('sell-publish')));
+}
+
+/// Necesidad-1…3 → Necesidad-publicada con los datos del prototipo (HU-13).
+Future<void> _needTo(_Shot s, int step) async {
+  final tester = s.tester;
+  Future<void> calm() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump(const Duration(milliseconds: 600));
+    await s.settle();
+  }
+
+  await s.go(AppRoutes.need);
+  await s.type('need-title', 'Calculadora Casio fx-991ES Plus');
+  await s.tap(find.byKey(const Key('need-category-calculadoras')));
+  await calm();
+  if (step < 2) return;
+  await s.tap(find.byKey(const Key('need-continue')));
+  await s.type(
+    'need-description',
+    'La necesito para Cálculo Integral y Física. Puede ser usada si funciona '
+        'bien y trae su tapa.',
+  );
+  for (final feature in [
+    'Modelo fx-991ES Plus',
+    'Con tapa',
+    'Pantalla sin rayones',
+  ]) {
+    await s.type('need-feature', feature);
+    await s.tap(find.byKey(const Key('need-feature-add')));
+  }
+  await calm();
+  if (step < 3) return;
+  await s.tap(find.byKey(const Key('need-details-continue')));
+  await s.type('need-budget', '600');
+  await s.tap(find.byKey(const Key('need-when-friday')));
+  await calm();
+  if (step < 4) return;
+  await s.tap(find.byKey(const Key('need-publish')));
+  await calm();
 }
 
 /// Escenas que necesitan otro catalogo (cargando o sin red).

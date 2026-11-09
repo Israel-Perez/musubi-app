@@ -28,6 +28,13 @@ abstract final class MusubiIcons {
     IconPath('m4.9 4.9 14.2 14.2'),
   ]);
 
+  /// `target` ("Ya hay N publicaciones parecidas", HU-13).
+  static const target = MusubiIconData([
+    IconCircle(12, 12, 10),
+    IconCircle(12, 12, 6),
+    IconCircle(12, 12, 2),
+  ]);
+
   /// `flag` (reportar, HU-28).
   static const flag = MusubiIconData([
     IconPath('M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'),
