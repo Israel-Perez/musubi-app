@@ -4,15 +4,13 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 ## Estado actual (09-Nov-2026)
 
-- **Solicitudes de compra (HU-13, rama `feature/SCRUM-35-solicitudes-compra`):** en un PR, contra la API `0.5.0-alpha.7` (musubi-api#54). Sin subir el `versionCode`: va en el siguiente lote para Google Play.
-- **Reportar y bloquear (HU-28 y HU-57, rama `feature/SCRUM-57-reportar-bloquear`):** en un PR, contra la API `0.5.0-alpha.6` (musubi-api#52). **No se sube a Google Play por cada HU:** el usuario prefiere juntar varias HU antes de publicar.
 - **En Google Play:** `0.5.1+7` en la prueba cerrada (chat, bandeja y detalle del producto).
-- **El chat no enviaba mensajes en producción (08-Nov-2026):** la API respondía `503 moderation.unavailable` porque el plan gratuito de AWS no incluye Translate ni Comprehend. La API `0.5.0-alpha.4` modera el texto con un léxico local (musubi-api, SCRUM-92). La app no cambia: ya muestra el mensaje del `503` y el del `422 moderation.text_rejected`. Fila sincronizada en `docs/versionado.md`.
-- **Chat (HU-20, HU-22):** app `0.5.0+6` en su PR, contra la API `0.5.0-alpha.2` (bandeja) y Redis en producción.
-- **Búsqueda (HU-09):** app `0.5.1+7` contra la API `0.5.0-alpha.5` (PR musubi-api#49, sin desplegar); 325 pruebas, analyze 0 y critic PASS. Antes de subirla a Google Play hay que subir el `versionCode` (`0.5.1+7` ya está publicada).
-- **HU-04 Editar mi perfil** (rama `feature/SCRUM-22-editar-perfil`): app `0.4.0+5` lista para el PR. Necesita la API `0.4.0-alpha.1` desplegada (`db/004` en Atlas y `infra-up`).
-- **Antes de publicar `0.4.0+5`:** actualizar "Seguridad de los datos" en Play Console (foto de perfil y carrera).
-- **Filtros de búsqueda (HU-10):** app en `feature/SCRUM-27-filtrar-categoria-precio`, contra la API del PR musubi-api#53 (`page` 1 a 50, `category` repetido, `sort`); 369 pruebas, analyze 0 y critic PASS. Hoja "Filtrar" de Inicio restaurada (lineamiento 4). Matriz compartida en API `0.5.0-alpha.8` / esquema 10 (renumerada el 09-Nov-2026: HU-13 entró antes con `alpha.7`). Sin publicar.
+- **En `main`, sin publicar (siguiente lote):** búsqueda (HU-09), filtros y orden (HU-10), reportar y bloquear + foto en el chat (HU-28 y HU-57) solicitudes de compra (HU-13) y el tablero "Se busca" (HU-15). **No se sube a Google Play por cada HU:** el usuario prefiere juntar varias. Antes de publicar el lote:
+  - subir el `versionCode` (`0.5.1+7` ya está publicada);
+  - actualizar "Seguridad de los datos" en Play Console (mensajes, reportes, bloqueos y solicitudes de compra).
+- **API en producción:** `0.5.0-alpha.8`, esquema 10 (`infra-up` del 09-Nov-2026). En `main` está `0.5.0-alpha.9` (HU-15), sin desplegar. La matriz está en `docs/versionado.md`.
+- **Siguiente:** HU-16 ("Yo tengo este producto"), luego HU-17 (elegir ofertas) y HU-14 (editar, cerrar y cancelar). Sprint 4: 9 al 20 de noviembre.
+- **Pendiente con dueño:** la rama `feature/SCRUM-24-editar-eliminar-publicaciones` (HU-07, Kazumi) tiene conflictos; no se toca sin el OK del usuario.
 
 ## T29 — Tablero "Se busca" (09-Nov-2026, SCRUM-37, HU-15)
 
@@ -34,7 +32,31 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Las hojas eligen 160 ms después y la siguiente abre 240 ms después:** en los tests, tras tocar una opción hay que avanzar el reloj antes de `pumpAndSettle`.
 - **`(a, b).wait` envuelve el error en `ParallelWaitError`:** Inicio dejó de recibir `ApiFailure`; se volvió a `Future.wait` con el tablero aparte.
 
-## T26 — Filtrar productos por categoría, precio y estado (08-Nov-2026, SCRUM-27, HU-10)
+## T28 — Publicar lo que necesito y Mis solicitudes (09-Nov-2026, SCRUM-35, HU-13)
+
+**Qué se hizo**
+- `lib/features/purchase_requests/` (M-05):
+  - `Necesidad-1`…`Necesidad-3` con un borrador en memoria (`needDraftProvider`);
+  - `Necesidad-publicada` con las coincidencias de la búsqueda (HU-09), primero las que caben en el presupuesto;
+  - `Mis-solicitudes` (Activas/Cerradas y "Cambiar").
+- Perfil: renglón "Mis solicitudes" ("N activas · N ofertas") y Privacidad en un renglón aparte.
+- `SellStepLayout` con `steps`, `heading`, `onSave` y `top`; ícono `target`; `longDate`.
+- 5 escenas en `tool/screenshots_test.dart`, comparadas con la maqueta. 352 pruebas, analyze 0, critic PASS.
+
+**Decisiones (con su porqué)**
+- **La carpeta es `purchase_requests` y las clases `Wanted*`:** `docs/modulos.md` fija la carpeta de M-05; las clases se llaman como en la API.
+- **"Elegir fecha" abre las fechas de la maqueta (`NEED_DATES`):** lunes, miércoles y viernes de la semana que entra y el lunes siguiente. El calendario de Material no es parte del sistema visual.
+- **Mis solicitudes está en la rama de Perfil:** la maqueta la muestra con la barra de pestañas. Desde "Ver mi solicitud" no hay nada atrás, así que "Regresar" lleva a Perfil.
+- **La cantidad siempre se ve (pedido del usuario):** en la vista previa y el boleto publicado ("vie 9 oct · 2 piezas") y, si es más de una, en Mis solicitudes y en "Cambiar". El script de la maqueta la quitaba al redibujar.
+- **"Compara las ofertas" queda vacío hasta HU-16/HU-17**, aunque la tarjeta diga "3 ofertas" con datos de muestra.
+
+**Errores a evitar**
+- **`Center` dentro de un `Wrap` ocupa todo el ancho:** los chips salían apilados y centrados. Usa `Center(widthFactor: 1)`.
+- **Un `<legend>` de `<fieldset>` no respeta el `padding-top`:** el navegador lo pega al bloque de arriba y deja el relleno debajo. Mide la captura, no el CSS.
+- **Con la fuente Ahem de las pruebas, una fila con textos largos se desborda:** usa `Flexible`/`FittedBox` donde la maqueta corta con `ellipsis`.
+- **`context.pop()` falla si la pantalla se abrió con `go`:** revisa `canPop()`.
+
+## T27 — Filtrar productos por categoría, precio y estado (08-Nov-2026, SCRUM-27, HU-10)
 
 > Las revisiones del 08-Nov corrigieron el alcance inicial: donde esta entrada diga
 > «máximo 3», «sin agregados» o «sin Más relevantes», manda lo que está al final.
@@ -95,29 +117,29 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Auditoría de trazabilidad:** specs de HU-09 y 02-04 reconciliadas, `NOTE` obsoletos fuera y pruebas nuevas del histograma, reingreso sin filtros y término del historial.
 - **Contrato final contra la API del PR #53:** `sort=relevance|newest|priceAsc|priceDesc`, `category` repetido, `page` y `hideSoldOut` opcional.
 
-## T26 — Publicar lo que necesito y Mis solicitudes (09-Nov-2026, SCRUM-35, HU-13)
+## T26 — Reportar y bloquear + foto en el chat (08-Nov-2026, SCRUM-57 y SCRUM-95, HU-28 y HU-57)
 
 **Qué se hizo**
-- `lib/features/purchase_requests/` (M-05):
-  - `Necesidad-1`…`Necesidad-3` con un borrador en memoria (`needDraftProvider`);
-  - `Necesidad-publicada` con las coincidencias de la búsqueda (HU-09), primero las que caben en el presupuesto;
-  - `Mis-solicitudes` (Activas/Cerradas y "Cambiar").
-- Perfil: renglón "Mis solicitudes" ("N activas · N ofertas") y Privacidad en un renglón aparte.
-- `SellStepLayout` con `steps`, `heading`, `onSave` y `top`; ícono `target`; `longDate`.
-- 5 escenas en `tool/screenshots_test.dart`, comparadas con la maqueta. 352 pruebas, analyze 0, critic PASS.
+- `lib/features/reputation/` (M-13): reportar (`showReportSheet`: motivos de la maqueta y "Cuéntanos qué pasó") y "Usuarios bloqueados" (`showBlockedUsersSheet`).
+- Chat:
+  - "Más opciones" con las cuatro opciones de `chatMoreSheet`;
+  - "Bloquear a …" con el diálogo de la maqueta;
+  - aviso "No puedes responder a esta conversación." en lugar de la caja si `canReply` es `false` o un envío responde `chat.blocked`.
+- Ajustes → "Reportar un problema". Privacidad → "Usuarios bloqueados" (número o "Ninguno").
+- La foto de perfil de la otra persona en el encabezado del chat y en la bandeja (`ProfileAvatar` con `palette`). Antes solo iniciales; lo pidió el usuario.
+- `MusubiTextField(multiline: true)` (`.s-field textarea`) e íconos `flag` y `circleHelp`.
+- 5 escenas nuevas en `tool/screenshots_test.dart`, comparadas con capturas de la maqueta.
+- 340 pruebas, analyze 0, critic PASS.
 
 **Decisiones (con su porqué)**
-- **La carpeta es `purchase_requests` y las clases `Wanted*`:** `docs/modulos.md` fija la carpeta de M-05; las clases se llaman como en la API.
-- **"Elegir fecha" abre las fechas de la maqueta (`NEED_DATES`):** lunes, miércoles y viernes de la semana que entra y el lunes siguiente. El calendario de Material no es parte del sistema visual.
-- **Mis solicitudes está en la rama de Perfil:** la maqueta la muestra con la barra de pestañas. Desde "Ver mi solicitud" no hay nada atrás, así que "Regresar" lleva a Perfil.
-- **La cantidad siempre se ve (pedido del usuario):** en la vista previa y el boleto publicado ("vie 9 oct · 2 piezas") y, si es más de una, en Mis solicitudes y en "Cambiar". El script de la maqueta la quitaba al redibujar.
-- **"Compara las ofertas" queda vacío hasta HU-16/HU-17**, aunque la tarjeta diga "3 ofertas" con datos de muestra.
+- **El texto bajo "Cuéntanos qué pasó" cambia:** la maqueta remite a un "chat de soporte" que no existe; el equipo responde por correo.
+- **"Ver perfil" y "Silenciar" se muestran con "llega muy pronto":** están en la maqueta (lineamiento 4) y dependen de HU-05 y HU-31.
+- **El aviso no dice quién bloqueó:** la API solo manda `canReply`.
 
 **Errores a evitar**
-- **`Center` dentro de un `Wrap` ocupa todo el ancho:** los chips salían apilados y centrados. Usa `Center(widthFactor: 1)`.
-- **Un `<legend>` de `<fieldset>` no respeta el `padding-top`:** el navegador lo pega al bloque de arriba y deja el relleno debajo. Mide la captura, no el CSS.
-- **Con la fuente Ahem de las pruebas, una fila con textos largos se desborda:** usa `Flexible`/`FittedBox` donde la maqueta corta con `ellipsis`.
-- **`context.pop()` falla si la pantalla se abrió con `go`:** revisa `canPop()`.
+- **`pumpAndSettle` no espera un `Future.delayed` sin cuadros pendientes:** después de elegir una opción (160 ms) y antes de la siguiente hoja (240 ms) hay que hacer `pump(Duration)` (helper `pick`).
+- **Una fila nueva en Ajustes deja "Cerrar sesión" fuera de la pantalla de prueba:** la lista es perezosa y no lo construye. `tapText` ahora hace `scrollUntilVisible`.
+- **Las funciones de la maqueta están dentro de un cierre:** para capturar una hoja con Edge sin interfaz hay que simular toques (`button.click()`), no llamar `chatMoreSheet()`.
 
 ## T25 — Buscar productos por palabra clave (07-Nov-2026, SCRUM-26, HU-09)
 
