@@ -114,6 +114,10 @@ abstract final class ApiPaths {
   /// `GET`, el tablero "Se busca" (spec `musubi-api:HU-15`).
   static const wanted = '/api/v1/wanted';
 
+  /// `GET` y `PUT /api/v1/wanted/{requestId}/offers/mine` — filas "M-05"
+  /// (spec `musubi-api:HU-16`).
+  static String myOffer(String requestId) => '$wanted/$requestId/offers/mine';
+
   /// `GET /api/v1/wanted/mine` — fila "M-05" (spec `musubi-api:HU-13`).
   static const myWanted = '$wanted/mine';
 

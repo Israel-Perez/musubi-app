@@ -4,6 +4,7 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/purchase_requests/data/http_wanted_repository.dart';
+import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
@@ -223,6 +224,105 @@ void main() {
       expect(visitor.requesterPhotoUrl, isNull);
       expect(visitor.neededBy, isNull);
       expect(page.nextCursor, 'abc');
+    });
+  });
+
+  group('ofertas (HU-16)', () {
+    Map<String, Object?> offerJson({String? photo}) => {
+      'id': 'o1',
+      'requestId': 'r1',
+      'kind': 'direct',
+      'productId': null,
+      'title': 'Bata blanca de algodón, talla M',
+      'priceCents': 32000,
+      'condition': 'used',
+      'photo': photo,
+      'message': null,
+      'status': 'sent',
+      'overBudget': true,
+      'createdAt': '2026-11-09T18:00:00Z',
+      'updatedAt': '2026-11-09T18:00:00Z',
+    };
+
+    test('mi oferta: null si aun no ofrezco', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'code': 'offers.not_found',
+          'title': 'Todavía no has ofrecido nada en esta solicitud.',
+        }, status: 404),
+      );
+
+      expect(await repository.myOffer('r1'), isNull);
+      expect(adapter.requests.single.path, ApiPaths.myOffer('r1'));
+    });
+
+    test('otro error de mi oferta si llega como ApiFailure', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'code': 'wanted.not_found',
+          'title': 'No encontramos esta solicitud.',
+        }, status: 404),
+      );
+
+      expect(
+        () => repository.myOffer('r1'),
+        throwsA(
+          isA<ApiFailure>().having((f) => f.code, 'code', 'wanted.not_found'),
+        ),
+      );
+    });
+
+    test(
+      'enviar manda el contrato con PUT y mapea la foto y su llave',
+      () async {
+        serve(
+          (_) => FakeHttpAdapter.json(
+            offerJson(photo: '/media/products/u1/foto.webp'),
+            status: 201,
+          ),
+        );
+
+        final offer = await repository.sendOffer(
+          'r1',
+          const NewOffer.direct(
+            description: '  Bata blanca de algodón, talla M ',
+            priceCents: 32000,
+            condition: 'used',
+            message: '   ',
+          ),
+        );
+
+        final request = adapter.requests.single;
+        expect((request.method, request.path), ('PUT', ApiPaths.myOffer('r1')));
+        expect(request.data, {
+          'productId': null,
+          'description': 'Bata blanca de algodón, talla M',
+          'priceCents': 32000,
+          'condition': 'used',
+          'photo': null,
+          'message': null,
+        });
+        expect((offer.kind, offer.overBudget), (OfferKind.direct, true));
+        expect(
+          offer.photoUrl,
+          'https://api.musubi.example/media/products/u1/foto.webp',
+        );
+        expect(offer.photoKey, 'media/products/u1/foto.webp');
+      },
+    );
+
+    test('vincular manda solo la publicacion y el mensaje', () {
+      expect(
+        const NewOffer.listing(productId: 'p1', message: ' Hola ').toJson(),
+        {
+          'productId': 'p1',
+          'description': null,
+          'priceCents': null,
+          'condition': null,
+          'photo': null,
+          'message': 'Hola',
+        },
+      );
     });
   });
 

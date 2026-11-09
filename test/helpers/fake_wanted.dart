@@ -1,4 +1,5 @@
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_repository.dart';
@@ -133,4 +134,36 @@ class FakeWantedRepository implements WantedRepository {
 
   @override
   Future<List<WantedRequest>> mine() async => List.of(stored);
+
+  /// Mis ofertas por solicitud (HU-16).
+  final Map<String, WantedOffer> offers = {};
+
+  /// Lo que se envio con "Enviar oferta".
+  final List<(String, NewOffer)> sentOffers = [];
+  ApiFailure? offerFailure;
+
+  @override
+  Future<WantedOffer?> myOffer(String requestId) async => offers[requestId];
+
+  @override
+  Future<WantedOffer> sendOffer(String requestId, NewOffer offer) async {
+    if (offerFailure != null) throw offerFailure!;
+    sentOffers.add((requestId, offer));
+    final budget = [
+      ...boardItems,
+      ...stored,
+    ].firstWhere((r) => r.id == requestId).budgetCents;
+    final price = offer.priceCents ?? 25000;
+    return offers[requestId] = WantedOffer(
+      id: 'o-$requestId',
+      requestId: requestId,
+      kind: offer.productId == null ? OfferKind.direct : OfferKind.listing,
+      productId: offer.productId,
+      title: offer.description ?? 'Bata de laboratorio blanca, talla M',
+      priceCents: price,
+      condition: offer.condition ?? 'used',
+      message: offer.message,
+      overBudget: price > budget,
+    );
+  }
 }

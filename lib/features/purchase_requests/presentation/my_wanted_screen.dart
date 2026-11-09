@@ -21,7 +21,7 @@ import 'package:musubi_app/features/purchase_requests/presentation/wanted_provid
 
 /// `Mis-solicitudes` (HU-13): "Activas" y "Cerradas", la solicitud elegida
 /// ("Cambiar" elige otra) y sus ofertas.
-/// NOTE (HU-16): "Compara las ofertas" con Rechazar, Abrir chat y Aceptar.
+/// NOTE (HU-17): "Compara las ofertas" con Rechazar, Abrir chat y Aceptar.
 /// NOTE (HU-14): "Cambiar" tambien edita, cierra o cancela.
 class MyWantedScreen extends ConsumerStatefulWidget {
   const new({super.key});

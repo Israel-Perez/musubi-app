@@ -406,7 +406,7 @@ class _AddTile extends StatelessWidget {
       pressScale: 0.97,
       semanticLabel: label,
       builder: (context, pressed) => CustomPaint(
-        foregroundPainter: _DashedBorderPainter(color: c.neutralStrong),
+        foregroundPainter: CssDashedBorderPainter(color: c.neutralStrong),
         child: Container(
           decoration: BoxDecoration(
             color: pressed ? c.surface : c.background,
@@ -431,36 +431,6 @@ class _AddTile extends StatelessWidget {
       ),
     );
   }
-}
-
-/// `border: 1.5px dashed` con radio 16, con el patron de guiones de Chrome.
-class _DashedBorderPainter extends CustomPainter {
-  const new({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const inset = cssDashThickness / 2;
-    final rect = RRect.fromRectAndRadius(
-      (Offset.zero & size).deflate(inset),
-      const Radius.circular(MusubiSizes.radiusButton - inset),
-    );
-    final path = Path()..addRRect(rect);
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = cssDashThickness;
-    for (final metric in path.computeMetrics()) {
-      for (final (start, end) in cssDashSegments(0, metric.length)) {
-        canvas.drawPath(metric.extractPath(start, end), paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 /// "Fotos que venden más rápido".

@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:flutter/rendering.dart';
 
 /// Grosor con el que Chrome pinta `1.5px` en un telefono (3x): 4 px del
 /// dispositivo.
@@ -49,4 +49,37 @@ void paintCssDashedLine(
   for (final (start, end) in cssDashSegments(left, right)) {
     canvas.drawLine(Offset(start, top + y), Offset(end, top + y), paint);
   }
+}
+
+/// `border: 1.5px dashed` con el radio [radius] (16 por defecto) y el patron
+/// de guiones de Chrome: "Tomar foto" de `Vender-1` y la foto de
+/// `Yo-tengo-oferta` (HU-16).
+class CssDashedBorderPainter extends CustomPainter {
+  const new({required this.color, this.radius = 16});
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const inset = cssDashThickness / 2;
+    final rect = RRect.fromRectAndRadius(
+      (Offset.zero & size).deflate(inset),
+      Radius.circular(radius - inset),
+    );
+    final path = Path()..addRRect(rect);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = cssDashThickness;
+    for (final metric in path.computeMetrics()) {
+      for (final (start, end) in cssDashSegments(0, metric.length)) {
+        canvas.drawPath(metric.extractPath(start, end), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(CssDashedBorderPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.radius != radius;
 }
