@@ -118,6 +118,15 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-16`).
   static String myOffer(String requestId) => '$wanted/$requestId/offers/mine';
 
+  /// `GET /api/v1/wanted/{requestId}/offers` — fila "M-05" (spec
+  /// `musubi-api:HU-17`).
+  static String receivedOffers(String requestId) => '$wanted/$requestId/offers';
+
+  /// `POST /api/v1/wanted/{requestId}/offers/{offerId}/reject`, `accept` y
+  /// `chat` — filas "M-05" (spec `musubi-api:HU-17`).
+  static String offerAction(String requestId, String offerId, String action) =>
+      '$wanted/$requestId/offers/$offerId/$action';
+
   /// `GET /api/v1/wanted/mine` — fila "M-05" (spec `musubi-api:HU-13`).
   static const myWanted = '$wanted/mine';
 

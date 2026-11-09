@@ -37,9 +37,13 @@ import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 /// NOTE (HU-27): la calificacion de la otra persona.
 /// NOTE (HU-32): "Resumir acuerdo" con IA.
 class ChatScreen extends ConsumerStatefulWidget {
-  const new({required this.target, super.key});
+  const new({required this.target, super.key, this.draft});
 
   final ChatTarget target;
+
+  /// Mensaje ya escrito en la caja ("¡Hola, Valeria! Acepto tu oferta…",
+  /// HU-17); la persona lo envia o lo cambia.
+  final String? draft;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -52,6 +56,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _input.text = widget.draft ?? '';
     _scroll.addListener(() {
       // La lista va invertida: el final del scroll son los mas viejos.
       if (_scroll.position.extentAfter < 240) {
@@ -233,12 +238,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 conversation: conversation,
                 preview: preview,
                 // HU-21: desde el contexto se abre el detalle del elemento.
-                onSee: () {
-                  final id = conversation?.context.id ?? preview?.id;
-                  if (id != null) {
-                    unawaited(context.push(AppRoutes.product(id)));
-                  }
-                },
+                // HU-17: una oferta no tiene detalle que abrir.
+                onSee: conversation?.context.isOffer ?? false
+                    ? null
+                    : () {
+                        final id = conversation?.context.id ?? preview?.id;
+                        if (id != null) {
+                          unawaited(context.push(AppRoutes.product(id)));
+                        }
+                      },
                 onSummarize: () => _soon('Resumir acuerdo'),
               ),
               Expanded(
@@ -399,7 +407,9 @@ class _ContextCard extends StatelessWidget {
 
   final Conversation? conversation;
   final ProductSummary? preview;
-  final VoidCallback onSee;
+
+  /// "Ver"; `null` sin detalle que abrir (una oferta, HU-17).
+  final VoidCallback? onSee;
   final VoidCallback onSummarize;
 
   @override
@@ -411,7 +421,12 @@ class _ContextCard extends StatelessWidget {
     final condition = context0?.conditionLabel ?? preview?.condition;
     final photo = context0?.photoUrl ?? preview?.photoUrl;
     final available = context0?.available ?? true;
+    final offer = context0?.isOffer ?? false;
     final eyebrow = switch (conversation) {
+      // HU-17: la conversacion nacio de una oferta a una solicitud.
+      Conversation(role: ChatRole.seller) when offer => 'TU OFERTA · SE BUSCA',
+      Conversation(:final counterpart) when offer =>
+        'OFERTA DE ${counterpart.firstName.toUpperCase()} · SE BUSCA',
       Conversation(role: ChatRole.seller) => 'TU PUBLICACIÓN',
       Conversation(:final counterpart) =>
         'PUBLICACIÓN DE ${counterpart.firstName.toUpperCase()}',
@@ -505,9 +520,14 @@ class _ContextCard extends StatelessWidget {
                                       TextSpan(text: ' · $condition'),
                                   ],
                                 )
-                              : const TextSpan(
-                                  text:
+                              : TextSpan(
+                                  text: switch ((offer, conversation?.role)) {
+                                    (true, ChatRole.seller) =>
+                                      'Respondiste a su solicitud',
+                                    (true, _) => 'Respondió a tu solicitud',
+                                    _ =>
                                       'Esta publicación ya no está disponible',
+                                  },
                                 ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -520,26 +540,27 @@ class _ContextCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Pressable(
-                    onTap: available ? onSee : null,
-                    semanticLabel: 'Ver la publicación',
-                    builder: (context, _) => SizedBox(
-                      height: MusubiSizes.minTouch,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Center(
-                          child: Text(
-                            'Ver',
-                            style: MusubiType.style(
-                              13.5,
-                              weight: FontWeight.w800,
-                              color: c.brandStrongText,
+                  if (onSee != null)
+                    Pressable(
+                      onTap: available ? onSee : null,
+                      semanticLabel: 'Ver la publicación',
+                      builder: (context, _) => SizedBox(
+                        height: MusubiSizes.minTouch,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Center(
+                            child: Text(
+                              'Ver',
+                              style: MusubiType.style(
+                                13.5,
+                                weight: FontWeight.w800,
+                                color: c.brandStrongText,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

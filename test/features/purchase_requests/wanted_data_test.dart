@@ -326,6 +326,93 @@ void main() {
     });
   });
 
+  group('ofertas recibidas (HU-17)', () {
+    test('lista con quien ofrece, su reputacion y la foto', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'items': [
+            {
+              'id': 'o1',
+              'kind': 'listing',
+              'productId': 'p1',
+              'title': 'Calculadora Casio',
+              'priceCents': 45000,
+              'condition': 'used',
+              'conditionDetail': 'fair',
+              'photo': '/media/products/u2/foto.webp',
+              'message': 'Tiene un rayón.',
+              'status': 'accepted',
+              'offerer': {
+                'id': 'u2',
+                'name': 'Valeria Cruz',
+                'photo': '/media/avatars/u2.webp',
+                'career': 'Arquitectura',
+                'ratingAvg': 4.6,
+                'ratingCount': 18,
+              },
+              'createdAt': '2026-11-09T18:00:00Z',
+            },
+          ],
+        }),
+      );
+
+      final offer = (await repository.receivedOffers('r1')).single;
+
+      expect(adapter.requests.single.path, ApiPaths.receivedOffers('r1'));
+      expect(
+        (offer.kind, offer.accepted, offer.conditionDetail),
+        (OfferKind.listing, true, 'fair'),
+      );
+      expect(
+        offer.photoUrl,
+        'https://api.musubi.example/media/products/u2/foto.webp',
+      );
+      expect(
+        (offer.offerer.firstName, offer.offerer.ratingAvg),
+        ('Valeria', 4.6),
+      );
+      expect(
+        offer.offerer.photoUrl,
+        'https://api.musubi.example/media/avatars/u2.webp',
+      );
+    });
+
+    test('rechazar, aceptar y abrir chat usan su ruta', () async {
+      serve(
+        (options) => options.path.endsWith('/reject')
+            ? ResponseBody.fromString('', 204)
+            : FakeHttpAdapter.json({'conversationId': 'c9'}),
+      );
+
+      await repository.rejectOffer('r1', 'o1');
+      final accepted = await repository.acceptOffer('r1', 'o1');
+      final chat = await repository.offerChat('r1', 'o2');
+
+      expect(adapter.requests.map((r) => (r.method, r.path)), [
+        ('POST', ApiPaths.offerAction('r1', 'o1', 'reject')),
+        ('POST', ApiPaths.offerAction('r1', 'o1', 'accept')),
+        ('POST', ApiPaths.offerAction('r1', 'o2', 'chat')),
+      ]);
+      expect((accepted, chat), ('c9', 'c9'));
+    });
+
+    test('mi oferta trae su estado', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'id': 'o1',
+          'requestId': 'r1',
+          'kind': 'direct',
+          'title': 'Bata',
+          'priceCents': 28000,
+          'condition': 'used',
+          'status': 'rejected',
+        }),
+      );
+
+      expect((await repository.myOffer('r1'))!.status, OfferStatus.rejected);
+    });
+  });
+
   group('fechas rapidas de Necesidad-3', () {
     // Martes 10 de noviembre de 2026.
     final tuesday = DateTime(2026, 11, 10, 18, 30);

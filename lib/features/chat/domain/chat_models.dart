@@ -40,13 +40,15 @@ class ChatCounterpart {
 
 /// Tarjeta de la publicacion de la que se habla (maqueta `Chat-Valeria`).
 /// Precio, estado y foto son los de ahora; si la publicacion ya no se puede
-/// ver, [available] es `false` y solo queda el nombre guardado.
+/// ver, [available] es `false` y solo queda el nombre guardado. HU-17: la
+/// conversacion tambien puede ser de una oferta ([isOffer]).
 @immutable
 class ChatContext {
   const new({
     required this.id,
     required this.title,
     required this.available,
+    this.type = 'product',
     this.priceCents,
     this.condition,
     this.conditionDetail,
@@ -56,7 +58,13 @@ class ChatContext {
   final String id;
   final String title;
   final bool available;
+
+  /// `product` u `offer` (HU-17).
+  final String type;
   final int? priceCents;
+
+  /// Conversacion de una oferta "Yo tengo este producto" (HU-17).
+  bool get isOffer => type == 'offer';
 
   /// `new` o `used`.
   final String? condition;

@@ -63,8 +63,10 @@ class FakeWantedRepository implements WantedRepository {
     this.publishFailure,
     this.boardFailure,
     this.pageSize,
+    Map<String, List<ReceivedOffer>>? received,
   }) : stored = mine ?? [],
-       boardItems = board ?? [];
+       boardItems = board ?? [],
+       received = received ?? {};
 
   final List<WantedRequest> stored;
   final List<WantedRequest> boardItems;
@@ -144,6 +146,39 @@ class FakeWantedRepository implements WantedRepository {
 
   @override
   Future<WantedOffer?> myOffer(String requestId) async => offers[requestId];
+
+  /// Ofertas recibidas por solicitud (HU-17).
+  final Map<String, List<ReceivedOffer>> received;
+
+  /// Lo que se decidio: `(accion, solicitud, oferta)`.
+  final List<(String, String, String)> decisions = [];
+  ApiFailure? decisionFailure;
+
+  @override
+  Future<List<ReceivedOffer>> receivedOffers(String requestId) async => [
+    for (final o in received[requestId] ?? const <ReceivedOffer>[])
+      if (!decisions.contains(('reject', requestId, o.id))) o,
+  ];
+
+  @override
+  Future<void> rejectOffer(String requestId, String offerId) async {
+    if (decisionFailure != null) throw decisionFailure!;
+    decisions.add(('reject', requestId, offerId));
+  }
+
+  @override
+  Future<String> acceptOffer(String requestId, String offerId) async {
+    if (decisionFailure != null) throw decisionFailure!;
+    decisions.add(('accept', requestId, offerId));
+    return 'c-$offerId';
+  }
+
+  @override
+  Future<String> offerChat(String requestId, String offerId) async {
+    if (decisionFailure != null) throw decisionFailure!;
+    decisions.add(('chat', requestId, offerId));
+    return 'c-$offerId';
+  }
 
   @override
   Future<WantedOffer> sendOffer(String requestId, NewOffer offer) async {

@@ -5,12 +5,36 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 ## Estado actual (09-Nov-2026)
 
 - **En Google Play:** `0.5.1+7` en la prueba cerrada (chat, bandeja y detalle del producto).
-- **En `main`, sin publicar (siguiente lote):** búsqueda (HU-09), filtros y orden (HU-10), reportar y bloquear + foto en el chat (HU-28 y HU-57) solicitudes de compra (HU-13) y el tablero "Se busca" (HU-15). **No se sube a Google Play por cada HU:** el usuario prefiere juntar varias. Antes de publicar el lote:
+- **En `main`, sin publicar (siguiente lote):** búsqueda (HU-09), filtros y orden (HU-10), reportar y bloquear + foto en el chat (HU-28 y HU-57), solicitudes de compra (HU-13), el tablero "Se busca" (HU-15), "Yo tengo este producto" (HU-16) y elegir ofertas (HU-17). **No se sube a Google Play por cada HU:** el usuario prefiere juntar varias. Antes de publicar el lote:
   - subir el `versionCode` (`0.5.1+7` ya está publicada);
   - actualizar "Seguridad de los datos" en Play Console (mensajes, reportes, bloqueos y solicitudes de compra).
-- **API en producción:** `0.5.0-alpha.8`, esquema 10 (`infra-up` del 09-Nov-2026). En `main` está `0.5.0-alpha.9` (HU-15), sin desplegar. La matriz está en `docs/versionado.md`.
-- **Siguiente:** HU-16 ("Yo tengo este producto"), luego HU-17 (elegir ofertas) y HU-14 (editar, cerrar y cancelar). Sprint 4: 9 al 20 de noviembre.
+- **API en producción:** `0.5.0-alpha.8`, esquema 10 (`infra-up` del 09-Nov-2026). En `main` hay más versiones sin desplegar (HU-15 a HU-17, hasta `0.5.0-alpha.11`, esquema 12). La matriz está en `docs/versionado.md`.
+- **Siguiente:** HU-14 (editar, cerrar y cancelar la solicitud) y luego Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
 - **Pendiente con dueño:** la rama `feature/SCRUM-24-editar-eliminar-publicaciones` (HU-07, Kazumi) tiene conflictos; no se toca sin el OK del usuario.
+
+## T31 — Ver y elegir ofertas (09-Nov-2026, SCRUM-39, HU-17)
+
+**Qué se hizo**
+- "Compara las ofertas" en `Mis-solicitudes` (`ReceivedOffersSection`):
+  - quien ofrece con ★, número de calificaciones y carrera;
+  - "Mejor reputación", "Menor precio" o "Aceptada";
+  - el precio frente al presupuesto, el mensaje y el estado.
+- "Ordenar ofertas": Recomendadas, Menor precio y Mejor reputación.
+- "Rechazar" con diálogo y "Deshacer" (la API se llama al terminar el aviso de 4 s).
+- "Aceptar" con diálogo: abre el chat con el saludo escrito. "Abrir chat" no decide.
+- El chat reconoce una oferta: "OFERTA DE VALERIA · SE BUSCA" o "TU OFERTA · SE BUSCA", sin "Ver". `ChatScreen.draft` llega por el `extra` de `/chat/:id`.
+- La hoja de HU-16 no deja cambiar una oferta ya elegida o rechazada.
+- API `0.5.0-alpha.11`. Tests 418 · analyze 0 · critic PASS. Captura `mis-solicitudes-ofertas`: tarjeta de 217 pt igual que la maqueta.
+
+**Decisiones (con su porqué)**
+- **"Deshacer" en la app, sin endpoint:** la API rechaza de forma definitiva; esperar al aviso evita un endpoint para revertir.
+- **El saludo se deja escrito, no se envía:** la persona decide si lo manda o lo cambia.
+- **Masculino genérico en el estado ("Usado · como nuevo"):** la maqueta usa el femenino porque habla de una calculadora.
+
+**Errores a evitar**
+- **Después de un `push`, `routeInformationProvider` no cambia en las pruebas:** para saber qué chat se abrió, busca el `ChatScreen` y su `target`.
+- **Un temporizador pendiente al terminar un widget test es error:** avanza el reloj más allá de `ReceivedOffersSection.undoWindow` antes de terminar.
+- **`ref` no se usa en `dispose`:** el repositorio se guarda antes (`late final _repository`) para enviar los rechazos pendientes al salir.
 
 ## T30 — "Yo tengo este producto" (09-Nov-2026, SCRUM-38, HU-16)
 

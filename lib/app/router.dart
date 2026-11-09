@@ -259,6 +259,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '${AppRoutes.chat}/:id',
         builder: (context, state) => ChatScreen(
           target: ChatTarget.conversation(state.pathParameters['id']!),
+          // HU-17: "Aceptar oferta" deja el saludo escrito.
+          draft: state.extra is String ? state.extra! as String : null,
         ),
       ),
       GoRoute(

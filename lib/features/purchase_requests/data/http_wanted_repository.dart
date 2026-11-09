@@ -87,6 +87,38 @@ class HttpWantedRepository implements WantedRepository {
         return offerFromJson(response.data ?? const {}, _apiBaseUrl);
       });
 
+  @override
+  Future<List<ReceivedOffer>> receivedOffers(String requestId) =>
+      _guard(() async {
+        final response = await _dio.get<Map<String, dynamic>>(
+          ApiPaths.receivedOffers(requestId),
+        );
+        return [
+          for (final item
+              in (response.data?['items'] as List<dynamic>? ?? const [])
+                  .cast<Map<String, dynamic>>())
+            receivedOfferFromJson(item, _apiBaseUrl),
+        ];
+      });
+
+  @override
+  Future<void> rejectOffer(String requestId, String offerId) => _guard(
+    () => _dio.post<void>(ApiPaths.offerAction(requestId, offerId, 'reject')),
+  );
+
+  @override
+  Future<String> acceptOffer(String requestId, String offerId) =>
+      _conversation(ApiPaths.offerAction(requestId, offerId, 'accept'));
+
+  @override
+  Future<String> offerChat(String requestId, String offerId) =>
+      _conversation(ApiPaths.offerAction(requestId, offerId, 'chat'));
+
+  Future<String> _conversation(String path) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(path);
+    return response.data!['conversationId'] as String;
+  });
+
   static Future<T> _guard<T>(Future<T> Function() call) async {
     try {
       return await call();
@@ -147,5 +179,34 @@ WantedOffer offerFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
         : photo,
     message: json['message'] as String?,
     overBudget: json['overBudget'] as bool? ?? false,
+    status: OfferStatus.parse(json['status']),
+  );
+}
+
+/// Un `ReceivedOfferResponse` de la API (HU-17).
+ReceivedOffer receivedOfferFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
+  final photo = json['photo'] as String?;
+  final offerer = json['offerer'] as Map<String, dynamic>? ?? const {};
+  final avatar = offerer['photo'] as String?;
+  return ReceivedOffer(
+    id: json['id'] as String,
+    kind: OfferKind.parse(json['kind']),
+    productId: json['productId'] as String?,
+    title: json['title'] as String,
+    priceCents: (json['priceCents'] as num).toInt(),
+    condition: json['condition'] as String? ?? 'used',
+    conditionDetail: json['conditionDetail'] as String?,
+    photoUrl: photo == null ? null : mediaUrl(photo, apiBaseUrl),
+    message: json['message'] as String?,
+    status: OfferStatus.parse(json['status']),
+    offerer: Offerer(
+      id: offerer['id'] as String? ?? '',
+      name: offerer['name'] as String? ?? '',
+      photoUrl: avatar == null ? null : mediaUrl(avatar, apiBaseUrl),
+      career: offerer['career'] as String?,
+      ratingAvg: (offerer['ratingAvg'] as num?)?.toDouble(),
+      ratingCount: (offerer['ratingCount'] as num?)?.toInt() ?? 0,
+    ),
+    createdAt: DateTime.parse(json['createdAt'] as String).toUtc(),
   );
 }

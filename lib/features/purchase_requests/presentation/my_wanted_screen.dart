@@ -17,11 +17,11 @@ import 'package:musubi_app/core/widgets/skeleton.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/received_offers.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 /// `Mis-solicitudes` (HU-13): "Activas" y "Cerradas", la solicitud elegida
-/// ("Cambiar" elige otra) y sus ofertas.
-/// NOTE (HU-17): "Compara las ofertas" con Rechazar, Abrir chat y Aceptar.
+/// ("Cambiar" elige otra) y sus ofertas ("Compara las ofertas", HU-17).
 /// NOTE (HU-14): "Cambiar" tambien edita, cierra o cancela.
 class MyWantedScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -140,7 +140,11 @@ class _MyWantedScreenState extends ConsumerState<MyWantedScreen> {
                 ),
               ),
             ),
-            if (selected != null) _Offers(request: selected),
+            if (selected != null)
+              ReceivedOffersSection(
+                key: ValueKey('offers-${selected.id}'),
+                request: selected,
+              ),
           ],
         ),
       ),
@@ -429,64 +433,6 @@ class _IconText extends StatelessWidget {
 }
 
 /// "Compara las ofertas": hoy, sin ofertas (llegan con HU-16).
-class _Offers extends StatelessWidget {
-  const new({required this.request});
-
-  final WantedRequest request;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.musubi;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-          child: Text(
-            'Compara las ofertas',
-            style: MusubiType.style(
-              16,
-              weight: FontWeight.w800,
-              color: c.textPrimary,
-            ),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: c.background,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            spacing: 6,
-            children: [
-              MusubiIcon(MusubiIcons.hand, size: 26, color: c.brand),
-              Text(
-                request.isActive ? 'Aún no hay ofertas' : 'Sin ofertas',
-                textAlign: TextAlign.center,
-                style: MusubiType.style(
-                  15,
-                  weight: FontWeight.w800,
-                  color: c.textPrimary,
-                ),
-              ),
-              Text(
-                request.isActive
-                    ? 'Te avisaremos cuando alguien responda “Yo tengo este '
-                          'producto”.'
-                    : 'Esta solicitud ya no recibe ofertas.',
-                textAlign: TextAlign.center,
-                style: MusubiType.style(13.5, line: 19, color: c.textSecondary),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// Sin solicitudes en la pestaña.
 class _Empty extends StatelessWidget {
   const new({required this.closed});

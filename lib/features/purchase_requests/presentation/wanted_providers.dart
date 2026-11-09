@@ -7,6 +7,7 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/purchase_requests/data/http_wanted_repository.dart';
+import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_repository.dart';
 
@@ -22,6 +23,15 @@ final wantedRepositoryProvider = Provider<WantedRepository>(
 final FutureProvider<List<WantedRequest>> myWantedProvider =
     FutureProvider.autoDispose<List<WantedRequest>>(
       (ref) => ref.watch(wantedRepositoryProvider).mine(),
+      retry: (_, _) => null,
+    );
+
+/// "Compara las ofertas" (HU-17) de una solicitud. Para recargar:
+/// `ref.invalidate(receivedOffersProvider(id))`.
+final FutureProviderFamily<List<ReceivedOffer>, String> receivedOffersProvider =
+    FutureProvider.autoDispose.family<List<ReceivedOffer>, String>(
+      (ref, requestId) =>
+          ref.watch(wantedRepositoryProvider).receivedOffers(requestId),
       retry: (_, _) => null,
     );
 

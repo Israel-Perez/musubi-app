@@ -39,6 +39,7 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
@@ -285,6 +286,47 @@ final List<WantedRequest> _visitorBoard = [
   ),
 ];
 
+/// "Compara las ofertas" de `Mis-solicitudes` (HU-17).
+final List<ReceivedOffer> _receivedOffers = [
+  ReceivedOffer(
+    id: 'o-diego',
+    kind: OfferKind.direct,
+    title: 'Casio fx-991ES Plus',
+    priceCents: 50000,
+    condition: 'used',
+    conditionDetail: 'likeNew',
+    photoUrl: 'asset:assets/products/casio.webp',
+    message: 'La usé un semestre, incluye tapa y pilas nuevas.',
+    offerer: const Offerer(
+      id: 'u-dh',
+      name: 'Diego Hernández',
+      career: 'Ing. Civil',
+      ratingAvg: 4.9,
+      ratingCount: 32,
+    ),
+    createdAt: _now.subtract(const Duration(hours: 2)),
+  ),
+  ReceivedOffer(
+    id: 'o-valeria',
+    kind: OfferKind.listing,
+    productId: 'casio-991es',
+    title: 'Calculadora Casio fx-991ES Plus',
+    priceCents: 45000,
+    condition: 'used',
+    conditionDetail: 'fair',
+    photoUrl: 'asset:assets/products/casio.webp',
+    message: 'Funciona bien, tiene un rayón en la tapa.',
+    offerer: const Offerer(
+      id: 'u-vc',
+      name: 'Valeria Cruz',
+      career: 'Arquitectura',
+      ratingAvg: 4.6,
+      ratingCount: 18,
+    ),
+    createdAt: _now.subtract(const Duration(hours: 1)),
+  ),
+];
+
 /// Mis publicaciones de `Yo-tengo-vincular` (HU-16).
 const List<OwnListing> _myListings = [
   OwnListing(
@@ -399,6 +441,7 @@ class _Shot {
             wantedRepositoryProvider.overrideWithValue(
               FakeWantedRepository(
                 board: member ? _memberBoard : _visitorBoard,
+                received: {'w1': _receivedOffers},
                 mine: [
                   sampleWanted(offers: 3, neededBy: DateTime(2026, 10, 9)),
                   sampleWanted(id: 'w2', title: 'Bata de laboratorio talla M'),
@@ -713,6 +756,13 @@ final Map<String, (bool, _Scene)> _scenes = {
   'necesidad-3': (true, (s) => _needTo(s, 3)),
   'necesidad-publicada': (true, (s) => _needTo(s, 4)),
   'mis-solicitudes': (true, (s) => s.go(AppRoutes.myWanted)),
+  'mis-solicitudes-ofertas': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myWanted);
+      await s.scroll(5000);
+    },
+  ),
   'se-busca': (true, (s) => s.go(AppRoutes.wanted)),
   'se-busca-filtros': (
     true,

@@ -242,6 +242,29 @@ void main() {
     expect(sent.photoKey, 'media/products/u1/foto.webp');
   });
 
+  testWidgets('una oferta ya rechazada no se puede cambiar (HU-17)', (
+    tester,
+  ) async {
+    final wanted = FakeWantedRepository(
+      board: [boardWanted(neededBy: DateTime(2026, 11, 9))],
+    );
+    wanted.offers['r-bata'] = const WantedOffer(
+      id: 'o1',
+      requestId: 'r-bata',
+      kind: OfferKind.direct,
+      title: 'Bata talla M',
+      priceCents: 26000,
+      condition: 'used',
+      status: OfferStatus.rejected,
+    );
+    final h = OfferHarness(tester, wanted: wanted);
+    await h.open();
+
+    expect(find.text('Fernanda rechazó tu oferta'), findsOneWidget);
+    await h.tap(find.byKey(const Key('offer-send')));
+    expect(h.wanted.sentOffers, isEmpty);
+  });
+
   testWidgets('si la API rechaza, avisa y la hoja sigue abierta', (
     tester,
   ) async {
