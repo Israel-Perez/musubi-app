@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/app/musubi_app.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
+import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
@@ -14,12 +15,14 @@ import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/data/http_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
+import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_http_adapter.dart';
 import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_session_api.dart';
@@ -51,6 +54,7 @@ Future<FakeCatalogRepository> _open(
   WidgetTester tester, {
   required ProductDetail? detail,
   SessionTokens? session,
+  FakeFavoritesRepository? favorites,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 3;
@@ -71,6 +75,9 @@ Future<FakeCatalogRepository> _open(
       overrides: [
         brandSplashEnabledProvider.overrideWithValue(false),
         catalogRepositoryProvider.overrideWithValue(catalog),
+        favoritesRepositoryProvider.overrideWithValue(
+          favorites ?? FakeFavoritesRepository(),
+        ),
         profileRepositoryProvider.overrideWithValue(profiles),
         sessionApiProvider.overrideWithValue(FakeSessionApi()),
         clockProvider.overrideWithValue(() => _now),
@@ -119,6 +126,59 @@ void main() {
     expect(find.text('Apartar'), findsOneWidget);
   });
 
+  testWidgets('el corazon guarda y quita el producto', (tester) async {
+    final favorites = FakeFavoritesRepository();
+    await _open(
+      tester,
+      detail: _detail(),
+      session: chatTokens(_now),
+      favorites: favorites,
+    );
+
+    await tester.tap(find.bySemanticsLabel('Guardar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(favorites.added, ['p1']);
+    expect(find.bySemanticsLabel('Quitar de favoritos'), findsOneWidget);
+    expect(find.textContaining('Guardaste'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 4));
+    await tester.tap(find.bySemanticsLabel('Quitar de favoritos'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(favorites.removed, ['p1']);
+    expect(find.text('Lo quitaste de Favoritos'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 4));
+  });
+
+  testWidgets('si guardar falla, avisa y no se marca', (tester) async {
+    final favorites = FakeFavoritesRepository(
+      addFailure: const ApiFailure(
+        code: ApiFailure.networkOffline,
+        message: 'Sin conexión.',
+      ),
+    );
+    await _open(
+      tester,
+      detail: _detail(),
+      session: chatTokens(_now),
+      favorites: favorites,
+    );
+
+    await tester.tap(find.bySemanticsLabel('Guardar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(favorites.added, ['p1']);
+    expect(find.text('Sin conexión.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Guardar'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 4));
+  });
+
   testWidgets('visitante: sin quien vende, y "Mensaje" pide la cuenta', (
     tester,
   ) async {
@@ -131,6 +191,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Crea tu cuenta para chatear'), findsOneWidget);
+  });
+
+  testWidgets('visitante: el corazon pide la cuenta', (tester) async {
+    final favorites = FakeFavoritesRepository();
+    await _open(tester, detail: _detail(sellerId: null), favorites: favorites);
+
+    await tester.tap(find.bySemanticsLabel('Guardar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Guarda lo que te gusta'), findsOneWidget);
+    expect(favorites.listCalls, 0);
+    expect(favorites.added, isEmpty);
   });
 
   testWidgets('agotado: precio tachado, aviso y "Ver parecidos"', (

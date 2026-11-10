@@ -26,5 +26,5 @@
 - `NOTE (HU-08)`: "Vendidos" y "Llevan tiempo sin venderse".
 - `NOTE (HU-50)`: cambiar piezas desde "Mis productos".
 - `NOTE (HU-49)`: "Populares".
-- `NOTE (HU-53)`: guardar el borrador con los datos locales.
+- El borrador local queda fuera del MVP: HU-53 decidió el 08-Nov-2026 que no hay modo sin conexión.
 - `NOTE (HU-06)`: recuperar la foto si Android cierra la app con la cámara abierta.

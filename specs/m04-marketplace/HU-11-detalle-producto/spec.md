@@ -55,7 +55,7 @@ Fila `GET /api/v1/products/{id}` (musubi-api `docs/endpoints.md`, M-03) y `GET /
 ## Límites
 - "Apártalo 24 h" y "Apartar": `NOTE (HU-52)`.
 - "Compara antes de comprar" y "Ver parecidos": `NOTE (HU-51)`.
-- Guardar y "Avísame": `NOTE (HU-53)`.
+- Guardar: HU-53 (spec detallada el 09-Nov-2026). "Avísame": `NOTE (HU-51)`.
 - Compartir: fuera de alcance por ahora.
 - El perfil de quien vende: `NOTE (HU-05)`.
 - "Responde en ~1 h": fuera de alcance.

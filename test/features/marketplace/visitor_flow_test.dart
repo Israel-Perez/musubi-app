@@ -11,6 +11,7 @@ import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
@@ -18,6 +19,7 @@ import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
 import '../../helpers/fake_auth_repository.dart';
 import '../../helpers/fake_catalog_repository.dart';
+import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/fake_status_repository.dart';
 import '../../helpers/in_memory_token_store.dart';
@@ -31,6 +33,7 @@ class Harness {
   final FakeCatalogRepository catalog;
   final SessionTokens? initial;
   final auth = FakeAuthRepository();
+  final favorites = FakeFavoritesRepository();
   late final store = InMemoryTokenStore(initial);
   late ProviderContainer container;
 
@@ -41,6 +44,7 @@ class Harness {
         overrides: [
           brandSplashEnabledProvider.overrideWithValue(false),
           catalogRepositoryProvider.overrideWithValue(catalog),
+          favoritesRepositoryProvider.overrideWithValue(favorites),
           authRepositoryProvider.overrideWithValue(auth),
           sessionApiProvider.overrideWithValue(FakeSessionApi()),
           clockProvider.overrideWithValue(() => auth.now),
@@ -209,6 +213,8 @@ void main() {
       await h.tap(find.byType(SaveButton));
       expect(find.text('Guarda lo que te gusta'), findsOneWidget);
       expect(h.location, AppRoutes.home);
+      expect(h.favorites.listCalls, 0);
+      expect(h.favorites.added, isEmpty);
       await h.tapText('Seguir explorando');
       expect(find.text('Guarda lo que te gusta'), findsNothing);
 

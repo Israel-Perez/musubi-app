@@ -34,7 +34,9 @@ import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
+import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
@@ -50,6 +52,7 @@ import 'package:musubi_app/features/status/presentation/status_providers.dart';
 import '../test/helpers/fake_auth_repository.dart';
 import '../test/helpers/fake_catalog_repository.dart';
 import '../test/helpers/fake_chat.dart';
+import '../test/helpers/fake_favorites_repository.dart';
 import '../test/helpers/fake_listings_repository.dart';
 import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_reputation.dart';
@@ -364,6 +367,52 @@ const List<OwnListing> _myListings = [
   ),
 ];
 
+/// Favoritos de la maqueta `Favoritos` (HU-53): dos disponibles y uno agotado.
+final List<FavoriteItem> _favoriteItems = [
+  FavoriteItem(
+    productId: 'set-dibujo',
+    savedAt: _now.subtract(const Duration(hours: 1)),
+    status: FavoriteStatus.available,
+    product: const ProductSummary(
+      id: 'set-dibujo',
+      title: 'Set de dibujo técnico: escuadras y lápices',
+      priceCents: 32000,
+      stock: 2,
+      photoUrl: 'asset:assets/products/set-dibujo.webp',
+      condition: 'Nuevo',
+      sellerName: 'Paola N.',
+    ),
+  ),
+  FavoriteItem(
+    productId: 'casio-991es',
+    savedAt: _now.subtract(const Duration(hours: 2)),
+    status: FavoriteStatus.available,
+    product: const ProductSummary(
+      id: 'casio-991es',
+      title: 'Calculadora Casio fx-991ES Plus',
+      priceCents: 45000,
+      stock: 1,
+      photoUrl: 'asset:assets/products/casio.webp',
+      condition: 'Usado',
+      sellerName: 'Valeria C.',
+    ),
+  ),
+  FavoriteItem(
+    productId: 'casio-lax',
+    savedAt: _now.subtract(const Duration(hours: 3)),
+    status: FavoriteStatus.soldOut,
+    product: const ProductSummary(
+      id: 'casio-lax',
+      title: 'Calculadora Casio fx-82LA Plus',
+      priceCents: 25000,
+      stock: 0,
+      photoUrl: 'asset:assets/products/casio-lax.webp',
+      condition: 'Usado',
+      sellerName: 'Diego H.',
+    ),
+  ),
+];
+
 /// La app con la vitrina de muestra, lista para tomar capturas.
 class _Shot {
   new(this.tester, {required this.member, CatalogRepository? catalog})
@@ -395,6 +444,11 @@ class _Shot {
           overrides: [
             brandSplashEnabledProvider.overrideWithValue(false),
             catalogRepositoryProvider.overrideWithValue(catalog),
+            favoritesRepositoryProvider.overrideWithValue(
+              FakeFavoritesRepository(
+                favorites: Favorites(items: _favoriteItems),
+              ),
+            ),
             authRepositoryProvider.overrideWithValue(auth),
             sessionApiProvider.overrideWithValue(FakeSessionApi()),
             clockProvider.overrideWithValue(() => _now),
@@ -716,6 +770,7 @@ final Map<String, (bool, _Scene)> _scenes = {
   'inicio': (true, (s) async {}),
   'inicio-scroll': (true, (s) => s.scroll(5000)),
   'perfil': (true, (s) => s.tap(find.bySemanticsLabel('Perfil'))),
+  'favoritos': (true, (s) => s.go(AppRoutes.favorites)),
   'ajustes': (true, (s) => s.go(AppRoutes.settings)),
   'privacidad': (true, (s) => s.go(AppRoutes.accountPrivacy)),
   'datos-personales': (

@@ -19,6 +19,7 @@ import 'package:musubi_app/core/widgets/skeleton.dart';
 import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
@@ -32,8 +33,8 @@ SessionProfile? sessionProfile(WidgetRef ref) =>
 
 /// Pestana Perfil (maqueta `Perfil`, HU-04): foto o iniciales, nombre,
 /// "UTTT · carrera · periodo", "Verificada", estadisticas y mosaicos ("Mis
-/// solicitudes", HU-13). El engrane abre `Ajustes`. Lo que aun no existe no
-/// se muestra: NOTE (HU-52) "Mis apartados", NOTE (HU-53) "Favoritos" y
+/// solicitudes", HU-13; "Favoritos", HU-53). El engrane abre `Ajustes`. Lo que
+/// aun no existe no se muestra: NOTE (HU-52) "Mis apartados" y
 /// NOTE (HU-25) "Mis pedidos".
 class ProfileScreen extends ConsumerWidget {
   const new({super.key});
@@ -376,29 +377,45 @@ class _Tiles extends ConsumerWidget {
   }
 }
 
-/// Segunda fila de mosaicos: "Privacidad" (NOTE (HU-53): "Favoritos" va antes).
-class _PrivacyRow extends StatelessWidget {
+/// Segunda fila de mosaicos: "Favoritos" y "Privacidad".
+class _PrivacyRow extends ConsumerWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-    child: Row(
-      spacing: 10,
-      children: [
-        Expanded(
-          child: _Tile(
-            key: const Key('tile-privacy'),
-            icon: MusubiIcons.shieldCheck,
-            title: 'Privacidad',
-            subtitle: 'Tus datos',
-            onTap: () => unawaited(context.push(AppRoutes.accountPrivacy)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(favoritesProvider).value?.items.length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      child: Row(
+        spacing: 10,
+        children: [
+          Expanded(
+            child: _Tile(
+              key: const Key('tile-favorites'),
+              icon: MusubiIcons.heart,
+              title: 'Favoritos',
+              subtitle: switch (count) {
+                null => 'Tus guardados',
+                0 => 'Ninguno',
+                1 => '1 guardado',
+                final n => '$n guardados',
+              },
+              onTap: () => unawaited(context.push(AppRoutes.favorites)),
+            ),
           ),
-        ),
-        const Expanded(child: SizedBox.shrink()),
-      ],
-    ),
-  );
+          Expanded(
+            child: _Tile(
+              key: const Key('tile-privacy'),
+              icon: MusubiIcons.shieldCheck,
+              title: 'Privacidad',
+              subtitle: 'Tus datos',
+              onTap: () => unawaited(context.push(AppRoutes.accountPrivacy)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Tile extends StatelessWidget {

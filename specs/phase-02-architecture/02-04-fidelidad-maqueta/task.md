@@ -49,5 +49,5 @@
 - `NOTE (HU-31)`: Notificaciones (la campana ya abre `/notificaciones`).
 - `NOTE (HU-04)`: Perfil completo (calificaciones, ventas y apartados).
 - `NOTE (HU-49)`: Recién publicados completo con "Más antiguas".
-- `NOTE (HU-53)`: guardar desde la vitrina.
+- `NOTE (HU-53)`: el corazón de la vitrina se conecta en HU-53 (spec detallada el 09-Nov-2026).
 - `NOTE (HU-54)`: modo noche manual y preferencias en Ajustes.

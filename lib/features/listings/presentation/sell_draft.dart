@@ -112,9 +112,8 @@ class SellDraft {
 }
 
 /// Borrador vivo mientras dure la app: cada foto se sube en cuanto se agrega
-/// y "Publicar producto" espera las que falten.
-/// NOTE (HU-53): guardar el borrador con los datos locales para que
-/// sobreviva a cerrar la app.
+/// y "Publicar producto" espera las que falten. HU-53 (08-Nov-2026) descartó el
+/// modo sin conexión; guardarlo en el telefono queda fuera del MVP.
 final sellDraftProvider = NotifierProvider<SellDraftNotifier, SellDraft>(
   SellDraftNotifier.new,
 );

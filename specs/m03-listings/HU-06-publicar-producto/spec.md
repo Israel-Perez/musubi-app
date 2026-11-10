@@ -78,7 +78,7 @@ Filas "M-03" de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez
 
 ## Límites
 - **Fotos:** se reducen en el teléfono (1600 px, JPEG 85) y la API las vuelve a procesar. Si Android cierra la app mientras la cámara está abierta, la foto se pierde. `NOTE (HU-06)`: recuperarla con `retrieveLostData`.
-- **El borrador vive en memoria:** "Guardar" lo conserva mientras la app siga abierta. `NOTE (HU-53)`: guardarlo con los datos locales.
+- **El borrador vive en memoria:** "Guardar" lo conserva mientras la app siga abierta. El MVP no tiene modo sin conexión (HU-53, 08-Nov-2026); por lineamiento 16, guardarlo en el teléfono queda fuera del MVP.
 
 ## Aprobación y Control de Cambios
 - **Estado:** 🚧 Borrador con evidencia

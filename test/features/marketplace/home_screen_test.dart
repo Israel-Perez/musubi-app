@@ -12,9 +12,12 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
+import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
+import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/in_memory_token_store.dart';
 
@@ -37,6 +40,7 @@ Future<void> _open(
   WidgetTester tester, {
   required CatalogRepository catalog,
   SessionTokens? session,
+  FakeFavoritesRepository? favorites,
   bool settle = true,
 }) async {
   await tester.pumpWidget(
@@ -44,6 +48,9 @@ Future<void> _open(
       overrides: [
         brandSplashEnabledProvider.overrideWithValue(false),
         catalogRepositoryProvider.overrideWithValue(catalog),
+        favoritesRepositoryProvider.overrideWithValue(
+          favorites ?? FakeFavoritesRepository(),
+        ),
         sessionApiProvider.overrideWithValue(FakeSessionApi()),
         clockProvider.overrideWithValue(() => _now),
         tokenStoreProvider.overrideWithValue(InMemoryTokenStore(session)),
@@ -185,6 +192,81 @@ void main() {
       expect(find.text('Se busca en tu comunidad'), findsOneWidget);
       expect(find.text('Entrar'), findsNothing);
       expect(find.byKey(const Key('home-join-banner')), findsNothing);
+    });
+
+    testWidgets('el corazon guarda y quita el producto', (tester) async {
+      final favorites = FakeFavoritesRepository();
+      await _open(
+        tester,
+        catalog: DemoCatalogRepository(() => _now),
+        session: _session(),
+        favorites: favorites,
+      );
+
+      await tester.tap(find.byType(SaveButton).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(favorites.added, hasLength(1));
+      expect(find.textContaining('Guardaste'), findsOneWidget);
+      expect(find.text('Ver'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 4));
+      await tester.tap(find.byType(SaveButton).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(favorites.removed, hasLength(1));
+      expect(find.text('Lo quitaste de Favoritos'), findsOneWidget);
+      expect(find.text('Deshacer'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('el aviso "Ver" abre Favoritos', (tester) async {
+      final favorites = FakeFavoritesRepository();
+      await _open(
+        tester,
+        catalog: DemoCatalogRepository(() => _now),
+        session: _session(),
+        favorites: favorites,
+      );
+
+      await tester.tap(find.byType(SaveButton).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ver'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Todos (1)'), findsOneWidget);
+    });
+
+    testWidgets('el aviso "Deshacer" vuelve a guardar', (tester) async {
+      final favorites = FakeFavoritesRepository();
+      await _open(
+        tester,
+        catalog: DemoCatalogRepository(() => _now),
+        session: _session(),
+        favorites: favorites,
+      );
+
+      await tester.tap(find.byType(SaveButton).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(seconds: 4));
+      await tester.tap(find.byType(SaveButton).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Deshacer'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(favorites.added, hasLength(2));
+      expect(find.bySemanticsLabel('Quitar de favoritos'), findsWidgets);
+
+      await tester.pump(const Duration(seconds: 4));
     });
 
     testWidgets('Publicaciones recientes: de la mas nueva a la mas vieja', (

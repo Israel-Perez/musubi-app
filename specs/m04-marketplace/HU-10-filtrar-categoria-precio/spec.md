@@ -105,7 +105,7 @@ Decisiones:
 ## Límites
 
 - **“Más relevantes”:** la API lo acepta pero ordena igual que `recent` hasta que exista puntaje (`NOTE (HU-09)`).
-- **Historial:** no se persiste entre sesiones (RNF-07); guardarlo en disco es HU-53.
+- **Historial:** no se persiste entre sesiones (RNF-07); HU-53 decidió el 08-Nov-2026 no agregar almacenamiento local.
 - **Tamaño de página:** 20; el API acepta de 1 a 50 y el número de páginas sale del `total`.
 - **Productos agotados en la base de muestra:** no se pueden publicar con la API (stock mínimo 1); el interruptor se prueba con pruebas, no con datos sembrados.
 - **Histograma de precio:** las alturas son decorativas (`aria-hidden` en la maqueta); solo el color sigue el rango elegido.

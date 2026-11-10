@@ -12,7 +12,7 @@
    - **La sesión se lee en `main()` antes de pintar:** sin estado intermedio ni redirecciones dobles al abrir.
    - **`QueuedInterceptor` + comparación del token enviado:** una sola renovación por ola de errores 401. El reintento sale por el cliente público, porque reintentar con el mismo cliente se bloquea (*deadlock*). Lo encontró la prueba "sin bucle".
    - **Guardia pura (`sessionRedirect`):** se prueba sin widgets. Al regreso con `?desde=` solo se aceptan rutas conocidas, para evitar una redirección abierta.
-   - **Sin SQLite en el MVP:** los lineamientos lo piden solo "si el proyecto lo requiere". Se revisa en HU-53.
+   - **Sin SQLite en el MVP:** los lineamientos lo piden solo "si el proyecto lo requiere". HU-53 decidió el 08-Nov-2026 no tener modo sin conexión; la caché local queda fuera del MVP.
 3. **Guardarraíles DevSecOps**
    - Pruebas de la configuración de Android: si alguien agrega un permiso o activa el backup o el tráfico en claro, el CI falla.
    - `SessionTokens.toString` sin tokens.

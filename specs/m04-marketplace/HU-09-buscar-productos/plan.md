@@ -15,7 +15,7 @@
    - **Paginación:** HU-10 la pasó a `page` (20 por página); el cursor queda en la API.
    - **Estado en un `AsyncNotifier`:** la pantalla distingue cargando, datos, vacío y error sin mezclar banderas; `loadMore` conserva las tarjetas si falla.
    - **Filtros, orden e historial:** son de HU-10.
-   - **Sin historial local:** RNF-07 prohíbe persistir `q`; el historial queda para HU-53.
+   - **Sin historial local:** RNF-07 prohíbe persistir `q`; el historial vive solo en la sesión y HU-53 no agrega almacenamiento local.
    - **Se reutilizan `RecentTile` y `ProductPhoto`:** el mosaico y las tarjetas ya son las de la maqueta; `RecentTile` muestra el título en dos líneas como `Busqueda`.
 
 3. **Guardarraíles:**

@@ -40,7 +40,7 @@ Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi
 - [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
 
 ## Límites
-- Decisión pendiente (Jira): si un apartado vencido regresa la unidad al inventario de forma automática (relación con HU-53).
+- Decisión pendiente (Jira): si un apartado vencido regresa la unidad al inventario de forma automática (relación con HU-52).
 - Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
 
 ## Aprobación y Control de Cambios

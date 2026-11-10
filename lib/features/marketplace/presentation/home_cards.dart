@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/css_dashes.dart';
@@ -8,6 +9,7 @@ import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 
 /// Tarjetas de la vitrina (maquetas `Inicio-visitante` e `Inicio`).
 
@@ -110,17 +112,20 @@ class StockPill extends StatelessWidget {
 }
 
 /// Corazon de "Guardar": circulo de 32 sobre la foto dentro de 44 tocables.
-class SaveButton extends StatelessWidget {
-  const new({required this.onPressed, super.key});
+class SaveButton extends ConsumerWidget {
+  const new({required this.productId, required this.onPressed, super.key});
 
+  final String productId;
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.musubi;
+    final saved =
+        ref.watch(favoritesProvider).value?.contains(productId) ?? false;
     return Pressable(
       onTap: onPressed,
-      semanticLabel: 'Guardar',
+      semanticLabel: saved ? 'Quitar de favoritos' : 'Guardar',
       pressScale: 0.92,
       builder: (context, _) => SizedBox.square(
         dimension: MusubiSizes.minTouch,
@@ -136,7 +141,9 @@ class SaveButton extends StatelessWidget {
               child: MusubiIcon(
                 MusubiIcons.heart,
                 size: 17,
-                color: c.textPrimary,
+                color: saved ? c.brand : c.textPrimary,
+                fillColor: saved ? c.brand : null,
+                filled: saved,
               ),
             ),
           ),
@@ -160,7 +167,7 @@ class PopularCard extends StatelessWidget {
 
   final int rank;
   final ProductSummary product;
-  final VoidCallback onSave;
+  final ValueChanged<ProductSummary> onSave;
   final bool member;
   final VoidCallback? onTap;
 
@@ -327,7 +334,14 @@ class PopularCard extends StatelessWidget {
       child: Stack(
         children: [
           card,
-          Positioned(top: 2, right: 2, child: SaveButton(onPressed: onSave)),
+          Positioned(
+            top: 2,
+            right: 2,
+            child: SaveButton(
+              productId: product.id,
+              onPressed: () => onSave(product),
+            ),
+          ),
         ],
       ),
     );
@@ -347,7 +361,7 @@ class MosaicTile extends StatelessWidget {
 
   final ProductSummary product;
   final double height;
-  final VoidCallback onSave;
+  final ValueChanged<ProductSummary> onSave;
   final VoidCallback? onTap;
 
   @override
@@ -453,7 +467,14 @@ class MosaicTile extends StatelessWidget {
     return Stack(
       children: [
         tile,
-        Positioned(top: 2, right: 2, child: SaveButton(onPressed: onSave)),
+        Positioned(
+          top: 2,
+          right: 2,
+          child: SaveButton(
+            productId: product.id,
+            onPressed: () => onSave(product),
+          ),
+        ),
       ],
     );
   }
@@ -472,7 +493,7 @@ class RecentTile extends StatelessWidget {
 
   final ProductSummary product;
   final DateTime now;
-  final VoidCallback onSave;
+  final ValueChanged<ProductSummary> onSave;
   final VoidCallback? onTap;
 
   @override
@@ -576,7 +597,14 @@ class RecentTile extends StatelessWidget {
     return Stack(
       children: [
         tile,
-        Positioned(top: 2, right: 2, child: SaveButton(onPressed: onSave)),
+        Positioned(
+          top: 2,
+          right: 2,
+          child: SaveButton(
+            productId: product.id,
+            onPressed: () => onSave(product),
+          ),
+        ),
       ],
     );
   }

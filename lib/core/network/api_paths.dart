@@ -53,6 +53,15 @@ abstract final class ApiPaths {
   /// `GET /api/v1/products/mine` — fila "M-03" (spec `musubi-api:HU-06`).
   static const myProducts = '/api/v1/products/mine';
 
+  /// `GET /api/v1/favorites` — fila 79 (spec `musubi-api:HU-53`): solo los
+  /// favoritos del token, del mas reciente al mas viejo, maximo 200.
+  static const favorites = '/api/v1/favorites';
+
+  /// `PUT` y `DELETE /api/v1/favorites/{productId}` — filas 80 y 81
+  /// (spec `musubi-api:HU-53`): idempotentes.
+  static String favorite(String productId) =>
+      '$favorites/${Uri.encodeComponent(productId)}';
+
   /// `POST /api/v1/account/delete` — fila "M-01" (spec `musubi-api:HU-46`).
   /// Con sesion; pide la contrasena actual.
   static const accountDelete = '/api/v1/account/delete';

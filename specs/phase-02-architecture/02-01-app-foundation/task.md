@@ -36,4 +36,4 @@
 - `NOTE (HU-48)`: aviso "Crea tu cuenta" antes de mandar al visitante a iniciar sesión.
 - `NOTE (HU-15, HU-22, HU-04, HU-06, HU-13)`: reemplazar cada `UpcomingSection` por su pantalla.
 - `NOTE (HU-31)`: Firebase (FCM y Crashlytics). `NOTE (02-05)`: timeouts medidos contra la API desplegada.
-- `NOTE (HU-53)`: decidir los datos locales (SQLite o caché) para favoritos sin conexión.
+- ~~`NOTE (HU-53)`: decidir los datos locales (SQLite o caché) para favoritos sin conexión~~ → resuelto el 08-Nov-2026: sin modo sin conexión; la caché local queda fuera del MVP.
