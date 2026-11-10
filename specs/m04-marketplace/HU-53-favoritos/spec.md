@@ -98,7 +98,7 @@ RNF que aplican: RNF-07 (privacidad, reflejado en la UI), RNF-12 (indicador de c
 - [x] Sin modo sin conexión ni almacenamiento local (R6): `grep -R "shared_preferences\|sqflite\|File(" lib/features/marketplace` sin resultados; la app solo lee de la API y muestra el 401/403/404 traducido → data tests.
 - [x] La captura `favoritos` mide 390×844 y coincide con la maqueta en claro y oscuro (R2) → `tool/screenshots_test.dart`.
 - [x] `dart format --output=none --set-exit-if-changed .` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` 0 · `flutter test` 454/454 · `pwsh scripts/critic-guardrails.ps1` PASS.
-- [x] `semgrep scan --config=auto --config=.semgrep/semgrep.yaml --error` sin hallazgos en el CI del PR #44 (run 42759746533).
+- [x] `semgrep scan --config=auto --config=.semgrep/semgrep.yaml --error` sin hallazgos en el CI del PR #44.
 
 ## Límites
 - **Sin modo sin conexión** (decisión de Jira, 08-Nov-2026): no hay SQLite, caché de favoritos ni vitrina offline. La app no promete "Guardado en tu teléfono".
