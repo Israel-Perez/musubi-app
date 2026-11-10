@@ -126,7 +126,7 @@ Ninguno nuevo. El perfil sale de `SessionResponse.user { fullName, email, campus
   - Mensajes (HU-20/22) y Publicar (HU-06).
 - **Perfil** muestra solo lo que ya existe (cuenta y verificación). Calificaciones, ventas y apartados llegan con HU-04.
 - **Diferencias a propósito con la maqueta:**
-  - `Inicio-error`: "Guardado en tu teléfono" y "Lo que guardaste sigue disponible" llegan con los favoritos locales (HU-53);
+  - `Inicio-error`: "Guardado en tu teléfono" y "Lo que guardaste sigue disponible" quedan fuera del MVP: HU-53 decidió el 08-Nov-2026 no tener modo sin conexión;
   - `Inicio` con sesión: el aviso push de ejemplo ("Valeria Cruz") llega con las notificaciones (HU-31);
   - `Aviso-privacidad`: debajo del resumen va el aviso integral (HU-47), que la maqueta no dibuja;
   - los datos de muestra siguen a `Inicio-visitante` cuando las dos pantallas de la maqueta no coinciden (por ejemplo, "Bata de laboratorio" frente a "…manga larga, talla S").

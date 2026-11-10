@@ -20,6 +20,8 @@ import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_actions.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
@@ -42,6 +44,18 @@ final FutureProviderFamily<PublicProfile?, String> sellerProfileProvider =
         return null;
       }
     }, retry: (_, _) => null);
+
+/// `ProductDetail` → tarjeta que usa el estado de favoritos (HU-53).
+ProductSummary _summaryOf(ProductDetail detail) => ProductSummary(
+  id: detail.id,
+  title: detail.title,
+  priceCents: detail.priceCents,
+  stock: detail.stock,
+  photoUrl: detail.photoUrls.isEmpty ? null : detail.photoUrls.first,
+  condition: detail.conditionName,
+  sellerName: detail.sellerName,
+  publishedAt: detail.publishedAt,
+);
 
 /// `Producto` y `Producto-visitante` (HU-11): fotos, precio, estado, piezas,
 /// descripcion, quien vende y "Mensaje" / "Comprar" hacia el chat (HU-20).
@@ -87,6 +101,10 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
     ),
   );
 
+  /// HU-53: el corazon del detalle usa el mismo estado global que las tarjetas.
+  void _toggle(ProductDetail detail) =>
+      unawaited(toggleFavorite(context, ref, _summaryOf(detail)));
+
   /// "Mensaje" y "Comprar": el chat con quien vende (HU-20).
   void _chat(
     ProductDetail detail, {
@@ -124,6 +142,8 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
         ? session.tokens.profile?.campus ?? 'UTTT'
         : 'UTTT';
     final detail = ref.watch(productDetailProvider(widget.productId));
+    final saved =
+        ref.watch(favoritesProvider).value?.contains(widget.productId) ?? false;
 
     return Scaffold(
       backgroundColor: c.background,
@@ -133,6 +153,7 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
           campus: campus,
           signedIn: signedIn,
           mine: myId != null && value.sellerId == myId,
+          saved: saved,
           now: ref.watch(clockProvider)(),
           pages: _pages,
           page: _page,
@@ -140,7 +161,7 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
           onBack: () => context.pop(),
           onShare: () => _soon('Compartir'),
           onSave: () =>
-              signedIn ? _soon('Guardar') : _gate(AccountGateMotive.save),
+              signedIn ? _toggle(value) : _gate(AccountGateMotive.save),
           onReserve: () =>
               signedIn ? _soon('Apartar') : _gate(AccountGateMotive.buy),
           onNotify: () =>
@@ -231,6 +252,7 @@ class _Loaded extends ConsumerWidget {
     required this.campus,
     required this.signedIn,
     required this.mine,
+    required this.saved,
     required this.now,
     required this.pages,
     required this.page,
@@ -251,6 +273,7 @@ class _Loaded extends ConsumerWidget {
   final String campus;
   final bool signedIn;
   final bool mine;
+  final bool saved;
   final DateTime now;
   final PageController pages;
   final int page;
@@ -294,6 +317,7 @@ class _Loaded extends ConsumerWidget {
                   photos: detail.photoUrls,
                   soldOut: soldOut,
                   campus: campus,
+                  saved: saved,
                   controller: pages,
                   page: page,
                   onPage: onPage,
@@ -463,6 +487,7 @@ class _Gallery extends StatelessWidget {
     required this.photos,
     required this.soldOut,
     required this.campus,
+    required this.saved,
     required this.controller,
     required this.page,
     required this.onPage,
@@ -474,6 +499,7 @@ class _Gallery extends StatelessWidget {
   final List<String> photos;
   final bool soldOut;
   final String campus;
+  final bool saved;
   final PageController controller;
   final int page;
   final ValueChanged<int> onPage;
@@ -533,9 +559,10 @@ class _Gallery extends StatelessWidget {
                       ),
                       _RoundButton(
                         icon: MusubiIcons.heart,
-                        label: 'Guardar',
+                        label: saved ? 'Quitar de favoritos' : 'Guardar',
                         onTap: onSave,
                         iconSize: 20,
+                        active: saved,
                       ),
                     ],
                   ),
@@ -643,6 +670,7 @@ class _RoundButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.iconSize = 22,
+    this.active = false,
   });
 
   final MusubiIconData icon;
@@ -650,28 +678,40 @@ class _RoundButton extends StatelessWidget {
   final VoidCallback onTap;
   final double iconSize;
 
+  /// Corazon guardado: relleno y en color de marca.
+  final bool active;
+
   @override
-  Widget build(BuildContext context) => Pressable(
-    onTap: onTap,
-    semanticLabel: label,
-    builder: (context, _) => Container(
-      width: MusubiSizes.minTouch,
-      height: MusubiSizes.minTouch,
-      decoration: const BoxDecoration(
-        color: Color(0xF0FFFFFF),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1F1C1C1E),
-            offset: Offset(0, 2),
-            blurRadius: 8,
-          ),
-        ],
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Pressable(
+      onTap: onTap,
+      semanticLabel: label,
+      builder: (context, _) => Container(
+        width: MusubiSizes.minTouch,
+        height: MusubiSizes.minTouch,
+        decoration: const BoxDecoration(
+          color: Color(0xF0FFFFFF),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x1F1C1C1E),
+              offset: Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: MusubiIcon(
+          icon,
+          size: iconSize,
+          color: active ? c.brand : const Color(0xFF1C1C1E),
+          fillColor: active ? c.brand : null,
+          filled: active,
+        ),
       ),
-      alignment: Alignment.center,
-      child: MusubiIcon(icon, size: iconSize, color: const Color(0xFF1C1C1E)),
-    ),
-  );
+    );
+  }
 }
 
 /// "UTTT" con la insignia, sobre la foto.

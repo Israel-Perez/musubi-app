@@ -6,24 +6,52 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/session/session_api.dart';
+import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
+import '../../helpers/fake_chat.dart' show jwtFor;
+import '../../helpers/fake_favorites_repository.dart';
+import '../../helpers/fake_session_api.dart';
+import '../../helpers/in_memory_token_store.dart';
 
 // HU-09: `Busqueda` y `Busqueda-vacia` con el fake del catalogo.
 void main() {
   ProductSummary product(String id, String title) =>
       ProductSummary(id: id, title: title, priceCents: 45000, stock: 2);
 
-  Future<void> open(WidgetTester tester, FakeCatalogRepository fake) async {
+  SessionTokens memberSession() => SessionTokens(
+    accessToken: jwtFor('user-search'),
+    accessExpiresAt: DateTime.utc(2026, 11, 9, 12, 15),
+    refreshToken: 'refresh-search',
+    profile: const SessionProfile(
+      fullName: 'Ana Sofía Ramírez',
+      email: 'ana.ramirez@uttt.edu.mx',
+      campus: 'UTTT',
+    ),
+  );
+
+  Future<void> open(
+    WidgetTester tester,
+    FakeCatalogRepository fake, {
+    FakeFavoritesRepository? favorites,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [catalogRepositoryProvider.overrideWithValue(fake)],
+        overrides: [
+          catalogRepositoryProvider.overrideWithValue(fake),
+          favoritesRepositoryProvider.overrideWithValue(
+            favorites ?? FakeFavoritesRepository(),
+          ),
+        ],
         child: const MaterialApp(home: SearchScreen()),
       ),
     );
@@ -33,8 +61,10 @@ void main() {
   /// Con go_router: el detalle y el boton de regreso necesitan ruta.
   Future<GoRouter> openRouted(
     WidgetTester tester,
-    FakeCatalogRepository fake,
-  ) async {
+    FakeCatalogRepository fake, {
+    SessionTokens? session,
+    FakeFavoritesRepository? favorites,
+  }) async {
     final router = GoRouter(
       initialLocation: AppRoutes.search,
       routes: [
@@ -51,7 +81,15 @@ void main() {
     );
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [catalogRepositoryProvider.overrideWithValue(fake)],
+        overrides: [
+          catalogRepositoryProvider.overrideWithValue(fake),
+          favoritesRepositoryProvider.overrideWithValue(
+            favorites ?? FakeFavoritesRepository(),
+          ),
+          sessionApiProvider.overrideWithValue(FakeSessionApi()),
+          initialSessionTokensProvider.overrideWithValue(session),
+          tokenStoreProvider.overrideWithValue(InMemoryTokenStore(session)),
+        ],
         child: MaterialApp.router(routerConfig: router),
       ),
     );
@@ -238,13 +276,41 @@ void main() {
         ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
       ],
     );
-    await open(tester, fake);
+    final favorites = FakeFavoritesRepository();
+    await open(tester, fake, favorites: favorites);
 
     await submit(tester, 'calculadora');
     await tester.tap(find.byType(SaveButton));
     await tester.pumpAndSettle();
 
     expect(find.text('Guarda lo que te gusta'), findsOneWidget);
+    expect(favorites.listCalls, 0);
+    expect(favorites.added, isEmpty);
+  });
+
+  testWidgets('con sesion el corazon guarda el producto', (tester) async {
+    final fake = FakeCatalogRepository(
+      [const HomeFeed()],
+      [
+        ProductPage(items: [product('p1', 'Calculadora Casio')], total: 1),
+      ],
+    );
+    final favorites = FakeFavoritesRepository();
+    await openRouted(
+      tester,
+      fake,
+      session: memberSession(),
+      favorites: favorites,
+    );
+
+    await tester.tap(find.byType(SaveButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(favorites.added, ['p1']);
+    expect(find.textContaining('Guardaste'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 4));
   });
 
   testWidgets('enviar muestra el contador y las tarjetas', (tester) async {

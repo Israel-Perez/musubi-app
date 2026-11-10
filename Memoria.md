@@ -11,6 +11,50 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **En `main`, sin publicar (siguiente lote):** editar, cerrar y cancelar la solicitud (HU-14). Necesita la API `0.5.0-alpha.13`.
 - **Siguiente:** Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** su API ya está en `main` (`0.5.0-alpha.12`); falta el PR de la app, que debe traer `docs/versionado.md` igual al de musubi-api.
+- **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T34 — Favoritos en la app (09-Nov-2026, SCRUM-68, HU-53)
+
+**Qué se hizo**
+- **Datos:** `FavoriteStatus`, `FavoriteItem`, `Favorites`, `HttpFavoritesRepository` y `ApiPaths.favorites/favorite` (filas 79–81).
+- **Estado:** `favoritesProvider` por `userId`, limpieza al cerrar sesión, protección contra peticiones en vuelo de otra cuenta, `favoriteTabProvider` y fake de pruebas.
+- **UI:** corazón en Inicio, Búsqueda y Producto; `FavoritesScreen` con Todos/Disponibles/Agotados, tres estados, vacío/error/recarga; ruta `/favoritos` y mosaico de Perfil con “1 guardado”/“N guardados”.
+- **Evidencia:** `flutter test` 454/454, analyze 0, format 0, critic PASS, APK debug compilado y capturas `favoritos`/`favoritos-dark` de 1170×2532.
+
+**Decisiones (con su porqué)**
+- **Corazón tras confirmar la API:** no se pinta guardado si el `PUT` falla.
+- **`unavailable` se quita sin “Deshacer”:** el `PUT` respondería 404 porque no hay producto.
+- **“Agotados” agrupa `soldOut` y `unavailable`:** la tarjeta distingue “Agotado” de “Ya no está disponible”.
+- **Tabs con área táctil de 44:** el pill visual mide 38 y el toque 44 (RNF-27).
+
+**Errores a evitar**
+- `androidTapTargetGuideline` exige 48; el proyecto usa 44. Para RNF-27 se usa `MinimumTapTargetGuideline(size: Size(44, 44))`.
+- Las llaves de los tabs usan `FavoriteTab.name` (`available`, `soldOut`), no las etiquetas en español.
+- Los avisos con “Ver”/“Deshacer” dejan un temporizador: hay que avanzar 4 s al terminar el test.
+- Un `PUT` en vuelo no debe escribir en el estado de otra sesión: se compara el `userId` antes de aplicar.
+
+**Pendientes y riesgos**
+- `NOTE (HU-53)`: tope de 200 sin paginar; el dueño es una HU posterior (spec/task).
+- PR #44 abierto; `semgrep`, analyze, critic y test en verde en el CI.
+- Falta el revisor de la spec.
+
+## T33 — Specs de favoritos (09-Nov-2026, SCRUM-68, HU-53)
+
+**Qué se hizo**
+- Spec detallada de `HU-53` (`spec.md`, `plan.md`, `task.md`): corazón en el detalle y las tarjetas, pantalla `Favoritos` con tabs y los estados `available`/`soldOut`/`unavailable`, y la privacidad RNF-07.
+- Contrato enlazado a las filas 79–81 de `musubi-api/docs/endpoints.md` (`GET`, `PUT` y `DELETE /favorites`) y al fixture `favorites.json`; la API local ya lo implementa (`0.5.0-alpha.14`, esquema 13; era `alpha.13` antes de traer main). No hay fake de endpoint; el fake de pruebas vive en `test/helpers/`.
+- Se conciliaron las specs que atribuían datos locales a HU-53 (`02-01`, `02-04`, `02-06`, HU-06, HU-09, HU-10, HU-11, HU-13 y HU-50), porque la decisión del 08-Nov-2026 fue sin modo sin conexión.
+
+**Decisiones (con su porqué)**
+- **Enfoque B:** `GET /favorites` arma el set de ids; los DTOs de productos no cambian y la vitrina sigue cacheable.
+- **Un provider por `userId`:** se limpia al cerrar sesión y no se recarga en cada renovación de token.
+- **El corazón cambia al confirmar la API:** no se muestra guardado si el `PUT` falla; el aviso conserva "Ver"/"Deshacer" de la maqueta.
+- **"Agotados" agrupa `soldOut` y `unavailable`:** la tarjeta distingue "Agotado" de "Ya no está disponible".
+
+**Pendientes y riesgos**
+- Implementación y evidencia en T34: `flutter test` 454/454, analyze 0, critic PASS, APK debug y capturas `favoritos`.
+- Semgrep en CI (PASS en el PR #44) y revisor de la spec pendiente.
+- La app no se publica antes de desplegar la API `0.5.0-alpha.14`.
 
 ## T32 — Editar, cerrar o cancelar mi solicitud (09-Nov-2026, SCRUM-36, HU-14)
 
@@ -237,7 +281,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **`/buscar` se limpia al salir:** el provider es `autoDispose`; al volver a abrir no se ven resultados viejos ni queda el término en memoria.
 - **`ProductPage` vive en `home_feed.dart`:** la vitrina y la búsqueda comparten la misma forma; no se crea un archivo para una clase de tres campos.
 - **`loadMore` conserva las tarjetas si falla:** la persona no pierde lo que ya ve; el error se avisa con un snack.
-- **Sin filtros ni historial de búsquedas:** los filtros son HU-10 (`NOTE (HU-10)`); no se guarda el historial porque RNF-07 prohíbe persistir `q`. El guardado local de productos es HU-53 (`NOTE (HU-53)`).
+- **Sin filtros ni historial de búsquedas:** los filtros son HU-10 (`NOTE (HU-10)`); no se guarda el historial porque RNF-07 prohíbe persistir `q`. El guardado local de productos quedó fuera del MVP (HU-53 decidió sin conexión el 08-Nov-2026).
 - **El estado vacío no guarda la búsqueda ni avisa:** esas acciones son HU-12 (`NOTE (HU-12)`).
 - **Los agotados no se filtran en la app:** con `q` la API nunca los devuelve.
 
@@ -593,7 +637,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Sesión leída en `main()`**: sin pantalla "cargando sesión" ni redirecciones dobles.
 - **Dos clientes HTTP**: `publicDioProvider` (sin sesión; renovación y `/auth`) y `dioProvider` (con interceptor).
 - **Íconos Material outlined** en lugar de un paquete Lucide (sin dependencia nueva).
-- **Sin SQLite en el MVP** (lineamiento 16 dice "si se requiere"); se revisa en HU-53.
+- **Sin SQLite en el MVP** (lineamiento 16 dice "si se requiere"); HU-53 confirmó el 08-Nov-2026 que no hay modo sin conexión y la caché local queda fuera del MVP.
 
 **Self-tests**
 - Interceptor que acepta cualquier host → "nunca envía el token a otro host" en rojo.

@@ -25,6 +25,7 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_actions.dart';
 import 'package:musubi_app/features/marketplace/presentation/filter_sheet.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
@@ -126,7 +127,7 @@ class HomeScreen extends ConsumerWidget {
             child: _PopularSection(
               feed: feed,
               member: false,
-              onSave: () => gate(AccountGateMotive.save),
+              onSave: (_) => gate(AccountGateMotive.save),
               onEmptyAction: () => gate(AccountGateMotive.publish),
               onOpen: open,
             ),
@@ -139,7 +140,7 @@ class HomeScreen extends ConsumerWidget {
             child: _RecentMosaic(
               feed: feed,
               filter: filter,
-              onSave: () => gate(AccountGateMotive.save),
+              onSave: (_) => gate(AccountGateMotive.save),
               onOpen: open,
             ),
           ),
@@ -165,7 +166,10 @@ class HomeScreen extends ConsumerWidget {
     WidgetRef ref,
     HomeFeed feed,
   ) {
-    // NOTE (HU-53): guardar desde la vitrina.
+    // HU-53: el corazon guarda el producto para la persona con sesion.
+    void save(ProductSummary product) =>
+        unawaited(toggleFavorite(context, ref, product));
+    // La oferta del boleto de Inicio sigue sin accion propia aqui.
     void noop() {}
     // HU-11: el producto abre su detalle (de ahi, "Mensaje" al chat).
     void open(ProductSummary product) =>
@@ -183,7 +187,7 @@ class HomeScreen extends ConsumerWidget {
             child: _PopularSection(
               feed: feed,
               member: true,
-              onSave: noop,
+              onSave: save,
               onEmptyAction: sell,
               onOpen: open,
             ),
@@ -205,7 +209,7 @@ class HomeScreen extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.only(top: 26),
-            child: _MemberRecent(feed: feed, onSave: noop, onOpen: open),
+            child: _MemberRecent(feed: feed, onSave: save, onOpen: open),
           ),
         ),
     ];
@@ -556,7 +560,7 @@ class _PopularSection extends ConsumerWidget {
 
   final HomeFeed feed;
   final bool member;
-  final VoidCallback onSave;
+  final ValueChanged<ProductSummary> onSave;
   final VoidCallback onEmptyAction;
 
   /// Tocar un producto: su detalle (HU-11).
@@ -758,7 +762,7 @@ class _RecentMosaic extends StatelessWidget {
 
   final HomeFeed feed;
   final CatalogFilter filter;
-  final VoidCallback onSave;
+  final ValueChanged<ProductSummary> onSave;
 
   /// Tocar un producto (HU-11).
   final ValueChanged<ProductSummary> onOpen;
@@ -981,7 +985,7 @@ class _MemberRecent extends ConsumerWidget {
   const new({required this.feed, required this.onSave, required this.onOpen});
 
   final HomeFeed feed;
-  final VoidCallback onSave;
+  final ValueChanged<ProductSummary> onSave;
 
   /// Tocar un producto: su detalle (HU-11).
   final ValueChanged<ProductSummary> onOpen;
@@ -1371,8 +1375,8 @@ class _ErrorState extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // NOTE (HU-53): con favoritos locales, "Lo que guardaste sigue
-              // disponible." y la fila "Guardado en tu teléfono".
+              // Sin caché local (HU-53): la vitrina no promete favoritos
+              // guardados en el teléfono.
               Text(
                 network
                     ? 'Revisa tu internet o tus datos móviles e inténtalo de '

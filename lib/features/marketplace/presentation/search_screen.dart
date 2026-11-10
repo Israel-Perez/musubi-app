@@ -21,6 +21,7 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_actions.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_filter_sheet.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_providers.dart';
@@ -156,17 +157,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     void open(ProductSummary product) =>
         unawaited(context.push(AppRoutes.product(product.id), extra: product));
 
-    // NOTE (HU-53): guardar un producto desde la busqueda (favoritos); el
-    // historial vive solo en la sesion y no se persiste (RNF-07).
-    void save() {
-      if (signedIn) return;
-      unawaited(
-        showAccountGate(
-          context,
-          motive: AccountGateMotive.save,
-          returnTo: AppRoutes.search,
-        ),
-      );
+    // HU-53: con sesion, el corazon guarda el producto; el historial vive solo
+    // en la sesion y no se persiste (RNF-07).
+    void save(ProductSummary product) {
+      if (!signedIn) {
+        unawaited(
+          showAccountGate(
+            context,
+            motive: AccountGateMotive.save,
+            returnTo: AppRoutes.search,
+          ),
+        );
+        return;
+      }
+      unawaited(toggleFavorite(context, ref, product));
     }
 
     return Scaffold(
@@ -344,7 +348,7 @@ class _Results extends StatelessWidget {
   final SearchState state;
   final DateTime now;
   final ValueChanged<ProductSummary> onOpen;
-  final VoidCallback onSave;
+  final ValueChanged<ProductSummary> onSave;
   final ValueChanged<int> onPage;
   final VoidCallback onSort;
 

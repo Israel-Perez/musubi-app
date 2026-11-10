@@ -36,7 +36,7 @@ Las filas de categorías, vitrina y carreras de [`musubi-api/docs/endpoints.md`]
 
 ## Límites
 - **Solo en memoria:** al cerrar la app se pierde.
-- **`NOTE (HU-53)`:** guardar en SQLite para ver la vitrina sin conexión y sincronizar al volver la red (requisito 16).
+- **Sin caché local de favoritos:** HU-53 decidió el 08-Nov-2026 no tener modo sin conexión; SQLite y la caché local quedan fuera del MVP (requisito 16).
 
 ## Aprobación y Control de Cambios
 - **Estado:** 🚧 Borrador con evidencia

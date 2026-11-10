@@ -29,5 +29,5 @@
 
 ## Pendientes con dueño
 - `NOTE (HU-09)`: `relevant` ordena como `recent` hasta que la API calcule puntaje.
-- `NOTE (HU-53)`: el historial de búsquedas vive solo en la sesión; persistirlo es de HU-53.
+- El historial de búsquedas vive solo en la sesión; no se persiste (RNF-07). HU-53 no agrega almacenamiento local.
 - `NOTE (HU-12)`: las acciones del estado vacío (guardar búsqueda) no están en esta HU.

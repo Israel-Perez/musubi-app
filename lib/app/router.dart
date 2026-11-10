@@ -22,6 +22,7 @@ import 'package:musubi_app/features/listings/presentation/sell_done_screen.dart'
 import 'package:musubi_app/features/listings/presentation/sell_photos_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_price_screen.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
@@ -91,6 +92,9 @@ abstract final class AppRoutes {
   /// "Editar solicitud", `Necesidad-3`.
   static const editNeedBudget = '/editar-solicitud/presupuesto';
 
+  /// "Favoritos" (HU-53), dentro de la rama de Perfil.
+  static const favorites = '/favoritos';
+
   /// Chat con quien vende (HU-20): `extra` lleva el `ProductSummary`.
   static const chat = '/chat';
 
@@ -122,6 +126,7 @@ abstract final class AppRoutes {
     editNeed,
     editNeedDetails,
     editNeedBudget,
+    favorites,
   };
 
   /// Solo para visitantes: con sesion se vuelve a Inicio.
@@ -225,6 +230,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.myWanted,
                 builder: (context, state) => const MyWantedScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.favorites,
+                builder: (context, state) => const FavoritesScreen(),
               ),
             ],
           ),

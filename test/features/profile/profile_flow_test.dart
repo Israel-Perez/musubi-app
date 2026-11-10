@@ -5,14 +5,19 @@ import 'package:musubi_app/app/app_version.dart';
 import 'package:musubi_app/app/musubi_app.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
+import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
+import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
 import '../../helpers/fake_account_repository.dart';
+import '../../helpers/fake_chat.dart' show jwtFor;
+import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_listings_repository.dart';
 import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_status_repository.dart';
@@ -20,14 +25,18 @@ import '../../helpers/in_memory_token_store.dart';
 
 /// App completa con el router real y la sesion abierta (HU-04).
 class ProfileHarness {
-  new(this.tester, {MyProfile? initial})
-    : profile = FakeProfileRepository(initial: initial);
+  new(this.tester, {MyProfile? initial, SessionTokens? tokens})
+    : profile = FakeProfileRepository(initial: initial),
+      _tokens = tokens ?? testTokens(),
+      store = InMemoryTokenStore(tokens ?? testTokens());
 
   final WidgetTester tester;
   final FakeProfileRepository profile;
   final account = FakeAccountRepository();
   final picker = FakePhotoPicker();
-  final store = InMemoryTokenStore(testTokens());
+  final favorites = FakeFavoritesRepository();
+  final SessionTokens _tokens;
+  final InMemoryTokenStore store;
   late ProviderContainer container;
 
   Future<void> open(String location) async {
@@ -43,12 +52,13 @@ class ProfileHarness {
           listingsRepositoryProvider.overrideWithValue(
             FakeListingsRepository(),
           ),
+          favoritesRepositoryProvider.overrideWithValue(favorites),
           photoPickerProvider.overrideWithValue(picker),
           statusRepositoryProvider.overrideWithValue(
             FakeStatusRepository([const ApiOnline(version: 'v1')]),
           ),
           tokenStoreProvider.overrideWithValue(store),
-          initialSessionTokensProvider.overrideWithValue(testTokens()),
+          initialSessionTokensProvider.overrideWithValue(_tokens),
         ],
         child: const MusubiApp(),
       ),
@@ -95,6 +105,17 @@ MyProfile profileWith({Career? career, int? term}) {
 }
 
 // HU-04: maquetas Perfil, Ajustes (y sus hojas) y Privacidad.
+SessionTokens jwtProfileSession() => SessionTokens(
+  accessToken: jwtFor('profile-user'),
+  accessExpiresAt: DateTime.utc(2026, 11, 9, 12, 15),
+  refreshToken: 'refresh-profile',
+  profile: const SessionProfile(
+    fullName: 'Ana Sofía Ramírez',
+    email: 'ana.ramirez@uttt.edu.mx',
+    campus: 'UTTT',
+  ),
+);
+
 void main() {
   group('Perfil', () {
     testWidgets('sin carrera: nombre, campus, "Verificada" y todo en cero', (
@@ -145,6 +166,33 @@ void main() {
 
       expect(find.text('Sin calificaciones'), findsOneWidget);
       expect(h.profile.loads, 2);
+    });
+
+    testWidgets('mosaicos: "Favoritos" muestra el conteo y abre la lista', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester, tokens: jwtProfileSession());
+      h.favorites.favorites = Favorites(
+        items: [
+          FavoriteItem(
+            productId: 'p1',
+            savedAt: DateTime.utc(2026, 11, 9, 12),
+            status: FavoriteStatus.available,
+          ),
+          FavoriteItem(
+            productId: 'p2',
+            savedAt: DateTime.utc(2026, 11, 9, 11),
+            status: FavoriteStatus.available,
+          ),
+        ],
+      );
+      await h.open(AppRoutes.profile);
+
+      expect(find.text('2 guardados'), findsOneWidget);
+
+      await h.tapKey('tile-favorites');
+
+      expect(find.text('Todos (2)'), findsOneWidget);
     });
 
     testWidgets('mosaicos: "Privacidad" abre la pantalla', (tester) async {

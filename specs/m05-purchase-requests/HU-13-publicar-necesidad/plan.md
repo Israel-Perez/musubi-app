@@ -2,7 +2,7 @@
 
 ## Decisiones
 - **Reutilizar `SellStepLayout`:** los tres pasos tienen el encabezado, la barra de progreso y la barra inferior de Vender. Se agregan parámetros con los valores de Vender por defecto, sin duplicar la pantalla.
-- **Borrador en memoria (`needDraftProvider`):** sobrevive al ir y venir entre pasos y se limpia al publicar. Guardar en el teléfono es HU-53.
+- **Borrador en memoria (`needDraftProvider`):** sobrevive al ir y venir entre pasos y se limpia al publicar. El MVP no tiene modo sin conexión (HU-53, 08-Nov-2026); guardarlo en el teléfono queda fuera del MVP.
 - **Coincidencias con la búsqueda de HU-09:** no hay endpoint de coincidencias todavía (HU-18). La misma consulta alimenta el aviso del paso 1 y la lista de la pantalla publicada.
 - **"Elegir fecha" con las fechas de la maqueta:** una hoja `MusubiOptions` en lugar del calendario de Material, que no es parte del sistema visual.
 - **`<legend>` de la maqueta:** el navegador pega "Categoría" y "¿Para cuándo la necesitas?" al bloque de arriba y deja el relleno debajo; la app lo replica.

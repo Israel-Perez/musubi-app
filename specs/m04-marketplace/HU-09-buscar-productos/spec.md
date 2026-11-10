@@ -20,7 +20,7 @@ Jira (SCRUM-26): como **comprador**, quiero **buscar productos por nombre o pala
 3. La consulta se recorta antes de enviarse. Si queda vacía, vuelve a listar todo el catálogo (HU-10).
 4. La app **no filtra ni ordena en el cliente**: la API decide disponibilidad, coincidencia por prefijo de palabra, orden por fecha y `total`.
 5. Con resultados se muestra "N resultados en UTTT" (`1 resultado` en singular) y un mosaico de dos columnas con las tarjetas de la vitrina.
-6. Cada tarjeta abre el detalle de la publicación (HU-11) y conserva el corazón de guardar; para un visitante, guardar abre la hoja "Crea tu cuenta" (HU-48). Con sesión, el guardado local llega con HU-53 (`NOTE (HU-53)`).
+6. Cada tarjeta abre el detalle de la publicación (HU-11) y conserva el corazón de guardar; para un visitante, guardar abre la hoja "Crea tu cuenta" (HU-48). Con sesión, el corazón llama a `PUT`/`DELETE /favorites` en HU-53 (`NOTE (HU-53)`).
 7. `200` con `items: []` muestra el estado vacío con el texto buscado: "Sin resultados para «q»" y una invitación a probar otras palabras.
 8. `400 listings.invalid_query`, `5xx` o un fallo de red muestran el mensaje en español y "Reintentar"; ninguna excepción de red llega a la UI.
 9. Los resultados se paginan por número de página, 20 por página (HU-10); un error al cambiar de página muestra el mensaje y "Reintentar".
@@ -103,7 +103,7 @@ Decisiones:
 
 - **Filtros, orden e historial:** llegan con HU-10 (`Busqueda-filtros`).
 - **Acciones del vacío (guardar búsqueda, avisarme, publicar necesidad):** HU-12 y HU-13. Aquí solo se garantiza el estado vacío correcto (`NOTE (HU-12)`).
-- **Historial de búsquedas:** HU-10 muestra hasta 5 de la sesión; no se persiste (RNF-07) y el almacenamiento local es HU-53 (`NOTE (HU-53)`).
+- **Historial de búsquedas:** HU-10 muestra hasta 5 de la sesión; no se persiste (RNF-07). HU-53 decidió el 08-Nov-2026 no agregar almacenamiento local.
 - **Orden:** el selector es de HU-10; `relevant` ordena como `recent` hasta que la API calcule puntaje (`NOTE (HU-09)`).
 - **Coincidencia por prefijo:** `calc`, `calcula` y `CASI` encuentran la calculadora; `culadora` no, porque el prefijo debe iniciar la palabra. El infijo queda como `NOTE (HU-09)` en el back.
 - **Agotados:** con `q` la API los oculta salvo `hideSoldOut=false` (HU-10); la app no los filtra en el cliente.
