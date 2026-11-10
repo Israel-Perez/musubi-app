@@ -25,9 +25,8 @@ Jira (SCRUM-71): Como **usuario**, quiero **cambiar entre modo claro y modo noch
 - JSON `{ theme: system|light|dark }`; no se copian DTOs ni catálogo de errores.
 
 ## Tests
-- `test/features/profile/http_preferences_repository_test.dart`: HTTP, JSON y errores.
-- `test/features/profile/preferences_providers_test.dart`: carga, persistencia, rollback y valores predeterminados.
-- `test/features/profile/profile_flow_test.dart`: selector en Ajustes, cambio de tema real y guardado/reintento.
+- `test/features/profile/http_theme_preference_repository_test.dart`: HTTP, JSON y errores.
+- `test/features/profile/profile_flow_test.dart`: carga, persistencia, rollback, valores predeterminados, selector en Ajustes y guardado/reintento.
 - `test/core/theme/app_theme_test.dart`: contraste AA en las dos paletas.
 
 ## Criterios
