@@ -2,16 +2,50 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (09-Nov-2026)
+## Estado actual (10-Nov-2026)
 
 - **En Google Play:** `0.6.0+8` enviada a la prueba cerrada el 09-Nov-2026 (SCRUM-87), con el lote de búsqueda (HU-09), filtros y orden (HU-10), reportar y bloquear + foto en el chat (HU-28 y HU-57), solicitudes de compra (HU-13), el tablero "Se busca" (HU-15), "Yo tengo este producto" (HU-16) y elegir ofertas (HU-17). La anterior era `0.5.1+7`.
   - Notas de la versión en `docs/play/whatsnew/whatsnew-es-419`; la descripción completa nueva y "Seguridad de los datos" (mensajes, solicitudes, ofertas, reportes y bloqueos) están en `docs/play/README.md` y **se pegan a mano en Play Console**: el workflow solo sube el AAB y las notas.
   - El siguiente lote vuelve a subir el `versionCode` (`0.6.0+8` ya está usada).
 - **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
 - **En `main`, sin publicar (siguiente lote):** editar, cerrar y cancelar la solicitud (HU-14). Necesita la API `0.5.0-alpha.13`.
-- **Siguiente:** Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
+- **HU-23 (pedidos):** en `feature/SCRUM-42-confirmar-compra`, con la API `0.5.0-alpha.15` (musubi-api #64). Se publica después de desplegar esa API.
+- **Siguiente:** HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** su API ya está en `main` (`0.5.0-alpha.12`); falta el PR de la app, que debe traer `docs/versionado.md` igual al de musubi-api.
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T35 — Confirmar la compra (10-Nov-2026, SCRUM-42, HU-23)
+
+**Qué se hizo**
+- Feature nueva `lib/features/orders/`:
+  - **Datos:** `Order`, `MeetingPoint`, `NewOrder`, `OrderRepository` y `HttpOrderRepository` (filas M-08).
+  - **Estado:** `orderRepositoryProvider`, `meetingPointsProvider`, `openOrderProvider(conversationId)` y `orderProvider(id)`.
+  - **Pantallas:** `OrderSummarySheet` ("Resumen del acuerdo", con los paneles de cantidad, entrega y fecha) y `OrderPaymentScreen` ("Tu pedido", `Pedido-pago`).
+- **Chat:** "Resumir acuerdo" abre el resumen para quien compra; a quien vende se le explica que el pedido lo crea quien compra. Con un pedido abierto, el aviso dice "Pedido #MS-NNNN · Pendiente" y "Ver pedido" lo abre.
+- Ruta `/pedido/:id` (con sesión). Íconos nuevos: `mapPin`, `arrowRightLeft`, `banknote`, `package` y `pencil`. Token nuevo: `mutedChip`.
+- **Evidencia:** `flutter test` 487/487 (22 nuevas), analyze 0, format 0. Capturas `resumen-acuerdo` y `pedido-pago` (claro y oscuro) comparadas con `Acuerdo-esperando` y `Pedido-pago`.
+
+**Decisiones (con su porqué)**
+- **Decisiones de la usuaria (10-Nov-2026):**
+  - resumen sin IA desde el chat;
+  - lugar de una lista con un detalle libre, y el edificio de la carrera primero;
+  - solo efectivo.
+- **El resumen es `Acuerdo-esperando` sin lo de IA:** sin el aviso "Propuesta generada con IA" ni "0 de 2". Producto y precio no llevan lápiz porque vienen de la publicación o de la oferta.
+- **Transferencia deshabilitada como en la maqueta** ("Valeria aún no registra su cuenta", al 55 %), con efectivo elegido.
+- **El paso 3 de "Así funciona" dice "Valeria confirma la entrega y se completa tu pedido"**, porque el código de entrega todavía no existe (HU-55).
+- **El chip recomendado lleva solo el nombre y un birrete,** y arriba dice "Primero está el edificio de tu carrera.": "Tecnologías de la Información · Tu edificio" no cabe en un teléfono angosto.
+- **`NeedChip` recorta con elipsis:** un nombre largo ya no desborda (en `Necesidad-1…3` no cambia nada).
+- **Quien vende ve "Tu venta"** con cómo le pagarán. Aceptar el pedido es HU-24.
+
+**Errores a evitar**
+- **Un pedido de prueba en la conversación `c1` cambia el aviso del chat** a "Ver pedido": en las capturas, el de `Pedido-pago` es de otra conversación (`c9`).
+- **Las horas del panel dependen de la zona del equipo:** las pruebas eligen "Mañana" a la 1:00 p. m. y comparan `deliveryAt.toLocal()`, para que pasen en el CI (UTC) y en local (UTC-6).
+
+**Pendientes con dueño**
+- `NOTE (HU-24)`: lo que hace quien vende.
+- `NOTE (HU-25)`: "Mis pedidos" en `Perfil`.
+- `NOTE (HU-34)`: la propuesta del acuerdo con IA.
+- `NOTE (HU-55)`: transferencia y código de entrega.
 
 ## T34 — Favoritos en la app (09-Nov-2026, SCRUM-68, HU-53)
 

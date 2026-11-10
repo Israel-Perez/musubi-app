@@ -170,12 +170,17 @@ class NeedChip extends StatelessWidget {
                       strokeWidth: selected ? 2.6 : 2,
                       color: selected ? c.brandStrongText : c.textPrimary,
                     ),
-                  Text(
-                    label,
-                    style: MusubiType.style(
-                      14,
-                      weight: selected ? FontWeight.w800 : FontWeight.w600,
-                      color: selected ? c.brandStrongText : c.textPrimary,
+                  // Un nombre largo (un edificio, HU-23) se recorta.
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: MusubiType.style(
+                        14,
+                        weight: selected ? FontWeight.w800 : FontWeight.w600,
+                        color: selected ? c.brandStrongText : c.textPrimary,
+                      ),
                     ),
                   ),
                 ],

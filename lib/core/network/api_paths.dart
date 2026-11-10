@@ -146,6 +146,21 @@ abstract final class ApiPaths {
   /// `GET /api/v1/wanted/mine` — fila "M-05" (spec `musubi-api:HU-13`).
   static const myWanted = '$wanted/mine';
 
+  /// `POST /api/v1/orders` y `GET /api/v1/orders?conversationId=` — filas
+  /// "M-08" (spec `musubi-api:HU-23`).
+  static const orders = '/api/v1/orders';
+
+  /// `GET /api/v1/orders/meeting-points` — fila "M-08"
+  /// (spec `musubi-api:HU-23`).
+  static const meetingPoints = '$orders/meeting-points';
+
+  /// `GET /api/v1/orders/{id}` — fila "M-08" (spec `musubi-api:HU-23`).
+  static String order(String id) => '$orders/$id';
+
+  /// `PUT /api/v1/orders/{id}/payment` — fila "M-08"
+  /// (spec `musubi-api:HU-23`).
+  static String orderPayment(String id) => '$orders/$id/payment';
+
   /// `POST /api/v1/reports` — fila "M-13" (spec `musubi-api:HU-28`).
   static const reports = '/api/v1/reports';
 

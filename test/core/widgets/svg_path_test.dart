@@ -75,6 +75,12 @@ void main() {
       MusubiIcons.spinner,
       MusubiIcons.user,
       MusubiIcons.wifiOff,
+      // HU-23.
+      MusubiIcons.mapPin,
+      MusubiIcons.arrowRightLeft,
+      MusubiIcons.banknote,
+      MusubiIcons.package,
+      MusubiIcons.pencil,
     ];
     for (final icon in icons) {
       for (final shape in icon.shapes) {

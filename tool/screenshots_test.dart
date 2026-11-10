@@ -39,6 +39,8 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
@@ -54,6 +56,7 @@ import '../test/helpers/fake_catalog_repository.dart';
 import '../test/helpers/fake_chat.dart';
 import '../test/helpers/fake_favorites_repository.dart';
 import '../test/helpers/fake_listings_repository.dart';
+import '../test/helpers/fake_orders.dart';
 import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_reputation.dart';
 import '../test/helpers/fake_session_api.dart';
@@ -132,6 +135,28 @@ DateTime _local(int day, int hour, int minute) =>
     DateTime(2026, 10, day, hour, minute).toUtc();
 
 /// `Chat-Valeria`: Ana pregunta por la calculadora de Valeria.
+/// El pedido de `Pedido-pago` (HU-23): la calculadora, en la Biblioteca el
+/// jueves 8 de octubre a la 1:00 p. m.
+final _order = Order(
+  id: 'o1',
+  number: 'MS-2481',
+  status: OrderStatus.pending,
+  isBuyer: true,
+  // Otra conversacion: la de `c1` sigue sin pedido ("Resumir acuerdo").
+  conversationId: 'c9',
+  item: const OrderItem(
+    title: 'Calculadora Casio fx-991ES Plus',
+    priceCents: 45000,
+    quantity: 1,
+    totalCents: 45000,
+    photoUrl: 'asset:assets/products/casio.webp',
+  ),
+  buyerName: 'Ana Sofía Ramírez',
+  sellerName: 'Valeria Cruz',
+  pointName: 'Biblioteca',
+  deliveryAt: DateTime(2026, 10, 8, 13).toUtc(),
+);
+
 final _chat = FakeChatRepository(
   conversationValue: const Conversation(
     id: 'c1',
@@ -477,6 +502,10 @@ class _Shot {
             tokenStoreProvider.overrideWithValue(InMemoryTokenStore(tokens)),
             initialSessionTokensProvider.overrideWithValue(tokens),
             chatRepositoryProvider.overrideWithValue(_chat),
+            // HU-23: el pedido de la calculadora (`Pedido-pago`).
+            orderRepositoryProvider.overrideWithValue(
+              FakeOrderRepository(orders: [_order]),
+            ),
             chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
             // HU-57: Diego bloqueado, como `APP.blocked` de la maqueta.
             reputationRepositoryProvider.overrideWithValue(
@@ -834,6 +863,24 @@ final Map<String, (bool, _Scene)> _scenes = {
       await s.tap(find.text('Editar solicitud'));
     },
   ),
+  // HU-23: "Resumen del acuerdo" sin IA (como `Acuerdo-esperando`: falta la
+  // fecha) y "Tu pedido" (`Pedido-pago`).
+  'resumen-acuerdo': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.conversation('c1'));
+      await s.tap(find.byKey(const Key('chat-summarize')));
+      await s.tap(
+        find.descendant(
+          of: find.byKey(const Key('order-place')),
+          matching: find.text('Agregar'),
+        ),
+      );
+      await s.tap(find.byKey(const Key('order-point-biblioteca')));
+      await s.tap(find.byKey(const Key('order-place-done')));
+    },
+  ),
+  'pedido-pago': (true, (s) => s.go(AppRoutes.order('o1'))),
   'se-busca': (true, (s) => s.go(AppRoutes.wanted)),
   'se-busca-filtros': (
     true,

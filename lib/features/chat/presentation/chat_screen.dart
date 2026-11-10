@@ -23,6 +23,9 @@ import 'package:musubi_app/features/chat/presentation/chat_format.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/presentation/order_providers.dart';
+import 'package:musubi_app/features/orders/presentation/order_summary_sheet.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 
@@ -35,7 +38,9 @@ import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 /// NOTE (HU-05): "Ver perfil" y "En linea" / "Activa hace 5 min".
 /// NOTE (HU-31): "Silenciar conversación" (sin avisos push no hay que callar).
 /// NOTE (HU-27): la calificacion de la otra persona.
-/// NOTE (HU-32): "Resumir acuerdo" con IA.
+/// "Resumir acuerdo" (HU-23): quien compra abre el resumen sin IA y crea el
+/// pedido; con un pedido abierto, el aviso lo muestra y lo abre.
+/// NOTE (HU-32): la propuesta del acuerdo con IA.
 class ChatScreen extends ConsumerStatefulWidget {
   const new({required this.target, super.key, this.draft});
 
@@ -80,6 +85,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     icon: MusubiIcons.clock,
     tone: SnackTone.info,
   );
+
+  /// "Resumir acuerdo": quien compra abre el resumen (HU-23); quien vende
+  /// espera el pedido.
+  void _summarize(Conversation? conversation) {
+    if (conversation == null) return;
+    if (conversation.role == ChatRole.buyer) {
+      unawaited(showOrderSummary(context, conversation: conversation));
+      return;
+    }
+    showMusubiSnack(
+      ScaffoldMessenger.of(context),
+      'El pedido lo crea quien compra. Cuando '
+      '${conversation.counterpart.firstName} lo haga, lo verás aquí.',
+      icon: MusubiIcons.info,
+      tone: SnackTone.info,
+    );
+  }
 
   Future<void> _send() async {
     final controller = ref.read(chatControllerProvider(widget.target).notifier);
@@ -204,6 +226,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final controller = ref.read(chatControllerProvider(widget.target).notifier);
     final conversation = state.conversation;
     final preview = widget.target.product;
+    final openOrder = conversation == null
+        ? null
+        : ref.watch(openOrderProvider(conversation.id)).value;
 
     return Scaffold(
       backgroundColor: c.background,
@@ -247,7 +272,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           unawaited(context.push(AppRoutes.product(id)));
                         }
                       },
-                onSummarize: () => _soon('Resumir acuerdo'),
+                order: openOrder,
+                onSummarize: () => _summarize(conversation),
+                onOpenOrder: (id) =>
+                    unawaited(context.push(AppRoutes.order(id))),
               ),
               Expanded(
                 child: state.loading && state.messages.isEmpty
@@ -403,6 +431,8 @@ class _ContextCard extends StatelessWidget {
     required this.preview,
     required this.onSee,
     required this.onSummarize,
+    required this.onOpenOrder,
+    this.order,
   });
 
   final Conversation? conversation;
@@ -411,6 +441,10 @@ class _ContextCard extends StatelessWidget {
   /// "Ver"; `null` sin detalle que abrir (una oferta, HU-17).
   final VoidCallback? onSee;
   final VoidCallback onSummarize;
+
+  /// El pedido abierto de la conversacion (HU-23): el aviso lo muestra.
+  final Order? order;
+  final ValueChanged<String> onOpenOrder;
 
   @override
   Widget build(BuildContext context) {
@@ -572,21 +606,29 @@ class _ContextCard extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      '¿Ya se pusieron de acuerdo?',
+                      switch (order) {
+                        Order(:final number, :final status) =>
+                          'Pedido #$number · ${status.label}',
+                        null => '¿Ya se pusieron de acuerdo?',
+                      },
+                      key: const Key('chat-order-status'),
                       style: MusubiType.style(
                         12.5,
-                        weight: FontWeight.w600,
-                        color: c.textSecondary,
+                        weight: order == null
+                            ? FontWeight.w600
+                            : FontWeight.w700,
+                        color: order == null ? c.textSecondary : c.textPrimary,
                       ),
                     ),
                   ),
-                  Pressable(
-                    onTap: onSummarize,
-                    semanticLabel: 'Resumir acuerdo',
-                    builder: (context, _) => SizedBox(
-                      height: MusubiSizes.minTouch,
-                      child: Center(
-                        child: _Glow(
+                  if (order case final order?)
+                    Pressable(
+                      key: const Key('chat-open-order'),
+                      onTap: () => onOpenOrder(order.id),
+                      semanticLabel: 'Ver pedido',
+                      builder: (context, _) => SizedBox(
+                        height: MusubiSizes.minTouch,
+                        child: Center(
                           child: Container(
                             height: 36,
                             padding: const EdgeInsets.only(left: 12, right: 14),
@@ -601,12 +643,12 @@ class _ContextCard extends StatelessWidget {
                               spacing: 7,
                               children: [
                                 MusubiIcon(
-                                  MusubiIcons.sparkle,
+                                  MusubiIcons.package,
                                   size: 16,
                                   color: c.onBrand,
                                 ),
                                 Text(
-                                  'Resumir acuerdo',
+                                  'Ver pedido',
                                   style: MusubiType.style(
                                     13.5,
                                     weight: FontWeight.w700,
@@ -618,8 +660,52 @@ class _ContextCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                    )
+                  else
+                    Pressable(
+                      key: const Key('chat-summarize'),
+                      onTap: onSummarize,
+                      semanticLabel: 'Resumir acuerdo',
+                      builder: (context, _) => SizedBox(
+                        height: MusubiSizes.minTouch,
+                        child: Center(
+                          child: _Glow(
+                            child: Container(
+                              height: 36,
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                right: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: c.inverse,
+                                borderRadius: BorderRadius.circular(
+                                  MusubiSizes.radiusChip,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                spacing: 7,
+                                children: [
+                                  MusubiIcon(
+                                    MusubiIcons.sparkle,
+                                    size: 16,
+                                    color: c.onBrand,
+                                  ),
+                                  Text(
+                                    'Resumir acuerdo',
+                                    style: MusubiType.style(
+                                      13.5,
+                                      weight: FontWeight.w700,
+                                      color: c.onBrand,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

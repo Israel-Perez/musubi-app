@@ -69,6 +69,9 @@ class MusubiColors extends ThemeExtension<MusubiColors> {
   Color get borderStrong => _pick(0xFFD4D4D8, 0xFF3A3A40);
   Color get divider => _pick(0xFFF0F0F2, 0xFF26262A);
 
+  /// Chip apagado ("Diego aún no registra su cuenta", `Pedido-pago`).
+  Color get mutedChip => _pick(0xFFEFEFF1, 0xFF29292E);
+
   /// Caja del codigo ya escrita y puntos de "escribiendo".
   Color get neutralStrong => _pick(0xFFC9C9CF, 0xFF4A4A52);
 

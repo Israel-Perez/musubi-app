@@ -26,6 +26,7 @@ import 'package:musubi_app/features/marketplace/presentation/favorites_screen.da
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
+import 'package:musubi_app/features/orders/presentation/order_payment_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/settings_screen.dart';
@@ -105,6 +106,12 @@ abstract final class AppRoutes {
   /// Una conversacion existente (desde `Mensajes`, HU-22).
   static String conversation(String id) => '$chat/${Uri.encodeComponent(id)}';
 
+  /// "Tu pedido" (`Pedido-pago`, HU-23).
+  static const orders = '/pedido';
+
+  /// Un pedido (HU-23); siempre con sesion.
+  static String order(String id) => '$orders/${Uri.encodeComponent(id)}';
+
   /// Parametro con la ruta a la que se vuelve despues de iniciar sesion.
   static const returnParam = 'desde';
 
@@ -157,7 +164,8 @@ String? sessionRedirect({
   final needsSession =
       AppRoutes.requiresSession.contains(path) ||
       path == AppRoutes.chat ||
-      path.startsWith('${AppRoutes.chat}/');
+      path.startsWith('${AppRoutes.chat}/') ||
+      path.startsWith('${AppRoutes.orders}/');
   if (!signedIn && needsSession) {
     return Uri(
       path: AppRoutes.signIn,
@@ -288,6 +296,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               ? state.extra! as ProductSummary
               : null,
         ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.orders}/:id',
+        builder: (context, state) =>
+            OrderPaymentScreen(orderId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '${AppRoutes.chat}/:id',
