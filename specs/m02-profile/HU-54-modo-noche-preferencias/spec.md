@@ -31,17 +31,17 @@ Jira (SCRUM-71): Como **usuario**, quiero **cambiar entre modo claro y modo noch
 - `test/core/theme/app_theme_test.dart`: contraste AA en las dos paletas.
 
 ## Criterios
-- [ ] Ajustes ofrece claro, oscuro y sistema; la selección aplica el tema en toda la app.
-- [ ] Contraste del tema oscuro cumple RNF-20 (≥ 4.5:1 en pares de texto medidos por `app_theme_test.dart`).
-- [ ] GET carga selección guardada; PUT conserva selección al reconstruir/reabrir; fallo de guardado revierte y ofrece reintentar.
-- [ ] `dart format --output=none --set-exit-if-changed .`, `flutter analyze --fatal-infos --fatal-warnings`, `flutter test` y critic PASS.
+- [x] Ajustes ofrece claro, oscuro y sistema; la selección aplica el tema en toda la app.
+- [x] Contraste del tema oscuro cumple RNF-20 (≥ 4.5:1 en pares de texto medidos por `app_theme_test.dart`).
+- [x] GET carga selección guardada; PUT conserva selección al reconstruir/reabrir; fallo de guardado revierte y ofrece reintentar.
+- [x] `dart format --output=none --set-exit-if-changed .`, `flutter analyze --fatal-infos --fatal-warnings`, `flutter test` y critic PASS.
 
 ## Límites
 - Las preferencias de notificaciones por tipo quedan fuera porque Jira deja su alcance MVP pendiente.
 - La cuenta visitante no sincroniza la preferencia; usa el modo del sistema. No se añade un paquete de persistencia local.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 revisor distinto del autor)
 - **Fecha:** 10-Nov-2026
 - **Detalle:** alcance detallado desde SCRUM-71; la preferencia se guarda por cuenta mediante la API; no se incluyen preferencias de notificaciones no definidas en Jira.
