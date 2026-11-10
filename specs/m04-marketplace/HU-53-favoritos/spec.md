@@ -98,7 +98,7 @@ RNF que aplican: RNF-07 (privacidad, reflejado en la UI), RNF-12 (indicador de c
 - [x] Sin modo sin conexión ni almacenamiento local (R6): `grep -R "shared_preferences\|sqflite\|File(" lib/features/marketplace` sin resultados; la app solo lee de la API y muestra el 401/403/404 traducido → data tests.
 - [x] La captura `favoritos` mide 390×844 y coincide con la maqueta en claro y oscuro (R2) → `tool/screenshots_test.dart`.
 - [x] `dart format --output=none --set-exit-if-changed .` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` 0 · `flutter test` 454/454 · `pwsh scripts/critic-guardrails.ps1` PASS.
-- [ ] `semgrep scan --config=auto --config=.semgrep/semgrep.yaml --error` sin hallazgos antes del primer push (semgrep no está instalado en el entorno local; corre en el CI).
+- [x] `semgrep scan --config=auto --config=.semgrep/semgrep.yaml --error` sin hallazgos en el CI del PR #44 (run 42759746533).
 
 ## Límites
 - **Sin modo sin conexión** (decisión de Jira, 08-Nov-2026): no hay SQLite, caché de favoritos ni vitrina offline. La app no promete "Guardado en tu teléfono".
@@ -121,5 +121,5 @@ RNF que aplican: RNF-07 (privacidad, reflejado en la UI), RNF-12 (indicador de c
   - se resuelve la decisión pendiente de Jira: sin modo sin conexión;
   - las filas 79–81 existen en la API local (`0.5.0-alpha.12`, esquema 13), con fixture; no hay fake de endpoint;
   - el aviso de la maqueta se conserva con "Ver" y "Deshacer";
-  - evidencia: `flutter test` 454/454, analyze 0, format 0, critic PASS, captura `favoritos` claro/oscuro (1170×2532), APK debug y `security-reviewer` PASS;
-  - pendiente: `semgrep` en el CI, el PR con la clave `SCRUM-68` y la aprobación de un revisor.
+  - evidencia: `flutter test` 454/454, analyze 0, format 0, critic PASS, captura `favoritos` claro/oscuro (1170×2532), APK debug, `security-reviewer` PASS y `semgrep` PASS en el CI del PR #44;
+  - pendiente: la aprobación de un revisor.

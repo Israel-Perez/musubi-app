@@ -9,8 +9,8 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
   - El siguiente lote vuelve a subir el `versionCode` (`0.6.0+8` ya está usada).
 - **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
 - **Shared (09-Nov-2026):** `docs/versionado.md` suma la fila `0.5.0-alpha.12`/esquema 13 de HU-53 (favoritos), solo API; sin cambios en la app. Se replicó en `musubi-api` y se registró en las dos `Memoria.md`.
-- **HU-53 (favoritos):** T1–T6 hechos el 09-Nov-2026; sigue el PR y la aprobación de un revisor; `semgrep` corre en CI.
-- **Siguiente:** PR de HU-53 y HU-14 (editar, cerrar y cancelar la solicitud); luego Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
+- **HU-53 (favoritos):** T1–T6 hechos el 09-Nov-2026; PR #44 abierto con CI verde; falta la aprobación de un revisor.
+- **Siguiente:** HU-14 (editar, cerrar y cancelar la solicitud); luego Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
 - **Pendiente con dueño:** la rama `feature/SCRUM-24-editar-eliminar-publicaciones` (HU-07, Kazumi) tiene conflictos; no se toca sin el OK del usuario.
 
 ## T33 — Favoritos en la app (09-Nov-2026, SCRUM-68, HU-53)
@@ -35,8 +35,8 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 **Pendientes y riesgos**
 - `NOTE (HU-53)`: tope de 200 sin paginar; el dueño es una HU posterior (spec/task).
-- `semgrep` no está instalado en el entorno local; corre en CI antes del push.
-- Falta el revisor de la spec y el PR.
+- PR #44 abierto; `semgrep`, analyze, critic y test en verde en el CI.
+- Falta el revisor de la spec.
 
 ## T32 — Specs de favoritos (09-Nov-2026, SCRUM-68, HU-53)
 
@@ -53,7 +53,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 **Pendientes y riesgos**
 - Implementación y evidencia en T33: `flutter test` 454/454, analyze 0, critic PASS, APK debug y capturas `favoritos`.
-- Semgrep en CI y revisor de la spec pendientes.
+- Semgrep en CI (PASS en el PR #44) y revisor de la spec pendiente.
 - La app no se publica antes de desplegar la API `0.5.0-alpha.12`.
 
 ## T31 — Ver y elegir ofertas (09-Nov-2026, SCRUM-39, HU-17)

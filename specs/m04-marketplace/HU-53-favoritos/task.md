@@ -81,9 +81,9 @@
   - `dart format`, `flutter analyze`, `flutter test`, `critic` y `semgrep`;
   - fila de `docs/trazabilidad.md` con las pruebas reales y estado "Borrador con evidencia";
   - `security-reviewer` y `traceability-clerk` antes del PR;
-  - PR `feature/SCRUM-68-favoritos` enlazando el PR del back.
-- **Verificación:** `flutter test` 454/454, analyze 0, format 0, critic PASS, capturas `favoritos`/`favoritos-dark` (1170×2532) y APK debug compilado; `security-reviewer` PASS. `semgrep` no está instalado en el entorno local: queda para el CI.
-- **Estado:** ✅ Hecho (09-Nov-2026), salvo `semgrep` en CI y el PR.
+  - PR #44 (`feature/SCRUM-68-favoritos`); no hay PR del back todavía.
+- **Verificación:** `flutter test` 454/454, analyze 0, format 0, critic PASS, capturas `favoritos`/`favoritos-dark` (1170×2532), APK debug compilado, `security-reviewer` PASS y `semgrep` PASS en el CI del PR #44.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
 ## Pendientes con dueño
 | Pendiente | Dueño |
