@@ -19,10 +19,10 @@ import 'package:musubi_app/features/profile/presentation/personal_data_sheet.dar
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/settings_row.dart';
-import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
-import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
 import 'package:musubi_app/features/profile/presentation/theme_preference_sheet.dart';
+import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
+import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 
 /// `Ajustes` (HU-04): la tarjeta de la cuenta abre "Datos personales";
 /// "Correo institucional", "Cambiar contraseña", "Privacidad · Quién te ve",

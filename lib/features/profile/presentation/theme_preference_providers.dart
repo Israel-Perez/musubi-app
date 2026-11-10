@@ -26,7 +26,9 @@ class ThemePreferenceController extends AsyncNotifier<ThemePreference> {
     final signedIn = ref.watch(
       sessionControllerProvider.select((session) => session is SignedIn),
     );
-    return signedIn ? _repository.getTheme() : Future.value(ThemePreference.system);
+    return signedIn
+        ? _repository.getTheme()
+        : Future.value(ThemePreference.system);
   }
 
   Future<void> setTheme(ThemePreference theme) async {

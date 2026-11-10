@@ -11,8 +11,8 @@ import 'package:musubi_app/features/listings/presentation/listings_providers.dar
 import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
-import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/domain/theme_preference.dart';
+import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
@@ -222,6 +222,12 @@ void main() {
       expect(find.text('Quién te ve'), findsOneWidget);
       expect(find.text('Tema'), findsOneWidget);
       expect(find.text('Como el sistema'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('settings-version')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Musubi $appVersion'), findsOneWidget);
     });
 
@@ -236,22 +242,34 @@ void main() {
       await h.pick('Modo noche');
 
       expect(h.theme.preference, ThemePreference.dark);
-      expect(h.container.read(themePreferenceProvider).value, ThemePreference.dark);
+      expect(
+        h.container.read(themePreferenceProvider).value,
+        ThemePreference.dark,
+      );
       expect(find.text('Modo noche'), findsOneWidget);
     });
 
-    testWidgets('si falla al guardar, restaura el modo anterior y deja reintentar', (
-      tester,
-    ) async {
-      final h = ProfileHarness(tester)..theme.failSave = true;
-      await h.open(AppRoutes.settings);
-      await h.tapKey('settings-theme');
-      await h.pick('Modo noche');
+    testWidgets(
+      'si falla al guardar, restaura el modo anterior y deja reintentar',
+      (tester) async {
+        final h = ProfileHarness(tester)..theme.failSave = true;
+        await h.open(AppRoutes.settings);
+        await h.tapKey('settings-theme');
+        await h.pick('Modo noche');
 
-      expect(h.container.read(themePreferenceProvider).value, ThemePreference.system);
-      expect(find.text('No hay conexión. Revisa tu internet e inténtalo de nuevo.'), findsOneWidget);
-      expect(find.text('Reintentar'), findsOneWidget);
-    });
+        expect(
+          h.container.read(themePreferenceProvider).value,
+          ThemePreference.system,
+        );
+        expect(
+          find.text(
+            'No hay conexión. Revisa tu internet e inténtalo de nuevo.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Reintentar'), findsOneWidget);
+      },
+    );
 
     testWidgets('"Correo institucional": correo, Verificado y desde cuando', (
       tester,
@@ -262,7 +280,13 @@ void main() {
       await h.tapKey('settings-email');
 
       expect(find.byKey(const Key('email-sheet')), findsOneWidget);
-      expect(find.text('ana.ramirez@uttt.edu.mx'), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('email-sheet')),
+          matching: find.text('ana.ramirez@uttt.edu.mx'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('oct 2026'), findsOneWidget);
       expect(find.textContaining('No se puede cambiar'), findsOneWidget);
       await h.tapText('Entendido');

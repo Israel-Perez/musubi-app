@@ -3,13 +3,13 @@ import 'package:musubi_app/features/profile/domain/theme_preference.dart';
 import 'package:musubi_app/features/profile/domain/theme_preference_repository.dart';
 
 class FakeThemePreferenceRepository implements ThemePreferenceRepository {
+  new({this.preference = ThemePreference.system});
+
   ThemePreference preference;
   bool failLoad = false;
   bool failSave = false;
   int loads = 0;
   final saves = <ThemePreference>[];
-
-  FakeThemePreferenceRepository({this.preference = ThemePreference.system});
 
   @override
   Future<ThemePreference> getTheme() async {

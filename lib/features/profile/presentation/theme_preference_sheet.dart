@@ -13,8 +13,8 @@ Future<void> showThemePreferenceSheet(
   BuildContext context,
   WidgetRef ref,
 ) async {
-  final selected = ref.read(themePreferenceProvider).value ??
-      ThemePreference.system;
+  final selected =
+      ref.read(themePreferenceProvider).value ?? ThemePreference.system;
   await showMusubiPanel<void>(
     context,
     builder: (sheetContext) => MusubiPanel(
