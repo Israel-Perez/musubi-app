@@ -266,9 +266,15 @@ class _ReceivedOffersSectionState extends ConsumerState<ReceivedOffersSection> {
                   _ when identical(offer, cheapest) => OfferBadge.cheapest,
                   _ => null,
                 },
-                onReject: () => unawaited(_reject(offer)),
+                // HU-14: una cerrada, cancelada o vencida ya no decide (RN-11);
+                // el chat sigue abierto.
+                onReject: request.isActive
+                    ? () => unawaited(_reject(offer))
+                    : null,
                 onChat: () => unawaited(_openChat(offer)),
-                onAccept: () => unawaited(_accept(offer)),
+                onAccept: request.isActive
+                    ? () => unawaited(_accept(offer))
+                    : null,
               ),
             ),
         ],
@@ -371,9 +377,13 @@ class OfferCompareCard extends StatelessWidget {
   final ReceivedOffer offer;
   final int budgetCents;
   final OfferBadge? badge;
-  final VoidCallback onReject;
+
+  /// `null` si la solicitud ya no esta activa (HU-14): no se muestra.
+  final VoidCallback? onReject;
   final VoidCallback onChat;
-  final VoidCallback onAccept;
+
+  /// `null` si la solicitud ya no esta activa (HU-14): no se muestra.
+  final VoidCallback? onAccept;
 
   static String _condition(ReceivedOffer o) => [
     if (o.condition == 'new') 'Nuevo' else 'Usado',
@@ -591,7 +601,7 @@ class OfferCompareCard extends StatelessWidget {
           Row(
             spacing: 8,
             children: [
-              if (!o.accepted)
+              if (!o.accepted && onReject != null)
                 Pressable(
                   key: ValueKey('offer-reject-${o.id}'),
                   semanticLabel: 'Rechazar',
@@ -622,7 +632,7 @@ class OfferCompareCard extends StatelessWidget {
                   onTap: onChat,
                 ),
               ),
-              if (!o.accepted)
+              if (onAccept case final accept? when !o.accepted)
                 Expanded(
                   child: _ActionButton(
                     key: ValueKey('offer-accept-${o.id}'),
@@ -630,7 +640,7 @@ class OfferCompareCard extends StatelessWidget {
                     icon: MusubiIcons.check,
                     iconStroke: 2.4,
                     primary: true,
-                    onTap: onAccept,
+                    onTap: accept,
                   ),
                 ),
             ],

@@ -86,6 +86,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Solicitudes de compra (HU-13): `lib/features/purchase_requests/` (clases `Wanted*`, como en la API); los pasos reutilizan `SellStepLayout` (`steps`, `heading`, `onSave`, `top`) y Mis solicitudes vive en la rama de Perfil.
 - "Yo tengo este producto" (HU-16): `showOfferSheet` (vincular o oferta directa) y `showOfferSentSheet` en `lib/features/purchase_requests/presentation/offer_sheet.dart`; la foto usa la subida de los productos (HU-06).
 - Ofertas recibidas (HU-17): `ReceivedOffersSection` en `Mis-solicitudes` (`received_offers.dart`, orden con `sortOffers`); el chat de una oferta usa `ChatContext.isOffer` y `ChatScreen.draft` (el saludo al aceptar).
+- Gestionar una solicitud (HU-14): "Cambiar" abre "Tu solicitud" (`MyWantedScreen._manage`). "Editar solicitud" reutiliza `Necesidad-1…3` con `editing: true`, rutas `AppRoutes.editNeed*` y su propio borrador (`needEditDraftProvider`, `need_edit.dart`) para no pisar el de publicar.
 - Tablero "Se busca" (HU-15): `WantedBoardScreen` (con sesión `Se-busca`, sin ella `Se-busca-visitante`), filtros en `wantedBoardFilterProvider` y páginas en `wantedBoardProvider`; listas de varias opciones con `MusubiMultiOptions`.
 - Pendientes con dueño: FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.
 

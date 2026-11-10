@@ -73,7 +73,8 @@ List<DateTime> otherDates(DateTime today) {
 
 DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 
-/// Borrador de "Publicar lo que necesito" (`Necesidad-1…3`).
+/// Borrador de "Publicar lo que necesito" (`Necesidad-1…3`) y de "Editar
+/// solicitud" (HU-14, con [editingId]).
 @immutable
 class NeedDraft {
   const new({
@@ -85,7 +86,33 @@ class NeedDraft {
     this.quantity = 1,
     this.when = NeedWhen.none,
     this.customDate,
+    this.editingId,
+    this.productLocked = false,
   });
+
+  /// "Editar solicitud" (HU-14): el borrador sale de la solicitud. Su fecha
+  /// vuelve a la opcion rapida que la da ("Esta semana" o el viernes) o queda
+  /// como "Elegir fecha".
+  factory fromRequest(WantedRequest request, DateTime today) => NeedDraft(
+    title: request.title,
+    category: CatalogCategory(
+      slug: request.categorySlug,
+      name: request.categoryName,
+    ),
+    description: request.description ?? '',
+    features: request.features,
+    budgetCents: request.budgetCents,
+    quantity: request.quantity,
+    when: switch (request.neededBy) {
+      null => NeedWhen.none,
+      final day when day == nextFriday(today) => NeedWhen.friday,
+      final day when day == endOfWeek(today) => NeedWhen.thisWeek,
+      _ => NeedWhen.custom,
+    },
+    customDate: request.neededBy,
+    editingId: request.id,
+    productLocked: request.offersCount > 0,
+  );
 
   final String title;
   final CatalogCategory? category;
@@ -95,6 +122,14 @@ class NeedDraft {
   final int quantity;
   final NeedWhen when;
   final DateTime? customDate;
+
+  /// La solicitud que se edita (HU-14), o `null` al publicar.
+  final String? editingId;
+
+  /// Con ofertas, el producto y la categoria ya no cambian (HU-14).
+  final bool productLocked;
+
+  bool get editing => editingId != null;
 
   /// Largo minimo del producto (como la API).
   static const minTitle = 3;
@@ -146,6 +181,8 @@ class NeedDraft {
     quantity: quantity ?? this.quantity,
     when: when ?? this.when,
     customDate: customDate ?? this.customDate,
+    editingId: editingId,
+    productLocked: productLocked,
   );
 
   /// Lo que se publica.
@@ -210,13 +247,29 @@ class NeedDraftNotifier extends Notifier<NeedDraft> {
         ? NeedWhen.none
         : value,
     customDate: value == NeedWhen.custom ? date : state.customDate,
+    editingId: state.editingId,
+    productLocked: state.productLocked,
   );
 
   void reset() => state = const NeedDraft();
+
+  /// "Editar solicitud" (HU-14): empieza con los datos de la solicitud.
+  void load(WantedRequest request, DateTime today) =>
+      state = NeedDraft.fromRequest(request, today);
 }
 
 final NotifierProvider<NeedDraftNotifier, NeedDraft> needDraftProvider =
     NotifierProvider<NeedDraftNotifier, NeedDraft>(NeedDraftNotifier.new);
+
+/// "Editar solicitud" (HU-14): otro borrador, para no pisar el de "Publicar
+/// lo que necesito" que se guardo a medias.
+final NotifierProvider<NeedDraftNotifier, NeedDraft> needEditDraftProvider =
+    NotifierProvider<NeedDraftNotifier, NeedDraft>(NeedDraftNotifier.new);
+
+/// El borrador de cada flujo: publicar o editar (HU-14).
+NotifierProvider<NeedDraftNotifier, NeedDraft> needDraftFor({
+  required bool editing,
+}) => editing ? needEditDraftProvider : needDraftProvider;
 
 /// Publicaciones del campus que coinciden con lo que se busca (busqueda
 /// HU-09), dentro del presupuesto primero. Sin coincidencias, vacio.

@@ -12,21 +12,29 @@ import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/listings/presentation/sell_layout.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/need_edit.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 /// `Necesidad-2` (HU-13): descripcion (hasta 300) y caracteristicas deseadas
 /// (opcionales, hasta 5).
 class NeedDetailsScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.editing = false});
+
+  /// "Editar solicitud" (HU-14): otro borrador, "Guardar" manda los cambios
+  /// y la X vuelve a `Mis-solicitudes`.
+  final bool editing;
 
   @override
   ConsumerState<NeedDetailsScreen> createState() => _NeedDetailsScreenState();
 }
 
 class _NeedDetailsScreenState extends ConsumerState<NeedDetailsScreen> {
+  NotifierProvider<NeedDraftNotifier, NeedDraft> get _draft =>
+      needDraftFor(editing: widget.editing);
+
   late final _description = TextEditingController(
-    text: ref.read(needDraftProvider).description,
+    text: ref.read(_draft).description,
   );
   final _descriptionFocus = FocusNode();
   final _feature = TextEditingController();
@@ -42,13 +50,10 @@ class _NeedDetailsScreenState extends ConsumerState<NeedDetailsScreen> {
   }
 
   void _addFeature() {
-    final added = ref
-        .read(needDraftProvider.notifier)
-        .addFeature(_feature.text);
+    final added = ref.read(_draft.notifier).addFeature(_feature.text);
     if (added) {
       _feature.clear();
-    } else if (ref.read(needDraftProvider).features.length >=
-        NeedDraft.maxFeatures) {
+    } else if (ref.read(_draft).features.length >= NeedDraft.maxFeatures) {
       showSellSnack(
         context,
         'Puedes agregar hasta 5 características.',
@@ -60,8 +65,8 @@ class _NeedDetailsScreenState extends ConsumerState<NeedDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    final draft = ref.watch(needDraftProvider);
-    final notifier = ref.read(needDraftProvider.notifier);
+    final draft = ref.watch(_draft);
+    final notifier = ref.read(_draft.notifier);
     final fieldStyle = MusubiType.style(15.5, line: 23, color: c.textPrimary);
 
     return SellStepLayout(
@@ -70,11 +75,14 @@ class _NeedDetailsScreenState extends ConsumerState<NeedDetailsScreen> {
       label: 'Detalles',
       title: 'Cuéntanos más',
       subtitle: 'Mientras más claro seas, mejores ofertas recibes.',
-      heading: 'Publicar lo que necesito',
-      onSave: () => showSellSnack(
-        context,
-        'Borrador guardado. Lo terminas cuando quieras desde Publicar.',
-      ),
+      heading: widget.editing ? needEditHeading : 'Publicar lo que necesito',
+      onSave: widget.editing
+          ? () => unawaited(saveNeedEdit(context, ref))
+          : () => showSellSnack(
+              context,
+              'Borrador guardado. Lo terminas cuando quieras desde Publicar.',
+            ),
+      onClose: widget.editing ? () => leaveNeedEdit(context) : null,
       actions: [
         SizedBox(
           width: 112,
@@ -88,7 +96,13 @@ class _NeedDetailsScreenState extends ConsumerState<NeedDetailsScreen> {
           child: MusubiButton(
             key: const Key('need-details-continue'),
             label: 'Continuar',
-            onPressed: () => unawaited(context.push(AppRoutes.needBudget)),
+            onPressed: () => unawaited(
+              context.push(
+                widget.editing
+                    ? AppRoutes.editNeedBudget
+                    : AppRoutes.needBudget,
+              ),
+            ),
           ),
         ),
       ],

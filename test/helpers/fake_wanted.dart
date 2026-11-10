@@ -137,6 +137,79 @@ class FakeWantedRepository implements WantedRepository {
   @override
   Future<List<WantedRequest>> mine() async => List.of(stored);
 
+  /// Lo que se mando con "Guardar cambios" (HU-14): `(id, datos)`.
+  final List<(String, NewWanted)> updates = [];
+
+  /// `(accion, id)` de "Ya lo consegui" y "Cancelar solicitud".
+  final List<(String, String)> statusChanges = [];
+  ApiFailure? manageFailure;
+
+  WantedRequest _replace(String id, WantedRequest Function(WantedRequest) f) {
+    final i = stored.indexWhere((r) => r.id == id);
+    final changed = f(stored[i]);
+    stored[i] = changed;
+    return changed;
+  }
+
+  @override
+  Future<WantedRequest> update(String id, NewWanted request) async {
+    if (manageFailure != null) throw manageFailure!;
+    updates.add((id, request));
+    return _replace(
+      id,
+      (r) => WantedRequest(
+        id: r.id,
+        title: request.title.trim(),
+        categorySlug: request.category,
+        categoryName: request.category == 'otro' ? 'Otro' : r.categoryName,
+        description: request.description,
+        features: request.features,
+        budgetCents: request.budgetCents,
+        quantity: request.quantity,
+        neededBy: request.neededBy,
+        status: r.status,
+        offersCount: r.offersCount,
+        requesterName: r.requesterName,
+        createdAt: r.createdAt,
+      ),
+    );
+  }
+
+  @override
+  Future<WantedRequest> close(String id) =>
+      _status(id, 'close', WantedStatus.closed);
+
+  @override
+  Future<WantedRequest> cancel(String id) =>
+      _status(id, 'cancel', WantedStatus.cancelled);
+
+  Future<WantedRequest> _status(
+    String id,
+    String action,
+    WantedStatus status,
+  ) async {
+    if (manageFailure != null) throw manageFailure!;
+    statusChanges.add((action, id));
+    return _replace(
+      id,
+      (r) => WantedRequest(
+        id: r.id,
+        title: r.title,
+        categorySlug: r.categorySlug,
+        categoryName: r.categoryName,
+        description: r.description,
+        features: r.features,
+        budgetCents: r.budgetCents,
+        quantity: r.quantity,
+        neededBy: r.neededBy,
+        status: status,
+        offersCount: r.offersCount,
+        requesterName: r.requesterName,
+        createdAt: r.createdAt,
+      ),
+    );
+  }
+
   /// Mis ofertas por solicitud (HU-16).
   final Map<String, WantedOffer> offers = {};
 

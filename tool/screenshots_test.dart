@@ -763,6 +763,22 @@ final Map<String, (bool, _Scene)> _scenes = {
       await s.scroll(5000);
     },
   ),
+  // HU-14: "Cambiar" abre "Tu solicitud"; "Editar solicitud" con ofertas.
+  'mis-solicitudes-gestionar': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myWanted);
+      await s.tap(find.byKey(const Key('my-wanted-change-button')));
+    },
+  ),
+  'editar-solicitud': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myWanted);
+      await s.tap(find.byKey(const Key('my-wanted-change-button')));
+      await s.tap(find.text('Editar solicitud'));
+    },
+  ),
   'se-busca': (true, (s) => s.go(AppRoutes.wanted)),
   'se-busca-filtros': (
     true,
