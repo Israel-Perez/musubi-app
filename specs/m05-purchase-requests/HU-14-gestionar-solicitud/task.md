@@ -1,17 +1,20 @@
-# HU-14 — Editar, cerrar o cancelar mi solicitud (tareas)
+# HU-14 — Editar, cerrar o cancelar mi solicitud (app, tareas)
 
 ## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-14)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Datos
+- **Crear:** `update`, `close` y `cancel`; `NeedDraft.fromRequest` y `needEditDraftProvider`.
+- **Verificar:** `wanted_data_test.dart`.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
 ## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+- **Crear:** "Tu solicitud", las confirmaciones y "Editar solicitud" sobre `Necesidad-1…3`.
+- **Verificar:** `manage_wanted_test.dart`, `need_flow_test.dart` y las escenas `mis-solicitudes-gestionar` y `editar-solicitud`.
+- **Estado:** ✅ Hecho (09-Nov-2026).
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## T4 — Documentación
+- **Estado:** ✅ Hecho (09-Nov-2026).
+
+## Pendientes
+- `NOTE (HU-25)` (RN-15, en la API) y `NOTE (HU-30)`.

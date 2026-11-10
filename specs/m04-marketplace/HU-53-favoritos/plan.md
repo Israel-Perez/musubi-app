@@ -74,7 +74,7 @@ Ninguna. Se usan Flutter, Riverpod 3, go_router, Dio y los widgets existentes de
 
 ## 7. Riesgos y dependencias
 
-- La app no debe publicarse antes de la API `0.5.0-alpha.13` (esquema 13).
+- La app no debe publicarse antes de la API `0.5.0-alpha.14` (esquema 13).
 - `ProductResponse` no trae la calificación del vendedor; la tarjeta de Favoritos muestra solo el nombre. Es una diferencia aceptada con la maqueta.
 - El tope de 200 y la ausencia de paginación son límites del back; si se superan, se pagina en otra HU.
 - El aviso "Deshacer" hace una llamada extra a `PUT`; si la publicación dejó de ser visible, el back responde 404 y se muestra el mensaje, sin dejar el corazón en un estado falso.

@@ -9,20 +9,23 @@ import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
+import 'package:musubi_app/core/widgets/musubi_dialog.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_panel.dart';
+import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/skeleton.dart';
+import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/received_offers.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
-/// `Mis-solicitudes` (HU-13): "Activas" y "Cerradas", la solicitud elegida
-/// ("Cambiar" elige otra) y sus ofertas ("Compara las ofertas", HU-17).
-/// NOTE (HU-14): "Cambiar" tambien edita, cierra o cancela.
+/// `Mis-solicitudes` (HU-13): "Activas" y "Cerradas", la solicitud elegida y
+/// sus ofertas ("Compara las ofertas", HU-17). En una activa, "Cambiar" abre
+/// "Tu solicitud" (HU-14): ver otra, editarla, "Ya lo conseguí" o cancelarla.
 class MyWantedScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -33,6 +36,121 @@ class MyWantedScreen extends ConsumerStatefulWidget {
 class _MyWantedScreenState extends ConsumerState<MyWantedScreen> {
   bool _closed = false;
   String? _selectedId;
+  bool _busy = false;
+
+  /// "Tu solicitud" (HU-14): las acciones de la elegida, y "Ver otra
+  /// solicitud" si hay mas en la pestana.
+  Future<void> _manage(WantedRequest request, List<WantedRequest> tab) async {
+    final picked = await showMusubiPanel<String>(
+      context,
+      builder: (context) => MusubiPanel(
+        key: const Key('my-wanted-manage'),
+        title: 'Tu solicitud',
+        bodyInset: 12,
+        child: MusubiOptions<String>(
+          plain: true,
+          options: [
+            if (tab.length > 1)
+              const MusubiOption(
+                value: 'other',
+                label: 'Ver otra solicitud',
+                icon: MusubiIcons.arrowDownUp,
+              ),
+            const MusubiOption(
+              value: 'edit',
+              label: 'Editar solicitud',
+              icon: MusubiIcons.penLine,
+            ),
+            const MusubiOption(
+              value: 'close',
+              label: 'Ya lo conseguí',
+              sub: 'La cerramos y deja de recibir ofertas',
+              icon: MusubiIcons.circleCheck,
+            ),
+            const MusubiOption(
+              value: 'cancel',
+              label: 'Cancelar solicitud',
+              sub: 'Ya no la necesito',
+              icon: MusubiIcons.x,
+              danger: true,
+            ),
+          ],
+          onPick: (value) => Navigator.of(context).pop(value),
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    // Como el resto de las hojas: el siguiente paso abre 240 ms despues.
+    await Future<void>.delayed(const Duration(milliseconds: 240));
+    if (!mounted) return;
+    switch (picked) {
+      case 'other':
+        await _change(tab);
+      case 'edit':
+        ref
+            .read(needEditDraftProvider.notifier)
+            .load(request, ref.read(clockProvider)().toLocal());
+        unawaited(context.push(AppRoutes.editNeed));
+      case 'close':
+        await _setStatus(request, close: true);
+      case 'cancel':
+        await _setStatus(request, close: false);
+    }
+  }
+
+  /// "Ya lo conseguí" o "Cancelar solicitud", con su confirmacion.
+  Future<void> _setStatus(WantedRequest request, {required bool close}) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showMusubiDialog(
+      context,
+      icon: close ? MusubiIcons.circleCheck : MusubiIcons.x,
+      title: close
+          ? '¿Ya conseguiste lo que buscabas?'
+          : '¿Cancelar tu solicitud?',
+      message: close
+          ? 'Cerraremos "${request.title}": deja de verse en Se busca y ya no '
+                'recibe ofertas.'
+          : '"${request.title}" deja de verse en Se busca y ya no recibe '
+                'ofertas. Las que ya tienes se quedan aquí.',
+      confirmLabel: close ? 'Sí, ya lo conseguí' : 'Cancelar solicitud',
+      cancelLabel: close ? 'Todavía no' : 'No, mantenerla',
+      danger: !close,
+      confirmKey: Key(
+        close ? 'my-wanted-close-confirm' : 'my-wanted-cancel-confirm',
+      ),
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _busy = true);
+    final repository = ref.read(wantedRepositoryProvider);
+    try {
+      await (close
+          ? repository.close(request.id)
+          : repository.cancel(request.id));
+      if (!mounted) return;
+      ref.invalidate(myWantedProvider);
+      setState(() {
+        _busy = false;
+        _selectedId = null;
+      });
+      showMusubiSnack(
+        messenger,
+        close
+            ? '¡Qué bien! Cerramos tu solicitud.'
+            : 'Cancelamos tu solicitud.',
+        icon: close ? MusubiIcons.circleCheck : MusubiIcons.check,
+      );
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ref.invalidate(myWantedProvider);
+      showMusubiSnack(
+        messenger,
+        failure.message,
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+    }
+  }
 
   Future<void> _change(List<WantedRequest> options) async {
     final picked = await showMusubiPanel<String>(
@@ -131,9 +249,16 @@ class _MyWantedScreenState extends ConsumerState<MyWantedScreen> {
                       else
                         _SelectedCard(
                           request: selected,
-                          onChange: tab.length > 1
+                          // Activa: "Tu solicitud" (HU-14). Cerrada: solo
+                          // elegir otra, si hay.
+                          onChange: _busy
+                              ? null
+                              : selected.isActive
+                              ? () => unawaited(_manage(selected, tab))
+                              : tab.length > 1
                               ? () => unawaited(_change(tab))
                               : null,
+                          busy: _busy,
                         ),
                     ],
                   ),
@@ -288,10 +413,13 @@ class _Tabs extends StatelessWidget {
 /// La solicitud elegida: "SE BUSCA", "Cambiar", nombre, "Hasta $600", fecha y
 /// ofertas.
 class _SelectedCard extends StatelessWidget {
-  const new({required this.request, required this.onChange});
+  const new({required this.request, required this.onChange, this.busy = false});
 
   final WantedRequest request;
   final VoidCallback? onChange;
+
+  /// Cerrando o cancelando (HU-14).
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -318,11 +446,15 @@ class _SelectedCard extends StatelessWidget {
             spacing: 8,
             children: [
               const SeBuscaBadge(small: true),
-              if (onChange != null)
+              if (busy)
+                const SizedBox(height: 32, child: MusubiSpinner())
+              else if (onChange != null)
                 Pressable(
                   key: const Key('my-wanted-change-button'),
                   onTap: onChange,
-                  semanticLabel: 'Cambiar de solicitud',
+                  semanticLabel: request.isActive
+                      ? 'Cambiar: editar, cerrar o cancelar'
+                      : 'Cambiar de solicitud',
                   builder: (context, _) => SizedBox(
                     height: 32,
                     child: Row(

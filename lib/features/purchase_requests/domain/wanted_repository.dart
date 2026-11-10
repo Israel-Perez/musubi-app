@@ -2,7 +2,7 @@ import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 
-/// Solicitudes de compra (HU-13, HU-15). Lanza `ApiFailure` (nunca
+/// Solicitudes de compra (HU-13 a HU-17). Lanza `ApiFailure` (nunca
 /// `DioException`).
 abstract interface class WantedRepository {
   /// Tablero "Se busca" del campus (HU-15). Tambien sin sesion (HU-48): la
@@ -18,6 +18,15 @@ abstract interface class WantedRepository {
 
   /// "Mis solicitudes", de la mas nueva a la mas vieja.
   Future<List<WantedRequest>> mine();
+
+  /// "Editar solicitud" (HU-14): todos los datos, con las reglas de publicar.
+  Future<WantedRequest> update(String id, NewWanted request);
+
+  /// "Ya lo consegui" (HU-14): la cierra.
+  Future<WantedRequest> close(String id);
+
+  /// "Cancelar solicitud" (HU-14).
+  Future<WantedRequest> cancel(String id);
 
   /// Mi oferta a una solicitud (HU-16), o `null` si aun no ofrezco.
   Future<WantedOffer?> myOffer(String requestId);

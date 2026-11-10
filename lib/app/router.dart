@@ -83,6 +83,15 @@ abstract final class AppRoutes {
   /// `Mis-solicitudes` (HU-13).
   static const myWanted = '/mis-solicitudes';
 
+  /// "Editar solicitud" (HU-14): `Necesidad-1` con los datos de la elegida.
+  static const editNeed = '/editar-solicitud';
+
+  /// "Editar solicitud", `Necesidad-2`.
+  static const editNeedDetails = '/editar-solicitud/detalles';
+
+  /// "Editar solicitud", `Necesidad-3`.
+  static const editNeedBudget = '/editar-solicitud/presupuesto';
+
   /// "Favoritos" (HU-53), dentro de la rama de Perfil.
   static const favorites = '/favoritos';
 
@@ -113,6 +122,10 @@ abstract final class AppRoutes {
     sellDone,
     myProducts,
     need,
+    myWanted,
+    editNeed,
+    editNeedDetails,
+    editNeedBudget,
     favorites,
   };
 
@@ -237,6 +250,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.needBudget,
         builder: (context, state) => const NeedBudgetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.editNeed,
+        builder: (context, state) => const NeedProductScreen(editing: true),
+      ),
+      GoRoute(
+        path: AppRoutes.editNeedDetails,
+        builder: (context, state) => const NeedDetailsScreen(editing: true),
+      ),
+      GoRoute(
+        path: AppRoutes.editNeedBudget,
+        builder: (context, state) => const NeedBudgetScreen(editing: true),
       ),
       GoRoute(
         path: AppRoutes.needDone,

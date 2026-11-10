@@ -54,6 +54,7 @@ class SellStepLayout extends ConsumerWidget {
     this.steps = 4,
     this.heading = 'Vender un producto',
     this.onSave,
+    this.onClose,
     this.top,
   });
 
@@ -68,6 +69,10 @@ class SellStepLayout extends ConsumerWidget {
 
   /// "Guardar"; por defecto guarda el borrador de venta.
   final VoidCallback? onSave;
+
+  /// La X; por defecto vuelve a Inicio ("Editar solicitud", HU-14, vuelve a
+  /// `Mis-solicitudes`).
+  final VoidCallback? onClose;
 
   /// Lo que va entre la barra de pasos y "Paso N" ("Así funciona" en
   /// `Necesidad-1`).
@@ -92,7 +97,7 @@ class SellStepLayout extends ConsumerWidget {
             bottom: false,
             child: _SellHeader(
               heading: heading,
-              onClose: () => context.go(AppRoutes.home),
+              onClose: onClose ?? () => context.go(AppRoutes.home),
               onSave:
                   onSave ??
                   () {

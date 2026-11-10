@@ -88,7 +88,7 @@
 ## Pendientes con dueño
 | Pendiente | Dueño |
 |---|---|
-| Desplegar la API `0.5.0-alpha.13` antes de publicar la app | `musubi-api:HU-53` / despliegue |
+| Desplegar la API `0.5.0-alpha.14` antes de publicar la app | `musubi-api:HU-53` / despliegue |
 | Paginar la lista si alguien supera 200 favoritos; hoy es `NOTE (HU-53)` | HU posterior |
 | Revisor de la spec (1 integrante distinto del autor) | Usuario |
 | "Bajó $" y avisos de favorito agotado | Fuera del MVP; HU posterior |

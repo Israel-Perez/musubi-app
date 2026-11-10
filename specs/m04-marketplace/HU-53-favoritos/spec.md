@@ -8,7 +8,7 @@ Jira (SCRUM-68): como **comprador**, quiero **guardar productos en favoritos**, 
 - Maqueta: `Favoritos` y el corazón de `Producto`; también las tarjetas de `Inicio` y `Busqueda` (sección 10, G-06).
 - Trazabilidad: sin RF/RNF en Jira (historia nacida de la maqueta, SCRUM-75); RNF-07 se refleja en la UI y lo aplica el back.
 - **Decisión de Jira (08-Nov-2026):** sin modo sin conexión. Los favoritos viven en la API; la caché local de la app queda fuera del MVP.
-- **Contrato del corazón (enfoque B):** la app arma el estado con `GET /api/v1/favorites`; los DTOs de productos no cambian. La API local ya implementa las tres filas (`0.5.0-alpha.13`, esquema 13) y su fixture `ContractTest/Fixtures/favorites.json`; no se usa un fake.
+- **Contrato del corazón (enfoque B):** la app arma el estado con `GET /api/v1/favorites`; los DTOs de productos no cambian. La API local ya implementa las tres filas (`0.5.0-alpha.14`, esquema 13) y su fixture `ContractTest/Fixtures/favorites.json`; no se usa un fake.
 - **Bloqueos y borrado de cuenta:** el back aplica `HU-57` (un bloqueo oculta el producto) y `HU-46` (al borrar una cuenta desaparecen sus favoritos); la app solo muestra el estado `unavailable` que devuelve la API.
 
 **Depende de:** `02-01` (sesión, clientes HTTP y errores), `02-04` (piezas de la maqueta), `HU-11` (detalle), `HU-48` (hoja "Crea tu cuenta"), `HU-57`/`HU-46` (reglas del back) y `musubi-api:HU-53`.
@@ -109,7 +109,7 @@ RNF que aplican: RNF-07 (privacidad, reflejado en la UI), RNF-12 (indicador de c
 - **Sin cambios en productos:** la vitrina pública sigue cacheable; no se agrega `isFavorite` a `ProductResponse`.
 - **Sin regla contra guardar una publicación propia:** el back lo permite; no aporta al comprador y no daña.
 - **Datos locales de otras HU:** el borrador de HU-06, el historial de búsqueda de HU-09/HU-10 y la caché de 02-06 no se implementan aquí. Las specs que los atribuían a HU-53 se concilian en `task.md` → T1.
-- **Pendiente con dueño:** despliegue de la API `0.5.0-alpha.13` → `musubi-api:HU-53`; revisor de esta spec → usuario.
+- **Pendiente con dueño:** despliegue de la API `0.5.0-alpha.14` → `musubi-api:HU-53`; revisor de esta spec → usuario.
 
 ## Aprobación y Control de Cambios
 - **Estado:** 🚧 Borrador con evidencia
@@ -119,7 +119,7 @@ RNF que aplican: RNF-07 (privacidad, reflejado en la UI), RNF-12 (indicador de c
   - spec detallada el 09-Nov-2026; implementación y pruebas completadas el mismo día;
   - se adopta el enfoque B del back: `GET /favorites` arma el corazón y los DTOs de productos no cambian;
   - se resuelve la decisión pendiente de Jira: sin modo sin conexión;
-  - las filas 79–81 existen en la API local (`0.5.0-alpha.13`, esquema 13), con fixture; no hay fake de endpoint;
+  - las filas 79–81 existen en la API local (`0.5.0-alpha.14`, esquema 13), con fixture; no hay fake de endpoint;
   - el aviso de la maqueta se conserva con "Ver" y "Deshacer";
   - evidencia: `flutter test` 454/454, analyze 0, format 0, critic PASS, captura `favoritos` claro/oscuro (1170×2532), APK debug, `security-reviewer` PASS y `semgrep` PASS en el CI del PR #44;
   - pendiente: la aprobación de un revisor.

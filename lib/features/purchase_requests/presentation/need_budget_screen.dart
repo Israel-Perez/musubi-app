@@ -20,21 +20,29 @@ import 'package:musubi_app/features/listings/presentation/listings_providers.dar
 import 'package:musubi_app/features/listings/presentation/sell_layout.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/need_edit.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 /// `Necesidad-3` (HU-13): presupuesto maximo, cantidad, para cuando y "Así
 /// la verá tu comunidad". "Publicar solicitud" la manda a la API.
 class NeedBudgetScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.editing = false});
+
+  /// "Editar solicitud" (HU-14): otro borrador, "Guardar" manda los cambios
+  /// y la X vuelve a `Mis-solicitudes`.
+  final bool editing;
 
   @override
   ConsumerState<NeedBudgetScreen> createState() => _NeedBudgetScreenState();
 }
 
 class _NeedBudgetScreenState extends ConsumerState<NeedBudgetScreen> {
+  NotifierProvider<NeedDraftNotifier, NeedDraft> get _draft =>
+      needDraftFor(editing: widget.editing);
+
   late final _budget = TextEditingController(
-    text: switch (ref.read(needDraftProvider).budgetCents) {
+    text: switch (ref.read(_draft).budgetCents) {
       final cents? => '${cents ~/ 100}',
       null => '',
     },
@@ -54,7 +62,7 @@ class _NeedBudgetScreenState extends ConsumerState<NeedBudgetScreen> {
 
   /// "Elegir fecha" abre las fechas de la maqueta en una hoja de opciones.
   Future<void> _pickDate() async {
-    final draft = ref.read(needDraftProvider);
+    final draft = ref.read(_draft);
     final dates = otherDates(_today);
     final picked = await showMusubiPanel<DateTime>(
       context,
@@ -73,11 +81,11 @@ class _NeedBudgetScreenState extends ConsumerState<NeedBudgetScreen> {
       ),
     );
     if (picked == null || !mounted) return;
-    ref.read(needDraftProvider.notifier).setWhen(NeedWhen.custom, date: picked);
+    ref.read(_draft.notifier).setWhen(NeedWhen.custom, date: picked);
   }
 
   Future<void> _publish() async {
-    final draft = ref.read(needDraftProvider);
+    final draft = ref.read(_draft);
     if (draft.budgetCents == null) {
       setState(() => _budgetError = true);
       _budgetFocus.requestFocus();
@@ -85,12 +93,17 @@ class _NeedBudgetScreenState extends ConsumerState<NeedBudgetScreen> {
     }
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _publishing = true);
+    if (widget.editing) {
+      final saved = await saveNeedEdit(context, ref);
+      if (!saved && mounted) setState(() => _publishing = false);
+      return;
+    }
     try {
       final published = await ref
           .read(wantedRepositoryProvider)
           .publish(draft.toRequest(_today));
       if (!mounted) return;
-      ref.read(needDraftProvider.notifier).reset();
+      ref.read(_draft.notifier).reset();
       ref.invalidate(myWantedProvider);
       context.go(AppRoutes.needDone, extra: published);
     } on ApiFailure catch (failure) {
@@ -109,8 +122,8 @@ class _NeedBudgetScreenState extends ConsumerState<NeedBudgetScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    final draft = ref.watch(needDraftProvider);
-    final notifier = ref.read(needDraftProvider.notifier);
+    final draft = ref.watch(_draft);
+    final notifier = ref.read(_draft.notifier);
     final today = _today;
     final friday = nextFriday(today);
     final category = draft.category;
@@ -124,11 +137,14 @@ class _NeedBudgetScreenState extends ConsumerState<NeedBudgetScreen> {
       steps: 3,
       label: 'Presupuesto',
       title: '¿Cuánto y para cuándo?',
-      heading: 'Publicar lo que necesito',
-      onSave: () => showSellSnack(
-        context,
-        'Borrador guardado. Lo terminas cuando quieras desde Publicar.',
-      ),
+      heading: widget.editing ? needEditHeading : 'Publicar lo que necesito',
+      onSave: widget.editing
+          ? () => unawaited(saveNeedEdit(context, ref))
+          : () => showSellSnack(
+              context,
+              'Borrador guardado. Lo terminas cuando quieras desde Publicar.',
+            ),
+      onClose: widget.editing ? () => leaveNeedEdit(context) : null,
       actions: [
         SizedBox(
           width: 112,
@@ -141,10 +157,10 @@ class _NeedBudgetScreenState extends ConsumerState<NeedBudgetScreen> {
         Expanded(
           child: MusubiButton(
             key: const Key('need-publish'),
-            label: 'Publicar solicitud',
-            loadingLabel: 'Publicando…',
+            label: widget.editing ? 'Guardar cambios' : 'Publicar solicitud',
+            loadingLabel: widget.editing ? 'Guardando…' : 'Publicando…',
             loading: _publishing,
-            icon: MusubiIcons.megaphone,
+            icon: widget.editing ? MusubiIcons.check : MusubiIcons.megaphone,
             iconSize: 20,
             onPressed: () => unawaited(_publish()),
           ),
