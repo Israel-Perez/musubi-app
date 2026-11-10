@@ -1,5 +1,11 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-54 (SCRUM-71, 10-Nov-2026)
+
+- Selector claro/oscuro/sistema en Ajustes conectado a `ThemeMode`; repositorio usa GET/PUT de musubi-api y mantiene estado reactivo por cuenta.
+- La preferencia por cuenta es la fuente de verdad; no se agregó almacenamiento local. Notificaciones quedan fuera porque Jira no concreta el MVP.
+- Pruebas Flutter/análisis pendientes por incompatibilidad local: disponible Flutter 3.44.8/Dart 3.12.2, requerido 3.47.7/Dart 3.13.5.
+
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
 ## Estado actual (10-Nov-2026)

@@ -21,12 +21,14 @@ import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/settings_row.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
+import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
+import 'package:musubi_app/features/profile/presentation/theme_preference_sheet.dart';
 
 /// `Ajustes` (HU-04): la tarjeta de la cuenta abre "Datos personales";
 /// "Correo institucional", "Cambiar contraseña", "Privacidad · Quién te ve",
-/// "Reportar un problema" (HU-28), legal, "Cerrar sesión" y la version. Lo
-/// que aun no existe no se muestra: NOTE (HU-55) "Cuenta para recibir pagos",
-/// NOTE (HU-54) modo noche y avisos, NOTE (HU-39) "Centro de ayuda".
+/// "Reportar un problema" (HU-28), apariencia, legal, "Cerrar sesión" y la
+/// version. Lo que aun no existe no se muestra: NOTE (HU-55) pagos,
+/// NOTE (HU-54) avisos y NOTE (HU-39) "Centro de ayuda".
 class SettingsScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -35,6 +37,7 @@ class SettingsScreen extends ConsumerWidget {
     final c = context.musubi;
     final session = sessionProfile(ref);
     final me = ref.watch(myProfileProvider).value;
+    final themePreference = ref.watch(themePreferenceProvider);
     return Scaffold(
       body: Column(
         children: [
@@ -122,6 +125,26 @@ class SettingsScreen extends ConsumerWidget {
                       value: 'Verificado',
                       valueColor: c.successText,
                       onTap: () => unawaited(showEmailSheet(context)),
+                    ),
+                  ],
+                ),
+                const _SectionLabel('Apariencia'),
+                _Group(
+                  children: [
+                    SettingsRow(
+                      key: const Key('settings-theme'),
+                      icon: MusubiIcons.moon,
+                      title: 'Tema',
+                      value: themePreference.isLoading
+                          ? 'Cargando…'
+                          : themePreference.hasError
+                          ? 'Reintentar'
+                          : themePreference.value?.label ?? 'Como el sistema',
+                      onTap: themePreference.hasError
+                          ? () => ref.invalidate(themePreferenceProvider)
+                          : () => unawaited(
+                              showThemePreferenceSheet(context, ref),
+                            ),
                     ),
                   ],
                 ),

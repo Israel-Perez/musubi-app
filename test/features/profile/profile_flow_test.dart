@@ -12,6 +12,8 @@ import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/domain/theme_preference.dart';
+import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
@@ -21,6 +23,7 @@ import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_listings_repository.dart';
 import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_status_repository.dart';
+import '../../helpers/fake_theme_preference_repository.dart';
 import '../../helpers/in_memory_token_store.dart';
 
 /// App completa con el router real y la sesion abierta (HU-04).
@@ -35,6 +38,7 @@ class ProfileHarness {
   final account = FakeAccountRepository();
   final picker = FakePhotoPicker();
   final favorites = FakeFavoritesRepository();
+  final theme = FakeThemePreferenceRepository();
   final SessionTokens _tokens;
   final InMemoryTokenStore store;
   late ProviderContainer container;
@@ -48,6 +52,7 @@ class ProfileHarness {
       ProviderScope(
         overrides: [
           profileRepositoryProvider.overrideWithValue(profile),
+          themePreferenceRepositoryProvider.overrideWithValue(theme),
           accountRepositoryProvider.overrideWithValue(account),
           listingsRepositoryProvider.overrideWithValue(
             FakeListingsRepository(),
@@ -215,7 +220,37 @@ void main() {
       expect(find.text('Verificado'), findsOneWidget);
       expect(find.text('Cambiar contraseña'), findsOneWidget);
       expect(find.text('Quién te ve'), findsOneWidget);
+      expect(find.text('Tema'), findsOneWidget);
+      expect(find.text('Como el sistema'), findsOneWidget);
       expect(find.text('Musubi $appVersion'), findsOneWidget);
+    });
+
+    testWidgets('cambiar a modo noche actualiza el tema y lo persiste', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      await h.open(AppRoutes.settings);
+
+      await h.tapKey('settings-theme');
+      expect(find.byKey(const Key('theme-preference-sheet')), findsOneWidget);
+      await h.pick('Modo noche');
+
+      expect(h.theme.preference, ThemePreference.dark);
+      expect(h.container.read(themePreferenceProvider).value, ThemePreference.dark);
+      expect(find.text('Modo noche'), findsOneWidget);
+    });
+
+    testWidgets('si falla al guardar, restaura el modo anterior y deja reintentar', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester)..theme.failSave = true;
+      await h.open(AppRoutes.settings);
+      await h.tapKey('settings-theme');
+      await h.pick('Modo noche');
+
+      expect(h.container.read(themePreferenceProvider).value, ThemePreference.system);
+      expect(find.text('No hay conexión. Revisa tu internet e inténtalo de nuevo.'), findsOneWidget);
+      expect(find.text('Reintentar'), findsOneWidget);
     });
 
     testWidgets('"Correo institucional": correo, Verificado y desde cuando', (

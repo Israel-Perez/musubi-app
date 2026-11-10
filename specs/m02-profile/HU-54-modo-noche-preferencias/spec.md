@@ -1,48 +1,47 @@
 # HU-54 — Elegir modo noche y preferencias (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-54 / SCRUM-71 / por asignar / M-02 / [musubi-api:HU-54](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m02-profile/HU-54-modo-noche-preferencias)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-54 / SCRUM-71 / Sprint 4 / M-02 / [musubi-api:HU-54](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m02-profile/HU-54-modo-noche-preferencias)
 
 ## Contexto
 Jira (SCRUM-71): Como **usuario**, quiero **cambiar entre modo claro y modo noche y ajustar mis preferencias**, para **usar la app con comodidad a cualquier hora**.
 
 - Maqueta: `Ajustes`.
-- Trazabilidad: sin RF/RNF en Jira (historia que nació de la maqueta, SCRUM-75).
-- Origen: maqueta (sección 10, G-07).
-
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-04`.
+- **Depende de:** `02-01`, `02-03`, `02-04`, `HU-04` y `musubi-api:HU-54`.
 
 ## Requisitos
-1. Ajustes ofrece el modo claro, el modo noche y "como el sistema".
-2. El modo noche usa la paleta oscura de la guía de estilo y mantiene el contraste AA (RNF-20).
-3. La preferencia se conserva al cerrar y abrir la app.
-
-RNF que aplican: RNF-20.
+1. En Ajustes, permitir elegir modo claro, modo noche o seguir el tema del sistema.
+2. Aplicar la paleta oscura existente con contraste AA (RNF-20).
+3. Guardar la selección en la preferencia de la cuenta para recuperarla tras cerrar y abrir la app y sincronizarla entre sesiones.
+4. Mostrar errores de carga/guardado en español y permitir reintentar; no perder la preferencia ya cargada si falla una actualización.
 
 ## Diseño
-- Feature `lib/features/profile/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-54. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-54)` (skill `deferred-scope-fakes`).
+- `lib/features/profile/`: modelo `ThemePreference`, repositorio HTTP y provider Riverpod con estado inicial del sistema.
+- Consumir `GET/PUT /api/v1/profiles/me/preferences` de `musubi-api:HU-54`; la app no duplica DTOs ni códigos.
+- `MusubiApp` aplica `ThemeMode` desde el provider; `Ajustes` agrega una fila con selector de opciones conforme a la maqueta.
+- Actualización optimista con rollback al error; para cuenta sin sesión, mantener el modo de sistema y no enviar requests autenticados.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-54, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+- [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md), filas M-02 GET/PUT `/profiles/me/preferences` (HU-54), enlazadas desde `lib/core/network/api_paths.dart`.
+- JSON `{ theme: system|light|dark }`; no se copian DTOs ni catálogo de errores.
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- `tool/screenshots_test.dart`: escenas de las pantallas, comparadas con la maqueta en claro y oscuro.
+- `test/features/profile/http_preferences_repository_test.dart`: HTTP, JSON y errores.
+- `test/features/profile/preferences_providers_test.dart`: carga, persistencia, rollback y valores predeterminados.
+- `test/features/profile/profile_flow_test.dart`: selector en Ajustes, cambio de tema real y guardado/reintento.
+- `test/core/theme/app_theme_test.dart`: contraste AA en las dos paletas.
 
 ## Criterios
-- [ ] Ajustes ofrece el modo claro, el modo noche y "como el sistema".
-- [ ] El modo noche usa la paleta oscura de la guía de estilo y mantiene el contraste AA (RNF-20).
-- [ ] La preferencia se conserva al cerrar y abrir la app.
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [ ] Ajustes ofrece claro, oscuro y sistema; la selección aplica el tema en toda la app.
+- [ ] Contraste del tema oscuro cumple RNF-20 (≥ 4.5:1 en pares de texto medidos por `app_theme_test.dart`).
+- [ ] GET carga selección guardada; PUT conserva selección al reconstruir/reabrir; fallo de guardado revierte y ofrece reintentar.
+- [ ] `dart format --output=none --set-exit-if-changed .`, `flutter analyze --fatal-infos --fatal-warnings`, `flutter test` y critic PASS.
 
 ## Límites
-- Decisión pendiente (Jira): qué otras preferencias de la pantalla Ajustes entran al MVP (notificaciones por tipo).
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- Las preferencias de notificaciones por tipo quedan fuera porque Jira deja su alcance MVP pendiente.
+- La cuenta visitante no sincroniza la preferencia; usa el modo del sistema. No se añade un paquete de persistencia local.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
-- **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Estado:** 🚧 Borrador
+- **Revisores:** Pendiente de designar (1 revisor distinto del autor)
+- **Fecha:** 10-Nov-2026
+- **Detalle:** alcance detallado desde SCRUM-71; la preferencia se guarda por cuenta mediante la API; no se incluyen preferencias de notificaciones no definidas en Jira.

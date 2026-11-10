@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
+import 'package:musubi_app/features/profile/domain/theme_preference.dart';
+import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
 
 /// Raiz de la app: tema, rutas e idioma espanol (RNF-18).
 class MusubiApp extends ConsumerWidget {
@@ -15,6 +17,9 @@ class MusubiApp extends ConsumerWidget {
     debugShowCheckedModeBanner: false,
     theme: AppTheme.light(),
     darkTheme: AppTheme.dark(),
+    themeMode: materialThemeMode(
+      ref.watch(themePreferenceProvider).value ?? ThemePreference.system,
+    ),
     locale: const Locale('es', 'MX'),
     supportedLocales: const [Locale('es', 'MX'), Locale('es')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,

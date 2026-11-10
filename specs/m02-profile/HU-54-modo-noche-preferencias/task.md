@@ -1,17 +1,17 @@
-# HU-54 — Elegir modo noche y preferencias (tareas)
+# HU-54 — Elegir modo noche y preferencias (tareas app)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
+## T1 — Contrato, modelo y repositorio
+- **Qué:** consumir GET/PUT preferencias y mapear `system|light|dark` más errores.
 - **Estado:** ⏳ Por hacer.
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-54)`) y sus pruebas.
+## T2 — Estado y tema global
+- **Qué:** provider con carga, cambio optimista, persistencia y rollback; conectar MaterialApp.
 - **Estado:** ⏳ Por hacer.
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
+## T3 — Selector en Ajustes
+- **Qué:** tres opciones conforme a la maqueta y estados accesibles.
 - **Estado:** ⏳ Por hacer.
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
+## T4 — Pruebas y cierre
+- **Qué:** repositorio, providers, widget, formato, análisis, suite, critic, trazabilidad y Memoria.
 - **Estado:** ⏳ Por hacer.
