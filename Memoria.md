@@ -42,7 +42,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 **Qué se hizo**
 - Spec detallada de `HU-53` (`spec.md`, `plan.md`, `task.md`): corazón en el detalle y las tarjetas, pantalla `Favoritos` con tabs y los estados `available`/`soldOut`/`unavailable`, y la privacidad RNF-07.
-- Contrato enlazado a las filas 79–81 de `musubi-api/docs/endpoints.md` (`GET`, `PUT` y `DELETE /favorites`) y al fixture `favorites.json`; la API local ya lo implementa (`0.5.0-alpha.12`, esquema 13). No hay fake de endpoint; el fake de pruebas vive en `test/helpers/`.
+- Contrato enlazado a las filas 79–81 de `musubi-api/docs/endpoints.md` (`GET`, `PUT` y `DELETE /favorites`) y al fixture `favorites.json`; la API local ya lo implementa (`0.5.0-alpha.13`, esquema 13). No hay fake de endpoint; el fake de pruebas vive en `test/helpers/`.
 - Se conciliaron las specs que atribuían datos locales a HU-53 (`02-01`, `02-04`, `02-06`, HU-06, HU-09, HU-10, HU-11, HU-13 y HU-50), porque la decisión del 08-Nov-2026 fue sin modo sin conexión.
 
 **Decisiones (con su porqué)**
@@ -54,7 +54,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 **Pendientes y riesgos**
 - Implementación y evidencia en T33: `flutter test` 454/454, analyze 0, critic PASS, APK debug y capturas `favoritos`.
 - Semgrep en CI (PASS en el PR #44) y revisor de la spec pendiente.
-- La app no se publica antes de desplegar la API `0.5.0-alpha.12`.
+- La app no se publica antes de desplegar la API `0.5.0-alpha.13`.
 
 ## T31 — Ver y elegir ofertas (09-Nov-2026, SCRUM-39, HU-17)
 
