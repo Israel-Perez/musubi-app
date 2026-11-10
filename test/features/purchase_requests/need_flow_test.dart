@@ -292,7 +292,11 @@ void main() {
     // Una pieza es lo normal: no se dice.
     expect(find.text('1 pieza'), findsNothing);
 
+    // HU-14: "Cambiar" abre "Tu solicitud"; "Ver otra solicitud" elige.
     await h.tap(find.byKey(const Key('my-wanted-change-button')));
+    await h.tap(find.text('Ver otra solicitud'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     await h.tap(find.text('Bata de laboratorio talla M').last);
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pumpAndSettle();

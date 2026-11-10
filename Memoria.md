@@ -8,8 +8,39 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
   - Notas de la versión en `docs/play/whatsnew/whatsnew-es-419`; la descripción completa nueva y "Seguridad de los datos" (mensajes, solicitudes, ofertas, reportes y bloqueos) están en `docs/play/README.md` y **se pegan a mano en Play Console**: el workflow solo sube el AAB y las notas.
   - El siguiente lote vuelve a subir el `versionCode` (`0.6.0+8` ya está usada).
 - **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
-- **Siguiente:** HU-14 (editar, cerrar y cancelar la solicitud) y luego Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
-- **Pendiente con dueño:** la rama `feature/SCRUM-24-editar-eliminar-publicaciones` (HU-07, Kazumi) tiene conflictos; no se toca sin el OK del usuario.
+- **En `main`, sin publicar (siguiente lote):** editar, cerrar y cancelar la solicitud (HU-14). Necesita la API `0.5.0-alpha.13`.
+- **Siguiente:** Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
+- **HU-07 (Kazumi):** su API ya está en `main` (`0.5.0-alpha.12`); falta el PR de la app, que debe traer `docs/versionado.md` igual al de musubi-api.
+
+## T32 — Editar, cerrar o cancelar mi solicitud (09-Nov-2026, SCRUM-36, HU-14)
+
+**Qué se hizo**
+- En una solicitud activa, "Cambiar" abre "Tu solicitud" (`MusubiPanel` con `MusubiOptions` sin marca, como "Más opciones" del chat):
+  - "Ver otra solicitud" (si hay más) abre la lista de antes;
+  - "Editar solicitud" abre `Necesidad-1…3` con sus datos;
+  - "Ya lo conseguí" y "Cancelar solicitud" piden confirmar con `showMusubiDialog`.
+- Editar: `NeedProductScreen`, `NeedDetailsScreen` y `NeedBudgetScreen` con `editing: true`:
+  - el encabezado dice "Editar solicitud";
+  - "Guardar" (arriba) y "Guardar cambios" (en el paso 3) mandan el `PUT`, y la X vuelve a `Mis-solicitudes` sin guardar;
+  - con ofertas, el producto queda sin editar, solo sale la categoría elegida y un aviso con candado lo explica.
+- En una cerrada, cancelada o vencida, las ofertas se ven sin "Rechazar" ni "Aceptar"; "Abrir chat" sigue.
+- `WantedRepository.update`, `close` y `cancel` (filas de `musubi-api:HU-14`).
+- Tests 429 · analyze 0 · critic PASS. Escenas `mis-solicitudes-gestionar` y `editar-solicitud`.
+
+**Decisiones (con su porqué)**
+- **"Cambiar" gestiona la solicitud:** la maqueta no tiene editar, cerrar ni cancelar. "Cambiar" ya era el control de la solicitud elegida y abre la misma hoja que el chat; así la tarjeta de la maqueta no cambia.
+- **Otro borrador para editar (`needEditDraftProvider`):** si alguien deja a medias "Publicar lo que necesito" y edita otra solicitud, su borrador no se pierde.
+- **La fecha guardada vuelve a su opción rápida** ("Esta semana" o "Vie 13 nov") si coincide; si no, queda en "Elegir fecha". Sin esto salían dos chips con la misma fecha.
+- **`myWanted` y las rutas de editar piden sesión** (`requiresSession`).
+
+**Errores a evitar**
+- **Después de cerrar el flujo, la pantalla ya no existe:** `saveNeedEdit` usa `ProviderScope.containerOf` (tomado antes de volver) para recargar la lista y limpiar el borrador.
+- **El monto de la tarjeta es un `Text.rich`** ("Hasta $700"): en las pruebas se busca con `findRichText: true`.
+- **La hoja siguiente abre 240 ms después:** las pruebas esperan 300 ms antes de buscarla (`pumpAndSettle` no espera un `Future.delayed` sin cuadros).
+
+**Pendientes con dueño**
+- `NOTE (HU-25)`: proponer cerrar la solicitud al completarse su pedido (RN-15), en la API.
+- `NOTE (HU-30)`: avisar a quienes ofrecieron.
 
 ## T31 — Ver y elegir ofertas (09-Nov-2026, SCRUM-39, HU-17)
 

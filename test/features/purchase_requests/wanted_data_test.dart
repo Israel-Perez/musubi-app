@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
@@ -464,6 +465,117 @@ void main() {
             .neededBy,
         DateTime(2026, 12, 2),
       );
+    });
+  });
+
+  group('HU-14', () {
+    test(
+      'editar manda PUT con el contrato; cerrar y cancelar, su ruta',
+      () async {
+        serve(
+          (options) => FakeHttpAdapter.json(
+            wantedJson(
+              status: switch (options.path) {
+                final p when p.endsWith('/close') => 'closed',
+                final p when p.endsWith('/cancel') => 'cancelled',
+                _ => 'active',
+              },
+            ),
+          ),
+        );
+
+        final edited = await repository.update(
+          'w1',
+          const NewWanted(
+            title: ' Calculadora graficadora ',
+            category: 'calculadoras',
+            description: '',
+            budgetCents: 90000,
+            quantity: 2,
+          ),
+        );
+        final closed = await repository.close('w1');
+        final cancelled = await repository.cancel('w2');
+
+        expect(adapter.requests.map((r) => (r.method, r.path)), [
+          ('PUT', ApiPaths.wantedById('w1')),
+          ('POST', ApiPaths.wantedAction('w1', 'close')),
+          ('POST', ApiPaths.wantedAction('w2', 'cancel')),
+        ]);
+        expect(adapter.requests.first.data, {
+          'title': 'Calculadora graficadora',
+          'category': 'calculadoras',
+          'description': null,
+          'features': <String>[],
+          'budgetCents': 90000,
+          'quantity': 2,
+          'neededBy': null,
+        });
+        expect(
+          (edited.status, closed.status, cancelled.status),
+          (WantedStatus.active, WantedStatus.closed, WantedStatus.cancelled),
+        );
+      },
+    );
+
+    test('el borrador de editar sale de la solicitud', () {
+      // Lunes 9 de noviembre: el viernes es el 13 y el domingo el 15.
+      final today = DateTime(2026, 11, 9);
+      WantedRequest on(DateTime? day, {int offers = 0}) => WantedRequest(
+        id: 'w1',
+        title: 'Calculadora Casio fx-991ES Plus',
+        categorySlug: 'otro',
+        categoryName: 'Otro',
+        description: 'Con tapa',
+        features: const ['Modelo fx-991ES Plus'],
+        budgetCents: 60000,
+        quantity: 2,
+        neededBy: day,
+        status: WantedStatus.active,
+        offersCount: offers,
+        requesterName: 'Ana R.',
+        createdAt: DateTime.utc(2026, 11, 9),
+      );
+
+      final draft = NeedDraft.fromRequest(on(DateTime(2026, 11, 20)), today);
+      expect(
+        (draft.editingId, draft.editing, draft.productLocked),
+        ('w1', true, false),
+      );
+      expect(
+        (draft.category?.slug, draft.description, draft.quantity),
+        ('otro', 'Con tapa', 2),
+      );
+      expect(
+        (draft.when, draft.neededBy(today)),
+        (NeedWhen.custom, DateTime(2026, 11, 20)),
+      );
+      expect(
+        NeedDraft.fromRequest(on(DateTime(2026, 11, 13)), today).when,
+        NeedWhen.friday,
+      );
+      expect(
+        NeedDraft.fromRequest(on(DateTime(2026, 11, 15)), today).when,
+        NeedWhen.thisWeek,
+      );
+      expect(NeedDraft.fromRequest(on(null), today).when, NeedWhen.none);
+      expect(
+        NeedDraft.fromRequest(on(null, offers: 1), today).productLocked,
+        isTrue,
+      );
+      // Cambiar la fecha no pierde que se esta editando.
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container.read(needEditDraftProvider.notifier)
+        ..load(on(null, offers: 1), today)
+        ..setWhen(NeedWhen.friday)
+        ..setBudget(70000);
+      final edited = container.read(needEditDraftProvider);
+      expect(
+        (edited.editingId, edited.productLocked, edited.budgetCents),
+        ('w1', true, 70000),
+      );
+      expect(container.read(needDraftProvider).editing, isFalse);
     });
   });
 }

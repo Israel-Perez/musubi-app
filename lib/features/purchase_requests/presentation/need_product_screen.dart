@@ -13,22 +13,28 @@ import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_text_field.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_layout.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/need_edit.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 /// `Necesidad-1` (HU-13): "Así funciona", el producto que se busca y su
 /// categoria. "Ya hay N publicaciones parecidas" sale de la busqueda (HU-09).
 class NeedProductScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.editing = false});
+
+  /// "Editar solicitud" (HU-14): otro borrador, "Guardar" manda los cambios
+  /// y la X vuelve a `Mis-solicitudes`.
+  final bool editing;
 
   @override
   ConsumerState<NeedProductScreen> createState() => _NeedProductScreenState();
 }
 
 class _NeedProductScreenState extends ConsumerState<NeedProductScreen> {
-  late final _title = TextEditingController(
-    text: ref.read(needDraftProvider).title,
-  );
+  NotifierProvider<NeedDraftNotifier, NeedDraft> get _draft =>
+      needDraftFor(editing: widget.editing);
+
+  late final _title = TextEditingController(text: ref.read(_draft).title);
   Timer? _debounce;
   String _query = '';
   String? _titleError;
@@ -49,7 +55,7 @@ class _NeedProductScreenState extends ConsumerState<NeedProductScreen> {
   }
 
   void _changed(String value) {
-    ref.read(needDraftProvider.notifier).setTitle(value);
+    ref.read(_draft.notifier).setTitle(value);
     if (_titleError != null && value.trim().length >= NeedDraft.minTitle) {
       setState(() => _titleError = null);
     }
@@ -61,7 +67,7 @@ class _NeedProductScreenState extends ConsumerState<NeedProductScreen> {
   }
 
   void _continue() {
-    final draft = ref.read(needDraftProvider);
+    final draft = ref.read(_draft);
     setState(() {
       _titleError = draft.titleValid
           ? null
@@ -70,14 +76,18 @@ class _NeedProductScreenState extends ConsumerState<NeedProductScreen> {
       if (_titleError != null) _shake++;
     });
     if (_titleError == null && _categoryError == null) {
-      unawaited(context.push(AppRoutes.needDetails));
+      unawaited(
+        context.push(
+          widget.editing ? AppRoutes.editNeedDetails : AppRoutes.needDetails,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    final draft = ref.watch(needDraftProvider);
+    final draft = ref.watch(_draft);
     final categories = ref.watch(sellCategoriesProvider);
     final matches = ref.watch(needMatchesProvider(_query)).value ?? const [];
 
@@ -86,12 +96,15 @@ class _NeedProductScreenState extends ConsumerState<NeedProductScreen> {
       steps: 3,
       label: 'Producto',
       title: '¿Qué estás buscando?',
-      heading: 'Publicar lo que necesito',
-      onSave: () => showSellSnack(
-        context,
-        'Borrador guardado. Lo terminas cuando quieras desde Publicar.',
-      ),
-      top: const NeedHowItWorks(),
+      heading: widget.editing ? needEditHeading : 'Publicar lo que necesito',
+      onSave: widget.editing
+          ? () => unawaited(saveNeedEdit(context, ref))
+          : () => showSellSnack(
+              context,
+              'Borrador guardado. Lo terminas cuando quieras desde Publicar.',
+            ),
+      onClose: widget.editing ? () => leaveNeedEdit(context) : null,
+      top: widget.editing ? null : const NeedHowItWorks(),
       actions: [
         Expanded(
           child: MusubiButton(
@@ -108,6 +121,7 @@ class _NeedProductScreenState extends ConsumerState<NeedProductScreen> {
             label: 'Producto que buscas',
             fieldKey: const Key('need-title'),
             controller: _title,
+            enabled: !draft.productLocked,
             errorText: _titleError,
             shakeTrigger: _shake,
             textInputAction: TextInputAction.done,
@@ -144,18 +158,19 @@ class _NeedProductScreenState extends ConsumerState<NeedProductScreen> {
                 AsyncData(:final value) => Wrap(
                   spacing: 8,
                   children: [
+                    // Con ofertas solo queda la elegida (HU-14).
                     for (final category in [...value, otherCategory])
-                      NeedChip(
-                        key: Key('need-category-${category.slug}'),
-                        label: category.name,
-                        selected: draft.category?.slug == category.slug,
-                        onTap: () {
-                          ref
-                              .read(needDraftProvider.notifier)
-                              .setCategory(category);
-                          setState(() => _categoryError = null);
-                        },
-                      ),
+                      if (!draft.productLocked ||
+                          category.slug == draft.category?.slug)
+                        NeedChip(
+                          key: Key('need-category-${category.slug}'),
+                          label: category.name,
+                          selected: draft.category?.slug == category.slug,
+                          onTap: () {
+                            ref.read(_draft.notifier).setCategory(category);
+                            setState(() => _categoryError = null);
+                          },
+                        ),
                   ],
                 ),
                 AsyncError() => Column(
@@ -194,7 +209,15 @@ class _NeedProductScreenState extends ConsumerState<NeedProductScreen> {
             ],
           ),
         ),
-        if (matches.isNotEmpty)
+        if (draft.productLocked)
+          const NeedNotice(
+            key: Key('need-locked'),
+            icon: MusubiIcons.lock,
+            text:
+                'Ya recibiste ofertas: el producto y la categoría ya no '
+                'cambian. El resto sí.',
+          )
+        else if (matches.isNotEmpty && !widget.editing)
           NeedNotice(
             text: matches.length == 1
                 ? 'Ya hay 1 publicación parecida. Te la mostramos al publicar.'
