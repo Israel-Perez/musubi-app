@@ -32,7 +32,7 @@ Jira (SCRUM-71): Como **usuario**, quiero **cambiar entre modo claro y modo noch
 ## Criterios
 - [x] Ajustes ofrece claro, oscuro y sistema; la selección aplica el tema en toda la app.
 - [x] Contraste del tema oscuro cumple RNF-20 (≥ 4.5:1 en pares de texto medidos por `app_theme_test.dart`).
-- [x] GET carga selección guardada; PUT conserva selección al reconstruir/reabrir; fallo de guardado revierte y ofrece reintentar.
+- [x] GET carga la preferencia de la cuenta; la app la solicita al iniciar sesión, PUT la persiste y el fallo de guardado revierte y permite reintentar. Persistencia API y carga del cliente están verificadas por sus pruebas de componente/flujo; no se afirma una prueba E2E de cierre y reinicio del proceso.
 - [x] `dart format --output=none --set-exit-if-changed .`, `flutter analyze --fatal-infos --fatal-warnings`, `flutter test` y critic PASS.
 
 ## Límites
