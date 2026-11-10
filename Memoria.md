@@ -8,6 +8,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
   - Notas de la versión en `docs/play/whatsnew/whatsnew-es-419`; la descripción completa nueva y "Seguridad de los datos" (mensajes, solicitudes, ofertas, reportes y bloqueos) están en `docs/play/README.md` y **se pegan a mano en Play Console**: el workflow solo sube el AAB y las notas.
   - El siguiente lote vuelve a subir el `versionCode` (`0.6.0+8` ya está usada).
 - **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
+- **Shared (09-Nov-2026):** `docs/versionado.md` suma la fila `0.5.0-alpha.12`/esquema 13 de HU-53 (favoritos), solo API; sin cambios en la app. Se replicó en `musubi-api` y se registró en las dos `Memoria.md`.
 - **Siguiente:** HU-14 (editar, cerrar y cancelar la solicitud) y luego Pedidos (HU-23 a HU-25). Sprint 4: 9 al 20 de noviembre.
 - **Pendiente con dueño:** la rama `feature/SCRUM-24-editar-eliminar-publicaciones` (HU-07, Kazumi) tiene conflictos; no se toca sin el OK del usuario.
 
