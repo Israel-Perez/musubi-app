@@ -1,0 +1,219 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/features/orders/data/http_order_repository.dart';
+import 'package:musubi_app/features/orders/domain/order_models.dart';
+
+import '../../helpers/fake_http_adapter.dart';
+
+/// `OrderResponse` como el fixture `order.json` de musubi-api.
+Map<String, Object?> orderJson({
+  Map<String, Object?>? payment,
+  String role = 'buyer',
+  String status = 'pending',
+}) => {
+  'id': '6716a00000000000000000a1',
+  'number': 'MS-1001',
+  'status': status,
+  'role': role,
+  'conversationId': '6716a00000000000000000c1',
+  'item': {
+    'source': 'product',
+    'sourceId': '6716a0000000000000000099',
+    'productId': '6716a0000000000000000099',
+    'title': 'Calculadora científica Casio fx-991ES Plus',
+    'photo':
+        '/media/products/6716a0000000000000000001/'
+        '0123456789abcdef0123456789abcdef.webp',
+    'priceCents': 50000,
+    'quantity': 2,
+    'totalCents': 100000,
+  },
+  'buyer': {'id': '6716a0000000000000000002', 'name': 'Ana Sofía Ramírez'},
+  'seller': {'id': '6716a0000000000000000001', 'name': 'Diego Hernández'},
+  'delivery': {
+    'point': 'biblioteca',
+    'pointName': 'Biblioteca',
+    'detail': 'Planta baja, junto a la entrada',
+    'at': '2026-11-11T19:00:00Z',
+  },
+  'payment': payment,
+  'transferAvailable': false,
+  'createdAt': '2026-11-10T18:00:00Z',
+};
+
+// HU-23: el repositorio habla las filas "M-08" de musubi-api.
+void main() {
+  late FakeHttpAdapter adapter;
+  late HttpOrderRepository repository;
+
+  void serve(ResponseBody Function(RequestOptions options) response) {
+    adapter = FakeHttpAdapter((options) async => response(options));
+    repository = HttpOrderRepository(
+      Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+        ..httpClientAdapter = adapter,
+      Uri.parse('https://api.musubi.example'),
+    );
+  }
+
+  test('los puntos de entrega traen el recomendado', () async {
+    serve(
+      (_) => FakeHttpAdapter.json({
+        'items': [
+          {'slug': 'biblioteca', 'name': 'Biblioteca', 'suggested': false},
+          {
+            'slug': 'tecnologias-informacion',
+            'name': 'Tecnologías de la Información',
+            'suggested': true,
+          },
+        ],
+      }),
+    );
+
+    final points = await repository.meetingPoints();
+
+    expect(adapter.requests.single.path, ApiPaths.meetingPoints);
+    expect(points.map((p) => p.slug), [
+      'biblioteca',
+      'tecnologias-informacion',
+    ]);
+    expect(points.map((p) => p.suggested), [false, true]);
+  });
+
+  test('crear manda el contrato y mapea el pedido', () async {
+    serve((_) => FakeHttpAdapter.json(orderJson(), status: 201));
+
+    final order = await repository.create(
+      NewOrder(
+        conversationId: 'c1',
+        quantity: 2,
+        meetingPoint: 'biblioteca',
+        detail: 'Planta baja, junto a la entrada',
+        // 1:00 p. m. del campus (UTC-6).
+        deliveryAt: DateTime.utc(2026, 11, 11, 19),
+      ),
+    );
+
+    final sent = adapter.requests.single;
+    expect((sent.method, sent.path), ('POST', ApiPaths.orders));
+    expect(sent.data, {
+      'conversationId': 'c1',
+      'quantity': 2,
+      'meetingPoint': 'biblioteca',
+      'meetingDetail': 'Planta baja, junto a la entrada',
+      'deliveryAt': '2026-11-11T19:00:00.000Z',
+    });
+    expect(order.number, 'MS-1001');
+    expect(order.status, OrderStatus.pending);
+    expect(order.isBuyer, isTrue);
+    expect(order.item.quantity, 2);
+    expect(order.item.totalCents, 100000);
+    expect(
+      order.item.photoUrl,
+      'https://api.musubi.example/media/products/6716a0000000000000000001/'
+      '0123456789abcdef0123456789abcdef.webp',
+    );
+    expect(order.pointName, 'Biblioteca');
+    expect(order.detail, 'Planta baja, junto a la entrada');
+    expect(order.deliveryAt, DateTime.utc(2026, 11, 11, 19));
+    expect(order.paysCash, isFalse);
+    expect(order.transferAvailable, isFalse);
+  });
+
+  test('sin detalle no manda meetingDetail', () async {
+    serve((_) => FakeHttpAdapter.json(orderJson(), status: 201));
+
+    await repository.create(
+      NewOrder(
+        conversationId: 'c1',
+        quantity: 1,
+        meetingPoint: 'biblioteca',
+        deliveryAt: DateTime.utc(2026, 11, 11, 19),
+      ),
+    );
+
+    expect(
+      (adapter.requests.single.data as Map).containsKey('meetingDetail'),
+      isFalse,
+    );
+  });
+
+  test(
+    'un pedido abierto ya existente llega como orders.already_open',
+    () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'code': 'orders.already_open',
+          'title': 'Ya hay un pedido abierto en esta conversación.',
+          'status': 409,
+        }, status: 409),
+      );
+
+      await expectLater(
+        repository.create(
+          NewOrder(
+            conversationId: 'c1',
+            quantity: 1,
+            meetingPoint: 'biblioteca',
+            deliveryAt: DateTime.utc(2026, 11, 11, 19),
+          ),
+        ),
+        throwsA(
+          isA<ApiFailure>()
+              .having((f) => f.code, 'code', 'orders.already_open')
+              .having(
+                (f) => f.message,
+                'message',
+                'Ya hay un pedido abierto en esta conversación.',
+              ),
+        ),
+      );
+    },
+  );
+
+  test('los de una conversacion piden por conversationId', () async {
+    serve(
+      (_) => FakeHttpAdapter.json({
+        'items': [orderJson(role: 'seller', status: 'cancelled')],
+      }),
+    );
+
+    final orders = await repository.byConversation('c1');
+
+    expect(adapter.requests.single.path, ApiPaths.orders);
+    expect(adapter.requests.single.queryParameters, {'conversationId': 'c1'});
+    expect(orders.single.isBuyer, isFalse);
+    expect(orders.single.status, OrderStatus.cancelled);
+  });
+
+  test('pagar en efectivo manda cash y queda registrado', () async {
+    serve(
+      (_) => FakeHttpAdapter.json(
+        orderJson(
+          payment: {'method': 'cash', 'chosenAt': '2026-11-10T18:05:00Z'},
+        ),
+      ),
+    );
+
+    final order = await repository.payCash('o1');
+
+    final sent = adapter.requests.single;
+    expect((sent.method, sent.path), ('PUT', ApiPaths.orderPayment('o1')));
+    expect(sent.data, {'method': 'cash'});
+    expect(order.paysCash, isTrue);
+  });
+
+  test(
+    'los estados se leen de la API y abiertos son pendiente y confirmado',
+    () {
+      expect(OrderStatus.parse('confirmed'), OrderStatus.confirmed);
+      expect(OrderStatus.parse('completed'), OrderStatus.completed);
+      expect(OrderStatus.parse('raro'), OrderStatus.pending);
+      expect(OrderStatus.values.where((s) => s.open), [
+        OrderStatus.pending,
+        OrderStatus.confirmed,
+      ]);
+    },
+  );
+}

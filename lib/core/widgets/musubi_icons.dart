@@ -419,6 +419,47 @@ abstract final class MusubiIcons {
     IconPath('m2 2 20 20'),
   ]);
 
+  /// `map-pin` ("Entrega" de `Pedido-pago`, HU-23).
+  static const mapPin = MusubiIconData([
+    IconPath('M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z'),
+    IconCircle(12, 10, 3),
+  ]);
+
+  /// `arrow-right-left` ("Transferencia" de `Pedido-pago`, HU-23).
+  static const arrowRightLeft = MusubiIconData([
+    IconPath('M8 3 4 7l4 4'),
+    IconPath('M4 7h16'),
+    IconPath('m16 21 4-4-4-4'),
+    IconPath('M20 17H4'),
+  ]);
+
+  /// `banknote` ("Efectivo al entregar" de `Pedido-pago`, HU-23).
+  static const banknote = MusubiIconData([
+    IconRect(2, 6, 20, 12, radius: 2),
+    IconCircle(12, 12, 2),
+    IconPath('M6 12h.01M18 12h.01'),
+  ]);
+
+  /// `package` ("Crear pedido" de `Acuerdo-confirmado`, HU-23).
+  static const package = MusubiIconData([
+    IconPath(
+      'M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 '
+      '0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z',
+    ),
+    IconPath('M12 22V12'),
+    IconPath('m3.3 7 8.7 5 8.7-5'),
+    IconPath('m7.5 4.27 9 5.15'),
+  ]);
+
+  /// `pencil` (editar un dato de `Acuerdo-esperando`, HU-23).
+  static const pencil = MusubiIconData([
+    IconPath(
+      'M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 '
+      '4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z',
+    ),
+    IconPath('m15 5 4 4'),
+  ]);
+
   /// `x`.
   static const x = MusubiIconData([
     IconPath('M18 6 6 18'),
