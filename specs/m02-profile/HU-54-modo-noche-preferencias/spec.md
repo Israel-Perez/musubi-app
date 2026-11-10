@@ -43,4 +43,4 @@ Jira (SCRUM-71): Como **usuario**, quiero **cambiar entre modo claro y modo noch
 - **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 revisor distinto del autor)
 - **Fecha:** 10-Nov-2026
-- **Detalle:** alcance detallado desde SCRUM-71; la preferencia se guarda por cuenta mediante la API; no se incluyen preferencias de notificaciones no definidas en Jira.
+- **Detalle:** alcance detallado desde SCRUM-71; la preferencia se guarda por cuenta mediante la API; no se incluyen preferencias de notificaciones no definidas en Jira. Jira sigue en «Por hacer» con sus criterios sin marcar; esta evidencia técnica no aprueba ni transiciona el ticket, que queda para el responsable.
