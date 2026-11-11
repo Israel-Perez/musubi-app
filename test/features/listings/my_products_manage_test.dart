@@ -29,6 +29,7 @@ OwnListing _listing({
   int priceCents = 45000,
   int stock = 1,
   ListingStatus status = ListingStatus.active,
+  DateTime? soldAt,
 }) => OwnListing(
   product: ProductSummary(
     id: id,
@@ -42,6 +43,7 @@ OwnListing _listing({
   status: status,
   description: 'La usé un semestre.',
   usedDetail: UsedDetail.good,
+  soldAt: soldAt,
 );
 
 /// App con sesion y `Mis-productos` abierto, con el fake de publicaciones.
@@ -112,7 +114,8 @@ class _Harness {
 }
 
 // HU-07: el menu de `Mis-productos` (Ver, Editar, Pausar/Reactivar, Eliminar)
-// y "Editar publicación" con `Vender-2…4`.
+// y "Editar publicación" con `Vender-2…4`. HU-08: pestanas con los conteos de
+// la API, "Marcar como vendido" y "Vendidos".
 void main() {
   setUp(() {
     TestWidgetsFlutterBinding.instance.platformDispatcher.implicitView!
@@ -269,5 +272,91 @@ void main() {
     await h.tapText('Cancelar');
 
     expect(h.listings.deleted, isEmpty);
+  });
+
+  testWidgets('las pestanas usan los conteos de la API', (tester) async {
+    final h = _Harness(tester)
+      ..listings.own = [
+        _listing(),
+        _listing(id: 'pausa', status: ListingStatus.hidden),
+        _listing(id: 'agotada', stock: 0, status: ListingStatus.soldOut),
+        _listing(id: 'vendida', status: ListingStatus.sold, soldAt: _now),
+      ];
+    await h.open();
+
+    expect(find.text('Activos (2)'), findsOneWidget);
+    expect(find.text('Vendidos (1)'), findsOneWidget);
+    expect(find.text('Agotados (1)'), findsOneWidget);
+    expect(find.byKey(const Key('my-product-vendida')), findsNothing);
+  });
+
+  testWidgets('marcar como vendido: dialogo de la maqueta y pasa a Vendidos', (
+    tester,
+  ) async {
+    final h = _Harness(tester)..listings.own = [_listing()];
+    await h.open();
+
+    await h.manage('calc', 'Marcar como vendido');
+
+    expect(find.text('¿Marcar como vendido?'), findsOneWidget);
+    expect(
+      find.text('Ya no aparecerá en las búsquedas y se moverá a tus ventas.'),
+      findsOneWidget,
+    );
+    await h.tapKey('my-product-sold-confirm');
+
+    expect(h.listings.soldIds, ['calc']);
+    expect(find.text('¡Felicidades por tu venta!'), findsOneWidget);
+    expect(find.text('Activos (0)'), findsOneWidget);
+    expect(find.text('Vendidos (1)'), findsOneWidget);
+  });
+
+  testWidgets('Vendidos: total, fecha y la marca; solo se ve o se elimina', (
+    tester,
+  ) async {
+    final h = _Harness(tester)
+      ..listings.own = [
+        _listing(id: 'v1', status: ListingStatus.sold, soldAt: _now),
+        _listing(
+          id: 'v2',
+          title: 'Libro de Cálculo',
+          priceCents: 30000,
+          status: ListingStatus.sold,
+          soldAt: _now,
+        ),
+      ];
+    await h.open();
+
+    await h.tapText('Vendidos (2)');
+
+    expect(find.text('2 ventas'), findsOneWidget);
+    expect(find.text(r'$750'), findsOneWidget);
+    expect(find.text(r'$450 · 10 nov'), findsOneWidget);
+    expect(find.text('Vendido'), findsNWidgets(2));
+
+    await h.tapKey('my-product-v1');
+
+    expect(find.text('Ver publicación'), findsOneWidget);
+    expect(find.text('Eliminar'), findsOneWidget);
+    expect(find.text('Editar'), findsNothing);
+    expect(find.text('Marcar como vendido'), findsNothing);
+    expect(find.text('Pausar publicación'), findsNothing);
+  });
+
+  testWidgets('Ver más: trae la siguiente pagina de la pestana', (
+    tester,
+  ) async {
+    final h = _Harness(tester)
+      ..listings.pageSize = 1
+      ..listings.own = [_listing(), _listing(id: 'libro', title: 'Libro')];
+    await h.open();
+
+    expect(find.byKey(const Key('my-product-calc')), findsOneWidget);
+    expect(find.byKey(const Key('my-product-libro')), findsNothing);
+
+    await h.tapKey('my-products-more');
+
+    expect(find.byKey(const Key('my-product-libro')), findsOneWidget);
+    expect(find.byKey(const Key('my-products-more')), findsNothing);
   });
 }

@@ -394,9 +394,12 @@ final List<ReceivedOffer> _receivedOffers = [
   ),
 ];
 
+/// Fecha de la venta de ejemplo (HU-08).
+final DateTime _soldAt = DateTime.utc(2026, 9, 28, 18);
+
 /// Mis publicaciones de `Yo-tengo-vincular` (HU-16).
-const List<OwnListing> _myListings = [
-  OwnListing(
+final List<OwnListing> _myListings = [
+  const OwnListing(
     product: ProductSummary(
       id: 'p-bata',
       title: 'Bata de laboratorio blanca, talla M',
@@ -409,7 +412,7 @@ const List<OwnListing> _myListings = [
     status: ListingStatus.active,
     description: 'La usé un cuatrimestre.',
   ),
-  OwnListing(
+  const OwnListing(
     product: ProductSummary(
       id: 'p-stewart',
       title: 'Cálculo de una variable, Stewart',
@@ -422,7 +425,7 @@ const List<OwnListing> _myListings = [
     status: ListingStatus.active,
     description: 'La usé un cuatrimestre.',
   ),
-  OwnListing(
+  const OwnListing(
     product: ProductSummary(
       id: 'p-escuadras',
       title: 'Juego de escuadras y compás',
@@ -434,6 +437,20 @@ const List<OwnListing> _myListings = [
     ),
     status: ListingStatus.active,
     description: 'La usé un cuatrimestre.',
+  ),
+  // HU-08: una vendida (la maqueta: "Calculadora Casio fx-82LA Plus", 28 sep).
+  OwnListing(
+    product: const ProductSummary(
+      id: 'p-casio-82',
+      title: 'Calculadora Casio fx-82LA Plus',
+      priceCents: 25000,
+      stock: 1,
+      condition: 'Usado',
+      photoUrl: 'asset:assets/products/casio.webp',
+      category: 'calculadoras',
+    ),
+    status: ListingStatus.sold,
+    soldAt: _soldAt,
   ),
 ];
 
@@ -726,6 +743,22 @@ final Map<String, (bool, _Scene)> _scenes = {
       await _pick(s, 'Editar');
       await s.tap(find.text('Continuar'));
       await s.tap(find.text('Continuar'));
+    },
+  ),
+  // HU-08: "Vendidos" y el dialogo de "Marcar como vendido".
+  'mis-productos-vendidos': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.text('Vendidos (1)'));
+    },
+  ),
+  'marcar-vendido': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.byKey(const Key('my-product-p-bata')));
+      await _pick(s, 'Marcar como vendido');
     },
   ),
   'chat-mas': (true, _chatMore),

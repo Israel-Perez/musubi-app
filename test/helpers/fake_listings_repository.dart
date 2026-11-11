@@ -109,6 +109,55 @@ class FakeListingsRepository implements ListingsRepository {
       if (l.product.id == listing.product.id) listing else l,
   ];
 
+  /// Ids marcados como vendidos (HU-08).
+  final List<String> soldIds = [];
+
+  /// Tamano de pagina de [minePage] (la API usa 50).
+  int pageSize = 50;
+
+  static const Map<MyProductsTab, Set<ListingStatus>> _tabStatuses = {
+    MyProductsTab.active: {ListingStatus.active, ListingStatus.hidden},
+    MyProductsTab.sold: {ListingStatus.sold},
+    MyProductsTab.soldOut: {ListingStatus.soldOut},
+  };
+
+  @override
+  Future<MyListingsPage> minePage(MyProductsTab tab, {String? cursor}) async {
+    final all = [
+      for (final l in own)
+        if (_tabStatuses[tab]!.contains(l.status)) l,
+    ];
+    final start = cursor == null ? 0 : int.parse(cursor);
+    final items = all.skip(start).take(pageSize).toList();
+    final next = start + items.length;
+    int count(MyProductsTab t) =>
+        own.where((l) => _tabStatuses[t]!.contains(l.status)).length;
+    return MyListingsPage(
+      items: items,
+      nextCursor: next < all.length ? '$next' : null,
+      total: all.length,
+      counts: MyListingsCounts(
+        active: count(MyProductsTab.active),
+        sold: count(MyProductsTab.sold),
+        soldOut: count(MyProductsTab.soldOut),
+      ),
+    );
+  }
+
+  @override
+  Future<OwnListing> markSold(String id) async {
+    _failIfAsked();
+    final current = _find(id);
+    soldIds.add(id);
+    final sold = _withStatus(
+      current,
+      ListingStatus.sold,
+      soldAt: current.soldAt ?? DateTime.utc(2026, 11, 10, 12),
+    );
+    _replace(sold);
+    return sold;
+  }
+
   @override
   Future<OwnListing> update(String id, ListingUpdate update) async {
     _failIfAsked();
@@ -170,14 +219,18 @@ class FakeListingsRepository implements ListingsRepository {
     ];
   }
 
-  static OwnListing _withStatus(OwnListing l, ListingStatus status) =>
-      OwnListing(
-        product: l.product,
-        status: status,
-        description: l.description,
-        condition: l.condition,
-        usedDetail: l.usedDetail,
-      );
+  static OwnListing _withStatus(
+    OwnListing l,
+    ListingStatus status, {
+    DateTime? soldAt,
+  }) => OwnListing(
+    product: l.product,
+    status: status,
+    description: l.description,
+    condition: l.condition,
+    usedDetail: l.usedDetail,
+    soldAt: soldAt ?? l.soldAt,
+  );
 }
 
 /// Camara y galeria falsas: devuelven rutas inventadas (la foto no se lee).

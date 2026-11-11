@@ -66,6 +66,41 @@ class HttpListingsRepository implements ListingsRepository {
   });
 
   @override
+  Future<MyListingsPage> minePage(MyProductsTab tab, {String? cursor}) =>
+      _guard(() async {
+        final response = await _dio.get<Map<String, dynamic>>(
+          ApiPaths.myProducts,
+          queryParameters: {'tab': tab.apiValue, 'cursor': ?cursor},
+        );
+        final body = _body(response);
+        final counts = body['counts'] as Map<String, dynamic>? ?? const {};
+        int count(String key) => (counts[key] as num? ?? 0).toInt();
+        return MyListingsPage(
+          items: [
+            for (final item
+                in (body['items'] as List<dynamic>)
+                    .cast<Map<String, dynamic>>())
+              _own(item),
+          ],
+          nextCursor: body['nextCursor'] as String?,
+          total: (body['total'] as num? ?? 0).toInt(),
+          counts: MyListingsCounts(
+            active: count('active'),
+            sold: count('sold'),
+            soldOut: count('soldOut'),
+          ),
+        );
+      });
+
+  @override
+  Future<OwnListing> markSold(String id) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiPaths.productSold(id),
+    );
+    return _own(_body(response));
+  });
+
+  @override
   Future<OwnListing> update(String id, ListingUpdate update) =>
       _guard(() async {
         final response = await _dio.put<Map<String, dynamic>>(
@@ -101,7 +136,13 @@ class HttpListingsRepository implements ListingsRepository {
     status: switch (item['status']) {
       'soldOut' => ListingStatus.soldOut,
       'hidden' => ListingStatus.hidden,
+      // HU-08: sin esto, una vendida contaria como activa (ofertas y Perfil).
+      'sold' => ListingStatus.sold,
       _ => ListingStatus.active,
+    },
+    soldAt: switch (item['soldAt']) {
+      final String at => DateTime.parse(at).toUtc(),
+      _ => null,
     },
     description: item['description'] as String? ?? '',
     condition: item['condition'] == 'new'

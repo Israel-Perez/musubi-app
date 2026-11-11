@@ -234,4 +234,66 @@ void main() {
       ),
     );
   });
+
+  // HU-08: pestanas de "Mis productos" y "Marcar como vendido" (filas "M-03"
+  // de musubi-api:HU-08).
+
+  test('mis productos por pestana: ?tab=, cursor y conteos', () async {
+    serve({
+      'items': [
+        {...productJson(status: 'sold'), 'soldAt': '2026-11-09T18:00:00Z'},
+      ],
+      'nextCursor': '6716a0000000000000000001',
+      'total': 3,
+      'counts': {'active': 2, 'sold': 3, 'soldOut': 1},
+    });
+
+    final page = await repository.minePage(
+      MyProductsTab.sold,
+      cursor: '6716a0000000000000000099',
+    );
+
+    final request = adapter.requests.single;
+    expect(request.path, ApiPaths.myProducts);
+    expect(request.queryParameters, {
+      'tab': 'sold',
+      'cursor': '6716a0000000000000000099',
+    });
+    final sold = page.items.single;
+    // Una vendida no se lee como activa (ofertas de HU-16 y el Perfil).
+    expect(sold.status, ListingStatus.sold);
+    expect(sold.soldAt, DateTime.utc(2026, 11, 9, 18));
+    expect(page.nextCursor, '6716a0000000000000000001');
+    expect(page.total, 3);
+    expect(
+      (page.counts.active, page.counts.sold, page.counts.soldOut),
+      (2, 3, 1),
+    );
+  });
+
+  test('primera pagina: sin cursor en la query', () async {
+    serve({
+      'items': <Object>[],
+      'nextCursor': null,
+      'total': 0,
+      'counts': <String, Object>{},
+    });
+
+    final page = await repository.minePage(MyProductsTab.active);
+
+    expect(adapter.requests.single.queryParameters, {'tab': 'active'});
+    expect(page.items, isEmpty);
+    expect(page.nextCursor, isNull);
+    expect(page.counts.active, 0);
+  });
+
+  test('marcar como vendido: POST a /sold', () async {
+    serve({...productJson(status: 'sold'), 'soldAt': '2026-11-10T12:00:00Z'});
+
+    final sold = await repository.markSold('a1');
+
+    expect(adapter.requests.single.method, 'POST');
+    expect(adapter.requests.single.path, ApiPaths.productSold('a1'));
+    expect(sold.sold, isTrue);
+  });
 }

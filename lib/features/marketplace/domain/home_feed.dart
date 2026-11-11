@@ -223,6 +223,9 @@ const _months = [
 String shortDate(DateTime date) =>
     '${_days[date.weekday - 1]} ${date.day} ${_months[date.month - 1]}';
 
+/// "30 sep" (las ventas de `Mis-productos`, HU-08).
+String dayMonth(DateTime date) => '${date.day} ${_months[date.month - 1]}';
+
 const _longDays = [
   'Lunes',
   'Martes',
