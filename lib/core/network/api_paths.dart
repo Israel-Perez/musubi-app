@@ -161,6 +161,18 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-23`).
   static String orderPayment(String id) => '$orders/$id/payment';
 
+  /// `POST /api/v1/agreements` y `GET /api/v1/agreements?conversationId=` —
+  /// filas "M-10" (specs `musubi-api:HU-32`, `HU-33` y `HU-34`).
+  static const agreements = '/api/v1/agreements';
+
+  /// `PUT` y `DELETE /api/v1/agreements/{id}` — filas "M-10"
+  /// (spec `musubi-api:HU-34`).
+  static String agreement(String id) => '$agreements/$id';
+
+  /// `POST /api/v1/agreements/{id}/confirm` — fila "M-10"
+  /// (spec `musubi-api:HU-34`).
+  static String agreementConfirm(String id) => '$agreements/$id/confirm';
+
   /// `POST /api/v1/reports` — fila "M-13" (spec `musubi-api:HU-28`).
   static const reports = '/api/v1/reports';
 

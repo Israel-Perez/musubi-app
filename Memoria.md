@@ -9,10 +9,31 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
   - El siguiente lote vuelve a subir el `versionCode` (`0.6.0+8` ya está usada).
 - **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
 - **En `main`, sin publicar (siguiente lote):** editar, cerrar y cancelar la solicitud (HU-14). Necesita la API `0.5.0-alpha.13`.
-- **HU-23 (pedidos):** en `feature/SCRUM-42-confirmar-compra`, con la API `0.5.0-alpha.15` (musubi-api #64). Se publica después de desplegar esa API.
-- **Siguiente:** HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
+- **HU-23 (pedidos):** en `main`, con la API `0.5.0-alpha.15`. Se publica después de desplegar esa API.
+- **HU-32/33/34 (acuerdo con IA):** en `feature/SCRUM-53-acuerdo-con-ia`, con la API `0.5.0-alpha.16`. Va en el siguiente lote de Google Play, después de desplegar esa API.
+- **Siguiente:** push con FCM (HU-31), después HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** su API ya está en `main` (`0.5.0-alpha.12`); falta el PR de la app, que debe traer `docs/versionado.md` igual al de musubi-api.
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T36 — Acuerdo con IA (10-Nov-2026, SCRUM-52/53/54, HU-32/33/34)
+
+**Qué se hizo**
+- Feature `lib/features/genai/`: modelo, `HttpAgreementRepository` (espera hasta 30 s porque la IA tarda), `agreementProvider`, `AiNoticeStore` y `agreement_sheet.dart` (`Acuerdo-esperando` y `Acuerdo-confirmado`).
+- Chat: "Resumir acuerdo" para los dos, el aviso de la primera vez, la hoja mientras la IA lee, el aviso del chat ("Acuerdo · Esperando confirmación (1 de 2)", "Ver acuerdo") y los avisos `kind: notice` centrados. `ChatRealtime.agreementChanges` recarga la hoja abierta y el aviso.
+- Sin IA (`genai.unavailable`), quien compra cae al resumen a mano de HU-23 (las pruebas de HU-23 ahora pasan por ahí).
+- `OrderRepository.createFromAgreement`; las piezas de HU-23 son públicas (`SummaryField` con `badge`, `QuantityPanel`, `PlacePanel`, `WhenPanel`).
+- Aviso de privacidad: la sección "Inteligencia artificial" dice qué sale a Gemini, cómo se filtra y cuánto se conserva.
+- Tests 513 (26 nuevos), analyze 0, capturas `acuerdo-esperando` y `acuerdo-confirmado` en claro y oscuro.
+
+**Decisiones (con su porqué)**
+- **"Confirmar acuerdo" se ve activo aunque falte algo**, como en la maqueta; al tocarlo avisa qué falta sin llamar a la API.
+- **"Descartar propuesta"** no está en la maqueta, pero HU-34 lo pide ("si la rechaza, se descarta").
+- **El aviso de la primera vez se guarda en el almacén cifrado** (por dispositivo), como la sesión; no se agregó paquete.
+- **La versión del aviso de privacidad sigue en `2026-10`:** subirla obliga a aceptarlo otra vez; lo decide la usuaria.
+
+**Errores a evitar**
+- **La fuente de las pruebas es más ancha:** cada `Text` dentro de una `Row` con otro elemento va en `Flexible`.
+- **Un `CustomPaint` con `painter` queda debajo del fondo del hijo:** para un borde punteado visible usa `foregroundPainter`.
 
 ## T35 — Confirmar la compra (10-Nov-2026, SCRUM-42, HU-23)
 

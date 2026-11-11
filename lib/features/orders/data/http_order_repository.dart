@@ -40,6 +40,15 @@ class HttpOrderRepository implements OrderRepository {
   });
 
   @override
+  Future<Order> createFromAgreement(String agreementId) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiPaths.orders,
+      data: {'agreementId': agreementId},
+    );
+    return orderFromJson(response.data ?? const {}, _apiBaseUrl);
+  });
+
+  @override
   Future<List<Order>> byConversation(String conversationId) => _guard(() async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiPaths.orders,

@@ -29,6 +29,8 @@ import 'package:musubi_app/features/auth/domain/auth_models.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
+import 'package:musubi_app/features/genai/domain/agreement_models.dart';
+import 'package:musubi_app/features/genai/presentation/agreement_providers.dart';
 import 'package:musubi_app/features/listings/data/photo_picker.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
@@ -51,6 +53,7 @@ import 'package:musubi_app/features/reputation/presentation/reputation_providers
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
+import '../test/helpers/fake_agreements.dart';
 import '../test/helpers/fake_auth_repository.dart';
 import '../test/helpers/fake_catalog_repository.dart';
 import '../test/helpers/fake_chat.dart';
@@ -137,6 +140,9 @@ DateTime _local(int day, int hour, int minute) =>
 /// `Chat-Valeria`: Ana pregunta por la calculadora de Valeria.
 /// El pedido de `Pedido-pago` (HU-23): la calculadora, en la Biblioteca el
 /// jueves 8 de octubre a la 1:00 p. m.
+/// La IA de las escenas (HU-32/33/34); cada escena la ajusta.
+final _ai = FakeAgreementRepository();
+
 final _order = Order(
   id: 'o1',
   number: 'MS-2481',
@@ -507,6 +513,11 @@ class _Shot {
               FakeOrderRepository(orders: [_order]),
             ),
             chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
+            // HU-32/33/34: la IA de cada escena (`_ai`, se ajusta en ella).
+            agreementRepositoryProvider.overrideWithValue(_ai),
+            aiNoticeStoreProvider.overrideWithValue(
+              FakeAiNoticeStore(wasSeen: true),
+            ),
             // HU-57: Diego bloqueado, como `APP.blocked` de la maqueta.
             reputationRepositoryProvider.overrideWithValue(
               FakeReputationRepository(
@@ -868,6 +879,9 @@ final Map<String, (bool, _Scene)> _scenes = {
   'resumen-acuerdo': (
     true,
     (s) async {
+      _ai
+        ..current = null
+        ..requestFailure = aiUnavailable;
       await s.go(AppRoutes.conversation('c1'));
       await s.tap(find.byKey(const Key('chat-summarize')));
       await s.tap(
@@ -881,6 +895,35 @@ final Map<String, (bool, _Scene)> _scenes = {
     },
   ),
   'pedido-pago': (true, (s) => s.go(AppRoutes.order('o1'))),
+  // HU-32/33/34: la propuesta de la IA (`Acuerdo-esperando`, sin fecha) y el
+  // acuerdo confirmado por los dos (`Acuerdo-confirmado`).
+  'acuerdo-esperando': (
+    true,
+    (s) async {
+      _ai
+        ..current = null
+        ..requestFailure = null
+        ..proposal = sampleAgreement(priceCents: 50000);
+      await s.go(AppRoutes.conversation('c1'));
+      await s.tap(find.byKey(const Key('chat-summarize')));
+    },
+  ),
+  'acuerdo-confirmado': (
+    true,
+    (s) async {
+      _ai
+        ..requestFailure = null
+        ..current = sampleAgreement(
+          priceCents: 50000,
+          status: AgreementStatus.confirmed,
+          deliveryAt: DateTime(2026, 10, 8, 13),
+          buyerConfirmedAt: _now,
+          sellerConfirmedAt: _now,
+        );
+      await s.go(AppRoutes.conversation('c1'));
+      await s.tap(find.byKey(const Key('chat-open-agreement')));
+    },
+  ),
   'se-busca': (true, (s) => s.go(AppRoutes.wanted)),
   'se-busca-filtros': (
     true,

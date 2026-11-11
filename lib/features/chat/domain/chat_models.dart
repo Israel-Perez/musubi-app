@@ -124,6 +124,7 @@ class ChatMessage {
     required this.senderId,
     required this.text,
     required this.sentAt,
+    this.notice = false,
   });
 
   final String id;
@@ -131,6 +132,10 @@ class ChatMessage {
   final String senderId;
   final String text;
   final DateTime sentAt;
+
+  /// Un aviso de la app ("Ana pidió un resumen con IA", HU-32): se pinta
+  /// centrado, no como burbuja.
+  final bool notice;
 
   @override
   bool operator ==(Object other) => other is ChatMessage && other.id == id;

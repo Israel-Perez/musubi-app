@@ -35,7 +35,12 @@ Finalidades adicionales, que puedes rechazar desde Ajustes sin perder el servici
 
 ## Inteligencia artificial
 
-Solo cuando una de las personas de una conversación lo pide, Musubi envía esa conversación a un servicio de inteligencia artificial para proponer un resumen del acuerdo. Se envían únicamente los mensajes necesarios. La propuesta nunca se confirma sola: ambas personas la revisan.
+Solo cuando una de las personas de una conversación toca "Resumir acuerdo", Musubi envía esa conversación a un servicio de inteligencia artificial (Gemini, de Google) para proponer un resumen del acuerdo: producto, precio, cantidad, lugar, fecha y condiciones. La primera vez la app te lo explica, y la otra persona ve en el chat que se pidió el resumen.
+
+- Se envían únicamente los mensajes de texto de esa conversación, sin sus nombres (se cambian por "Comprador" y "Vendedor") y sin correos, teléfonos, números de cuenta ni enlaces.
+- Usamos la capa gratuita de Gemini: Google puede usar lo que recibe para mejorar sus productos, y personas de su equipo pueden revisarlo. Por eso no enviamos datos que te identifiquen.
+- No guardamos la conversación que se envía. Solo guardamos la propuesta, que se borra cuando crean el pedido, cuando la descartan o a los 30 días.
+- La propuesta nunca se confirma sola: ambas personas la revisan, la corrigen y la confirman.
 
 ## Moderación y reportes
 

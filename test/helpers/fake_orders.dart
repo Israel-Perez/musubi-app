@@ -84,6 +84,17 @@ class FakeOrderRepository implements OrderRepository {
     return made;
   }
 
+  final List<String> fromAgreements = [];
+
+  @override
+  Future<Order> createFromAgreement(String agreementId) async {
+    fromAgreements.add(agreementId);
+    if (createFailure != null) throw createFailure!;
+    final made = sampleOrder(id: 'o${stored.length + 1}', quantity: 2);
+    stored.add(made);
+    return made;
+  }
+
   @override
   Future<List<Order>> byConversation(String conversationId) async => [
     for (final order in stored.reversed)

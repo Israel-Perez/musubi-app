@@ -68,6 +68,12 @@ final StreamProvider<ChatMessage> chatIncomingProvider =
       (ref) => ref.watch(chatRealtimeProvider).messages,
     );
 
+/// El id de cada conversacion cuyo acuerdo con IA cambio (HU-34).
+final StreamProvider<String> chatAgreementChangesProvider =
+    StreamProvider<String>(
+      (ref) => ref.watch(chatRealtimeProvider).agreementChanges,
+    );
+
 /// Bandeja por pestana. Se vuelve a pedir al llegar un mensaje.
 final FutureProviderFamily<InboxPage, InboxFilter> inboxProvider =
     FutureProvider.autoDispose.family<InboxPage, InboxFilter>((ref, filter) {

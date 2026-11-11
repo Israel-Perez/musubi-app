@@ -123,12 +123,20 @@ class FakeChatRepository implements ChatRepository {
 /// Tiempo real falso: la prueba empuja mensajes con [push].
 class FakeChatRealtime implements ChatRealtime {
   final _controller = StreamController<ChatMessage>.broadcast();
+  final _agreements = StreamController<String>.broadcast();
   int starts = 0;
 
   void push(ChatMessage message) => _controller.add(message);
 
+  /// `agreementChanged` de la conversacion.
+  void agreementChanged(String conversationId) =>
+      _agreements.add(conversationId);
+
   @override
   Stream<ChatMessage> get messages => _controller.stream;
+
+  @override
+  Stream<String> get agreementChanges => _agreements.stream;
 
   @override
   void start() => starts++;
