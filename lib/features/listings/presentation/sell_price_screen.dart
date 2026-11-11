@@ -18,6 +18,7 @@ import 'package:musubi_app/core/widgets/shake.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
+import 'package:musubi_app/features/listings/presentation/sell_edit.dart';
 import 'package:musubi_app/features/listings/presentation/sell_layout.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 
@@ -34,15 +35,21 @@ MusubiIconData categoryIcon(String slug) => switch (slug) {
 
 /// `Vender-3`: "Precio y categoría".
 class SellPriceScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.editing = false});
+
+  /// "Editar publicación" (HU-07): otro borrador; "Guardar" manda los cambios.
+  final bool editing;
 
   @override
   ConsumerState<SellPriceScreen> createState() => _SellPriceScreenState();
 }
 
 class _SellPriceScreenState extends ConsumerState<SellPriceScreen> {
+  late final NotifierProvider<SellDraftNotifier, SellDraft> _draft =
+      sellDraftFor(editing: widget.editing);
+
   late final _price = TextEditingController(
-    text: switch (ref.read(sellDraftProvider).priceCents) {
+    text: switch (ref.read(_draft).priceCents) {
       0 => '',
       final cents => '${cents ~/ 100}',
     },
@@ -60,7 +67,7 @@ class _SellPriceScreenState extends ConsumerState<SellPriceScreen> {
   }
 
   void _continue() {
-    final draft = ref.read(sellDraftProvider);
+    final draft = ref.read(_draft);
     if (draft.priceCents <= 0) {
       setState(() {
         _priceError = true;
@@ -84,14 +91,20 @@ class _SellPriceScreenState extends ConsumerState<SellPriceScreen> {
       );
       return;
     }
-    unawaited(context.push(AppRoutes.sellCondition));
+    unawaited(
+      context.push(
+        widget.editing
+            ? AppRoutes.editListingCondition
+            : AppRoutes.sellCondition,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    final draft = ref.watch(sellDraftProvider);
-    final notifier = ref.read(sellDraftProvider.notifier);
+    final draft = ref.watch(_draft);
+    final notifier = ref.read(_draft.notifier);
     final categories = ref.watch(sellCategoriesProvider);
     final category = draft.category;
     final range = category == null
@@ -99,6 +112,11 @@ class _SellPriceScreenState extends ConsumerState<SellPriceScreen> {
         : ref.watch(priceRangeProvider(category)).value;
     return SellStepLayout(
       step: 3,
+      heading: widget.editing ? sellEditHeading : 'Vender un producto',
+      onSave: widget.editing
+          ? () => unawaited(saveSellEdit(context, ref))
+          : null,
+      onClose: widget.editing ? () => leaveSellEdit(context) : null,
       label: 'Precio',
       title: 'Precio y categoría',
       actions: [

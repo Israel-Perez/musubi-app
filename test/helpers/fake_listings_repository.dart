@@ -77,6 +77,107 @@ class FakeListingsRepository implements ListingsRepository {
 
   @override
   Future<PriceRange?> priceRange(String category) async => range;
+
+  /// Lo que se mando al editar (HU-07), por id.
+  final Map<String, ListingUpdate> updates = {};
+
+  /// Ids eliminados.
+  final List<String> deleted = [];
+
+  /// Error que responde la siguiente escritura (editar, pausar, reactivar o
+  /// eliminar), como la API (p. ej. `409 listings.product_has_orders`).
+  ApiFailure? nextFailure;
+
+  void _failIfAsked() {
+    final failure = nextFailure;
+    if (failure != null) {
+      nextFailure = null;
+      throw failure;
+    }
+  }
+
+  OwnListing _find(String id) =>
+      own.where((l) => l.product.id == id).firstOrNull ??
+      (throw const ApiFailure(
+        code: 'listings.product_not_found',
+        message: 'Esta publicación ya no está disponible.',
+        status: 404,
+      ));
+
+  void _replace(OwnListing listing) => own = [
+    for (final l in own)
+      if (l.product.id == listing.product.id) listing else l,
+  ];
+
+  @override
+  Future<OwnListing> update(String id, ListingUpdate update) async {
+    _failIfAsked();
+    final current = _find(id);
+    updates[id] = update;
+    final product = current.product;
+    final edited = OwnListing(
+      product: ProductSummary(
+        id: product.id,
+        title: update.title.trim(),
+        priceCents: update.priceCents,
+        stock: product.stock,
+        photoUrl: product.photoUrl,
+        category: update.category,
+        condition: update.condition.label,
+        sellerName: product.sellerName,
+        publishedAt: product.publishedAt,
+      ),
+      status: current.status,
+      description: update.description.trim(),
+      condition: update.condition,
+      usedDetail: update.condition == ProductCondition.used
+          ? update.usedDetail
+          : null,
+    );
+    _replace(edited);
+    return edited;
+  }
+
+  @override
+  Future<OwnListing> pause(String id) async {
+    _failIfAsked();
+    final current = _find(id);
+    final paused = _withStatus(current, ListingStatus.hidden);
+    _replace(paused);
+    return paused;
+  }
+
+  @override
+  Future<OwnListing> resume(String id) async {
+    _failIfAsked();
+    final current = _find(id);
+    final resumed = _withStatus(
+      current,
+      current.product.stock > 0 ? ListingStatus.active : ListingStatus.soldOut,
+    );
+    _replace(resumed);
+    return resumed;
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    _failIfAsked();
+    _find(id);
+    deleted.add(id);
+    own = [
+      for (final l in own)
+        if (l.product.id != id) l,
+    ];
+  }
+
+  static OwnListing _withStatus(OwnListing l, ListingStatus status) =>
+      OwnListing(
+        product: l.product,
+        status: status,
+        description: l.description,
+        condition: l.condition,
+        usedDetail: l.usedDetail,
+      );
 }
 
 /// Camara y galeria falsas: devuelven rutas inventadas (la foto no se lee).

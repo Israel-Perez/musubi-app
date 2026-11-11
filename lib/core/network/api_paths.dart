@@ -111,8 +111,18 @@ abstract final class ApiPaths {
   static const chatHub = '/hubs/chat';
 
   /// `GET /api/v1/products/{id}` — fila "M-03" (spec `musubi-api:HU-11`):
-  /// publico; el vendedor solo viene con sesion.
+  /// publico; el vendedor solo viene con sesion. `PUT` (editar) y `DELETE`
+  /// (eliminar) — filas "M-03" (spec `musubi-api:HU-07`): solo el dueno; a
+  /// cualquier otra persona, 404 `listings.product_not_found`.
   static String product(String id) => '$products/${Uri.encodeComponent(id)}';
+
+  /// `POST /api/v1/products/{id}/pause` — fila "M-03"
+  /// (spec `musubi-api:HU-07`): idempotente.
+  static String productPause(String id) => '${product(id)}/pause';
+
+  /// `POST /api/v1/products/{id}/resume` — fila "M-03"
+  /// (spec `musubi-api:HU-07`): idempotente; sin piezas queda agotada.
+  static String productResume(String id) => '${product(id)}/resume';
 
   /// `GET /api/v1/profiles/{id}` — fila "M-02" (spec `musubi-api:HU-04`;
   /// HU-05 lo amplia): perfil publico, con sesion.

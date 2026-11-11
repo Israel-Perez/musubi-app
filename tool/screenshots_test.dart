@@ -371,8 +371,10 @@ const List<OwnListing> _myListings = [
       stock: 1,
       condition: 'Usado',
       photoUrl: 'asset:assets/products/bata.webp',
+      category: 'laboratorio',
     ),
     status: ListingStatus.active,
+    description: 'La usé un cuatrimestre.',
   ),
   OwnListing(
     product: ProductSummary(
@@ -382,8 +384,10 @@ const List<OwnListing> _myListings = [
       stock: 1,
       condition: 'Usado',
       photoUrl: 'asset:assets/products/calculo.webp',
+      category: 'libros',
     ),
     status: ListingStatus.active,
+    description: 'La usé un cuatrimestre.',
   ),
   OwnListing(
     product: ProductSummary(
@@ -393,8 +397,10 @@ const List<OwnListing> _myListings = [
       stock: 1,
       condition: 'Nuevo',
       photoUrl: 'asset:assets/products/compas.webp',
+      category: 'dibujo',
     ),
     status: ListingStatus.active,
+    description: 'La usé un cuatrimestre.',
   ),
 ];
 
@@ -657,6 +663,33 @@ Future<void> _chatMore(_Shot s) async {
 }
 
 final Map<String, (bool, _Scene)> _scenes = {
+  // HU-07: el menu de una publicacion en `Mis-productos` y "Editar
+  // publicación" (`Vender-2` y `Vender-4` con las piezas sin cambiarse).
+  'mis-productos-menu': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.byKey(const Key('my-product-p-bata')));
+    },
+  ),
+  'editar-publicacion': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.byKey(const Key('my-product-p-bata')));
+      await _pick(s, 'Editar');
+    },
+  ),
+  'editar-publicacion-estado': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.byKey(const Key('my-product-p-bata')));
+      await _pick(s, 'Editar');
+      await s.tap(find.text('Continuar'));
+      await s.tap(find.text('Continuar'));
+    },
+  ),
   'chat-mas': (true, _chatMore),
   'chat-bloquear': (
     true,
