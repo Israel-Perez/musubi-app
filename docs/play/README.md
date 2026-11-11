@@ -49,13 +49,22 @@ Cuando se pongan de acuerdo, toca "Resumir acuerdo": la IA propone producto, pre
 Guarda lo que te interesa
 Marca con el corazón los productos que te gustan y encuéntralos después en Favoritos.
 
+Te avisamos
+Recibe una notificación cuando te escriben, cuando alguien te hace un pedido o responde a tus ofertas, y cuando tu solicitud está por vencer. Tú decides si activas los avisos.
+
+Tus publicaciones, en orden
+Edita, pausa o elimina lo que publicaste, márcalo como vendido y revisa tus ventas en Mis productos.
+
+De día o de noche
+Cambia al modo noche en Ajustes; se guarda en tu cuenta.
+
 Sin comisiones
 Musubi no cobra comisiones ni procesa pagos: acuerdas directamente con la otra persona y entregan en un lugar público del campus.
 
 Tus datos son tuyos
 No vendemos tus datos ni usamos rastreo publicitario. Puedes pedir que borremos tu cuenta cuando quieras.
 
-Musubi es un proyecto estudiantil de la Universidad Tecnológica de Tula-Tepeji (UTTT). Por ahora está disponible para la UTTT; pronto llegarán más universidades y funciones: apartados, calificaciones y avisos.
+Musubi es un proyecto estudiantil de la Universidad Tecnológica de Tula-Tepeji (UTTT). Por ahora está disponible para la UTTT; pronto llegarán más universidades y funciones: apartados y calificaciones.
 
 Dudas: contacto@musubiapp.com.mx
 ```
@@ -107,7 +116,7 @@ Notas:
 - **`0.4.0` (HU-04) agrega la foto de perfil y la carrera:** actualiza el formulario en Play Console antes de enviar esa versión.
 - **`0.6.0` (lote de HU-09 a HU-17) ya recopila mensajes del chat, solicitudes, ofertas, reportes y bloqueos:** actualiza el formulario en Play Console (filas de arriba) antes de enviar esa versión.
 - **`0.7.0` (lote de HU-14, HU-53, HU-23 y HU-32/33/34) comparte mensajes con Google (Gemini) y recopila pedidos, acuerdos y favoritos:** actualiza en Play Console la pregunta "¿Se comparten datos?" y las filas de arriba antes de enviar esa versión.
-- **`0.8.0` (HU-31) agrega avisos push:** recopila el ID de instalación de Firebase (fila de arriba). Antes de subirla, actualiza el formulario y crea el secreto `GOOGLE_SERVICES_JSON_B64` en el entorno `google-play` (si falta, `release-play` se detiene).
+- **`0.8.0` (HU-07, HU-08, HU-31 y HU-54) agrega avisos push:** recopila el ID de instalación de Firebase (fila de arriba). FCM entrega los avisos por cuenta de Musubi, así que no cuenta como compartir. El modo noche se guarda en la cuenta, pero es una preferencia de la app y no un dato que declarar. Antes de enviarla, actualiza el formulario en Play Console. El secreto `GOOGLE_SERVICES_JSON_B64` ya existe en el repositorio (11-Nov-2026); si falta, `release-play` se detiene.
 - **Cuando llegue** Crashlytics, **hay que actualizar este formulario** antes de subir esa versión.
 
 ### Acceso a la app: texto para Play (en inglés)

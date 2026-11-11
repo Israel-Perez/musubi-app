@@ -1,24 +1,25 @@
 # Memoria del proyecto — musubi-app
 
-## Trabajo en curso — HU-54 (SCRUM-71, 10-Nov-2026)
-
-- Interruptor "Modo noche" en `Ajustes` · "Preferencias" conectado a `ThemeMode`; repositorio usa GET/PUT de musubi-api y mantiene estado reactivo por cuenta.
-- La preferencia por cuenta es la fuente de verdad; no se agregó almacenamiento local. Notificaciones quedan fuera porque Jira no concreta el MVP.
-- Verificación final sobre `origin/main` actualizado (10-Nov-2026) con Flutter 3.47.7/Dart 3.13.5: `flutter pub get` pasó; `flutter analyze --fatal-infos --fatal-warnings` sin issues; `dart format --output=none --set-exit-if-changed .` sin cambios; suite completa 492/492. `critic` PASS (15 archivos, 0 avisos). `pub get` avisó que 15 paquetes tienen versiones más nuevas incompatibles con las restricciones actuales; no se cambiaron dependencias.
-- **11-Nov-2026 (revisión para fusionar):** se trajo `main` (HU-31: `MusubiApp` ahora vigila `pushCoordinatorProvider` y además aplica el tema). El selector de tres opciones se cambió por el interruptor de la maqueta (`DarkModeRow`): muestra el tema que se ve y guarda `dark` o `light`, con el aviso "Modo noche activado" o "desactivado". Volver a "seguir el sistema" no tiene control en la maqueta. Capturas de `ajustes` en claro y oscuro revisadas. La API va en `0.5.0-alpha.19` (`db/018`).
-
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
 ## Estado actual (11-Nov-2026)
 
-- **En Google Play:** `0.7.0+9` enviada a la prueba cerrada el 11-Nov-2026 (HU-14, favoritos HU-53, confirmar la compra HU-23 y el acuerdo con IA HU-32/33/34), con la API `0.5.0-alpha.17` en producción. El siguiente lote (`0.8.0`) trae los avisos push.
+- **En Google Play:** `0.8.0+10` a la prueba cerrada el 11-Nov-2026 (SCRUM-87): editar o eliminar publicaciones (HU-07), estado de mis productos (HU-08), avisos push y Notificaciones (HU-31) y modo noche (HU-54), con la API `0.5.0-alpha.19` en producción (`infra-up` del 11-Nov-2026). Antes: `0.7.0+9` (HU-14, HU-53, HU-23 y HU-32/33/34).
+  - **Antes de enviar la revisión en Play Console:** "Seguridad de los datos" declara el ID de instalación de Firebase (`docs/play/README.md`).
   - Notas en `docs/play/whatsnew/whatsnew-es-419`; descripción y "Seguridad de los datos" en `docs/play/README.md` (**se pegan a mano en Play Console**). Desde `0.7.0` se declara que los mensajes se comparten con Google (Gemini) cuando alguien pide "Resumir acuerdo".
-- **API en producción:** `0.5.0-alpha.17`, esquema 16 (`infra-up` del 11-Nov-2026). La matriz está en `docs/versionado.md`.
+- **API en producción:** `0.5.0-alpha.19`, esquema 18 (`infra-up` del 11-Nov-2026). La matriz está en `docs/versionado.md`.
 - **HU-31 (push):** en `main` (#52), con la API `0.5.0-alpha.18`. Proyecto de Firebase `musubi-2a78e` listo y secreto `GOOGLE_SERVICES_JSON_B64` en el repo (11-Nov-2026).
 - **Siguiente:** HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** API y app en `main` (#50).
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T40 — Modo noche (10 y 11-Nov-2026, SCRUM-71, HU-54, Alejandro)
+
+- Interruptor "Modo noche" en `Ajustes` · "Preferencias" conectado a `ThemeMode`; repositorio usa GET/PUT de musubi-api y mantiene estado reactivo por cuenta.
+- La preferencia por cuenta es la fuente de verdad; no se agregó almacenamiento local. Notificaciones quedan fuera porque Jira no concreta el MVP.
+- Verificación final sobre `origin/main` actualizado (10-Nov-2026) con Flutter 3.47.7/Dart 3.13.5: `flutter pub get` pasó; `flutter analyze --fatal-infos --fatal-warnings` sin issues; `dart format --output=none --set-exit-if-changed .` sin cambios; suite completa 492/492. `critic` PASS (15 archivos, 0 avisos). `pub get` avisó que 15 paquetes tienen versiones más nuevas incompatibles con las restricciones actuales; no se cambiaron dependencias.
+- **11-Nov-2026 (revisión para fusionar):** se trajo `main` (HU-31: `MusubiApp` ahora vigila `pushCoordinatorProvider` y además aplica el tema). El selector de tres opciones se cambió por el interruptor de la maqueta (`DarkModeRow`): muestra el tema que se ve y guarda `dark` o `light`, con el aviso "Modo noche activado" o "desactivado". Volver a "seguir el sistema" no tiene control en la maqueta. Capturas de `ajustes` en claro y oscuro revisadas. La API va en `0.5.0-alpha.19` (`db/018`).
 
 ## T39 — Consultar el estado de mis productos (10-Nov-2026, SCRUM-25, HU-08)
 
