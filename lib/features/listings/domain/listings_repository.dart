@@ -19,4 +19,17 @@ abstract interface class ListingsRepository {
   /// Rango de precios de la categoria, o `null` si aun no hay suficientes
   /// publicaciones para que sea honesto.
   Future<PriceRange?> priceRange(String category);
+
+  /// "Editar publicacion" (HU-07): manda todos los campos editables.
+  Future<OwnListing> update(String id, ListingUpdate update);
+
+  /// "Pausar publicacion" (HU-07): sale de la vitrina; idempotente.
+  Future<OwnListing> pause(String id);
+
+  /// "Reactivar" (HU-07): vuelve a la vitrina (sin piezas, agotada).
+  Future<OwnListing> resume(String id);
+
+  /// "Eliminar" (HU-07): borrado real. Con pedidos abiertos la API responde
+  /// `409 listings.product_has_orders` (RN-07).
+  Future<void> delete(String id);
 }

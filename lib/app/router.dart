@@ -93,6 +93,16 @@ abstract final class AppRoutes {
   /// "Editar solicitud", `Necesidad-3`.
   static const editNeedBudget = '/editar-solicitud/presupuesto';
 
+  /// "Editar publicación" (HU-07): `Vender-2` con los datos de la publicacion
+  /// (sin `Vender-1`: las fotos no se editan).
+  static const editListing = '/editar-publicacion';
+
+  /// "Editar publicación", `Vender-3`.
+  static const editListingPrice = '/editar-publicacion/precio';
+
+  /// "Editar publicación", `Vender-4`.
+  static const editListingCondition = '/editar-publicacion/estado';
+
   /// "Favoritos" (HU-53), dentro de la rama de Perfil.
   static const favorites = '/favoritos';
 
@@ -133,6 +143,9 @@ abstract final class AppRoutes {
     editNeed,
     editNeedDetails,
     editNeedBudget,
+    editListing,
+    editListingPrice,
+    editListingCondition,
     favorites,
     notifications,
   };
@@ -343,6 +356,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.myProducts,
         builder: (context, state) => const MyProductsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.editListing,
+        builder: (context, state) => const SellDetailsScreen(editing: true),
+      ),
+      GoRoute(
+        path: AppRoutes.editListingPrice,
+        builder: (context, state) => const SellPriceScreen(editing: true),
+      ),
+      GoRoute(
+        path: AppRoutes.editListingCondition,
+        builder: (context, state) => const SellConditionScreen(editing: true),
       ),
       GoRoute(
         path: AppRoutes.settings,
