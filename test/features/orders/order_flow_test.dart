@@ -10,12 +10,14 @@ import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
+import 'package:musubi_app/features/genai/presentation/agreement_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 
+import '../../helpers/fake_agreements.dart';
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
 import '../../helpers/fake_orders.dart';
@@ -72,6 +74,13 @@ class _Harness {
           chatRepositoryProvider.overrideWithValue(chat),
           chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
           orderRepositoryProvider.overrideWithValue(orders),
+          // Sin IA (RNF-15): "Resumir acuerdo" abre el resumen a mano.
+          agreementRepositoryProvider.overrideWithValue(
+            FakeAgreementRepository()..requestFailure = aiUnavailable,
+          ),
+          aiNoticeStoreProvider.overrideWithValue(
+            FakeAiNoticeStore(wasSeen: true),
+          ),
         ],
         child: const MusubiApp(),
       ),
@@ -310,7 +319,9 @@ void main() {
       expect(find.byKey(const Key('chat-summarize')), findsOneWidget);
     });
 
-    testWidgets('quien vende no crea el pedido: se le explica', (tester) async {
+    testWidgets('sin IA, quien vende no llena el resumen: se le avisa', (
+      tester,
+    ) async {
       final h = _Harness(
         tester,
         chat: FakeChatRepository(
@@ -333,9 +344,7 @@ void main() {
 
       expect(find.text('Resumen del acuerdo'), findsNothing);
       expect(
-        find.text(
-          'El pedido lo crea quien compra. Cuando Ana lo haga, lo verás aquí.',
-        ),
+        find.text('La IA no está disponible ahora. Inténtalo más tarde.'),
         findsOneWidget,
       );
     });

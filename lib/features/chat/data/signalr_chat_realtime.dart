@@ -35,6 +35,7 @@ class SignalRChatRealtime implements ChatRealtime {
   final WebSocketConnector _connect;
   final Duration _pingInterval;
   final _messages = StreamController<ChatMessage>.broadcast();
+  final _agreements = StreamController<String>.broadcast();
 
   WebSocket? _socket;
   Timer? _ping;
@@ -53,6 +54,9 @@ class SignalRChatRealtime implements ChatRealtime {
 
   @override
   Stream<ChatMessage> get messages => _messages.stream;
+
+  @override
+  Stream<String> get agreementChanges => _agreements.stream;
 
   @override
   void start() {
@@ -120,6 +124,13 @@ class SignalRChatRealtime implements ChatRealtime {
         }:
           _attempt = 0;
           _messages.add(messageFromJson(message));
+        case {
+          'type': 1,
+          'target': 'agreementChanged',
+          'arguments': [{'conversationId': final String id}, ...],
+        }:
+          _attempt = 0;
+          _agreements.add(id);
         case {'type': 7}:
           // El servidor cierra (por ejemplo, el token vencio): se reconecta.
           unawaited(_socket?.close());

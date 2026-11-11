@@ -8,6 +8,10 @@ abstract interface class OrderRepository {
   /// "Crear pedido": nace Pendiente (RN-16).
   Future<Order> create(NewOrder order);
 
+  /// "Crear pedido" desde el acuerdo con IA que confirmaron los dos (HU-34,
+  /// RF-47): la API toma todo del acuerdo y lo borra.
+  Future<Order> createFromAgreement(String agreementId);
+
   /// Los pedidos de una conversacion, del mas nuevo al mas viejo.
   Future<List<Order>> byConversation(String conversationId);
 

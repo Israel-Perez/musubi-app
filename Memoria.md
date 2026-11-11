@@ -2,23 +2,78 @@
 
 ## Trabajo en curso — HU-54 (SCRUM-71, 10-Nov-2026)
 
-- Selector claro/oscuro/sistema en Ajustes conectado a `ThemeMode`; repositorio usa GET/PUT de musubi-api y mantiene estado reactivo por cuenta.
+- Interruptor "Modo noche" en `Ajustes` · "Preferencias" conectado a `ThemeMode`; repositorio usa GET/PUT de musubi-api y mantiene estado reactivo por cuenta.
 - La preferencia por cuenta es la fuente de verdad; no se agregó almacenamiento local. Notificaciones quedan fuera porque Jira no concreta el MVP.
 - Verificación final sobre `origin/main` actualizado (10-Nov-2026) con Flutter 3.47.7/Dart 3.13.5: `flutter pub get` pasó; `flutter analyze --fatal-infos --fatal-warnings` sin issues; `dart format --output=none --set-exit-if-changed .` sin cambios; suite completa 492/492. `critic` PASS (15 archivos, 0 avisos). `pub get` avisó que 15 paquetes tienen versiones más nuevas incompatibles con las restricciones actuales; no se cambiaron dependencias.
+- **11-Nov-2026 (revisión para fusionar):** se trajo `main` (HU-31: `MusubiApp` ahora vigila `pushCoordinatorProvider` y además aplica el tema). El selector de tres opciones se cambió por el interruptor de la maqueta (`DarkModeRow`): muestra el tema que se ve y guarda `dark` o `light`, con el aviso "Modo noche activado" o "desactivado". Volver a "seguir el sistema" no tiene control en la maqueta. Capturas de `ajustes` en claro y oscuro revisadas. La API va en `0.5.0-alpha.19` (`db/018`).
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (10-Nov-2026)
+## Estado actual (11-Nov-2026)
 
-- **En Google Play:** `0.6.0+8` enviada a la prueba cerrada el 09-Nov-2026 (SCRUM-87), con el lote de búsqueda (HU-09), filtros y orden (HU-10), reportar y bloquear + foto en el chat (HU-28 y HU-57), solicitudes de compra (HU-13), el tablero "Se busca" (HU-15), "Yo tengo este producto" (HU-16) y elegir ofertas (HU-17). La anterior era `0.5.1+7`.
-  - Notas de la versión en `docs/play/whatsnew/whatsnew-es-419`; la descripción completa nueva y "Seguridad de los datos" (mensajes, solicitudes, ofertas, reportes y bloqueos) están en `docs/play/README.md` y **se pegan a mano en Play Console**: el workflow solo sube el AAB y las notas.
-  - El siguiente lote vuelve a subir el `versionCode` (`0.6.0+8` ya está usada).
-- **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
-- **En `main`, sin publicar (siguiente lote):** editar, cerrar y cancelar la solicitud (HU-14). Necesita la API `0.5.0-alpha.13`.
-- **HU-23 (pedidos):** en `feature/SCRUM-42-confirmar-compra`, con la API `0.5.0-alpha.15` (musubi-api #64). Se publica después de desplegar esa API.
+- **En Google Play:** `0.7.0+9` enviada a la prueba cerrada el 11-Nov-2026 (HU-14, favoritos HU-53, confirmar la compra HU-23 y el acuerdo con IA HU-32/33/34), con la API `0.5.0-alpha.17` en producción. El siguiente lote (`0.8.0`) trae los avisos push.
+  - Notas en `docs/play/whatsnew/whatsnew-es-419`; descripción y "Seguridad de los datos" en `docs/play/README.md` (**se pegan a mano en Play Console**). Desde `0.7.0` se declara que los mensajes se comparten con Google (Gemini) cuando alguien pide "Resumir acuerdo".
+- **API en producción:** `0.5.0-alpha.17`, esquema 16 (`infra-up` del 11-Nov-2026). La matriz está en `docs/versionado.md`.
+- **HU-31 (push):** en `feature/SCRUM-49-avisos-push`, con la API `0.5.0-alpha.18`. Falta el proyecto de Firebase (la usuaria).
 - **Siguiente:** HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
-- **HU-07 (Kazumi):** su API ya está en `main` (`0.5.0-alpha.12`); falta el PR de la app, que debe traer `docs/versionado.md` igual al de musubi-api.
+- **HU-07 (Kazumi):** API y app en `main` (#50). HU-08 (app) va en un PR apilado encima.
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T38 — Avisos push (11-Nov-2026, SCRUM-49, HU-31)
+
+**Qué se hizo**
+- Feature `lib/features/notifications/`: repositorio HTTP, `FirebasePushService`, `PushCoordinator` (registro, baja, tocar un push, snack) y la pantalla `Notificaciones` de la maqueta; la campana de `Inicio` cuenta los no leídos.
+- Permiso en contexto (L-16f): `askForPushInContext` al mandar el primer mensaje y al publicar una solicitud.
+- Android: canal "musubi", `POST_NOTIFICATIONS`, `firebase_messaging_installation_id_enabled` y el plugin de Google Services solo con `google-services.json`. `release-play` y `ci-pr` lo regeneran del secreto `GOOGLE_SERVICES_JSON_B64` (en la publicación es obligatorio).
+- 17 pruebas nuevas.
+
+**Decisiones (con su porqué)**
+- **FID en lugar del token:** `firebase_messaging` 17 marca `getToken()` como obsoleto y la guía de Firebase pide no mezclar los dos; la API manda al campo `fid` de HTTP v1.
+- **`register()` solo con permiso:** pide el permiso si no lo hay, y aquí se pide en contexto.
+- **Al cerrar sesión, `unregister()`:** la sesión ya no existe para llamar a la API; FCM da de baja el ID y la API lo borra al primer envío que falle.
+- **Sin Firebase la app sigue igual** (RNF-15): así las pruebas, el CI de PR y un build local no lo necesitan.
+
+**Errores a evitar**
+- **`currentConfiguration.uri` no es la pantalla de arriba si se abrió con `push`:** usa `currentPath(router)` (lee el `ImperativeRouteMatch`).
+- **El snack de la raíz se pinta en el `Scaffold` del shell:** en las pruebas, un toque sobre su acción cae en el `Scaffold` de `Inicio`; se prueba invocando su acción.
+## T37 — Editar o eliminar mis publicaciones (10-Nov-2026, SCRUM-24, HU-07)
+
+**Qué se hizo**
+- Menú de cada publicación en `Mis-productos`: "Ver publicación", "Editar", "Pausar publicación" o "Reactivar", y "Eliminar" con el diálogo de la maqueta.
+- "Editar publicación": `Vender-2…4` con `editing`, un borrador aparte (`sellEditDraftProvider`) y las rutas `/editar-publicacion…`. "Guardar" y "Guardar cambios" mandan el `PUT`.
+- `ListingsRepository`: `update`, `pause`, `resume` y `delete`; `ApiPaths.productPause` y `ApiPaths.productResume`.
+- Pruebas: `my_products_manage_test.dart` (7) y 4 más del repositorio HTTP. 524 en total. Capturas: `mis-productos-menu`, `editar-publicacion` y `editar-publicacion-estado`.
+
+**Decisiones (con su porqué)** (de la usuaria, 10-Nov-2026)
+- **Pausar entra en el menú** aunque la maqueta no lo tenga: la API ya lo tiene. La pausada sigue en "Activos", con "Pausada" y la foto en gris.
+- **Las piezas se ven sin poder cambiarlas al editar:** "Reponer" es de HU-50, y así la edición no pisa el descuento de un pedido.
+- **Dos PR apilados:** HU-07 y luego HU-08 (un PR = una HU).
+- **Borrador aparte para editar** (como HU-14): editar no pisa un borrador de venta guardado.
+
+**Errores a evitar**
+- **Flutter 3.31 beta no corre la app** (pide `>=3.47.7` y Dart 3.13): se dejó `C:\Flutter\flutter` en `stable` 3.47.7, como el CI. El editor puede seguir marcando `new(...)` como error hasta que recargue el SDK; manda `flutter analyze`.
+- **Después de elegir una opción de una hoja, `pumpAndSettle` no basta:** la app espera 240 ms antes del siguiente paso. En las pruebas: `pump(300 ms)` y luego `pumpAndSettle`.
+- **Las publicaciones de ejemplo de las capturas necesitan `category`:** sin ella, "Editar" se queda en `Vender-3` con "Elige una categoría".
+
+## T36 — Acuerdo con IA (10-Nov-2026, SCRUM-52/53/54, HU-32/33/34)
+
+**Qué se hizo**
+- Feature `lib/features/genai/`: modelo, `HttpAgreementRepository` (espera hasta 30 s porque la IA tarda), `agreementProvider`, `AiNoticeStore` y `agreement_sheet.dart` (`Acuerdo-esperando` y `Acuerdo-confirmado`).
+- Chat: "Resumir acuerdo" para los dos, el aviso de la primera vez, la hoja mientras la IA lee, el aviso del chat ("Acuerdo · Esperando confirmación (1 de 2)", "Ver acuerdo") y los avisos `kind: notice` centrados. `ChatRealtime.agreementChanges` recarga la hoja abierta y el aviso.
+- Sin IA (`genai.unavailable`), quien compra cae al resumen a mano de HU-23 (las pruebas de HU-23 ahora pasan por ahí).
+- `OrderRepository.createFromAgreement`; las piezas de HU-23 son públicas (`SummaryField` con `badge`, `QuantityPanel`, `PlacePanel`, `WhenPanel`).
+- Aviso de privacidad: la sección "Inteligencia artificial" dice qué sale a Gemini, cómo se filtra y cuánto se conserva.
+- Tests 513 (26 nuevos), analyze 0, capturas `acuerdo-esperando` y `acuerdo-confirmado` en claro y oscuro.
+
+**Decisiones (con su porqué)**
+- **"Confirmar acuerdo" se ve activo aunque falte algo**, como en la maqueta; al tocarlo avisa qué falta sin llamar a la API.
+- **"Descartar propuesta"** no está en la maqueta, pero HU-34 lo pide ("si la rechaza, se descarta").
+- **El aviso de la primera vez se guarda en el almacén cifrado** (por dispositivo), como la sesión; no se agregó paquete.
+- **La versión del aviso de privacidad sigue en `2026-10`:** subirla obliga a aceptarlo otra vez; lo decide la usuaria.
+
+**Errores a evitar**
+- **La fuente de las pruebas es más ancha:** cada `Text` dentro de una `Row` con otro elemento va en `Flexible`.
+- **Un `CustomPaint` con `painter` queda debajo del fondo del hijo:** para un borde punteado visible usa `foregroundPainter`.
 
 ## T35 — Confirmar la compra (10-Nov-2026, SCRUM-42, HU-23)
 

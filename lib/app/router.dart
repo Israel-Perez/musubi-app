@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/return_path.dart';
 import 'package:musubi_app/app/shell/app_shell.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
-import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
 import 'package:musubi_app/features/auth/presentation/forgot_password_screen.dart';
 import 'package:musubi_app/features/auth/presentation/legal_screens.dart';
@@ -26,6 +25,7 @@ import 'package:musubi_app/features/marketplace/presentation/favorites_screen.da
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
+import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:musubi_app/features/orders/presentation/order_payment_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
@@ -93,6 +93,16 @@ abstract final class AppRoutes {
   /// "Editar solicitud", `Necesidad-3`.
   static const editNeedBudget = '/editar-solicitud/presupuesto';
 
+  /// "Editar publicación" (HU-07): `Vender-2` con los datos de la publicacion
+  /// (sin `Vender-1`: las fotos no se editan).
+  static const editListing = '/editar-publicacion';
+
+  /// "Editar publicación", `Vender-3`.
+  static const editListingPrice = '/editar-publicacion/precio';
+
+  /// "Editar publicación", `Vender-4`.
+  static const editListingCondition = '/editar-publicacion/estado';
+
   /// "Favoritos" (HU-53), dentro de la rama de Perfil.
   static const favorites = '/favoritos';
 
@@ -133,7 +143,11 @@ abstract final class AppRoutes {
     editNeed,
     editNeedDetails,
     editNeedBudget,
+    editListing,
+    editListingPrice,
+    editListingCondition,
     favorites,
+    notifications,
   };
 
   /// Solo para visitantes: con sesion se vuelve a Inicio.
@@ -209,6 +223,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.home,
                 builder: (context, state) => const HomeScreen(),
+              ),
+              // Con la barra e Inicio activo, como `Notificaciones` (HU-31).
+              GoRoute(
+                path: AppRoutes.notifications,
+                builder: (context, state) => const NotificationsScreen(),
               ),
             ],
           ),
@@ -339,6 +358,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const MyProductsScreen(),
       ),
       GoRoute(
+        path: AppRoutes.editListing,
+        builder: (context, state) => const SellDetailsScreen(editing: true),
+      ),
+      GoRoute(
+        path: AppRoutes.editListingPrice,
+        builder: (context, state) => const SellPriceScreen(editing: true),
+      ),
+      GoRoute(
+        path: AppRoutes.editListingCondition,
+        builder: (context, state) => const SellConditionScreen(editing: true),
+      ),
+      GoRoute(
         path: AppRoutes.settings,
         builder: (context, state) => const SettingsScreen(),
       ),
@@ -349,16 +380,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.search,
         builder: (context, state) => const SearchScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.notifications,
-        // NOTE (HU-31): avisos de la app.
-        builder: (context, state) => const UpcomingSection(
-          title: 'Notificaciones',
-          message: 'Aquí verás ofertas, mensajes y avisos de tu campus.',
-          icon: MusubiIcons.bell,
-          canGoBack: true,
-        ),
       ),
       GoRoute(
         path: AppRoutes.signIn,

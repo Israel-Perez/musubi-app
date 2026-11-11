@@ -5,46 +5,39 @@
 ## Contexto
 Jira (SCRUM-53): Como **comprador o vendedor**, quiero **que la IA identifique producto, precio, cantidad, entrega y fecha a partir del chat**, para **convertir la conversación en una propuesta de acuerdo**.
 
-- Maqueta: `Mensajes`, `Chat`, `Acuerdo-esperando`, `Acuerdo-confirmado`.
+- Maqueta: `Acuerdo-esperando`.
 - Trazabilidad: RF-45 · CU-16 · RN-42, RN-43.
-- Origen: Propuesta inicial §11.
+- Decisiones de la usuaria (10-Nov-2026): Gemini en la capa gratuita; la primera vez, un aviso; en el chat, "Ana pidió un resumen con IA"; del chat no se guarda nada y la propuesta se borra al crear el pedido o a los 30 días, y el aviso de privacidad lo dice.
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-32`.
+**Depende de:** `HU-32`.
 
 ## Requisitos
-1. La IA propone producto, precio acordado, cantidad, lugar de entrega, fecha y condiciones.
-2. Lo que no se mencionó en la conversación se marca como **"No identificado"** (RN-42).
-3. La IA no negocia, no envía mensajes en nombre de los usuarios y no acepta ni rechaza tratos (RN-43).
-4. La aplicación valida que la respuesta contenga siempre los mismos campos antes de mostrarla.
-
-RNF que aplican: se confirman al detallar.
+1. **R1 · Propuesta:** la hoja muestra "Propuesta generada con IA, revísala antes de confirmar", producto, precio acordado, cantidad, entrega (con su detalle), fecha y, si la IA las encontró, condiciones.
+2. **R2 · "No identificado" (RN-42):** lo que falta sale en ámbar con "Agregar" y la nota "No encontramos una fecha en la conversación. Agrégala o pregúntale a Diego en el chat." (concuerda con lo que falta).
+3. **R3 · Misma forma:** `agreementFromJson` exige los ocho campos de la propuesta, cada uno de su tipo; si no, `agreements.invalid_response` y no se muestra.
+4. **R4 · La IA no actúa (RN-43):** nada se confirma ni se envía solo; solo las personas tocan los botones.
 
 ## Diseño
-- Feature `lib/features/genai/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-33. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-33)` (skill `deferred-scope-fakes`).
-- La propuesta de la IA se muestra editable, con su etiqueta, y lo que falta como "No identificado" (guía de estilo).
+Ver `HU-32/spec.md`. La hoja reutiliza `SummaryField` y los paneles de HU-23.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-33, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+`AgreementResponse` (fixture `agreement.json` de musubi-api).
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- `tool/screenshots_test.dart`: escenas de las pantallas, comparadas con la maqueta en claro y oscuro.
+`test/features/genai/agreement_flow_test.dart`, `test/features/genai/agreement_data_test.dart`: mapeo, lo que falta y lo agregado, forma inválida y la hoja con "No identificado".
 
 ## Criterios
-- [ ] La IA propone producto, precio acordado, cantidad, lugar de entrega, fecha y condiciones.
-- [ ] Lo que no se mencionó en la conversación se marca como **"No identificado"** (RN-42).
-- [ ] La IA no negocia, no envía mensajes en nombre de los usuarios y no acepta ni rechaza tratos (RN-43).
-- [ ] La aplicación valida que la respuesta contenga siempre los mismos campos antes de mostrarla.
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] La IA propone producto, precio, cantidad, lugar, fecha y condiciones (R1).
+- [x] Lo que no se mencionó se marca como "No identificado" (R2, RN-42).
+- [x] La IA no negocia ni actúa por nadie (R4, RN-43).
+- [x] La app valida que la respuesta tenga siempre los mismos campos antes de mostrarla (R3).
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS · capturas comparadas con la maqueta.
 
 ## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- Diferencias con la maqueta: "Descartar propuesta" (HU-34 lo pide) y la fila de condiciones cuando la IA las encuentra.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 29-Oct-2026 (borrador ligero) · 10-Nov-2026 (detallado e implementado)
+- **Detalle:** la propuesta igual a `Acuerdo-esperando`, con validación de forma.

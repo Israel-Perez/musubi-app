@@ -115,8 +115,18 @@ abstract final class ApiPaths {
   static const chatHub = '/hubs/chat';
 
   /// `GET /api/v1/products/{id}` — fila "M-03" (spec `musubi-api:HU-11`):
-  /// publico; el vendedor solo viene con sesion.
+  /// publico; el vendedor solo viene con sesion. `PUT` (editar) y `DELETE`
+  /// (eliminar) — filas "M-03" (spec `musubi-api:HU-07`): solo el dueno; a
+  /// cualquier otra persona, 404 `listings.product_not_found`.
   static String product(String id) => '$products/${Uri.encodeComponent(id)}';
+
+  /// `POST /api/v1/products/{id}/pause` — fila "M-03"
+  /// (spec `musubi-api:HU-07`): idempotente.
+  static String productPause(String id) => '${product(id)}/pause';
+
+  /// `POST /api/v1/products/{id}/resume` — fila "M-03"
+  /// (spec `musubi-api:HU-07`): idempotente; sin piezas queda agotada.
+  static String productResume(String id) => '${product(id)}/resume';
 
   /// `GET /api/v1/profiles/{id}` — fila "M-02" (spec `musubi-api:HU-04`;
   /// HU-05 lo amplia): perfil publico, con sesion.
@@ -164,6 +174,30 @@ abstract final class ApiPaths {
   /// `PUT /api/v1/orders/{id}/payment` — fila "M-08"
   /// (spec `musubi-api:HU-23`).
   static String orderPayment(String id) => '$orders/$id/payment';
+
+  /// `POST /api/v1/agreements` y `GET /api/v1/agreements?conversationId=` —
+  /// filas "M-10" (specs `musubi-api:HU-32`, `HU-33` y `HU-34`).
+  static const agreements = '/api/v1/agreements';
+
+  /// `PUT` y `DELETE /api/v1/agreements/{id}` — filas "M-10"
+  /// (spec `musubi-api:HU-34`).
+  static String agreement(String id) => '$agreements/$id';
+
+  /// `POST /api/v1/agreements/{id}/confirm` — fila "M-10"
+  /// (spec `musubi-api:HU-34`).
+  static String agreementConfirm(String id) => '$agreements/$id/confirm';
+
+  /// `GET /api/v1/notifications` — fila "M-09" (spec `musubi-api:HU-31`).
+  static const notifications = '/api/v1/notifications';
+
+  /// `POST /api/v1/notifications/read` ("Marcar leidas") — fila "M-09".
+  static const notificationsRead = '$notifications/read';
+
+  /// `POST /api/v1/notifications/{id}/read` — fila "M-09".
+  static String notificationRead(String id) => '$notifications/$id/read';
+
+  /// `PUT /api/v1/notifications/devices` — fila "M-09".
+  static const notificationDevices = '$notifications/devices';
 
   /// `POST /api/v1/reports` — fila "M-13" (spec `musubi-api:HU-28`).
   static const reports = '/api/v1/reports';

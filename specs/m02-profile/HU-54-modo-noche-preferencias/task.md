@@ -8,8 +8,8 @@
 - **Qué:** provider con carga, cambio optimista, persistencia y rollback; conectar MaterialApp.
 - **Estado:** ✅ Hecho.
 
-## T3 — Selector en Ajustes
-- **Qué:** tres opciones conforme a la maqueta y estados accesibles.
+## T3 — "Modo noche" en Ajustes
+- **Qué:** sección "Preferencias" con el interruptor de la maqueta, su aviso y estados accesibles (11-Nov-2026: reemplaza al selector de tres opciones).
 - **Estado:** ✅ Hecho.
 
 ## T4 — Pruebas y cierre

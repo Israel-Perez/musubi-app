@@ -14,25 +14,30 @@ import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/musubi_text_field.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
+import 'package:musubi_app/features/listings/presentation/sell_edit.dart';
 import 'package:musubi_app/features/listings/presentation/sell_layout.dart';
 
 /// `Vender-2`: "Cuéntanos qué es" (nombre y descripción).
 class SellDetailsScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.editing = false});
+
+  /// "Editar publicación" (HU-07): otro borrador; "Guardar" manda los cambios.
+  final bool editing;
 
   @override
   ConsumerState<SellDetailsScreen> createState() => _SellDetailsScreenState();
 }
 
 class _SellDetailsScreenState extends ConsumerState<SellDetailsScreen> {
+  late final NotifierProvider<SellDraftNotifier, SellDraft> _draft =
+      sellDraftFor(editing: widget.editing);
+
   /// Maximo de la descripcion (contador "N / 500").
   static const maxDescription = 500;
 
-  late final _title = TextEditingController(
-    text: ref.read(sellDraftProvider).title,
-  );
+  late final _title = TextEditingController(text: ref.read(_draft).title);
   late final _description = TextEditingController(
-    text: ref.read(sellDraftProvider).description,
+    text: ref.read(_draft).description,
   );
   final _descriptionFocus = FocusNode();
   bool _titleError = false;
@@ -47,7 +52,7 @@ class _SellDetailsScreenState extends ConsumerState<SellDetailsScreen> {
   }
 
   void _continue() {
-    if (!ref.read(sellDraftProvider).titleValid) {
+    if (!ref.read(_draft).titleValid) {
       setState(() {
         _titleError = true;
         _shake = Object();
@@ -60,16 +65,25 @@ class _SellDetailsScreenState extends ConsumerState<SellDetailsScreen> {
       );
       return;
     }
-    unawaited(context.push(AppRoutes.sellPrice));
+    unawaited(
+      context.push(
+        widget.editing ? AppRoutes.editListingPrice : AppRoutes.sellPrice,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    final draft = ref.watch(sellDraftProvider);
-    final notifier = ref.read(sellDraftProvider.notifier);
+    final draft = ref.watch(_draft);
+    final notifier = ref.read(_draft.notifier);
     return SellStepLayout(
       step: 2,
+      heading: widget.editing ? sellEditHeading : 'Vender un producto',
+      onSave: widget.editing
+          ? () => unawaited(saveSellEdit(context, ref))
+          : null,
+      onClose: widget.editing ? () => leaveSellEdit(context) : null,
       label: 'Detalles',
       title: 'Cuéntanos qué es',
       actions: [

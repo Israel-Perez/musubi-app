@@ -220,8 +220,8 @@ void main() {
       expect(find.text('Verificado'), findsOneWidget);
       expect(find.text('Cambiar contraseña'), findsOneWidget);
       expect(find.text('Quién te ve'), findsOneWidget);
-      expect(find.text('Tema'), findsOneWidget);
-      expect(find.text('Como el sistema'), findsOneWidget);
+      expect(find.text('PREFERENCIAS'), findsOneWidget);
+      expect(find.text('Modo noche'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.byKey(const Key('settings-version')),
         200,
@@ -231,45 +231,52 @@ void main() {
       expect(find.text('Musubi $appVersion'), findsOneWidget);
     });
 
-    testWidgets('cambiar a modo noche actualiza el tema y lo persiste', (
+    testWidgets('"Modo noche" cambia el tema, lo guarda en la cuenta y avisa', (
       tester,
     ) async {
       final h = ProfileHarness(tester);
       await h.open(AppRoutes.settings);
+      bool dark() =>
+          Theme.of(tester.element(find.text('Modo noche'))).brightness ==
+          Brightness.dark;
+      expect(dark(), isFalse);
 
-      await h.tapKey('settings-theme');
-      expect(find.byKey(const Key('theme-preference-sheet')), findsOneWidget);
-      await h.pick('Modo noche');
+      await h.tapKey('settings-dark');
 
-      expect(h.theme.preference, ThemePreference.dark);
+      expect(h.theme.saves, [ThemePreference.dark]);
       expect(
         h.container.read(themePreferenceProvider).value,
         ThemePreference.dark,
       );
-      expect(find.text('Modo noche'), findsOneWidget);
+      expect(dark(), isTrue);
+      expect(find.text('Modo noche activado'), findsOneWidget);
+
+      await h.tapKey('settings-dark');
+      expect(h.theme.saves.last, ThemePreference.light);
+      expect(dark(), isFalse);
+      expect(find.text('Modo noche desactivado'), findsOneWidget);
     });
 
-    testWidgets(
-      'si falla al guardar, restaura el modo anterior y deja reintentar',
-      (tester) async {
-        final h = ProfileHarness(tester)..theme.failSave = true;
-        await h.open(AppRoutes.settings);
-        await h.tapKey('settings-theme');
-        await h.pick('Modo noche');
+    testWidgets('si no se guarda, vuelve al tema anterior y deja reintentar', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester)..theme.failSave = true;
+      await h.open(AppRoutes.settings);
+      await h.tapKey('settings-dark');
 
-        expect(
-          h.container.read(themePreferenceProvider).value,
-          ThemePreference.system,
-        );
-        expect(
-          find.text(
-            'No hay conexión. Revisa tu internet e inténtalo de nuevo.',
-          ),
-          findsOneWidget,
-        );
-        expect(find.text('Reintentar'), findsOneWidget);
-      },
-    );
+      expect(
+        h.container.read(themePreferenceProvider).value,
+        ThemePreference.system,
+      );
+      expect(
+        find.text(
+          'No pudimos guardar el cambio. No hay conexión. Revisa tu internet '
+          'e inténtalo de nuevo.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Reintentar'), findsOneWidget);
+    });
 
     testWidgets('"Correo institucional": correo, Verificado y desde cuando', (
       tester,

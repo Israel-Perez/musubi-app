@@ -88,8 +88,10 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Ofertas recibidas (HU-17): `ReceivedOffersSection` en `Mis-solicitudes` (`received_offers.dart`, orden con `sortOffers`); el chat de una oferta usa `ChatContext.isOffer` y `ChatScreen.draft` (el saludo al aceptar).
 - Gestionar una solicitud (HU-14): "Cambiar" abre "Tu solicitud" (`MyWantedScreen._manage`). "Editar solicitud" reutiliza `Necesidad-1…3` con `editing: true`, rutas `AppRoutes.editNeed*` y su propio borrador (`needEditDraftProvider`, `need_edit.dart`) para no pisar el de publicar.
 - Pedidos (HU-23): `lib/features/orders/`. En el chat, "Resumir acuerdo" abre `showOrderSummary` (resumen sin IA: cantidad, entrega y fecha) para quien compra; con un pedido abierto (`openOrderProvider`) el aviso cambia a "Pedido #MS-NNNN" y abre `OrderPaymentScreen` (`AppRoutes.order`, `Pedido-pago`).
+- Acuerdo con IA (HU-32/33/34): `lib/features/genai/`. "Resumir acuerdo" (los dos) pide la propuesta (`HttpAgreementRepository`, 30 s), la primera vez con `confirmAiNotice` (`AiNoticeStore`), y abre `showAgreementSheet` (`Acuerdo-esperando` / `Acuerdo-confirmado`, con `SummaryField` y los paneles de HU-23). Con `genai.unavailable`, quien compra cae al resumen a mano. `agreementProvider` y la hoja se recargan con `ChatRealtime.agreementChanges`; los avisos del chat (`ChatMessage.notice`) van centrados.
 - Tablero "Se busca" (HU-15): `WantedBoardScreen` (con sesión `Se-busca`, sin ella `Se-busca-visitante`), filtros en `wantedBoardFilterProvider` y páginas en `wantedBoardProvider`; listas de varias opciones con `MusubiMultiOptions`.
-- Pendientes con dueño: FCM → HU-31; Crashlytics → HU-31; datos locales → HU-53; firma de subida → 02-02.
+- Avisos (HU-31): `lib/features/notifications/`. `pushCoordinatorProvider` (lo enciende `MusubiApp`) registra el FID con sesión y permiso, da de baja al cerrar sesión, abre lo que trae un push y muestra el snack con la app abierta (`scaffoldMessengerKeyProvider`). El permiso se pide en contexto con `askForPushInContext` (primer mensaje y publicar una solicitud). Sin `google-services.json` la app funciona sin push.
+- Pendientes con dueño: Crashlytics → 02-01; datos locales → HU-53; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)
 

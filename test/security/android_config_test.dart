@@ -15,7 +15,11 @@ void main() {
   });
 
   test('solo los permisos aprobados (se piden en contexto, 02-01)', () {
-    const approved = {'android.permission.INTERNET'};
+    const approved = {
+      'android.permission.INTERNET',
+      // HU-31: avisos push, pedido en contexto (askForPushInContext).
+      'android.permission.POST_NOTIFICATIONS',
+    };
     final declared = RegExp('uses-permission[^>]*android:name="([^"]+)"')
         .allMatches(manifest)
         .map((m) => m.group(1))

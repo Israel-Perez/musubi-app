@@ -7,8 +7,8 @@ import 'package:musubi_app/features/marketplace/data/product_json.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 
 /// [ListingsRepository] sobre las filas "M-03" de
-/// `musubi-api/docs/endpoints.md` (spec `musubi-api:HU-06`). Usa el cliente
-/// con sesion.
+/// `musubi-api/docs/endpoints.md` (specs `musubi-api:HU-06` y
+/// `musubi-api:HU-07`). Usa el cliente con sesion.
 class HttpListingsRepository implements ListingsRepository {
   new(this._dio, this._apiBaseUrl);
 
@@ -61,16 +61,59 @@ class HttpListingsRepository implements ListingsRepository {
       for (final item
           in (_body(response)['items'] as List<dynamic>)
               .cast<Map<String, dynamic>>())
-        OwnListing(
-          product: productFromJson(item, _apiBaseUrl),
-          status: switch (item['status']) {
-            'soldOut' => ListingStatus.soldOut,
-            'hidden' => ListingStatus.hidden,
-            _ => ListingStatus.active,
-          },
-        ),
+        _own(item),
     ];
   });
+
+  @override
+  Future<OwnListing> update(String id, ListingUpdate update) =>
+      _guard(() async {
+        final response = await _dio.put<Map<String, dynamic>>(
+          ApiPaths.product(id),
+          data: update.toJson(),
+        );
+        return _own(_body(response));
+      });
+
+  @override
+  Future<OwnListing> pause(String id) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiPaths.productPause(id),
+    );
+    return _own(_body(response));
+  });
+
+  @override
+  Future<OwnListing> resume(String id) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiPaths.productResume(id),
+    );
+    return _own(_body(response));
+  });
+
+  @override
+  Future<void> delete(String id) =>
+      _guard(() => _dio.delete<void>(ApiPaths.product(id)));
+
+  /// `ProductResponse` propio → publicacion con su estado y lo editable.
+  OwnListing _own(Map<String, dynamic> item) => OwnListing(
+    product: productFromJson(item, _apiBaseUrl),
+    status: switch (item['status']) {
+      'soldOut' => ListingStatus.soldOut,
+      'hidden' => ListingStatus.hidden,
+      _ => ListingStatus.active,
+    },
+    description: item['description'] as String? ?? '',
+    condition: item['condition'] == 'new'
+        ? ProductCondition.brandNew
+        : ProductCondition.used,
+    usedDetail: switch (item['conditionDetail']) {
+      'likeNew' => UsedDetail.likeNew,
+      'good' => UsedDetail.good,
+      'fair' => UsedDetail.fair,
+      _ => null,
+    },
+  );
 
   @override
   Future<PriceRange?> priceRange(String category) => _guard(() async {

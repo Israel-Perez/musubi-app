@@ -3,7 +3,7 @@ description: "MUSUBI: compra-venta entre estudiantes de la UTTT (app Android)."
 publish_to: 'none'
 
 # versionName+versionCode de Android. Subir el build (+N) en cada entrega a Google Play.
-version: 0.6.0+8
+version: 0.7.0+9
 
 environment:
   sdk: ^3.13.5
@@ -12,6 +12,8 @@ environment:
 # Paquetes aprobados en la plantilla inicial (licencia, mantenimiento y seguridad revisados; ver 00-01).
 dependencies:
   dio: ^5.11.1
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
   flutter:
     sdk: flutter
   flutter_localizations:

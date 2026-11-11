@@ -5,46 +5,41 @@
 ## Contexto
 Jira (SCRUM-54): Como **usuario**, quiero **revisar y corregir la propuesta de la IA antes de confirmarla**, para **asegurarme de que refleja lo que realmente acordamos**.
 
-- Maqueta: `Mensajes`, `Chat`, `Acuerdo-esperando`, `Acuerdo-confirmado`.
+- Maqueta: `Acuerdo-esperando` (lápices, "0 de 2", "Confirmar acuerdo") y `Acuerdo-confirmado` ("Agregada", "Crear pedido", "Volver al chat").
 - Trazabilidad: RF-46, RF-47 · CU-16 · RN-41.
-- Origen: Propuesta inicial §11.
+- Decisiones de la usuaria (10-Nov-2026): Gemini en la capa gratuita; la primera vez, un aviso; en el chat, "Ana pidió un resumen con IA"; del chat no se guarda nada y la propuesta se borra al crear el pedido o a los 30 días, y el aviso de privacidad lo dice.
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-33`.
+**Depende de:** `HU-33`, `HU-23` (paneles y `Pedido-pago`).
 
 ## Requisitos
-1. Ambos participantes pueden revisar y corregir la propuesta.
-2. Un participante la envía al otro, que la confirma o pide cambios; si la rechaza, se descarta y la conversación continúa.
-3. El acuerdo solo es válido cuando **ambos** lo confirman (RN-41).
-4. Un acuerdo confirmado se puede convertir en pedido con los datos ya llenados (RF-47).
-
-RNF que aplican: se confirman al detallar.
+1. **R1 · Corregir:** los lápices abren el producto, el precio (en pesos), la cantidad, la entrega y la fecha (paneles de HU-23) y las condiciones; cada cambio borra las confirmaciones.
+2. **R2 · Confirmar (RN-41):** "Confirmar acuerdo" se ve activo como en la maqueta; si falta algo, avisa sin llamar a la API. Después: "1 de 2" y "Esperando a Diego". Si la otra persona cambió algo antes, `agreements.changed` se avisa y la hoja se vuelve a leer.
+3. **R3 · Tiempo real:** con `agreementChanged` la hoja abierta y el aviso del chat se actualizan (por ejemplo, pasa a "Acuerdo confirmado").
+4. **R4 · Confirmado:** "Acuerdo confirmado · Ana y Diego lo confirmaron · hora", "Agregada" en lo que agregó una persona y "Si algo cambia, ambos deben confirmar de nuevo." Quien compra toca "Crear pedido" (`POST /orders` con `agreementId`) y se abre `Pedido-pago`; quien vende ve que lo crea quien compra.
+5. **R5 · Descartar:** "Descartar propuesta" (con diálogo) lo borra para los dos y vuelve "Resumir acuerdo".
+6. **R6 · Aviso del chat:** "Acuerdo · Esperando confirmación (1 de 2)" o "Acuerdo confirmado · Falta crear el pedido", con "Ver acuerdo".
 
 ## Diseño
-- Feature `lib/features/genai/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-34. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-34)` (skill `deferred-scope-fakes`).
-- La propuesta de la IA se muestra editable, con su etiqueta, y lo que falta como "No identificado" (guía de estilo).
+Ver `HU-32/spec.md`. `OrderRepository.createFromAgreement`.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-34, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Filas "M-10" y `POST /api/v1/orders` (`agreementId`) de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md).
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- `tool/screenshots_test.dart`: escenas de las pantallas, comparadas con la maqueta en claro y oscuro.
+`test/features/genai/agreement_flow_test.dart`, `test/features/genai/agreement_data_test.dart`: agregar la fecha, corregir el precio, confirmar, versión vieja, la otra persona confirma, crear el pedido, quien vende, el aviso del chat y descartar. `tool/screenshots_test.dart`: escenas `acuerdo-esperando` y `acuerdo-confirmado` en claro y oscuro.
 
 ## Criterios
-- [ ] Ambos participantes pueden revisar y corregir la propuesta.
-- [ ] Un participante la envía al otro, que la confirma o pide cambios; si la rechaza, se descarta y la conversación continúa.
-- [ ] El acuerdo solo es válido cuando **ambos** lo confirman (RN-41).
-- [ ] Un acuerdo confirmado se puede convertir en pedido con los datos ya llenados (RF-47).
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] Ambos participantes pueden revisar y corregir la propuesta (R1).
+- [x] Un participante la envía al otro, que la confirma o pide cambios; si la rechaza, se descarta y la conversación continúa (R2, R3, R5).
+- [x] El acuerdo solo es válido cuando ambos lo confirman (R2, R4, RN-41).
+- [x] Un acuerdo confirmado se convierte en pedido con los datos ya llenados (R4, RF-47).
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS · capturas comparadas con la maqueta.
 
 ## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- `NOTE (HU-31)`: aviso push cuando la otra persona confirma.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 29-Oct-2026 (borrador ligero) · 10-Nov-2026 (detallado e implementado)
+- **Detalle:** corrección con los paneles de HU-23, confirmación por versión y pedido con lo acordado.

@@ -19,6 +19,7 @@ import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_layout.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_edit.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.dart';
@@ -105,6 +106,9 @@ class _NeedBudgetScreenState extends ConsumerState<NeedBudgetScreen> {
       if (!mounted) return;
       ref.read(_draft.notifier).reset();
       ref.invalidate(myWantedProvider);
+      // HU-31 (L-16f): avisarle de las ofertas y de cuando vence.
+      await askForPushInContext(context, ref);
+      if (!mounted) return;
       context.go(AppRoutes.needDone, extra: published);
     } on ApiFailure catch (failure) {
       if (!mounted) return;

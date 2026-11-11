@@ -67,3 +67,9 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// HU-31: Firebase (push) solo si existe google-services.json. Sin el archivo la app compila igual y los avisos push
+// quedan apagados (las pruebas y el CI de PR no lo necesitan).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
