@@ -8,22 +8,29 @@ import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
+import 'package:musubi_app/core/widgets/musubi_dialog.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_panel.dart';
+import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
 /// Pestanas de "Mis productos" (maqueta `Mis-productos`).
 enum _MyTab { active, sold, soldOut }
 
-/// `Mis-productos`: tus publicaciones por estado.
+/// `Mis-productos`: tus publicaciones por estado. Al tocar una, su menu
+/// (HU-07): "Ver publicación", "Editar", "Pausar publicación" o "Reactivar"
+/// y "Eliminar".
 ///
-/// NOTE (HU-08): "Vendidos" llega con los pedidos (HU-23) y "Llevan tiempo
-/// sin venderse" con las vistas y los mensajes (HU-11, HU-20).
+/// NOTE (HU-08): "Vendidos" y "Marcar como vendido" con las filas de
+/// `musubi-api:HU-08`; "Llevan tiempo sin venderse" con las vistas y los
+/// mensajes (HU-11, HU-20).
 /// NOTE (HU-50): cambiar las piezas desde la lista.
 class MyProductsScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -35,14 +42,151 @@ class MyProductsScreen extends ConsumerStatefulWidget {
 class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
   _MyTab _tab = _MyTab.active;
 
+  /// Menu de una publicacion (maqueta: `UI.options` con su nombre corto).
+  Future<void> _manage(OwnListing listing) async {
+    final picked = await showMusubiPanel<String>(
+      context,
+      builder: (context) => MusubiPanel(
+        key: const Key('my-product-manage'),
+        title: listing.product.title,
+        bodyInset: 12,
+        child: MusubiOptions<String>(
+          plain: true,
+          options: [
+            const MusubiOption(
+              value: 'view',
+              label: 'Ver publicación',
+              icon: MusubiIcons.image,
+            ),
+            const MusubiOption(
+              value: 'edit',
+              label: 'Editar',
+              icon: MusubiIcons.fileText,
+            ),
+            // La maqueta no lo dibuja; la API lo tiene (decision de la
+            // usuaria, 10-Nov-2026).
+            if (listing.paused)
+              const MusubiOption(
+                value: 'resume',
+                label: 'Reactivar',
+                sub: 'Vuelve a verse en Musubi',
+                icon: MusubiIcons.eye,
+              )
+            else
+              const MusubiOption(
+                value: 'pause',
+                label: 'Pausar publicación',
+                sub: 'Deja de verse; la reactivas cuando quieras',
+                icon: MusubiIcons.eyeOff,
+              ),
+            const MusubiOption(
+              value: 'delete',
+              label: 'Eliminar',
+              icon: MusubiIcons.x,
+              danger: true,
+            ),
+          ],
+          onPick: (value) => Navigator.of(context).pop(value),
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    // Como el resto de las hojas: el siguiente paso abre 240 ms despues.
+    await Future<void>.delayed(const Duration(milliseconds: 240));
+    if (!mounted) return;
+    switch (picked) {
+      case 'view':
+        unawaited(context.push(AppRoutes.product(listing.product.id)));
+      case 'edit':
+        ref.read(sellEditDraftProvider.notifier).load(listing);
+        unawaited(context.push(AppRoutes.editListing));
+      case 'pause':
+        await _setPaused(listing, paused: true);
+      case 'resume':
+        await _setPaused(listing, paused: false);
+      case 'delete':
+        await _delete(listing);
+    }
+  }
+
+  /// "Pausar publicación" o "Reactivar" (HU-07).
+  Future<void> _setPaused(OwnListing listing, {required bool paused}) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final repository = ref.read(listingsRepositoryProvider);
+    try {
+      await (paused
+          ? repository.pause(listing.product.id)
+          : repository.resume(listing.product.id));
+    } on ApiFailure catch (failure) {
+      _failed(messenger, failure);
+      return;
+    }
+    ref
+      ..invalidate(myListingsProvider)
+      ..invalidate(homeFeedProvider);
+    showMusubiSnack(
+      messenger,
+      paused
+          ? 'Pausaste la publicación. Ya no se ve en Musubi.'
+          : 'Reactivaste la publicación. Ya se ve en Musubi.',
+      icon: paused ? MusubiIcons.eyeOff : MusubiIcons.check,
+      tone: paused ? SnackTone.info : SnackTone.success,
+    );
+  }
+
+  /// "Eliminar" con la confirmacion de la maqueta (HU-07).
+  Future<void> _delete(OwnListing listing) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showMusubiDialog(
+      context,
+      icon: MusubiIcons.x,
+      title: '¿Eliminar la publicación?',
+      message: 'Ya no aparecerá en Musubi. Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      danger: true,
+      confirmKey: const Key('my-product-delete-confirm'),
+    );
+    if (!confirmed || !mounted) return;
+    try {
+      await ref.read(listingsRepositoryProvider).delete(listing.product.id);
+    } on ApiFailure catch (failure) {
+      // RN-07 (HU-23): con pedidos abiertos la API explica que hacer.
+      _failed(messenger, failure);
+      return;
+    }
+    ref
+      ..invalidate(myListingsProvider)
+      ..invalidate(homeFeedProvider);
+    showMusubiSnack(
+      messenger,
+      'Eliminaste la publicación',
+      icon: MusubiIcons.x,
+      tone: SnackTone.info,
+    );
+  }
+
+  /// El mensaje de la API; si ya no existe, la lista se refresca.
+  void _failed(ScaffoldMessengerState messenger, ApiFailure failure) {
+    if (failure.code == 'listings.product_not_found') {
+      ref.invalidate(myListingsProvider);
+    }
+    showMusubiSnack(
+      messenger,
+      failure.message,
+      icon: MusubiIcons.circleAlert,
+      tone: SnackTone.warn,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
     final mine = ref.watch(myListingsProvider);
     final all = mine.value ?? const <OwnListing>[];
+    // Activos: disponibles y pausadas (la pausada lleva su marca).
     final active = [
       for (final l in all)
-        if (l.status == ListingStatus.active) l,
+        if (l.status == ListingStatus.active || l.paused) l,
     ];
     final soldOut = [
       for (final l in all)
@@ -177,7 +321,10 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
                         ),
                       ),
                       for (final listing in shown)
-                        _InventoryRow(product: listing.product),
+                        _InventoryRow(
+                          listing: listing,
+                          onTap: () => unawaited(_manage(listing)),
+                        ),
                     ],
                   ),
                 ),
@@ -258,23 +405,42 @@ class _Tabs extends StatelessWidget {
   }
 }
 
-/// Fila de "Tu inventario": foto de 52, nombre y "$180 · Quedan 2".
+/// Fila de "Tu inventario": foto de 52, nombre y "$180 · Quedan 2". Al
+/// tocarla, su menu (HU-07).
 class _InventoryRow extends StatelessWidget {
-  const new({required this.product});
+  const new({required this.listing, required this.onTap});
 
-  final ProductSummary product;
+  final OwnListing listing;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
+    final product = listing.product;
     final few = product.stock > 0 && product.stock <= 2;
-    final detail = product.soldOut
+    final stock = product.soldOut
         ? 'Agotado'
         : few
         ? product.stockLabel ?? ''
         : product.stock == 1
         ? '1 disponible'
         : '${product.stock} disponibles';
+    final detail = listing.paused ? 'Pausada · $stock' : stock;
+    return Pressable(
+      key: Key('my-product-${product.id}'),
+      onTap: onTap,
+      semanticLabel: '${product.title}, $detail. Opciones',
+      builder: (context, _) => _row(context, c, product, few, detail),
+    );
+  }
+
+  Widget _row(
+    BuildContext context,
+    MusubiColors c,
+    ProductSummary product,
+    bool few,
+    String detail,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
@@ -289,7 +455,7 @@ class _InventoryRow extends StatelessWidget {
               dimension: 52,
               child: ProductPhoto(
                 url: product.photoUrl,
-                soldOut: product.soldOut,
+                soldOut: product.soldOut || listing.paused,
               ),
             ),
           ),

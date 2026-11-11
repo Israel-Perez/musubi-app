@@ -157,4 +157,81 @@ void main() {
       ),
     );
   });
+
+  // HU-07: editar, pausar, reactivar y eliminar (filas "M-03" de
+  // musubi-api:HU-07).
+
+  test('editar: PUT con los campos editables y lee lo que se edita', () async {
+    serve(productJson(status: 'hidden'));
+
+    final edited = await repository.update(
+      '6716a0000000000000000099',
+      const ListingUpdate(
+        title: '  Calculadora Casio fx-570  ',
+        description: 'Como nueva.',
+        category: 'libros',
+        priceCents: 39900,
+        condition: ProductCondition.brandNew,
+        usedDetail: UsedDetail.good,
+      ),
+    );
+
+    final request = adapter.requests.single;
+    expect(request.method, 'PUT');
+    expect(request.path, ApiPaths.product('6716a0000000000000000099'));
+    expect(request.data, {
+      'title': 'Calculadora Casio fx-570',
+      'description': 'Como nueva.',
+      'category': 'libros',
+      'priceCents': 39900,
+      'condition': 'new',
+      // Un nuevo no lleva detalle.
+      'conditionDetail': null,
+    });
+    expect(edited.paused, isTrue);
+    expect(edited.description, 'La usé un semestre.');
+    expect(edited.condition, ProductCondition.used);
+    expect(edited.usedDetail, UsedDetail.likeNew);
+  });
+
+  test('pausar y reactivar: POST a sus rutas', () async {
+    serve(productJson(status: 'hidden'));
+    final paused = await repository.pause('a1');
+    expect(adapter.requests.single.method, 'POST');
+    expect(adapter.requests.single.path, ApiPaths.productPause('a1'));
+    expect(paused.status, ListingStatus.hidden);
+
+    serve(productJson(status: 'soldOut', stock: 0));
+    final resumed = await repository.resume('a1');
+    expect(adapter.requests.single.path, ApiPaths.productResume('a1'));
+    expect(resumed.status, ListingStatus.soldOut);
+  });
+
+  test('eliminar: DELETE a la publicacion', () async {
+    serve(null, status: 204);
+
+    await repository.delete('a1');
+
+    expect(adapter.requests.single.method, 'DELETE');
+    expect(adapter.requests.single.path, ApiPaths.product('a1'));
+  });
+
+  test('eliminar con pedidos abiertos: 409 con el mensaje de la API', () async {
+    serve({
+      'title':
+          'Tiene pedidos pendientes o confirmados. Termínalos o cancélalos '
+          'antes de eliminarla.',
+      'code': 'listings.product_has_orders',
+      'status': 409,
+    }, status: 409);
+
+    expect(
+      () => repository.delete('a1'),
+      throwsA(
+        isA<ApiFailure>()
+            .having((f) => f.code, 'code', 'listings.product_has_orders')
+            .having((f) => f.message, 'message', contains('Termínalos')),
+      ),
+    );
+  });
 }

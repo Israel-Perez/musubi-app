@@ -55,7 +55,23 @@ class SellDraft {
     this.usedDetail = UsedDetail.likeNew,
     this.quantity = 1,
     this.saved = false,
+    this.editingId,
+    this.coverUrl,
   });
+
+  /// "Editar publicacion" (HU-07): los datos de una publicacion propia.
+  /// Las fotos no se editan; la portada se muestra desde su URL.
+  factory editing(OwnListing listing) => SellDraft(
+    title: listing.product.title,
+    description: listing.description,
+    category: listing.product.category,
+    priceCents: listing.product.priceCents,
+    condition: listing.condition,
+    usedDetail: listing.usedDetail ?? UsedDetail.likeNew,
+    quantity: listing.product.stock,
+    editingId: listing.product.id,
+    coverUrl: listing.product.photoUrl,
+  );
 
   /// Maximo de fotos (maqueta: "Puedes subir hasta 8").
   static const maxPhotos = 8;
@@ -74,6 +90,14 @@ class SellDraft {
 
   /// "Guardar": se conserva al cerrar y se retoma desde Publicar.
   final bool saved;
+
+  /// Id de la publicacion que se edita (HU-07), o `null` al vender.
+  final String? editingId;
+
+  /// Portada de la publicacion que se edita (la vista previa de `Vender-4`).
+  final String? coverUrl;
+
+  bool get editing => editingId != null;
 
   int get room => maxPhotos - photos.length;
 
@@ -108,6 +132,8 @@ class SellDraft {
     usedDetail: usedDetail ?? this.usedDetail,
     quantity: quantity ?? this.quantity,
     saved: saved ?? this.saved,
+    editingId: editingId,
+    coverUrl: coverUrl,
   );
 }
 
@@ -117,6 +143,16 @@ class SellDraft {
 final sellDraftProvider = NotifierProvider<SellDraftNotifier, SellDraft>(
   SellDraftNotifier.new,
 );
+
+/// "Editar publicacion" (HU-07): otro borrador, para no pisar un borrador de
+/// venta guardado (igual que `needEditDraftProvider` de HU-14).
+final NotifierProvider<SellDraftNotifier, SellDraft> sellEditDraftProvider =
+    NotifierProvider<SellDraftNotifier, SellDraft>(SellDraftNotifier.new);
+
+/// El borrador de cada flujo: vender o editar (HU-07).
+NotifierProvider<SellDraftNotifier, SellDraft> sellDraftFor({
+  required bool editing,
+}) => editing ? sellEditDraftProvider : sellDraftProvider;
 
 class SellDraftNotifier extends Notifier<SellDraft> {
   final Map<int, Future<void>> _uploads = {};
@@ -135,6 +171,37 @@ class SellDraftNotifier extends Notifier<SellDraft> {
 
   /// "Guardar" (maqueta: "Borrador guardado").
   void save() => state = state.copyWith(saved: true);
+
+  /// "Editar" en `Mis-productos` (HU-07): carga la publicacion.
+  void load(OwnListing listing) => state = SellDraft.editing(listing);
+
+  /// "Guardar cambios" (HU-07): manda los campos editables y limpia el
+  /// borrador. Lanza `ApiFailure` con el mensaje de la API.
+  Future<OwnListing> saveEdit() async {
+    final draft = state;
+    final id = draft.editingId;
+    if (id == null) {
+      throw const ApiFailure(
+        code: ApiFailure.serverError,
+        message: 'No encontramos la publicación que editas.',
+      );
+    }
+    final saved = await ref
+        .read(listingsRepositoryProvider)
+        .update(
+          id,
+          ListingUpdate(
+            title: draft.title,
+            description: draft.description,
+            category: draft.category ?? '',
+            priceCents: draft.priceCents,
+            condition: draft.condition,
+            usedDetail: draft.usedDetail,
+          ),
+        );
+    if (ref.mounted) reset();
+    return saved;
+  }
 
   /// Agrega fotos (hasta 8) y empieza a subirlas. Devuelve cuantas entraron.
   int addPhotos(List<String> paths) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -16,13 +17,19 @@ import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/sell_done_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
+import 'package:musubi_app/features/listings/presentation/sell_edit.dart';
 import 'package:musubi_app/features/listings/presentation/sell_layout.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
 /// `Vender-4`: "Estado y cantidad", la vista previa y "Publicar producto".
+/// Al editar (HU-07): "Guardar cambios" y las piezas sin poder cambiarse.
 class SellConditionScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.editing = false});
+
+  /// "Editar publicación" (HU-07): otro borrador; "Guardar" manda los cambios.
+  final bool editing;
 
   @override
   ConsumerState<SellConditionScreen> createState() =>
@@ -30,13 +37,22 @@ class SellConditionScreen extends ConsumerStatefulWidget {
 }
 
 class _SellConditionScreenState extends ConsumerState<SellConditionScreen> {
+  late final NotifierProvider<SellDraftNotifier, SellDraft> _draft =
+      sellDraftFor(editing: widget.editing);
   bool _publishing = false;
 
+  /// "Guardar cambios" (HU-07).
+  Future<void> _saveEdit() async {
+    setState(() => _publishing = true);
+    final saved = await saveSellEdit(context, ref);
+    if (!saved && mounted) setState(() => _publishing = false);
+  }
+
   Future<void> _publish() async {
-    final cover = ref.read(sellDraftProvider).photos.firstOrNull?.path;
+    final cover = ref.read(_draft).photos.firstOrNull?.path;
     setState(() => _publishing = true);
     try {
-      final product = await ref.read(sellDraftProvider.notifier).publish();
+      final product = await ref.read(_draft.notifier).publish();
       ref.invalidate(homeFeedProvider);
       if (!mounted) return;
       context.go(
@@ -58,11 +74,18 @@ class _SellConditionScreenState extends ConsumerState<SellConditionScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    final draft = ref.watch(sellDraftProvider);
-    final notifier = ref.read(sellDraftProvider.notifier);
+    final draft = ref.watch(_draft);
+    final notifier = ref.read(_draft.notifier);
     final used = draft.condition == ProductCondition.used;
     return SellStepLayout(
       step: 4,
+      heading: widget.editing ? sellEditHeading : 'Vender un producto',
+      onSave: widget.editing
+          ? _publishing
+                ? null
+                : _saveEdit
+          : null,
+      onClose: widget.editing ? () => leaveSellEdit(context) : null,
       label: 'Último paso',
       title: 'Estado y cantidad',
       actions: [
@@ -75,13 +98,22 @@ class _SellConditionScreenState extends ConsumerState<SellConditionScreen> {
           ),
         ),
         Expanded(
-          child: MusubiButton(
-            key: const Key('sell-publish'),
-            label: 'Publicar producto',
-            loading: _publishing,
-            loadingLabel: 'Publicando…',
-            onPressed: _publish,
-          ),
+          child: widget.editing
+              ? MusubiButton(
+                  key: const Key('sell-save-edit'),
+                  label: 'Guardar cambios',
+                  icon: MusubiIcons.check,
+                  loading: _publishing,
+                  loadingLabel: 'Guardando…',
+                  onPressed: _saveEdit,
+                )
+              : MusubiButton(
+                  key: const Key('sell-publish'),
+                  label: 'Publicar producto',
+                  loading: _publishing,
+                  loadingLabel: 'Publicando…',
+                  onPressed: _publish,
+                ),
         ),
       ],
       children: [
@@ -150,7 +182,11 @@ class _SellConditionScreenState extends ConsumerState<SellConditionScreen> {
             ],
           ),
         ),
-        _QuantityRow(quantity: draft.quantity, onStep: notifier.step),
+        _QuantityRow(
+          quantity: draft.quantity,
+          // Al editar no se cambian: "Reponer" es de HU-50.
+          onStep: widget.editing ? null : notifier.step,
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
           child: Column(
@@ -166,7 +202,9 @@ class _SellConditionScreenState extends ConsumerState<SellConditionScreen> {
                 ),
               ),
               ListingPreviewCard(
-                photo: _localPhoto(draft.photos.firstOrNull?.path),
+                photo: draft.editing
+                    ? _remotePhoto(draft.coverUrl)
+                    : _localPhoto(draft.photos.firstOrNull?.path),
                 price: formatPrice(draft.priceCents),
                 title: draft.title.trim(),
                 footer: _Pill(text: draft.summaryLabel),
@@ -177,6 +215,9 @@ class _SellConditionScreenState extends ConsumerState<SellConditionScreen> {
       ],
     );
   }
+
+  static Widget? _remotePhoto(String? url) =>
+      url == null ? null : ProductPhoto(url: url);
 
   static Widget? _localPhoto(String? path) => path == null
       ? null
@@ -343,12 +384,13 @@ class _DetailChip extends StatelessWidget {
   }
 }
 
-/// "Piezas disponibles" con quitar y agregar (1 a 10, HU-50).
+/// "Piezas disponibles" con quitar y agregar (1 a 10, HU-50). Sin [onStep]
+/// (al editar, HU-07) se ve la cantidad sin poder cambiarla.
 class _QuantityRow extends StatelessWidget {
   const new({required this.quantity, required this.onStep});
 
   final int quantity;
-  final ValueChanged<int> onStep;
+  final ValueChanged<int>? onStep;
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +402,7 @@ class _QuantityRow extends StatelessWidget {
       required int delta,
     }) => Pressable(
       key: Key('sell-quantity-$delta'),
-      onTap: enabled ? () => onStep(delta) : null,
+      onTap: enabled && onStep != null ? () => onStep!(delta) : null,
       semanticLabel: label,
       builder: (context, pressed) => SizedBox.square(
         dimension: MusubiSizes.minTouch,
@@ -394,19 +436,35 @@ class _QuantityRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              'Piezas disponibles',
-              style: MusubiType.style(
-                15,
-                weight: FontWeight.w800,
-                color: c.textPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
+              children: [
+                Text(
+                  'Piezas disponibles',
+                  style: MusubiType.style(
+                    15,
+                    weight: FontWeight.w800,
+                    color: c.textPrimary,
+                  ),
+                ),
+                if (onStep == null)
+                  Text(
+                    'Cámbialas desde Mis productos',
+                    key: const Key('sell-quantity-locked'),
+                    style: MusubiType.style(
+                      12,
+                      weight: FontWeight.w600,
+                      color: c.textSecondary,
+                    ),
+                  ),
+              ],
             ),
           ),
           button(
             icon: MusubiIcons.minus,
             label: 'Quitar uno',
-            enabled: quantity > 1,
+            enabled: onStep != null && quantity > 1,
             delta: -1,
           ),
           ConstrainedBox(
@@ -427,7 +485,7 @@ class _QuantityRow extends StatelessWidget {
           button(
             icon: MusubiIcons.plus,
             label: 'Agregar uno',
-            enabled: quantity < SellDraft.maxQuantity,
+            enabled: onStep != null && quantity < SellDraft.maxQuantity,
             delta: 1,
           ),
         ],

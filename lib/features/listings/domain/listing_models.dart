@@ -71,6 +71,42 @@ class NewListing {
   };
 }
 
+/// Lo que se edita (`UpdateProductRequest` de musubi-api, HU-07): todos los
+/// campos editables. Las fotos y las piezas no se cambian aqui.
+@immutable
+class ListingUpdate {
+  const new({
+    required this.title,
+    required this.description,
+    required this.category,
+    required this.priceCents,
+    required this.condition,
+    this.usedDetail,
+  });
+
+  final String title;
+  final String description;
+
+  /// `slug` de la categoria.
+  final String category;
+  final int priceCents;
+  final ProductCondition condition;
+
+  /// Solo con [ProductCondition.used].
+  final UsedDetail? usedDetail;
+
+  Map<String, Object?> toJson() => {
+    'title': title.trim(),
+    'description': description.trim(),
+    'category': category,
+    'priceCents': priceCents,
+    'condition': condition.apiValue,
+    'conditionDetail': condition == ProductCondition.used
+        ? usedDetail?.apiValue
+        : null,
+  };
+}
+
 /// Foto subida (`PhotoResponse`): la llave va en la publicacion.
 @immutable
 class UploadedPhoto {
@@ -92,11 +128,28 @@ class PriceRange {
 /// Estado de una publicacion propia ("Mis productos").
 enum ListingStatus { active, soldOut, hidden }
 
-/// Publicacion propia con su estado.
+/// Publicacion propia con su estado y lo que hace falta para editarla
+/// (HU-07).
 @immutable
 class OwnListing {
-  const new({required this.product, required this.status});
+  const new({
+    required this.product,
+    required this.status,
+    this.description = '',
+    this.condition = ProductCondition.used,
+    this.usedDetail,
+  });
 
   final ProductSummary product;
   final ListingStatus status;
+
+  /// Descripcion tal como se publico (`Vender-2` al editar).
+  final String description;
+  final ProductCondition condition;
+
+  /// Detalle de un usado, o `null` en uno nuevo.
+  final UsedDetail? usedDetail;
+
+  /// Pausada por su vendedor: sigue en "Activos", fuera de la vitrina.
+  bool get paused => status == ListingStatus.hidden;
 }

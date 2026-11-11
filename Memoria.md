@@ -12,8 +12,27 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-23 (pedidos):** en `main`, con la API `0.5.0-alpha.15`. Se publica después de desplegar esa API.
 - **HU-32/33/34 (acuerdo con IA):** en `feature/SCRUM-53-acuerdo-con-ia`, con la API `0.5.0-alpha.16`. Va en el siguiente lote de Google Play, después de desplegar esa API.
 - **Siguiente:** push con FCM (HU-31), después HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
-- **HU-07 (Kazumi):** su API ya está en `main` (`0.5.0-alpha.12`); falta el PR de la app, que debe traer `docs/versionado.md` igual al de musubi-api.
+- **HU-07 (Kazumi):** app en `feature/SCRUM-24-editar-eliminar-publicaciones` (menú de `Mis-productos`, editar, pausar/reactivar y eliminar). HU-08 va en un PR apilado encima.
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T37 — Editar o eliminar mis publicaciones (10-Nov-2026, SCRUM-24, HU-07)
+
+**Qué se hizo**
+- Menú de cada publicación en `Mis-productos`: "Ver publicación", "Editar", "Pausar publicación" o "Reactivar", y "Eliminar" con el diálogo de la maqueta.
+- "Editar publicación": `Vender-2…4` con `editing`, un borrador aparte (`sellEditDraftProvider`) y las rutas `/editar-publicacion…`. "Guardar" y "Guardar cambios" mandan el `PUT`.
+- `ListingsRepository`: `update`, `pause`, `resume` y `delete`; `ApiPaths.productPause` y `ApiPaths.productResume`.
+- Pruebas: `my_products_manage_test.dart` (7) y 4 más del repositorio HTTP. 524 en total. Capturas: `mis-productos-menu`, `editar-publicacion` y `editar-publicacion-estado`.
+
+**Decisiones (con su porqué)** (de la usuaria, 10-Nov-2026)
+- **Pausar entra en el menú** aunque la maqueta no lo tenga: la API ya lo tiene. La pausada sigue en "Activos", con "Pausada" y la foto en gris.
+- **Las piezas se ven sin poder cambiarlas al editar:** "Reponer" es de HU-50, y así la edición no pisa el descuento de un pedido.
+- **Dos PR apilados:** HU-07 y luego HU-08 (un PR = una HU).
+- **Borrador aparte para editar** (como HU-14): editar no pisa un borrador de venta guardado.
+
+**Errores a evitar**
+- **Flutter 3.31 beta no corre la app** (pide `>=3.47.7` y Dart 3.13): se dejó `C:\Flutter\flutter` en `stable` 3.47.7, como el CI. El editor puede seguir marcando `new(...)` como error hasta que recargue el SDK; manda `flutter analyze`.
+- **Después de elegir una opción de una hoja, `pumpAndSettle` no basta:** la app espera 240 ms antes del siguiente paso. En las pruebas: `pump(300 ms)` y luego `pumpAndSettle`.
+- **Las publicaciones de ejemplo de las capturas necesitan `category`:** sin ella, "Editar" se queda en `Vender-3` con "Elige una categoría".
 
 ## T36 — Acuerdo con IA (10-Nov-2026, SCRUM-52/53/54, HU-32/33/34)
 
