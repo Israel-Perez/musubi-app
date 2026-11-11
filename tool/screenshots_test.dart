@@ -47,6 +47,7 @@ import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
@@ -67,6 +68,7 @@ import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_reputation.dart';
 import '../test/helpers/fake_session_api.dart';
 import '../test/helpers/fake_status_repository.dart';
+import '../test/helpers/fake_theme_preference_repository.dart';
 import '../test/helpers/fake_wanted.dart';
 import '../test/helpers/in_memory_token_store.dart';
 
@@ -540,6 +542,9 @@ class _Shot {
                   ratingCount: 18,
                   sales: 15,
                 ),
+            ),
+            themePreferenceRepositoryProvider.overrideWithValue(
+              FakeThemePreferenceRepository(),
             ),
             statusRepositoryProvider.overrideWithValue(
               FakeStatusRepository([const ApiOnline(version: 'v1')]),

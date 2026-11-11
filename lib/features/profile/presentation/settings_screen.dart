@@ -14,6 +14,7 @@ import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/auth/presentation/sign_out_button.dart';
 import 'package:musubi_app/features/profile/presentation/change_password_sheet.dart';
+import 'package:musubi_app/features/profile/presentation/dark_mode_row.dart';
 import 'package:musubi_app/features/profile/presentation/email_sheet.dart';
 import 'package:musubi_app/features/profile/presentation/personal_data_sheet.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
@@ -24,9 +25,10 @@ import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 
 /// `Ajustes` (HU-04): la tarjeta de la cuenta abre "Datos personales";
 /// "Correo institucional", "Cambiar contraseña", "Privacidad · Quién te ve",
-/// "Reportar un problema" (HU-28), legal, "Cerrar sesión" y la version. Lo
-/// que aun no existe no se muestra: NOTE (HU-55) "Cuenta para recibir pagos",
-/// NOTE (HU-54) modo noche y avisos, NOTE (HU-39) "Centro de ayuda".
+/// "Modo noche" (HU-54), "Reportar un problema" (HU-28), legal, "Cerrar
+/// sesión" y la version. Lo que aun no existe no se muestra: NOTE (HU-55)
+/// pagos, NOTE (HU-54) los interruptores de "Notificaciones" por tipo y
+/// NOTE (HU-39) "Centro de ayuda".
 class SettingsScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -125,6 +127,8 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                const _SectionLabel('Preferencias'),
+                const _Group(children: [DarkModeRow()]),
                 const _SectionLabel('Privacidad y seguridad'),
                 _Group(
                   children: [

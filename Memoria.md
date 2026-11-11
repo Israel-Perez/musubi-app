@@ -1,5 +1,12 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-54 (SCRUM-71, 10-Nov-2026)
+
+- Interruptor "Modo noche" en `Ajustes` · "Preferencias" conectado a `ThemeMode`; repositorio usa GET/PUT de musubi-api y mantiene estado reactivo por cuenta.
+- La preferencia por cuenta es la fuente de verdad; no se agregó almacenamiento local. Notificaciones quedan fuera porque Jira no concreta el MVP.
+- Verificación final sobre `origin/main` actualizado (10-Nov-2026) con Flutter 3.47.7/Dart 3.13.5: `flutter pub get` pasó; `flutter analyze --fatal-infos --fatal-warnings` sin issues; `dart format --output=none --set-exit-if-changed .` sin cambios; suite completa 492/492. `critic` PASS (15 archivos, 0 avisos). `pub get` avisó que 15 paquetes tienen versiones más nuevas incompatibles con las restricciones actuales; no se cambiaron dependencias.
+- **11-Nov-2026 (revisión para fusionar):** se trajo `main` (HU-31: `MusubiApp` ahora vigila `pushCoordinatorProvider` y además aplica el tema). El selector de tres opciones se cambió por el interruptor de la maqueta (`DarkModeRow`): muestra el tema que se ve y guarda `dark` o `light`, con el aviso "Modo noche activado" o "desactivado". Volver a "seguir el sistema" no tiene control en la maqueta. Capturas de `ajustes` en claro y oscuro revisadas. La API va en `0.5.0-alpha.19` (`db/018`).
+
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
 ## Estado actual (11-Nov-2026)

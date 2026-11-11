@@ -11,7 +11,9 @@ import 'package:musubi_app/features/listings/presentation/listings_providers.dar
 import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
+import 'package:musubi_app/features/profile/domain/theme_preference.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
@@ -21,6 +23,7 @@ import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_listings_repository.dart';
 import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_status_repository.dart';
+import '../../helpers/fake_theme_preference_repository.dart';
 import '../../helpers/in_memory_token_store.dart';
 
 /// App completa con el router real y la sesion abierta (HU-04).
@@ -35,6 +38,7 @@ class ProfileHarness {
   final account = FakeAccountRepository();
   final picker = FakePhotoPicker();
   final favorites = FakeFavoritesRepository();
+  final theme = FakeThemePreferenceRepository();
   final SessionTokens _tokens;
   final InMemoryTokenStore store;
   late ProviderContainer container;
@@ -48,6 +52,7 @@ class ProfileHarness {
       ProviderScope(
         overrides: [
           profileRepositoryProvider.overrideWithValue(profile),
+          themePreferenceRepositoryProvider.overrideWithValue(theme),
           accountRepositoryProvider.overrideWithValue(account),
           listingsRepositoryProvider.overrideWithValue(
             FakeListingsRepository(),
@@ -215,7 +220,62 @@ void main() {
       expect(find.text('Verificado'), findsOneWidget);
       expect(find.text('Cambiar contraseña'), findsOneWidget);
       expect(find.text('Quién te ve'), findsOneWidget);
+      expect(find.text('PREFERENCIAS'), findsOneWidget);
+      expect(find.text('Modo noche'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('settings-version')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Musubi $appVersion'), findsOneWidget);
+    });
+
+    testWidgets('"Modo noche" cambia el tema, lo guarda en la cuenta y avisa', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      await h.open(AppRoutes.settings);
+      bool dark() =>
+          Theme.of(tester.element(find.text('Modo noche'))).brightness ==
+          Brightness.dark;
+      expect(dark(), isFalse);
+
+      await h.tapKey('settings-dark');
+
+      expect(h.theme.saves, [ThemePreference.dark]);
+      expect(
+        h.container.read(themePreferenceProvider).value,
+        ThemePreference.dark,
+      );
+      expect(dark(), isTrue);
+      expect(find.text('Modo noche activado'), findsOneWidget);
+
+      await h.tapKey('settings-dark');
+      expect(h.theme.saves.last, ThemePreference.light);
+      expect(dark(), isFalse);
+      expect(find.text('Modo noche desactivado'), findsOneWidget);
+    });
+
+    testWidgets('si no se guarda, vuelve al tema anterior y deja reintentar', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester)..theme.failSave = true;
+      await h.open(AppRoutes.settings);
+      await h.tapKey('settings-dark');
+
+      expect(
+        h.container.read(themePreferenceProvider).value,
+        ThemePreference.system,
+      );
+      expect(
+        find.text(
+          'No pudimos guardar el cambio. No hay conexión. Revisa tu internet '
+          'e inténtalo de nuevo.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Reintentar'), findsOneWidget);
     });
 
     testWidgets('"Correo institucional": correo, Verificado y desde cuando', (
@@ -227,7 +287,13 @@ void main() {
       await h.tapKey('settings-email');
 
       expect(find.byKey(const Key('email-sheet')), findsOneWidget);
-      expect(find.text('ana.ramirez@uttt.edu.mx'), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('email-sheet')),
+          matching: find.text('ana.ramirez@uttt.edu.mx'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('oct 2026'), findsOneWidget);
       expect(find.textContaining('No se puede cambiar'), findsOneWidget);
       await h.tapText('Entendido');
