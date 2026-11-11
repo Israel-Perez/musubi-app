@@ -2,19 +2,33 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (10-Nov-2026)
+## Estado actual (11-Nov-2026)
 
-- **En Google Play:** `0.6.0+8` en la prueba cerrada (09-Nov-2026). **Siguiente lote: `0.7.0+9`** (rama `release/SCRUM-87-app-0.7.0`): HU-14, favoritos (HU-53), confirmar la compra (HU-23) y el acuerdo con IA (HU-32/33/34).
+- **En Google Play:** `0.7.0+9` enviada a la prueba cerrada el 11-Nov-2026 (HU-14, favoritos HU-53, confirmar la compra HU-23 y el acuerdo con IA HU-32/33/34), con la API `0.5.0-alpha.17` en producción. El siguiente lote (`0.8.0`) trae los avisos push.
   - Notas en `docs/play/whatsnew/whatsnew-es-419`; descripción y "Seguridad de los datos" en `docs/play/README.md` (**se pegan a mano en Play Console**). Desde `0.7.0` se declara que los mensajes se comparten con Google (Gemini) cuando alguien pide "Resumir acuerdo".
-  - Antes de publicar: `infra-up` con la API `0.5.0-alpha.17` (esquema 16).
-- **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
-- **En `main`, sin publicar (siguiente lote):** editar, cerrar y cancelar la solicitud (HU-14). Necesita la API `0.5.0-alpha.13`.
-- **HU-23 (pedidos):** en `main`, con la API `0.5.0-alpha.15`. Se publica después de desplegar esa API.
-- **HU-32/33/34 (acuerdo con IA):** en `feature/SCRUM-53-acuerdo-con-ia`, con la API `0.5.0-alpha.16`. Va en el siguiente lote de Google Play, después de desplegar esa API.
-- **Siguiente:** push con FCM (HU-31), después HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
-- **HU-07 (Kazumi):** app en `feature/SCRUM-24-editar-eliminar-publicaciones` (menú de `Mis-productos`, editar, pausar/reactivar y eliminar). HU-08 va en un PR apilado encima.
+- **API en producción:** `0.5.0-alpha.17`, esquema 16 (`infra-up` del 11-Nov-2026). La matriz está en `docs/versionado.md`.
+- **HU-31 (push):** en `feature/SCRUM-49-avisos-push`, con la API `0.5.0-alpha.18`. Falta el proyecto de Firebase (la usuaria).
+- **Siguiente:** HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
+- **HU-07 (Kazumi):** API y app en `main` (#50). HU-08 (app) va en un PR apilado encima.
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T38 — Avisos push (11-Nov-2026, SCRUM-49, HU-31)
+
+**Qué se hizo**
+- Feature `lib/features/notifications/`: repositorio HTTP, `FirebasePushService`, `PushCoordinator` (registro, baja, tocar un push, snack) y la pantalla `Notificaciones` de la maqueta; la campana de `Inicio` cuenta los no leídos.
+- Permiso en contexto (L-16f): `askForPushInContext` al mandar el primer mensaje y al publicar una solicitud.
+- Android: canal "musubi", `POST_NOTIFICATIONS`, `firebase_messaging_installation_id_enabled` y el plugin de Google Services solo con `google-services.json`. `release-play` y `ci-pr` lo regeneran del secreto `GOOGLE_SERVICES_JSON_B64` (en la publicación es obligatorio).
+- 17 pruebas nuevas.
+
+**Decisiones (con su porqué)**
+- **FID en lugar del token:** `firebase_messaging` 17 marca `getToken()` como obsoleto y la guía de Firebase pide no mezclar los dos; la API manda al campo `fid` de HTTP v1.
+- **`register()` solo con permiso:** pide el permiso si no lo hay, y aquí se pide en contexto.
+- **Al cerrar sesión, `unregister()`:** la sesión ya no existe para llamar a la API; FCM da de baja el ID y la API lo borra al primer envío que falle.
+- **Sin Firebase la app sigue igual** (RNF-15): así las pruebas, el CI de PR y un build local no lo necesitan.
+
+**Errores a evitar**
+- **`currentConfiguration.uri` no es la pantalla de arriba si se abrió con `push`:** usa `currentPath(router)` (lee el `ImperativeRouteMatch`).
+- **El snack de la raíz se pinta en el `Scaffold` del shell:** en las pruebas, un toque sobre su acción cae en el `Scaffold` de `Inicio`; se prueba invocando su acción.
 ## T37 — Editar o eliminar mis publicaciones (10-Nov-2026, SCRUM-24, HU-07)
 
 **Qué se hizo**

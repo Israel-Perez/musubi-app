@@ -29,6 +29,7 @@ import 'package:musubi_app/features/marketplace/presentation/favorites_actions.d
 import 'package:musubi_app/features/marketplace/presentation/filter_sheet.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/notifications/presentation/notification_providers.dart';
 
 /// Inicio: la vitrina del campus, igual a la maqueta `Inicio-visitante` (sin
 /// cuenta) e `Inicio` (con sesion), con `Inicio-cargando` e `Inicio-error`
@@ -315,37 +316,23 @@ class _MemberHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 20, right: 10),
+        const Padding(
+          padding: EdgeInsets.only(left: 20, right: 10),
           child: SizedBox(
             height: MusubiSizes.minTouch,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Con letra grande el logotipo se reduce antes que desbordar.
-                const Flexible(
+                Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: MusubiLogo(),
                   ),
                 ),
-                const CampusChip(signedIn: true),
-                Pressable(
-                  // NOTE (HU-31): avisos de la app.
-                  onTap: () => unawaited(context.push(AppRoutes.notifications)),
-                  semanticLabel: 'Notificaciones',
-                  builder: (context, _) => SizedBox.square(
-                    dimension: MusubiSizes.minTouch,
-                    child: Center(
-                      child: MusubiIcon(
-                        MusubiIcons.bell,
-                        strokeWidth: 1.9,
-                        color: c.textPrimary,
-                      ),
-                    ),
-                  ),
-                ),
+                CampusChip(signedIn: true),
+                NotificationBell(),
               ],
             ),
           ),
@@ -1394,6 +1381,64 @@ class _ErrorState extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// La campana de `Inicio` con cuantos avisos sin leer (HU-31, "3 nuevas").
+class NotificationBell extends ConsumerWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.musubi;
+    final unread = ref.watch(unreadNotificationsProvider).value ?? 0;
+    return Pressable(
+      key: const Key('home-bell'),
+      onTap: () => unawaited(context.push(AppRoutes.notifications)),
+      semanticLabel: unread == 0
+          ? 'Notificaciones'
+          : 'Notificaciones, $unread ${unread == 1 ? 'nueva' : 'nuevas'}',
+      builder: (context, _) => SizedBox.square(
+        dimension: MusubiSizes.minTouch,
+        child: Stack(
+          children: [
+            Center(
+              child: MusubiIcon(
+                MusubiIcons.bell,
+                strokeWidth: 1.9,
+                color: c.textPrimary,
+              ),
+            ),
+            if (unread > 0)
+              Positioned(
+                top: 5,
+                right: 4,
+                child: Container(
+                  key: const Key('home-bell-count'),
+                  constraints: const BoxConstraints(minWidth: 19),
+                  height: 19,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: c.brand,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: c.background, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      unread > 9 ? '9+' : '$unread',
+                      style: MusubiType.style(
+                        10,
+                        weight: FontWeight.w800,
+                        color: c.onBrand,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

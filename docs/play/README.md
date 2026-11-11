@@ -98,6 +98,7 @@ Qué datos se recopilan:
 | Actividad en la app → Otro contenido generado por el usuario | Sí (publicaciones: título, descripción y precio; desde `0.6.0` también solicitudes "Se busca", ofertas y reportes; desde `0.7.0`, pedidos y acuerdos: cantidad, lugar y fecha de entrega) | Funcionalidad de la app; reportes: seguridad y cumplimiento | Sí |
 | Mensajes → Otros mensajes en la app | Sí (chat entre estudiantes, desde `0.5.0`). **Compartido** desde `0.7.0`: con Google (Gemini) solo cuando alguien pide "Resumir acuerdo" | Funcionalidad de la app | Sí (solo quien escribe; la IA solo si alguien la pide) |
 | Actividad en la app → Interacciones con la app | Sí (a quién bloqueaste, desde `0.6.0`; favoritos, desde `0.7.0`) | Funcionalidad de la app; seguridad | Sí |
+| IDs de dispositivo u otros IDs | Sí desde `0.8.0`: el ID de instalación de Firebase (FID) para los avisos push (HU-31). Se borra al cerrar sesión o a los 60 días sin usarse | Funcionalidad de la app (avisos) | Sí (solo si acepta los avisos) |
 | Ubicación, contactos, correos o SMS, información financiera, salud, archivos, calendario, audio | No | — | — |
 | Información y rendimiento de la app (fallos) | No (sin Crashlytics en esta versión) | — | — |
 
@@ -106,7 +107,8 @@ Notas:
 - **`0.4.0` (HU-04) agrega la foto de perfil y la carrera:** actualiza el formulario en Play Console antes de enviar esa versión.
 - **`0.6.0` (lote de HU-09 a HU-17) ya recopila mensajes del chat, solicitudes, ofertas, reportes y bloqueos:** actualiza el formulario en Play Console (filas de arriba) antes de enviar esa versión.
 - **`0.7.0` (lote de HU-14, HU-53, HU-23 y HU-32/33/34) comparte mensajes con Google (Gemini) y recopila pedidos, acuerdos y favoritos:** actualiza en Play Console la pregunta "¿Se comparten datos?" y las filas de arriba antes de enviar esa versión.
-- **Cuando lleguen** avisos push (HU-31) o Crashlytics, **hay que actualizar este formulario** antes de subir esa versión.
+- **`0.8.0` (HU-31) agrega avisos push:** recopila el ID de instalación de Firebase (fila de arriba). Antes de subirla, actualiza el formulario y crea el secreto `GOOGLE_SERVICES_JSON_B64` en el entorno `google-play` (si falta, `release-play` se detiene).
+- **Cuando llegue** Crashlytics, **hay que actualizar este formulario** antes de subir esa versión.
 
 ### Acceso a la app: texto para Play (en inglés)
 

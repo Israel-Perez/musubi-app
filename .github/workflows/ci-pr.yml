@@ -91,8 +91,17 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
-      # NOTE (HU-31): aqui se regeneran lib/firebase_options.dart y google-services.json
-      # desde secretos de GitHub (ver la skill critic-guardrails, politica Firebase).
+      # HU-31: google-services.json sale del secreto (politica Firebase de la skill critic-guardrails). Sin el
+      # secreto el APK se arma igual, sin avisos push (el plugin de Google Services solo se aplica con el archivo).
+      - name: Firebase
+        env:
+          GOOGLE_SERVICES_JSON_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_B64" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON_B64" | base64 --decode > android/app/google-services.json
+          else
+            echo "::notice::Sin GOOGLE_SERVICES_JSON_B64: APK sin avisos push."
+          fi
       - run: flutter build apk --debug --dart-define-from-file=config/dev.example.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

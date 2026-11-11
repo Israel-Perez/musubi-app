@@ -12,6 +12,8 @@ environment:
 # Paquetes aprobados en la plantilla inicial (licencia, mantenimiento y seguridad revisados; ver 00-01).
 dependencies:
   dio: ^5.11.1
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
   flutter:
     sdk: flutter
   flutter_localizations:
