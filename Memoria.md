@@ -13,24 +13,6 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
-## T38 — Avisos push (11-Nov-2026, SCRUM-49, HU-31)
-
-**Qué se hizo**
-- Feature `lib/features/notifications/`: repositorio HTTP, `FirebasePushService`, `PushCoordinator` (registro, baja, tocar un push, snack) y la pantalla `Notificaciones` de la maqueta; la campana de `Inicio` cuenta los no leídos.
-- Permiso en contexto (L-16f): `askForPushInContext` al mandar el primer mensaje y al publicar una solicitud.
-- Android: canal "musubi", `POST_NOTIFICATIONS`, `firebase_messaging_installation_id_enabled` y el plugin de Google Services solo con `google-services.json`. `release-play` y `ci-pr` lo regeneran del secreto `GOOGLE_SERVICES_JSON_B64` (en la publicación es obligatorio).
-- 17 pruebas nuevas.
-
-**Decisiones (con su porqué)**
-- **FID en lugar del token:** `firebase_messaging` 17 marca `getToken()` como obsoleto y la guía de Firebase pide no mezclar los dos; la API manda al campo `fid` de HTTP v1.
-- **`register()` solo con permiso:** pide el permiso si no lo hay, y aquí se pide en contexto.
-- **Al cerrar sesión, `unregister()`:** la sesión ya no existe para llamar a la API; FCM da de baja el ID y la API lo borra al primer envío que falle.
-- **Sin Firebase la app sigue igual** (RNF-15): así las pruebas, el CI de PR y un build local no lo necesitan.
-
-**Errores a evitar**
-- **`currentConfiguration.uri` no es la pantalla de arriba si se abrió con `push`:** usa `currentPath(router)` (lee el `ImperativeRouteMatch`).
-- **El snack de la raíz se pinta en el `Scaffold` del shell:** en las pruebas, un toque sobre su acción cae en el `Scaffold` de `Inicio`; se prueba invocando su acción.
-
 ## T39 — Consultar el estado de mis productos (10-Nov-2026, SCRUM-25, HU-08)
 
 **Qué se hizo**
@@ -48,6 +30,24 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 **Errores a evitar**
 - **Un estado nuevo de la API se lee como su propio estado:** el `switch` tomaba cualquier valor desconocido como activo, y una vendida habría salido en "Yo tengo este producto" y en el Perfil.
 - **`shortDate` incluye el día de la semana** ("mar 10 nov"); para "30 sep" está `dayMonth`.
+
+## T38 — Avisos push (11-Nov-2026, SCRUM-49, HU-31)
+
+**Qué se hizo**
+- Feature `lib/features/notifications/`: repositorio HTTP, `FirebasePushService`, `PushCoordinator` (registro, baja, tocar un push, snack) y la pantalla `Notificaciones` de la maqueta; la campana de `Inicio` cuenta los no leídos.
+- Permiso en contexto (L-16f): `askForPushInContext` al mandar el primer mensaje y al publicar una solicitud.
+- Android: canal "musubi", `POST_NOTIFICATIONS`, `firebase_messaging_installation_id_enabled` y el plugin de Google Services solo con `google-services.json`. `release-play` y `ci-pr` lo regeneran del secreto `GOOGLE_SERVICES_JSON_B64` (en la publicación es obligatorio).
+- 17 pruebas nuevas.
+
+**Decisiones (con su porqué)**
+- **FID en lugar del token:** `firebase_messaging` 17 marca `getToken()` como obsoleto y la guía de Firebase pide no mezclar los dos; la API manda al campo `fid` de HTTP v1.
+- **`register()` solo con permiso:** pide el permiso si no lo hay, y aquí se pide en contexto.
+- **Al cerrar sesión, `unregister()`:** la sesión ya no existe para llamar a la API; FCM da de baja el ID y la API lo borra al primer envío que falle.
+- **Sin Firebase la app sigue igual** (RNF-15): así las pruebas, el CI de PR y un build local no lo necesitan.
+
+**Errores a evitar**
+- **`currentConfiguration.uri` no es la pantalla de arriba si se abrió con `push`:** usa `currentPath(router)` (lee el `ImperativeRouteMatch`).
+- **El snack de la raíz se pinta en el `Scaffold` del shell:** en las pruebas, un toque sobre su acción cae en el `Scaffold` de `Inicio`; se prueba invocando su acción.
 
 ## T37 — Editar o eliminar mis publicaciones (10-Nov-2026, SCRUM-24, HU-07)
 
