@@ -41,6 +41,8 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/notifications/domain/notification_models.dart';
+import 'package:musubi_app/features/notifications/presentation/notification_providers.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
@@ -59,6 +61,7 @@ import '../test/helpers/fake_catalog_repository.dart';
 import '../test/helpers/fake_chat.dart';
 import '../test/helpers/fake_favorites_repository.dart';
 import '../test/helpers/fake_listings_repository.dart';
+import '../test/helpers/fake_notifications.dart';
 import '../test/helpers/fake_orders.dart';
 import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_reputation.dart';
@@ -140,6 +143,36 @@ DateTime _local(int day, int hour, int minute) =>
 /// `Chat-Valeria`: Ana pregunta por la calculadora de Valeria.
 /// El pedido de `Pedido-pago` (HU-23): la calculadora, en la Biblioteca el
 /// jueves 8 de octubre a la 1:00 p. m.
+/// Los avisos de `Notificaciones` (HU-31), como la maqueta.
+final _notices = FakeNotificationRepository(
+  items: [
+    sampleNotification(createdAt: DateTime.utc(2026, 10, 6, 3, 14)),
+    sampleNotification(
+      id: 'n2',
+      type: 'offer_received',
+      category: 'requests',
+      title: 'Alguien tiene lo que buscas',
+      body:
+          'Diego respondió “Yo tengo este producto” a tu solicitud de '
+          r'Calculadora Casio · $500.',
+      target: NotificationTarget.wanted,
+      targetId: 'w1',
+      createdAt: DateTime.utc(2026, 10, 6, 2, 5),
+    ),
+    sampleNotification(
+      id: 'n3',
+      type: 'request_expiring',
+      category: 'requests',
+      title: 'Tu solicitud vence mañana',
+      body: 'Física Universitaria, Sears-Zemansky. ¿Quieres extender la fecha?',
+      target: NotificationTarget.wanted,
+      targetId: 'w2',
+      read: true,
+      createdAt: DateTime.utc(2026, 10, 5, 1),
+    ),
+  ],
+);
+
 /// La IA de las escenas (HU-32/33/34); cada escena la ajusta.
 final _ai = FakeAgreementRepository();
 
@@ -513,6 +546,11 @@ class _Shot {
               FakeOrderRepository(orders: [_order]),
             ),
             chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
+            // HU-31: los avisos de `Notificaciones` (sin Firebase aqui).
+            notificationRepositoryProvider.overrideWithValue(_notices),
+            pushServiceProvider.overrideWithValue(
+              FakePushService(available: false),
+            ),
             // HU-32/33/34: la IA de cada escena (`_ai`, se ajusta en ella).
             agreementRepositoryProvider.overrideWithValue(_ai),
             aiNoticeStoreProvider.overrideWithValue(
@@ -895,6 +933,8 @@ final Map<String, (bool, _Scene)> _scenes = {
     },
   ),
   'pedido-pago': (true, (s) => s.go(AppRoutes.order('o1'))),
+  // HU-31: `Notificaciones` (Hoy y Ayer, dos sin leer).
+  'notificaciones': (true, (s) => s.go(AppRoutes.notifications)),
   // HU-32/33/34: la propuesta de la IA (`Acuerdo-esperando`, sin fecha) y el
   // acuerdo confirmado por los dos (`Acuerdo-confirmado`).
   'acuerdo-esperando': (

@@ -173,6 +173,18 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-34`).
   static String agreementConfirm(String id) => '$agreements/$id/confirm';
 
+  /// `GET /api/v1/notifications` — fila "M-09" (spec `musubi-api:HU-31`).
+  static const notifications = '/api/v1/notifications';
+
+  /// `POST /api/v1/notifications/read` ("Marcar leidas") — fila "M-09".
+  static const notificationsRead = '$notifications/read';
+
+  /// `POST /api/v1/notifications/{id}/read` — fila "M-09".
+  static String notificationRead(String id) => '$notifications/$id/read';
+
+  /// `PUT /api/v1/notifications/devices` — fila "M-09".
+  static const notificationDevices = '$notifications/devices';
+
   /// `POST /api/v1/reports` — fila "M-13" (spec `musubi-api:HU-28`).
   static const reports = '/api/v1/reports';
 

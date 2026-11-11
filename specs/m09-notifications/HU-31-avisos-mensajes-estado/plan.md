@@ -1,10 +1,3 @@
-# plan.md — HU-31 Avisos de mensajes y cambios de estado (borrador)
+# plan.md — HU-31 (app)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
-
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+El diseño está en [`spec.md`](spec.md) y el de la API en [`musubi-api:HU-31/plan.md`](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m09-notifications/HU-31-avisos-mensajes-estado/plan.md).

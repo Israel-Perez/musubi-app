@@ -1,17 +1,7 @@
-# HU-31 — Avisos de mensajes y cambios de estado (tareas)
+# task.md — HU-31 (app)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
-
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-31)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
-
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
-
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+- **T1 · Datos y push:** `HttpNotificationRepository` y `FirebasePushService` (FID). ✅
+- **T2 · Coordinador:** registro, baja, tocar un push y snack. ✅
+- **T3 · Pantallas:** `Notificaciones`, la campana y la pregunta en contexto. ✅
+- **T4 · Android y CI:** canal, permiso, plugin condicional y el secreto `GOOGLE_SERVICES_JSON_B64`. ✅
+- **T5 · Documentos:** spec, trazabilidad, AGENTS, Memoria y la ficha de Google Play. ✅

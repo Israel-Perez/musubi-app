@@ -26,6 +26,7 @@ import 'package:musubi_app/features/genai/presentation/agreement_providers.dart'
 import 'package:musubi_app/features/genai/presentation/agreement_sheet.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/orders/presentation/order_summary_sheet.dart';
@@ -139,6 +140,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (!mounted) return;
     if (sent) {
       _input.clear();
+      // HU-31 (L-16f): la primera vez que escribe, se le ofrece avisarle.
+      await askForPushInContext(context, ref);
       return;
     }
     final failure = ref.read(chatControllerProvider(widget.target)).sendFailure;

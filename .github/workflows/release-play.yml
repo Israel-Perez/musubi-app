@@ -91,6 +91,18 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
 
+      # HU-31: los avisos push necesitan google-services.json (ignorado en git). Sale del secreto del entorno
+      # google-play; sin el, la version saldria sin push, asi que el workflow se detiene.
+      - name: Firebase
+        env:
+          GOOGLE_SERVICES_JSON_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_B64" ]; then
+            echo "::error::Falta el secreto GOOGLE_SERVICES_JSON_B64 (docs/play/README.md, Firebase)."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON_B64" | base64 --decode > android/app/google-services.json
+
       - name: AAB ${{ steps.version.outputs.version }}
         run: flutter build appbundle --release --dart-define-from-file=config/prod.json
 
