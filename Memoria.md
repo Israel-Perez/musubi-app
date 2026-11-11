@@ -30,7 +30,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **Borrador aparte para editar** (como HU-14): editar no pisa un borrador de venta guardado.
 
 **Errores a evitar**
-- **Flutter 3.31 beta no corre la app** (pide `>=3.47.7` y Dart 3.13): se dejó `C:\Flutterlutter` en `stable` 3.47.7, como el CI. El editor puede seguir marcando `new(...)` como error hasta que recargue el SDK; manda `flutter analyze`.
+- **Flutter 3.31 beta no corre la app** (pide `>=3.47.7` y Dart 3.13): se dejó `C:\Flutter\flutter` en `stable` 3.47.7, como el CI. El editor puede seguir marcando `new(...)` como error hasta que recargue el SDK; manda `flutter analyze`.
 - **Después de elegir una opción de una hoja, `pumpAndSettle` no basta:** la app espera 240 ms antes del siguiente paso. En las pruebas: `pump(300 ms)` y luego `pumpAndSettle`.
 - **Las publicaciones de ejemplo de las capturas necesitan `category`:** sin ella, "Editar" se queda en `Vender-3` con "Elige una categoría".
 
