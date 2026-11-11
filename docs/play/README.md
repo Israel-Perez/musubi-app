@@ -43,13 +43,19 @@ Publica lo que necesitas con tu presupuesto y para cuándo lo quieres. Quien lo 
 Platica antes de comprar
 Escríbele a la otra persona en el chat, en tiempo real, para acordar el precio y el lugar de entrega. Si alguien te incomoda, puedes reportarlo o bloquearlo.
 
+Del chat al pedido
+Cuando se pongan de acuerdo, toca "Resumir acuerdo": la IA propone producto, precio, cantidad, lugar y fecha a partir de la plática, y lo que no encuentre queda marcado para que lo completes. Los dos revisan y confirman el acuerdo, y con un toque se crea el pedido. Eliges el edificio del campus donde se ven y pagas en efectivo al recibir.
+
+Guarda lo que te interesa
+Marca con el corazón los productos que te gustan y encuéntralos después en Favoritos.
+
 Sin comisiones
 Musubi no cobra comisiones ni procesa pagos: acuerdas directamente con la otra persona y entregan en un lugar público del campus.
 
 Tus datos son tuyos
 No vendemos tus datos ni usamos rastreo publicitario. Puedes pedir que borremos tu cuenta cuando quieras.
 
-Musubi es un proyecto estudiantil de la Universidad Tecnológica de Tula-Tepeji (UTTT). Por ahora está disponible para la UTTT; pronto llegarán más universidades y funciones: pedidos, apartados, calificaciones y avisos.
+Musubi es un proyecto estudiantil de la Universidad Tecnológica de Tula-Tepeji (UTTT). Por ahora está disponible para la UTTT; pronto llegarán más universidades y funciones: apartados, calificaciones y avisos.
 
 Dudas: contacto@musubiapp.com.mx
 ```
@@ -78,7 +84,7 @@ Revísalas antes de enviar. Deben describir lo que **esta** versión hace, no lo
 **Seguridad de los datos:**
 - **Cifrado en tránsito:** sí. Todo va por HTTPS a `api.musubiapp.com.mx`.
 - **Borrado de datos:** el usuario puede pedirlo, desde la URL de arriba.
-- **¿Se comparten datos con terceros?** No. AWS y MongoDB Atlas son proveedores que procesan los datos por cuenta de Musubi, y Google no cuenta eso como compartir.
+- **¿Se comparten datos con terceros?** Desde `0.7.0`, **sí**: cuando una persona toca "Resumir acuerdo", los mensajes de texto de esa conversación (sin nombres ni datos de contacto) se envían a Gemini de Google. En la capa gratuita, Google puede usarlos para mejorar sus productos, así que no cuenta como un proveedor que solo procesa por cuenta de Musubi: se declara como compartido. AWS y MongoDB Atlas sí son proveedores que procesan por cuenta de Musubi (no cuentan como compartir).
 
 Qué datos se recopilan:
 
@@ -89,9 +95,9 @@ Qué datos se recopilan:
 | Información personal → IDs de usuario | Sí (ID interno de la cuenta) | Administración de la cuenta | No |
 | Fotos y videos → Fotos | Sí (fotos de los productos publicados y foto de perfil, desde `0.4.0`) | Funcionalidad de la app | Sí (solo quien publica o quien sube su foto) |
 | Información personal → Otra información | Sí (carrera y cuatrimestre del perfil, desde `0.4.0`) | Funcionalidad de la app | Sí |
-| Actividad en la app → Otro contenido generado por el usuario | Sí (publicaciones: título, descripción y precio; desde `0.6.0` también solicitudes "Se busca", ofertas y reportes) | Funcionalidad de la app; reportes: seguridad y cumplimiento | Sí |
-| Mensajes → Otros mensajes en la app | Sí (chat entre estudiantes, desde `0.5.0`) | Funcionalidad de la app | Sí (solo quien escribe) |
-| Actividad en la app → Interacciones con la app | Sí (a quién bloqueaste, desde `0.6.0`) | Funcionalidad de la app; seguridad | Sí |
+| Actividad en la app → Otro contenido generado por el usuario | Sí (publicaciones: título, descripción y precio; desde `0.6.0` también solicitudes "Se busca", ofertas y reportes; desde `0.7.0`, pedidos y acuerdos: cantidad, lugar y fecha de entrega) | Funcionalidad de la app; reportes: seguridad y cumplimiento | Sí |
+| Mensajes → Otros mensajes en la app | Sí (chat entre estudiantes, desde `0.5.0`). **Compartido** desde `0.7.0`: con Google (Gemini) solo cuando alguien pide "Resumir acuerdo" | Funcionalidad de la app | Sí (solo quien escribe; la IA solo si alguien la pide) |
+| Actividad en la app → Interacciones con la app | Sí (a quién bloqueaste, desde `0.6.0`; favoritos, desde `0.7.0`) | Funcionalidad de la app; seguridad | Sí |
 | Ubicación, contactos, correos o SMS, información financiera, salud, archivos, calendario, audio | No | — | — |
 | Información y rendimiento de la app (fallos) | No (sin Crashlytics en esta versión) | — | — |
 
@@ -99,6 +105,7 @@ Notas:
 - La API guarda el *user agent* de cada sesión para que el usuario la reconozca. No es un identificador del dispositivo.
 - **`0.4.0` (HU-04) agrega la foto de perfil y la carrera:** actualiza el formulario en Play Console antes de enviar esa versión.
 - **`0.6.0` (lote de HU-09 a HU-17) ya recopila mensajes del chat, solicitudes, ofertas, reportes y bloqueos:** actualiza el formulario en Play Console (filas de arriba) antes de enviar esa versión.
+- **`0.7.0` (lote de HU-14, HU-53, HU-23 y HU-32/33/34) comparte mensajes con Google (Gemini) y recopila pedidos, acuerdos y favoritos:** actualiza en Play Console la pregunta "¿Se comparten datos?" y las filas de arriba antes de enviar esa versión.
 - **Cuando lleguen** avisos push (HU-31) o Crashlytics, **hay que actualizar este formulario** antes de subir esa versión.
 
 ### Acceso a la app: texto para Play (en inglés)
