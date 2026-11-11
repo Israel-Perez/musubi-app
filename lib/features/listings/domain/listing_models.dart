@@ -125,8 +125,48 @@ class PriceRange {
   final int highCents;
 }
 
-/// Estado de una publicacion propia ("Mis productos").
-enum ListingStatus { active, soldOut, hidden }
+/// Estado de una publicacion propia ("Mis productos"). [sold]: "Marcar como
+/// vendido" (HU-08); no vuelve a la vitrina.
+enum ListingStatus { active, soldOut, hidden, sold }
+
+/// Pestanas de `Mis-productos` (HU-08) y su valor en `?tab=`.
+enum MyProductsTab {
+  active('active'),
+  sold('sold'),
+  soldOut('soldOut');
+
+  new(this.apiValue);
+
+  final String apiValue;
+}
+
+/// Conteos de las pestanas: "Activos (n)", "Vendidos (n)" y "Agotados (n)".
+@immutable
+class MyListingsCounts {
+  const new({this.active = 0, this.sold = 0, this.soldOut = 0});
+
+  final int active;
+  final int sold;
+  final int soldOut;
+}
+
+/// Una pagina de `Mis-productos` (`MyProductPage` de musubi-api, HU-08).
+@immutable
+class MyListingsPage {
+  const new({
+    required this.items,
+    required this.counts,
+    this.nextCursor,
+    this.total = 0,
+  });
+
+  final List<OwnListing> items;
+  final MyListingsCounts counts;
+
+  /// Cursor de la siguiente pagina; `null` si no hay mas.
+  final String? nextCursor;
+  final int total;
+}
 
 /// Publicacion propia con su estado y lo que hace falta para editarla
 /// (HU-07).
@@ -138,6 +178,7 @@ class OwnListing {
     this.description = '',
     this.condition = ProductCondition.used,
     this.usedDetail,
+    this.soldAt,
   });
 
   final ProductSummary product;
@@ -150,6 +191,12 @@ class OwnListing {
   /// Detalle de un usado, o `null` en uno nuevo.
   final UsedDetail? usedDetail;
 
+  /// Cuando se marco como vendida (HU-08).
+  final DateTime? soldAt;
+
   /// Pausada por su vendedor: sigue en "Activos", fuera de la vitrina.
   bool get paused => status == ListingStatus.hidden;
+
+  /// Vendida (HU-08): no se edita, no se pausa ni se reactiva.
+  bool get sold => status == ListingStatus.sold;
 }

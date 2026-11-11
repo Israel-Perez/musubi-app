@@ -52,11 +52,14 @@ Future<bool> saveSellEdit(BuildContext context, WidgetRef ref) async {
     );
     // Ya no existe (la eliminaron en otro telefono): la lista se refresca.
     if (failure.code == 'listings.product_not_found') {
-      container.invalidate(myListingsProvider);
+      container
+        ..invalidate(myListingsTabProvider)
+        ..invalidate(myListingsProvider);
     }
     return false;
   }
   container
+    ..invalidate(myListingsTabProvider)
     ..invalidate(myListingsProvider)
     ..invalidate(homeFeedProvider);
   if (context.mounted) leaveSellEdit(context);

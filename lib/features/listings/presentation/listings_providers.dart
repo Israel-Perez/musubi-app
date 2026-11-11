@@ -36,7 +36,15 @@ final FutureProviderFamily<PriceRange?, String> priceRangeProvider =
       retry: (_, _) => null,
     );
 
-/// "Mis productos".
+/// Una pestana de `Mis-productos` con los conteos de las tres (HU-08).
+final FutureProviderFamily<MyListingsPage, MyProductsTab>
+myListingsTabProvider = FutureProvider.autoDispose
+    .family<MyListingsPage, MyProductsTab>(
+      (ref, tab) => ref.watch(listingsRepositoryProvider).minePage(tab),
+      retry: (_, _) => null,
+    );
+
+/// Todas mis publicaciones (Perfil y "Yo tengo este producto").
 final FutureProvider<List<OwnListing>> myListingsProvider =
     FutureProvider.autoDispose<List<OwnListing>>(
       (ref) => ref.watch(listingsRepositoryProvider).mine(),

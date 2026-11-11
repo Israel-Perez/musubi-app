@@ -13,8 +13,15 @@ abstract interface class ListingsRepository {
   /// Publica y devuelve la tarjeta tal como se vera en la vitrina.
   Future<ProductSummary> publish(NewListing listing);
 
-  /// Las publicaciones del usuario ("Ver mis productos").
+  /// Las publicaciones del usuario ("Ver mis productos"), todas menos las
+  /// quitadas.
   Future<List<OwnListing>> mine();
+
+  /// Una pestana de `Mis-productos` con los conteos de las tres (HU-08).
+  Future<MyListingsPage> minePage(MyProductsTab tab, {String? cursor});
+
+  /// "Marcar como vendido" (HU-08): sale de la vitrina y pasa a "Vendidos".
+  Future<OwnListing> markSold(String id);
 
   /// Rango de precios de la categoria, o `null` si aun no hay suficientes
   /// publicaciones para que sea honesto.

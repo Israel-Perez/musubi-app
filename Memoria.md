@@ -14,10 +14,29 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **En Google Play:** `0.7.0+9` enviada a la prueba cerrada el 11-Nov-2026 (HU-14, favoritos HU-53, confirmar la compra HU-23 y el acuerdo con IA HU-32/33/34), con la API `0.5.0-alpha.17` en producción. El siguiente lote (`0.8.0`) trae los avisos push.
   - Notas en `docs/play/whatsnew/whatsnew-es-419`; descripción y "Seguridad de los datos" en `docs/play/README.md` (**se pegan a mano en Play Console**). Desde `0.7.0` se declara que los mensajes se comparten con Google (Gemini) cuando alguien pide "Resumir acuerdo".
 - **API en producción:** `0.5.0-alpha.17`, esquema 16 (`infra-up` del 11-Nov-2026). La matriz está en `docs/versionado.md`.
-- **HU-31 (push):** en `feature/SCRUM-49-avisos-push`, con la API `0.5.0-alpha.18`. Falta el proyecto de Firebase (la usuaria).
+- **HU-31 (push):** en `main` (#52), con la API `0.5.0-alpha.18`. Proyecto de Firebase `musubi-2a78e` listo y secreto `GOOGLE_SERVICES_JSON_B64` en el repo (11-Nov-2026).
 - **Siguiente:** HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
-- **HU-07 (Kazumi):** API y app en `main` (#50). HU-08 (app) va en un PR apilado encima.
+- **HU-07 (Kazumi):** API y app en `main` (#50).
+- **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T39 — Consultar el estado de mis productos (10-Nov-2026, SCRUM-25, HU-08)
+
+**Qué se hizo**
+- `Mis-productos` pide cada pestaña a la API (`?tab=`) con sus conteos, y "Ver más" usa el cursor.
+- "Marcar como vendido" con el diálogo de la maqueta y "¡Felicidades por tu venta!".
+- "Vendidos" con la tarjeta "N ventas · $total" y filas "$precio · 28 sep · Vendido".
+- Una vendida solo ofrece "Ver publicación" y "Eliminar".
+- `ListingStatus.sold`, `OwnListing.soldAt`, `minePage`, `markSold`, `ApiPaths.productSold` y `dayMonth`.
+- Pruebas: +3 del repositorio y +4 de pantalla; 531 en total. Capturas: `mis-productos-vendidos` y `marcar-vendido`.
+
+**Decisiones (con su porqué)**
+- **Los conteos los da la API:** antes la app filtraba una sola lista y "Vendidos" siempre decía 0.
+- **Se confirma antes de vender:** no se deshace, y la maqueta ya tiene ese diálogo en `Producto`.
+
+**Errores a evitar**
+- **Un estado nuevo de la API se lee como su propio estado:** el `switch` tomaba cualquier valor desconocido como activo, y una vendida habría salido en "Yo tengo este producto" y en el Perfil.
+- **`shortDate` incluye el día de la semana** ("mar 10 nov"); para "30 sep" está `dayMonth`.
 
 ## T38 — Avisos push (11-Nov-2026, SCRUM-49, HU-31)
 
@@ -36,6 +55,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 **Errores a evitar**
 - **`currentConfiguration.uri` no es la pantalla de arriba si se abrió con `push`:** usa `currentPath(router)` (lee el `ImperativeRouteMatch`).
 - **El snack de la raíz se pinta en el `Scaffold` del shell:** en las pruebas, un toque sobre su acción cae en el `Scaffold` de `Inicio`; se prueba invocando su acción.
+
 ## T37 — Editar o eliminar mis publicaciones (10-Nov-2026, SCRUM-24, HU-07)
 
 **Qué se hizo**
