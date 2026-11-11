@@ -4,9 +4,9 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 ## Estado actual (10-Nov-2026)
 
-- **En Google Play:** `0.6.0+8` enviada a la prueba cerrada el 09-Nov-2026 (SCRUM-87), con el lote de búsqueda (HU-09), filtros y orden (HU-10), reportar y bloquear + foto en el chat (HU-28 y HU-57), solicitudes de compra (HU-13), el tablero "Se busca" (HU-15), "Yo tengo este producto" (HU-16) y elegir ofertas (HU-17). La anterior era `0.5.1+7`.
-  - Notas de la versión en `docs/play/whatsnew/whatsnew-es-419`; la descripción completa nueva y "Seguridad de los datos" (mensajes, solicitudes, ofertas, reportes y bloqueos) están en `docs/play/README.md` y **se pegan a mano en Play Console**: el workflow solo sube el AAB y las notas.
-  - El siguiente lote vuelve a subir el `versionCode` (`0.6.0+8` ya está usada).
+- **En Google Play:** `0.6.0+8` en la prueba cerrada (09-Nov-2026). **Siguiente lote: `0.7.0+9`** (rama `release/SCRUM-87-app-0.7.0`): HU-14, favoritos (HU-53), confirmar la compra (HU-23) y el acuerdo con IA (HU-32/33/34).
+  - Notas en `docs/play/whatsnew/whatsnew-es-419`; descripción y "Seguridad de los datos" en `docs/play/README.md` (**se pegan a mano en Play Console**). Desde `0.7.0` se declara que los mensajes se comparten con Google (Gemini) cuando alguien pide "Resumir acuerdo".
+  - Antes de publicar: `infra-up` con la API `0.5.0-alpha.17` (esquema 16).
 - **API en producción:** `0.5.0-alpha.11`, esquema 12 (`infra-up` del 09-Nov-2026, antes de la versión de la app). La matriz está en `docs/versionado.md`.
 - **En `main`, sin publicar (siguiente lote):** editar, cerrar y cancelar la solicitud (HU-14). Necesita la API `0.5.0-alpha.13`.
 - **HU-23 (pedidos):** en `main`, con la API `0.5.0-alpha.15`. Se publica después de desplegar esa API.
