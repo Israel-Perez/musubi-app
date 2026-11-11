@@ -32,6 +32,10 @@ abstract interface class ChatRealtime {
   /// que llegan a mis otros dispositivos).
   Stream<ChatMessage> get messages;
 
+  /// El id de cada conversacion cuyo acuerdo con IA cambio (`agreementChanged`,
+  /// HU-34): se pidio, se corrigio, se confirmo, se descarto o ya es pedido.
+  Stream<String> get agreementChanges;
+
   /// Conecta (y reconecta solo) mientras haya sesion.
   void start();
 

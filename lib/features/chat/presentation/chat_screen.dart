@@ -21,6 +21,9 @@ import 'package:musubi_app/features/chat/domain/chat_models.dart';
 import 'package:musubi_app/features/chat/presentation/chat_controller.dart';
 import 'package:musubi_app/features/chat/presentation/chat_format.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
+import 'package:musubi_app/features/genai/domain/agreement_models.dart';
+import 'package:musubi_app/features/genai/presentation/agreement_providers.dart';
+import 'package:musubi_app/features/genai/presentation/agreement_sheet.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
@@ -38,9 +41,10 @@ import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 /// NOTE (HU-05): "Ver perfil" y "En linea" / "Activa hace 5 min".
 /// NOTE (HU-31): "Silenciar conversación" (sin avisos push no hay que callar).
 /// NOTE (HU-27): la calificacion de la otra persona.
-/// "Resumir acuerdo" (HU-23): quien compra abre el resumen sin IA y crea el
-/// pedido; con un pedido abierto, el aviso lo muestra y lo abre.
-/// NOTE (HU-32): la propuesta del acuerdo con IA.
+/// "Resumir acuerdo" (HU-32/33/34): cualquiera de los dos le pide a la IA la
+/// propuesta (la primera vez, con el aviso de RN-40); con un acuerdo vigente,
+/// el aviso lo muestra y lo abre, y con un pedido abierto, el pedido (HU-23).
+/// Si la IA no esta disponible, quien compra llena el resumen a mano (RNF-15).
 class ChatScreen extends ConsumerStatefulWidget {
   const new({required this.target, super.key, this.draft});
 
@@ -86,21 +90,47 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     tone: SnackTone.info,
   );
 
-  /// "Resumir acuerdo": quien compra abre el resumen (HU-23); quien vende
-  /// espera el pedido.
-  void _summarize(Conversation? conversation) {
+  /// "Resumir acuerdo": abre el acuerdo vigente o le pide uno a la IA.
+  Future<void> _summarize(Conversation? conversation) async {
     if (conversation == null) return;
-    if (conversation.role == ChatRole.buyer) {
-      unawaited(showOrderSummary(context, conversation: conversation));
+    final existing = ref.read(agreementProvider(conversation.id)).value;
+    if (existing != null) {
+      await showAgreementSheet(
+        context,
+        conversation: conversation,
+        agreement: existing,
+      );
       return;
     }
+    // RN-40: la primera vez se explica que la IA leera el chat.
+    final notices = ref.read(aiNoticeStoreProvider);
+    if (!await notices.seen()) {
+      if (!mounted) return;
+      final go = await confirmAiNotice(
+        context,
+        counterpart: conversation.counterpart.firstName,
+      );
+      if (!go) return;
+      await notices.markSeen();
+    }
+    if (!mounted) return;
+    final outcome = await showAgreementSheet(
+      context,
+      conversation: conversation,
+      request: true,
+    );
+    if (outcome != AgreementOutcome.unavailable || !mounted) return;
+    final buyer = conversation.role == ChatRole.buyer;
     showMusubiSnack(
       ScaffoldMessenger.of(context),
-      'El pedido lo crea quien compra. Cuando '
-      '${conversation.counterpart.firstName} lo haga, lo verás aquí.',
+      buyer
+          ? 'La IA no está disponible ahora. Llena el resumen a mano.'
+          : 'La IA no está disponible ahora. Inténtalo más tarde.',
       icon: MusubiIcons.info,
       tone: SnackTone.info,
     );
+    // RNF-15: el pedido se puede crear igual, sin IA (HU-23).
+    if (buyer) await showOrderSummary(context, conversation: conversation);
   }
 
   Future<void> _send() async {
@@ -229,6 +259,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final openOrder = conversation == null
         ? null
         : ref.watch(openOrderProvider(conversation.id)).value;
+    final agreement = conversation == null
+        ? null
+        : ref.watch(agreementProvider(conversation.id)).value;
+    // Un pedido que salio del acuerdo en otro dispositivo (HU-34).
+    ref.listen(chatAgreementChangesProvider, (_, next) {
+      final id = conversation?.id;
+      if (id != null && next.value == id) {
+        ref.invalidate(openOrderProvider(id));
+      }
+    });
 
     return Scaffold(
       backgroundColor: c.background,
@@ -273,7 +313,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         }
                       },
                 order: openOrder,
-                onSummarize: () => _summarize(conversation),
+                agreement: agreement,
+                onSummarize: () => unawaited(_summarize(conversation)),
                 onOpenOrder: (id) =>
                     unawaited(context.push(AppRoutes.order(id))),
               ),
@@ -433,6 +474,7 @@ class _ContextCard extends StatelessWidget {
     required this.onSummarize,
     required this.onOpenOrder,
     this.order,
+    this.agreement,
   });
 
   final Conversation? conversation;
@@ -445,6 +487,10 @@ class _ContextCard extends StatelessWidget {
   /// El pedido abierto de la conversacion (HU-23): el aviso lo muestra.
   final Order? order;
   final ValueChanged<String> onOpenOrder;
+
+  /// El acuerdo con IA vigente (HU-34): el aviso lo muestra y "Ver acuerdo"
+  /// lo abre.
+  final Agreement? agreement;
 
   @override
   Widget build(BuildContext context) {
@@ -606,18 +652,25 @@ class _ContextCard extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      switch (order) {
-                        Order(:final number, :final status) =>
+                      switch ((order, agreement)) {
+                        (Order(:final number, :final status), _) =>
                           'Pedido #$number · ${status.label}',
-                        null => '¿Ya se pusieron de acuerdo?',
+                        (null, final Agreement a) when a.confirmed =>
+                          'Acuerdo confirmado · Falta crear el pedido',
+                        (null, final Agreement a) =>
+                          'Acuerdo · Esperando confirmación '
+                              '(${a.confirmations} de 2)',
+                        _ => '¿Ya se pusieron de acuerdo?',
                       },
                       key: const Key('chat-order-status'),
                       style: MusubiType.style(
                         12.5,
-                        weight: order == null
+                        weight: order == null && agreement == null
                             ? FontWeight.w600
                             : FontWeight.w700,
-                        color: order == null ? c.textSecondary : c.textPrimary,
+                        color: order == null && agreement == null
+                            ? c.textSecondary
+                            : c.textPrimary,
                       ),
                     ),
                   ),
@@ -649,6 +702,46 @@ class _ContextCard extends StatelessWidget {
                                 ),
                                 Text(
                                   'Ver pedido',
+                                  style: MusubiType.style(
+                                    13.5,
+                                    weight: FontWeight.w700,
+                                    color: c.onBrand,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (agreement != null)
+                    Pressable(
+                      key: const Key('chat-open-agreement'),
+                      onTap: onSummarize,
+                      semanticLabel: 'Ver acuerdo',
+                      builder: (context, _) => SizedBox(
+                        height: MusubiSizes.minTouch,
+                        child: Center(
+                          child: Container(
+                            height: 36,
+                            padding: const EdgeInsets.only(left: 12, right: 14),
+                            decoration: BoxDecoration(
+                              color: c.inverse,
+                              borderRadius: BorderRadius.circular(
+                                MusubiSizes.radiusChip,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 7,
+                              children: [
+                                MusubiIcon(
+                                  MusubiIcons.handshake,
+                                  size: 16,
+                                  color: c.onBrand,
+                                ),
+                                Text(
+                                  'Ver acuerdo',
                                   style: MusubiType.style(
                                     13.5,
                                     weight: FontWeight.w700,
@@ -755,7 +848,11 @@ class _Log extends StatelessWidget {
           _Stamp(text: messageStamp(message.sentAt.toLocal(), now), mine: mine),
         );
       }
-      items.add(_Bubble(message: message, mine: mine));
+      items.add(
+        message.notice
+            ? _NoticeLine(text: message.text)
+            : _Bubble(message: message, mine: mine),
+      );
     }
     items.add(
       _Opener(
@@ -814,6 +911,42 @@ class _Opener extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Un aviso de la app dentro del chat ("Ana pidió un resumen con IA", RN-40).
+class _NoticeLine extends StatelessWidget {
+  const new({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          key: const Key('chat-notice'),
+          mainAxisSize: MainAxisSize.min,
+          spacing: 6,
+          children: [
+            MusubiIcon(MusubiIcons.sparkle, size: 13, color: c.textSecondary),
+            Flexible(
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                style: MusubiType.style(
+                  12,
+                  weight: FontWeight.w700,
+                  color: c.textSecondary,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

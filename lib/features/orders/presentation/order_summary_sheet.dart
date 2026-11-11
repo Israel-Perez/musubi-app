@@ -29,8 +29,9 @@ import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.
 // "Resumen del acuerdo" sin IA (HU-23, decision de la usuaria del
 // 10-Nov-2026): la hoja de `Acuerdo-esperando` con el producto y el precio de
 // la conversacion. Quien compra elige cantidad, entrega y fecha, y "Crear
-// pedido" lo deja Pendiente. NOTE (HU-34): la propuesta de la IA y la
-// confirmacion de los dos llegan encima de esta misma hoja.
+// pedido" lo deja Pendiente. Sus filas y paneles (SummaryField, QuantityPanel,
+// PlacePanel y WhenPanel) los reutiliza el acuerdo con IA (HU-34). Si la IA no
+// esta disponible, "Resumir acuerdo" abre esta hoja (RNF-15).
 
 /// Primera y ultima hora de entrega del campus (la API valida lo mismo).
 const orderFirstHour = 7;
@@ -96,7 +97,7 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
   Future<void> _editQuantity(int max) async {
     final picked = await showMusubiPanel<int>(
       context,
-      builder: (context) => _QuantityPanel(initial: _quantity, max: max),
+      builder: (context) => QuantityPanel(initial: _quantity, max: max),
     );
     if (picked != null && mounted) setState(() => _quantity = picked);
   }
@@ -104,7 +105,7 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
   Future<void> _editPlace() async {
     final picked = await showMusubiPanel<(MeetingPoint, String)>(
       context,
-      builder: (context) => _PlacePanel(point: _point, detail: _detail),
+      builder: (context) => PlacePanel(point: _point, detail: _detail),
     );
     if (picked == null || !mounted) return;
     final (point, detail) = picked;
@@ -118,7 +119,7 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
     final now = ref.read(clockProvider)().toLocal();
     final picked = await showMusubiPanel<DateTime>(
       context,
-      builder: (context) => _WhenPanel(now: now, initial: _at),
+      builder: (context) => WhenPanel(now: now, initial: _at),
     );
     if (picked != null && mounted) setState(() => _at = picked);
   }
@@ -296,7 +297,7 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _Field(
+                          SummaryField(
                             label: 'Producto',
                             value: context0.title,
                             divider: true,
@@ -318,7 +319,7 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
                                           right: BorderSide(color: c.divider),
                                         ),
                                       ),
-                                      child: _Field(
+                                      child: SummaryField(
                                         label: 'Precio acordado',
                                         value: formatPrice(
                                           context0.priceCents ?? 0,
@@ -329,7 +330,7 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
                                     ),
                                   ),
                                   Expanded(
-                                    child: _Field(
+                                    child: SummaryField(
                                       key: const Key('order-quantity'),
                                       label: 'Cantidad',
                                       value: '$_quantity',
@@ -345,7 +346,7 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
                               ),
                             ),
                           ),
-                          _Field(
+                          SummaryField(
                             key: const Key('order-place'),
                             label: 'Entrega',
                             value: point == null
@@ -356,7 +357,7 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
                             editLabel: 'Editar entrega',
                             onEdit: () => unawaited(_editPlace()),
                           ),
-                          _Field(
+                          SummaryField(
                             key: const Key('order-when'),
                             label: 'Fecha',
                             value: at == null
@@ -449,9 +450,10 @@ class _OrderSummarySheetState extends ConsumerState<OrderSummarySheet> {
   }
 }
 
-/// Una fila del resumen: etiqueta y valor, con el lapiz para editarlo. Sin
-/// valor es "No identificado" en ambar con "Agregar" (`Acuerdo-esperando`).
-class _Field extends StatelessWidget {
+/// Una fila del resumen (tambien la del acuerdo con IA): etiqueta y valor,
+/// con el lapiz para editarlo. Sin valor es "No identificado" en ambar con
+/// "Agregar" (`Acuerdo-esperando`).
+class SummaryField extends StatelessWidget {
   const new({
     required this.label,
     required this.value,
@@ -462,6 +464,7 @@ class _Field extends StatelessWidget {
     this.divider = false,
     this.editLabel,
     this.onEdit,
+    this.badge,
   });
 
   final String label;
@@ -478,6 +481,9 @@ class _Field extends StatelessWidget {
   final bool divider;
   final String? editLabel;
   final VoidCallback? onEdit;
+
+  /// Etiqueta verde junto al valor ("Agregada", `Acuerdo-confirmado`).
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -533,13 +539,38 @@ class _Field extends StatelessWidget {
                     ],
                   )
                 else
-                  Text(
-                    value!,
-                    style: MusubiType.style(
-                      big ? 17 : 15.5,
-                      weight: big ? FontWeight.w800 : FontWeight.w700,
-                      color: c.textPrimary,
-                    ),
+                  Wrap(
+                    spacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        value!,
+                        style: MusubiType.style(
+                          big ? 17 : 15.5,
+                          weight: big ? FontWeight.w800 : FontWeight.w700,
+                          color: c.textPrimary,
+                        ),
+                      ),
+                      if (badge case final badge?)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: c.successSoft,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            badge,
+                            style: MusubiType.style(
+                              11,
+                              weight: FontWeight.w800,
+                              color: c.successText,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 if (sub case final sub?)
                   Text(
@@ -606,17 +637,17 @@ class _Field extends StatelessWidget {
 }
 
 /// "Cantidad": quitar y agregar uno, de 1 a lo disponible.
-class _QuantityPanel extends StatefulWidget {
-  const new({required this.initial, required this.max});
+class QuantityPanel extends StatefulWidget {
+  const new({required this.initial, required this.max, super.key});
 
   final int initial;
   final int max;
 
   @override
-  State<_QuantityPanel> createState() => _QuantityPanelState();
+  State<QuantityPanel> createState() => _QuantityPanelState();
 }
 
-class _QuantityPanelState extends State<_QuantityPanel> {
+class _QuantityPanelState extends State<QuantityPanel> {
   late int _quantity = widget.initial;
 
   @override
@@ -661,17 +692,17 @@ class _QuantityPanelState extends State<_QuantityPanel> {
 
 /// "Entrega": un edificio del campus (el de tu carrera primero) y un detalle
 /// libre ("Planta baja, junto a la entrada").
-class _PlacePanel extends ConsumerStatefulWidget {
-  const new({required this.point, required this.detail});
+class PlacePanel extends ConsumerStatefulWidget {
+  const new({required this.point, required this.detail, super.key});
 
   final MeetingPoint? point;
   final String detail;
 
   @override
-  ConsumerState<_PlacePanel> createState() => _PlacePanelState();
+  ConsumerState<PlacePanel> createState() => _PlacePanelState();
 }
 
-class _PlacePanelState extends ConsumerState<_PlacePanel> {
+class _PlacePanelState extends ConsumerState<PlacePanel> {
   late MeetingPoint? _point = widget.point;
   late final _detail = TextEditingController(text: widget.detail);
 
@@ -768,17 +799,17 @@ class _PlacePanelState extends ConsumerState<_PlacePanel> {
 
 /// "Fecha": el dia (hoy y los 13 siguientes) y la hora, de las 7:00 a las
 /// 21:00 del campus y con al menos 30 minutos de anticipacion.
-class _WhenPanel extends StatefulWidget {
-  const new({required this.now, required this.initial});
+class WhenPanel extends StatefulWidget {
+  const new({required this.now, required this.initial, super.key});
 
   final DateTime now;
   final DateTime? initial;
 
   @override
-  State<_WhenPanel> createState() => _WhenPanelState();
+  State<WhenPanel> createState() => _WhenPanelState();
 }
 
-class _WhenPanelState extends State<_WhenPanel> {
+class _WhenPanelState extends State<WhenPanel> {
   late DateTime? _day = widget.initial == null
       ? null
       : DateUtils.dateOnly(widget.initial!);

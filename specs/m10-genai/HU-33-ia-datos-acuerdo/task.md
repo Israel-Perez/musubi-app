@@ -1,17 +1,7 @@
-# HU-33 — La IA identifica los datos del acuerdo (tareas)
+# task.md — tareas de la app (HU-32/33/34)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
-
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-33)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
-
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
-
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+- **T1 · Chat:** `ChatMessage.notice`, `agreementChanges` y el aviso. ✅
+- **T2 · Datos:** `HttpAgreementRepository` y `createFromAgreement`. ✅
+- **T3 · Hoja:** `agreement_sheet.dart`, aviso de la primera vez y respaldo sin IA. ✅
+- **T4 · Pruebas y capturas:** 26 pruebas nuevas; escenas `acuerdo-esperando` y `acuerdo-confirmado`. ✅
+- **T5 · Documentos:** specs, trazabilidad, aviso de privacidad, `AGENTS.md` y `Memoria.md`. ✅

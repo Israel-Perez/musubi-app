@@ -152,4 +152,5 @@ ChatMessage messageFromJson(Map<String, dynamic> json) => ChatMessage(
   senderId: json['senderId'] as String,
   text: json['text'] as String,
   sentAt: DateTime.parse(json['sentAt'] as String).toUtc(),
+  notice: json['kind'] == 'notice',
 );
