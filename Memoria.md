@@ -12,10 +12,29 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-24 (aceptar y actualizar pedidos):** app en `feature/SCRUM-43-aceptar-actualizar-pedidos`, con la API `0.5.0-alpha.20` (musubi-api #72). Ver T41.
 - **HU-05 (perfil del vendedor):** fila compartida `0.5.0-alpha.22` de musubi-api (`alpha.21` quedó para HU-50, fusionada antes) en `docs/versionado.md` (esquema 19, el de HU-24/#72; la API se rebasa antes del merge); la app está en `feature/SCRUM-34-perfil-publico` con T2–T6 hechos, versión `0.8.0+10` (se publica en el siguiente lote) y spec en “Borrador con evidencia” (ver T43); faltan el revisor y el PR.
 - **Push verificado en un celular real (11-Nov-2026)** con la llave nueva de Firebase. El fallo anterior era de la API: llave en otra región, guardada en varias líneas y revocada.
-- **Siguiente:** desplegar `alpha.20` y probar HU-24 en el celular; luego HU-25. Sprint 4: 9 al 20 de noviembre.
+- **HU-25 (mis pedidos):** app en `feature/SCRUM-44-mis-pedidos` con la API `0.5.0-alpha.23` (fila compartida). Ver T44.
+- **Siguiente:** desplegar la API (`alpha.20` a `alpha.23` juntas) y probar HU-24, HU-50, HU-05 y HU-25 en el celular. Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** API y app en `main` (#50).
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T44 — Consultar mis pedidos (12-Nov-2026, SCRUM-44, HU-25)
+
+**Qué se hizo**
+- "Mis pedidos" de `Perfil` (maqueta): mis tres compras más nuevas con foto, línea gris, píldora del estado y "Ver todos" (`RecentOrdersSection`).
+- `MyOrdersScreen` (`/mis-pedidos`): pestañas Activos, Completados y Cancelados con sus números, "Ver más", vacíos y error. Tocar un pedido abre "Tu pedido".
+- `OrderRepository.mine` (`GET /api/v1/orders/mine`), `MyOrdersTab`/`MyOrdersCounts`/`MyOrdersPage` y `Order.updatedAt`.
+- Pruebas: +16 (624 en total). Capturas: `perfil` (con los pedidos de la maqueta) y `mis-pedidos`.
+
+**Decisiones (con su porqué)** (usuaria, 12-Nov-2026)
+- **Solo mis compras:** Jira dice "como comprador"; las ventas son de HU-26 (los `NOTE` de "Vendidos" pasaron a HU-26).
+- **Pestañas por estado** en "Ver todos": la maqueta no tiene esa pantalla; se arma con las pestañas de `Mis-productos`.
+- **Cancelado en gris con `circle-x`:** la maqueta no tiene esa píldora.
+
+**Errores a evitar**
+- `OverflowBoxFit` no existe en esta versión de Flutter, y un `OverflowBox` dentro de un `Row` recibe ancho infinito. Para un enlace de 44 sobre un renglón de 24, usar un `Stack` con el enlace en `Positioned`, dentro de los límites del `Stack` para que reciba el toque.
+- Un `ListView` construye las filas de forma diferida: en una prueba no se cuentan 20 filas a la vez; se usa `scrollUntilVisible`.
+- Todo harness que abra `Perfil` necesita `orderRepositoryProvider` falso (ya está en `ProfileHarness`).
 
 ## T42 — Manejar la cantidad disponible (12-Nov-2026, SCRUM-67, HU-50)
 

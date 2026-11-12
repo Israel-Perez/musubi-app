@@ -163,6 +163,7 @@ class Order {
     this.buyerConfirmed = false,
     this.sellerConfirmed = false,
     this.cancellation,
+    this.updatedAt,
   });
 
   final String id;
@@ -202,6 +203,9 @@ class Order {
   /// Quien cancelo y por que, o `null` (HU-24).
   final OrderCancellation? cancellation;
 
+  /// Ultimo cambio (UTC): cuando se completo o se cancelo (HU-25).
+  final DateTime? updatedAt;
+
   /// Quien mira ya confirmo su lado de la entrega.
   bool get iConfirmed => isBuyer ? buyerConfirmed : sellerConfirmed;
 
@@ -233,7 +237,62 @@ class Order {
     buyerConfirmed: buyerConfirmed ?? this.buyerConfirmed,
     sellerConfirmed: sellerConfirmed ?? this.sellerConfirmed,
     cancellation: cancellation ?? this.cancellation,
+    updatedAt: updatedAt,
   );
+}
+
+/// Pestanas de "Mis pedidos" (HU-25, decision de la usuaria del 12-Nov-2026).
+enum MyOrdersTab {
+  /// Pendientes y confirmados.
+  active('active', 'Activos'),
+  completed('completed', 'Completados'),
+  cancelled('cancelled', 'Cancelados');
+
+  new(this.code, this.label);
+
+  /// Valor de la API (`?tab=`).
+  final String code;
+
+  /// Texto de la pestana.
+  final String label;
+}
+
+/// Los numeros de las tres pestanas de "Mis pedidos".
+@immutable
+class MyOrdersCounts {
+  const new({this.active = 0, this.completed = 0, this.cancelled = 0});
+
+  final int active;
+  final int completed;
+  final int cancelled;
+
+  /// El numero de una pestana.
+  int of(MyOrdersTab tab) => switch (tab) {
+    MyOrdersTab.active => active,
+    MyOrdersTab.completed => completed,
+    MyOrdersTab.cancelled => cancelled,
+  };
+}
+
+/// Una pagina de "Mis pedidos" (`GET /api/v1/orders/mine`): mis compras, del
+/// mas nuevo al mas viejo.
+@immutable
+class MyOrdersPage {
+  const new({
+    this.items = const [],
+    this.nextCursor,
+    this.total = 0,
+    this.counts = const MyOrdersCounts(),
+  });
+
+  final List<Order> items;
+
+  /// Cursor de la pagina siguiente, o `null` si no hay mas.
+  final String? nextCursor;
+
+  /// Cuantos hay en la pestana (sin pestana, todos).
+  final int total;
+  final MyOrdersCounts counts;
 }
 
 /// "Crear pedido" desde el resumen del chat.

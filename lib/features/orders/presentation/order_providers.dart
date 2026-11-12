@@ -44,3 +44,19 @@ final FutureProviderFamily<Order, String> orderProvider = FutureProvider
       (ref, id) => ref.watch(orderRepositoryProvider).get(id),
       retry: (_, _) => null,
     );
+
+/// "Mis pedidos" de `Perfil` (HU-25): mis tres compras mas nuevas. Se recarga
+/// con `ref.invalidate(recentOrdersProvider)`.
+final FutureProvider<MyOrdersPage> recentOrdersProvider =
+    FutureProvider.autoDispose<MyOrdersPage>(
+      (ref) => ref.watch(orderRepositoryProvider).mine(limit: 3),
+      retry: (_, _) => null,
+    );
+
+/// La primera pagina de una pestana de "Mis pedidos" (HU-25); "Ver más" pide
+/// las siguientes con el repositorio.
+final FutureProviderFamily<MyOrdersPage, MyOrdersTab> myOrdersProvider =
+    FutureProvider.autoDispose.family<MyOrdersPage, MyOrdersTab>(
+      (ref, tab) => ref.watch(orderRepositoryProvider).mine(tab: tab),
+      retry: (_, _) => null,
+    );

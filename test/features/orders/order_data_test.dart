@@ -309,4 +309,79 @@ void main() {
       ),
     );
   });
+
+  group('Mis pedidos (HU-25)', () {
+    test('pide la pestana, el cursor y el limite, y lee la pagina', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'items': [
+            orderJson(status: 'completed'),
+            orderJson(status: 'cancelled'),
+          ],
+          'nextCursor': '6716a00000000000000000a1',
+          'total': 7,
+          'counts': {'active': 2, 'completed': 7, 'cancelled': 1},
+        }),
+      );
+
+      final page = await repository.mine(
+        tab: MyOrdersTab.completed,
+        cursor: 'abc',
+        limit: 2,
+      );
+
+      expect(adapter.requests.single.path, ApiPaths.myOrders);
+      expect(adapter.requests.single.queryParameters, {
+        'tab': 'completed',
+        'cursor': 'abc',
+        'limit': 2,
+      });
+      expect(page.items.map((o) => o.status), [
+        OrderStatus.completed,
+        OrderStatus.cancelled,
+      ]);
+      expect(page.items.first.updatedAt, DateTime.utc(2026, 11, 10, 18, 5));
+      expect(page.nextCursor, '6716a00000000000000000a1');
+      expect(page.total, 7);
+      expect(
+        (page.counts.active, page.counts.completed, page.counts.cancelled),
+        (2, 7, 1),
+      );
+      expect(page.counts.of(MyOrdersTab.completed), 7);
+    });
+
+    test('sin pestana no manda tab (la seccion de Perfil)', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'items': <Object?>[],
+          'nextCursor': null,
+          'total': 0,
+          'counts': {'active': 0, 'completed': 0, 'cancelled': 0},
+        }),
+      );
+
+      final page = await repository.mine(limit: 3);
+
+      expect(adapter.requests.single.queryParameters, {'limit': 3});
+      expect(page.items, isEmpty);
+      expect(page.nextCursor, isNull);
+    });
+
+    test('una pestana que no existe llega como ApiFailure', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'code': 'orders.invalid_tab',
+          'title': 'No pudimos cargar esa lista. Actualiza la pantalla.',
+          'status': 400,
+        }, status: 400),
+      );
+
+      await expectLater(
+        repository.mine(tab: MyOrdersTab.active),
+        throwsA(
+          isA<ApiFailure>().having((f) => f.code, 'code', 'orders.invalid_tab'),
+        ),
+      );
+    });
+  });
 }

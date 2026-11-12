@@ -1,10 +1,12 @@
-# plan.md — HU-25 Consultar mis pedidos (borrador)
+# HU-25 — Consultar mis pedidos (plan, app)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
+1. **T1 — Spec:** con las decisiones de la usuaria (solo compras; pestañas por estado). ✅
+2. **T2 — Datos:** `MyOrdersTab`, `MyOrdersCounts`, `MyOrdersPage`, `Order.updatedAt`, `OrderRepository.mine` y `ApiPaths.myOrders`. ✅
+3. **T3 — Perfil:** `RecentOrdersSection` después de "Privacidad", con las piezas de la maqueta. ✅
+4. **T4 — "Mis pedidos":** `MyOrdersScreen` con pestañas, "Ver más", vacíos y error. ✅
+5. **T5 — Evidencia y documentación:** pruebas, capturas, `docs/trazabilidad.md`, `docs/versionado.md` (sección compartida) y `Memoria.md`. ✅
 
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+**Decisiones:**
+- **D1 · Cancelado en gris:** la maqueta no tiene la píldora; se usa `circle-x` como el aviso de cancelación de HU-24.
+- **D2 · La fecha de un completado o cancelado** es `updatedAt` (el día en que pasó), como "26 sep" de la maqueta.
+- **D3 · Las pestañas cubren los 44 de alto** (RNF-27) y la pastilla de 38 queda a 3 del borde, como en `Perfil-vendedor`.

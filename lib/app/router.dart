@@ -26,6 +26,7 @@ import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
 import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
+import 'package:musubi_app/features/orders/presentation/my_orders_screen.dart';
 import 'package:musubi_app/features/orders/presentation/order_payment_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
@@ -69,6 +70,9 @@ abstract final class AppRoutes {
 
   /// "Mis productos" (`Mis-productos`).
   static const myProducts = '/mis-productos';
+
+  /// "Ver todos" de "Mis pedidos" (HU-25); siempre con sesion.
+  static const myOrders = '/mis-pedidos';
 
   /// "Publicar lo que necesito" (HU-13).
   static const need = '/necesito';
@@ -145,6 +149,7 @@ abstract final class AppRoutes {
     sellCondition,
     sellDone,
     myProducts,
+    myOrders,
     need,
     myWanted,
     editNeed,
@@ -373,6 +378,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.myProducts,
         builder: (context, state) => const MyProductsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.myOrders,
+        builder: (context, state) => const MyOrdersScreen(),
       ),
       GoRoute(
         path: AppRoutes.editListing,
