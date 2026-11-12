@@ -46,6 +46,12 @@ Escríbele a la otra persona en el chat, en tiempo real, para acordar el precio 
 Del chat al pedido
 Cuando se pongan de acuerdo, toca "Resumir acuerdo": la IA propone producto, precio, cantidad, lugar y fecha a partir de la plática, y lo que no encuentre queda marcado para que lo completes. Los dos revisan y confirman el acuerdo, y con un toque se crea el pedido. Eliges el edificio del campus donde se ven y pagas en efectivo al recibir.
 
+Tus pedidos, de principio a fin
+Quien vende acepta o rechaza el pedido. Al entregar, los dos lo confirman y queda completado; si algo cambia, cualquiera puede cancelarlo con un motivo. En tu Perfil, "Mis pedidos" te dice en qué va cada compra.
+
+Conoce a quien vende
+Abre su perfil desde el producto o el chat: su carrera, desde cuándo está en Musubi y sus publicaciones activas.
+
 Guarda lo que te interesa
 Marca con el corazón los productos que te gustan y encuéntralos después en Favoritos.
 
@@ -53,7 +59,7 @@ Te avisamos
 Recibe una notificación cuando te escriben, cuando alguien te hace un pedido o responde a tus ofertas, y cuando tu solicitud está por vencer. Tú decides si activas los avisos.
 
 Tus publicaciones, en orden
-Edita, pausa o elimina lo que publicaste, márcalo como vendido y revisa tus ventas en Mis productos.
+Edita, pausa o elimina lo que publicaste, cambia las piezas disponibles, márcalo como vendido y revisa tus ventas en Mis productos.
 
 De día o de noche
 Cambia al modo noche en Ajustes; se guarda en tu cuenta.
