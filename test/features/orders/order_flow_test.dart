@@ -99,6 +99,13 @@ class _Harness {
     await tester.pumpAndSettle();
   }
 
+  /// Una opcion de una hoja (`MusubiOptions` la elige 160 ms despues).
+  Future<void> pick(String label) async {
+    await tester.tap(find.text(label));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
+  }
+
   /// "Agregar" de una fila del resumen.
   Future<void> add(String row) => tap(
     find.descendant(of: find.byKey(Key(row)), matching: find.text('Agregar')),
@@ -366,7 +373,7 @@ void main() {
       expect(find.text('Siempre disponible'), findsOneWidget);
       expect(find.text('ASÍ FUNCIONA'), findsOneWidget);
       expect(
-        find.text('Valeria confirma la entrega y se completa tu pedido'),
+        find.text('Los dos confirman la entrega y se completa tu pedido'),
         findsOneWidget,
       );
       final transfer = tester.widget<Opacity>(
@@ -423,7 +430,13 @@ void main() {
 
       expect(find.text('Tu venta'), findsOneWidget);
       expect(find.text('Compra Ana Sofía Ramírez'), findsOneWidget);
-      expect(find.text('Ana pagará en efectivo al recibir.'), findsOneWidget);
+      expect(
+        find.text(
+          'Ana pagará en efectivo al recibir. Acepta el pedido para apartar '
+          'la pieza.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('¿Cómo quieres pagar?'), findsNothing);
     });
 
@@ -437,6 +450,211 @@ void main() {
       await h.tap(find.byKey(const Key('order-help-button')));
 
       expect(find.text('¿Cómo funciona tu pedido?'), findsOneWidget);
+    });
+  });
+
+  group('Aceptar y actualizar mis pedidos (HU-24)', () {
+    testWidgets('quien vende acepta un pedido con el pago elegido', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        orders: FakeOrderRepository(
+          orders: [sampleOrder(isBuyer: false, paysCash: true)],
+        ),
+      );
+      await h.open(AppRoutes.order('o1'));
+
+      expect(find.text('Rechazar pedido'), findsOneWidget);
+      await h.tap(find.byKey(const Key('order-accept')));
+
+      expect(h.orders.accepted, ['o1']);
+      expect(find.text('Pedido aceptado. Le avisamos a Ana.'), findsOneWidget);
+      expect(find.bySemanticsLabel('Estado del pedido: Confirmado'), findsOne);
+      expect(find.text('Marcar como entregado'), findsOneWidget);
+      expect(find.text('Cancelar pedido'), findsOneWidget);
+    });
+
+    testWidgets('sin pago elegido, Aceptar sale deshabilitado y lo explica', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        orders: FakeOrderRepository(orders: [sampleOrder(isBuyer: false)]),
+      );
+      await h.open(AppRoutes.order('o1'));
+
+      expect(_button(tester, 'order-accept').enabled, isFalse);
+      expect(
+        find.text(
+          'Ana aún no elige cómo pagar. Podrás aceptar el pedido cuando lo '
+          'elija.',
+        ),
+        findsOneWidget,
+      );
+      expect(h.orders.accepted, isEmpty);
+    });
+
+    testWidgets('rechazar pide un motivo de la lista de quien vende', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        orders: FakeOrderRepository(
+          orders: [sampleOrder(isBuyer: false, paysCash: true)],
+        ),
+      );
+      await h.open(AppRoutes.order('o1'));
+
+      await h.tap(find.byKey(const Key('order-cancel')));
+
+      expect(find.byKey(const Key('order-cancel-reasons')), findsOneWidget);
+      expect(find.text('Ya no tengo el producto'), findsOneWidget);
+      expect(find.text('Ya no lo necesito'), findsNothing);
+      await h.pick('Ya no tengo el producto');
+
+      expect(h.orders.cancelled, [('o1', CancelReason.unavailable)]);
+      expect(find.text('Rechazaste el pedido.'), findsOneWidget);
+      expect(
+        find.text('Cancelaste el pedido: Ya no tengo el producto.'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('order-cancel')), findsNothing);
+      expect(find.byKey(const Key('order-back-to-chat')), findsOneWidget);
+    });
+
+    testWidgets('quien compra cancela con su propia lista de motivos', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        orders: FakeOrderRepository(
+          orders: [sampleOrder(paysCash: true, status: OrderStatus.confirmed)],
+        ),
+      );
+      await h.open(AppRoutes.order('o1'));
+
+      await h.tap(find.byKey(const Key('order-cancel')));
+
+      expect(find.text('Ya no lo necesito'), findsOneWidget);
+      expect(find.text('Ya no tengo el producto'), findsNothing);
+      await h.pick('No puedo en la fecha acordada');
+
+      expect(h.orders.cancelled, [('o1', CancelReason.schedule)]);
+      expect(find.text('Cancelaste el pedido.'), findsOneWidget);
+    });
+
+    testWidgets('confirmar la entrega deja esperando a la otra parte', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        orders: FakeOrderRepository(
+          orders: [sampleOrder(paysCash: true, status: OrderStatus.confirmed)],
+        ),
+      );
+      await h.open(AppRoutes.order('o1'));
+
+      expect(
+        find.text('Revisa el producto antes de confirmar la entrega.'),
+        findsOneWidget,
+      );
+      await h.tap(find.byKey(const Key('order-handover')));
+
+      expect(h.orders.handovers, ['o1']);
+      expect(find.text('Listo: confirmaste la entrega.'), findsOneWidget);
+      expect(
+        find.text('Ya confirmaste la entrega. Falta que Valeria la confirme.'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('order-handover')), findsNothing);
+    });
+
+    testWidgets('si la otra parte ya confirmo, completar cierra el pedido', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        orders: FakeOrderRepository(
+          orders: [
+            sampleOrder(
+              isBuyer: false,
+              paysCash: true,
+              status: OrderStatus.confirmed,
+              buyerConfirmed: true,
+            ),
+          ],
+        ),
+      );
+      await h.open(AppRoutes.order('o1'));
+
+      expect(
+        find.text('Ana confirmó que lo recibió. Confirma que lo entregaste.'),
+        findsOneWidget,
+      );
+      await h.tap(find.byKey(const Key('order-handover')));
+
+      expect(find.bySemanticsLabel('Estado del pedido: Completado'), findsOne);
+      expect(
+        find.text('Pedido completado. ¡Gracias por usar Musubi!'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('order-cancel')), findsNothing);
+    });
+
+    testWidgets('si la API rechaza la accion, avisa y se puede reintentar', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        orders:
+            FakeOrderRepository(
+                orders: [sampleOrder(isBuyer: false, paysCash: true)],
+              )
+              ..actionFailure = const ApiFailure(
+                code: 'orders.not_enough_stock',
+                message:
+                    'No hay tantas piezas disponibles. Elige una cantidad '
+                    'menor.',
+              ),
+      );
+      await h.open(AppRoutes.order('o1'));
+
+      await h.tap(find.byKey(const Key('order-accept')));
+
+      expect(
+        find.text(
+          'No hay tantas piezas disponibles. Elige una cantidad menor.',
+        ),
+        findsOneWidget,
+      );
+      expect(_button(tester, 'order-accept').enabled, isTrue);
+      expect(find.bySemanticsLabel('Estado del pedido: Pendiente'), findsOne);
+    });
+
+    testWidgets('un pedido cancelado dice quien y por que', (tester) async {
+      final h = _Harness(
+        tester,
+        orders: FakeOrderRepository(
+          orders: [
+            sampleOrder(
+              status: OrderStatus.cancelled,
+              cancellation: const OrderCancellation(
+                byBuyer: false,
+                reason: CancelReason.noShow,
+              ),
+            ),
+          ],
+        ),
+      );
+      await h.open(AppRoutes.order('o1'));
+
+      expect(
+        find.text('Valeria canceló el pedido: La otra persona no llegó.'),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Estado del pedido: Cancelado'), findsOne);
+      expect(find.byKey(const Key('order-cancel')), findsNothing);
     });
   });
 }

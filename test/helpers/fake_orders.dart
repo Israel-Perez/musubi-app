@@ -21,6 +21,9 @@ Order sampleOrder({
   bool paysCash = false,
   OrderStatus status = OrderStatus.pending,
   int quantity = 1,
+  bool buyerConfirmed = false,
+  bool sellerConfirmed = false,
+  OrderCancellation? cancellation,
 }) => Order(
   id: id,
   number: 'MS-1001',
@@ -40,6 +43,9 @@ Order sampleOrder({
   detail: 'Planta baja',
   deliveryAt: DateTime.utc(2026, 11, 7, 19),
   paysCash: paysCash,
+  buyerConfirmed: buyerConfirmed,
+  sellerConfirmed: sellerConfirmed,
+  cancellation: cancellation,
 );
 
 /// Repositorio de pedidos en memoria: guarda lo que se le pide.
@@ -104,25 +110,64 @@ class FakeOrderRepository implements OrderRepository {
   @override
   Future<Order> get(String id) async => stored.firstWhere((o) => o.id == id);
 
+  final List<String> accepted = [];
+  final List<(String, CancelReason)> cancelled = [];
+  final List<String> handovers = [];
+
+  /// Falla la siguiente accion de HU-24 (aceptar, cancelar o entregar).
+  ApiFailure? actionFailure;
+
   @override
   Future<Order> payCash(String id) async {
     paid.add(id);
     if (payFailure != null) throw payFailure!;
-    final i = stored.indexWhere((o) => o.id == id);
-    final o = stored[i];
-    return stored[i] = Order(
-      id: o.id,
-      number: o.number,
-      status: o.status,
-      isBuyer: o.isBuyer,
-      conversationId: o.conversationId,
-      item: o.item,
-      buyerName: o.buyerName,
-      sellerName: o.sellerName,
-      pointName: o.pointName,
-      detail: o.detail,
-      deliveryAt: o.deliveryAt,
-      paysCash: true,
+    return _replace(id, (o) => o.copyWith(paysCash: true));
+  }
+
+  @override
+  Future<Order> accept(String id) async {
+    accepted.add(id);
+    _fail();
+    return _replace(id, (o) => o.copyWith(status: OrderStatus.confirmed));
+  }
+
+  @override
+  Future<Order> cancel(String id, CancelReason reason) async {
+    cancelled.add((id, reason));
+    _fail();
+    return _replace(
+      id,
+      (o) => o.copyWith(
+        status: OrderStatus.cancelled,
+        cancellation: OrderCancellation(byBuyer: o.isBuyer, reason: reason),
+      ),
     );
+  }
+
+  @override
+  Future<Order> confirmHandover(String id) async {
+    handovers.add(id);
+    _fail();
+    return _replace(id, (o) {
+      final buyer = o.buyerConfirmed || o.isBuyer;
+      final seller = o.sellerConfirmed || !o.isBuyer;
+      return o.copyWith(
+        buyerConfirmed: buyer,
+        sellerConfirmed: seller,
+        status: buyer && seller ? OrderStatus.completed : null,
+      );
+    });
+  }
+
+  void _fail() {
+    final failure = actionFailure;
+    if (failure == null) return;
+    actionFailure = null;
+    throw failure;
+  }
+
+  Order _replace(String id, Order Function(Order) change) {
+    final i = stored.indexWhere((o) => o.id == id);
+    return stored[i] = change(stored[i]);
   }
 }

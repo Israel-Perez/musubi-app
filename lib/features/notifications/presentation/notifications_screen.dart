@@ -303,7 +303,14 @@ class _Row extends StatelessWidget {
     final c = context.musubi;
     final n = notification;
     final (icon, background, ink) = switch (n.type) {
-      'order_created' => (MusubiIcons.package, c.successSoft, c.successText),
+      'order_created' ||
+      'order_handover' => (MusubiIcons.package, c.successSoft, c.successText),
+      'order_confirmed' || 'order_completed' => (
+        MusubiIcons.circleCheck,
+        c.successSoft,
+        c.successText,
+      ),
+      'order_cancelled' => (MusubiIcons.circleX, c.errorSoft, c.error),
       'agreement_confirmed' ||
       'offer_accepted' => (MusubiIcons.handshake, c.successSoft, c.successText),
       'offer_received' ||

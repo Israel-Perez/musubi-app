@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-// Pedidos (HU-23). Forma canonica: filas "M-08" de musubi-api
+// Pedidos (HU-23 y HU-24). Forma canonica: filas "M-08" de musubi-api
 // `docs/endpoints.md`; aqui solo lo que muestra la app.
 
 /// Estado del pedido (RF-31): los cuatro pasos de `Pedido-pago`.
@@ -35,6 +35,70 @@ enum OrderStatus {
 
   /// Sigue abierto (pendiente o confirmado).
   bool get open => this == pending || this == confirmed;
+}
+
+/// Motivo de "Rechazar" o "Cancelar pedido" (HU-24, RN-20): una lista
+/// cerrada, cada uno con quien lo puede elegir.
+enum CancelReason {
+  /// Solo quien compra.
+  changedMind('changed_mind', 'Ya no lo necesito'),
+
+  /// Solo quien vende.
+  unavailable('unavailable', 'Ya no tengo el producto'),
+
+  noAgreement('no_agreement', 'No nos pusimos de acuerdo'),
+  schedule('schedule', 'No puedo en la fecha acordada'),
+  noShow('no_show', 'La otra persona no llegó'),
+  other('other', 'Otro motivo'),
+
+  /// Lo pone la API al borrar una cuenta (HU-46); no se elige.
+  accountDeleted('account_deleted', 'La cuenta se eliminó');
+
+  new(this.code, this.label);
+
+  /// Valor de la API.
+  final String code;
+
+  /// Texto de la lista.
+  final String label;
+
+  /// Los que ve quien compra.
+  static const List<CancelReason> forBuyer = [
+    changedMind,
+    noAgreement,
+    schedule,
+    noShow,
+    other,
+  ];
+
+  /// Los que ve quien vende.
+  static const List<CancelReason> forSeller = [
+    unavailable,
+    noAgreement,
+    schedule,
+    noShow,
+    other,
+  ];
+
+  static CancelReason parse(Object? value) =>
+      values.firstWhere((r) => r.code == value, orElse: () => other);
+}
+
+/// Quien cancelo y por que (HU-24).
+@immutable
+class OrderCancellation {
+  const new({
+    required this.byBuyer,
+    required this.reason,
+    this.bySystem = false,
+  });
+
+  /// Lo cancelo quien compra (si no, quien vende o el sistema).
+  final bool byBuyer;
+
+  /// Una cuenta borrada (HU-46).
+  final bool bySystem;
+  final CancelReason reason;
 }
 
 /// Un punto de entrega del campus (`GET /orders/meeting-points`).
@@ -96,6 +160,9 @@ class Order {
     this.detail,
     this.paysCash = false,
     this.transferAvailable = false,
+    this.buyerConfirmed = false,
+    this.sellerConfirmed = false,
+    this.cancellation,
   });
 
   final String id;
@@ -125,6 +192,48 @@ class Order {
 
   /// Quien vende registro su cuenta (HU-55; hoy siempre `false`).
   final bool transferAvailable;
+
+  /// Quien compra ya marco "Confirmar entrega" (HU-24, RN-19).
+  final bool buyerConfirmed;
+
+  /// Quien vende ya marco "Marcar como entregado" (HU-24, RN-19).
+  final bool sellerConfirmed;
+
+  /// Quien cancelo y por que, o `null` (HU-24).
+  final OrderCancellation? cancellation;
+
+  /// Quien mira ya confirmo su lado de la entrega.
+  bool get iConfirmed => isBuyer ? buyerConfirmed : sellerConfirmed;
+
+  /// Nombre de la otra parte.
+  String get otherName => isBuyer ? sellerName : buyerName;
+
+  /// El mismo pedido con otro estado (lo usan los fakes de las pruebas).
+  Order copyWith({
+    OrderStatus? status,
+    bool? isBuyer,
+    bool? paysCash,
+    bool? buyerConfirmed,
+    bool? sellerConfirmed,
+    OrderCancellation? cancellation,
+  }) => Order(
+    id: id,
+    number: number,
+    status: status ?? this.status,
+    isBuyer: isBuyer ?? this.isBuyer,
+    conversationId: conversationId,
+    item: item,
+    buyerName: buyerName,
+    sellerName: sellerName,
+    pointName: pointName,
+    deliveryAt: deliveryAt,
+    detail: detail,
+    paysCash: paysCash ?? this.paysCash,
+    transferAvailable: transferAvailable,
+    buyerConfirmed: buyerConfirmed ?? this.buyerConfirmed,
+    sellerConfirmed: sellerConfirmed ?? this.sellerConfirmed,
+    cancellation: cancellation ?? this.cancellation,
+  );
 }
 
 /// "Crear pedido" desde el resumen del chat.

@@ -12,6 +12,11 @@ Map<String, Object?> orderJson({
   Map<String, Object?>? payment,
   String role = 'buyer',
   String status = 'pending',
+  Map<String, Object?> handover = const {
+    'buyerConfirmedAt': null,
+    'sellerConfirmedAt': null,
+  },
+  Map<String, Object?>? cancellation,
 }) => {
   'id': '6716a00000000000000000a1',
   'number': 'MS-1001',
@@ -41,6 +46,9 @@ Map<String, Object?> orderJson({
   'payment': payment,
   'transferAvailable': false,
   'createdAt': '2026-11-10T18:00:00Z',
+  'handover': handover,
+  'cancellation': cancellation,
+  'updatedAt': '2026-11-10T18:05:00Z',
 };
 
 // HU-23: el repositorio habla las filas "M-08" de musubi-api.
@@ -216,4 +224,89 @@ void main() {
       ]);
     },
   );
+
+  test('aceptar y confirmar la entrega van por POST sin cuerpo', () async {
+    serve(
+      (_) => FakeHttpAdapter.json(
+        orderJson(
+          status: 'confirmed',
+          role: 'seller',
+          handover: {
+            'buyerConfirmedAt': null,
+            'sellerConfirmedAt': '2026-11-11T19:10:00Z',
+          },
+        ),
+      ),
+    );
+
+    await repository.accept('o1');
+    final order = await repository.confirmHandover('o1');
+
+    expect(
+      [for (final r in adapter.requests) (r.method, r.path, r.data)],
+      [
+        ('POST', ApiPaths.orderAccept('o1'), null),
+        ('POST', ApiPaths.orderHandover('o1'), null),
+      ],
+    );
+    expect((order.sellerConfirmed, order.buyerConfirmed), (true, false));
+    expect(order.iConfirmed, isTrue);
+  });
+
+  test('cancelar manda el codigo del motivo y lee quien cancelo', () async {
+    serve(
+      (_) => FakeHttpAdapter.json(
+        orderJson(
+          status: 'cancelled',
+          cancellation: {
+            'by': 'seller',
+            'reason': 'no_show',
+            'at': '2026-11-11T19:10:00Z',
+          },
+        ),
+      ),
+    );
+
+    final order = await repository.cancel('o1', CancelReason.noShow);
+
+    final sent = adapter.requests.single;
+    expect((sent.method, sent.path), ('POST', ApiPaths.orderCancel('o1')));
+    expect(sent.data, {'reason': 'no_show'});
+    expect(order.status, OrderStatus.cancelled);
+    expect(order.cancellation?.byBuyer, isFalse);
+    expect(order.cancellation?.reason, CancelReason.noShow);
+  });
+
+  test('los motivos son los de la API y cada parte tiene los suyos', () {
+    expect(CancelReason.parse('account_deleted'), CancelReason.accountDeleted);
+    expect(CancelReason.parse('raro'), CancelReason.other);
+    expect(CancelReason.forBuyer, contains(CancelReason.changedMind));
+    expect(CancelReason.forBuyer, isNot(contains(CancelReason.unavailable)));
+    expect(CancelReason.forSeller, contains(CancelReason.unavailable));
+    expect(
+      CancelReason.forSeller,
+      isNot(contains(CancelReason.accountDeleted)),
+    );
+  });
+
+  test('si la API rechaza la accion, llega el mensaje en espanol', () async {
+    serve(
+      (_) => FakeHttpAdapter.json({
+        'code': 'orders.payment_missing',
+        'title': 'Espera a que elijan cómo pagar para aceptar el pedido.',
+        'status': 409,
+      }, status: 409),
+    );
+
+    await expectLater(
+      repository.accept('o1'),
+      throwsA(
+        isA<ApiFailure>().having(
+          (f) => f.code,
+          'code',
+          'orders.payment_missing',
+        ),
+      ),
+    );
+  });
 }

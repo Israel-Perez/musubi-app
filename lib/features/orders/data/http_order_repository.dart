@@ -6,7 +6,7 @@ import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/domain/order_repository.dart';
 
 /// [OrderRepository] sobre las filas "M-08" de `musubi-api/docs/endpoints.md`
-/// (spec `musubi-api:HU-23`). Siempre con sesion.
+/// (specs `musubi-api:HU-23` y `musubi-api:HU-24`). Siempre con sesion.
 class HttpOrderRepository implements OrderRepository {
   new(this._dio, this._apiBaseUrl);
 
@@ -77,6 +77,23 @@ class HttpOrderRepository implements OrderRepository {
     return orderFromJson(response.data ?? const {}, _apiBaseUrl);
   });
 
+  @override
+  Future<Order> accept(String id) => _post(ApiPaths.orderAccept(id));
+
+  @override
+  Future<Order> cancel(String id, CancelReason reason) =>
+      _post(ApiPaths.orderCancel(id), {'reason': reason.code});
+
+  @override
+  Future<Order> confirmHandover(String id) => _post(ApiPaths.orderHandover(id));
+
+  Future<Order> _post(String path, [Map<String, Object?>? body]) => _guard(
+    () async {
+      final response = await _dio.post<Map<String, dynamic>>(path, data: body);
+      return orderFromJson(response.data ?? const {}, _apiBaseUrl);
+    },
+  );
+
   static Future<T> _guard<T>(Future<T> Function() call) async {
     try {
       return await call();
@@ -92,6 +109,8 @@ Order orderFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
   final item = json['item'] as Map<String, dynamic>? ?? const {};
   final delivery = json['delivery'] as Map<String, dynamic>? ?? const {};
   final payment = json['payment'] as Map<String, dynamic>?;
+  final handover = json['handover'] as Map<String, dynamic>?;
+  final cancellation = json['cancellation'] as Map<String, dynamic>?;
   final photo = item['photo'] as String?;
   return Order(
     id: json['id'] as String? ?? '',
@@ -116,5 +135,14 @@ Order orderFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
     deliveryAt: DateTime.parse(delivery['at'] as String).toUtc(),
     paysCash: payment?['method'] == 'cash',
     transferAvailable: json['transferAvailable'] as bool? ?? false,
+    buyerConfirmed: handover?['buyerConfirmedAt'] != null,
+    sellerConfirmed: handover?['sellerConfirmedAt'] != null,
+    cancellation: cancellation == null
+        ? null
+        : OrderCancellation(
+            byBuyer: cancellation['by'] == 'buyer',
+            bySystem: cancellation['by'] == 'system',
+            reason: CancelReason.parse(cancellation['reason']),
+          ),
   );
 }
