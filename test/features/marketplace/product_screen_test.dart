@@ -17,8 +17,8 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
-import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
@@ -62,14 +62,8 @@ Future<FakeCatalogRepository> _open(
   final catalog = FakeCatalogRepository();
   if (detail != null) catalog.details['p1'] = detail;
   final profiles = FakeProfileRepository();
-  profiles.publicProfiles['6716a0000000000000000001'] = const PublicProfile(
-    id: '6716a0000000000000000001',
-    fullName: 'Valeria Cruz',
-    careerShortName: 'Arquitectura',
-    ratingAvg: 4.6,
-    ratingCount: 18,
-    sales: 15,
-  );
+  profiles.publicProfiles['6716a0000000000000000001'] =
+      FakeProfileRepository.publicSample;
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -124,6 +118,62 @@ void main() {
     );
     expect(find.text('Comprar'), findsOneWidget);
     expect(find.text('Apartar'), findsOneWidget);
+  });
+
+  testWidgets('la tarjeta de quien vende abre su perfil (HU-05)', (
+    tester,
+  ) async {
+    final catalog = await _open(
+      tester,
+      detail: _detail(),
+      session: chatTokens(_now),
+    );
+    catalog.sellerListingsResponse = const ProductPage(total: 3);
+
+    final card = find.bySemanticsLabel('Ver perfil de Valeria Cruz');
+    await tester.ensureVisible(card);
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Arquitectura · 8º cuatrimestre'), findsOneWidget);
+    expect(find.text('Publicaciones (3)'), findsOneWidget);
+    // "Mensaje" del perfil abrira el chat de esta publicacion.
+    final screen = tester.widget<SellerProfileScreen>(
+      find.byType(SellerProfileScreen),
+    );
+    expect(screen.origin?.product?.id, _detail().id);
+  });
+
+  testWidgets('visitante: la tarjeta del vendedor pide la cuenta', (
+    tester,
+  ) async {
+    await _open(tester, detail: _detail(sellerId: null));
+
+    final card = find.bySemanticsLabel(
+      'Crea tu cuenta para ver quién lo vende',
+    );
+    await tester.ensureVisible(card);
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Crea tu perfil'), findsOneWidget);
+  });
+
+  testWidgets('mi publicación: la tarjeta lleva a mi Perfil (HU-05)', (
+    tester,
+  ) async {
+    await _open(
+      tester,
+      detail: _detail(sellerId: myId),
+      session: chatTokens(_now),
+    );
+
+    final card = find.bySemanticsLabel('Ver perfil de Valeria C.');
+    await tester.ensureVisible(card);
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mis publicaciones'), findsOneWidget);
   });
 
   testWidgets('el corazon guarda y quita el producto', (tester) async {

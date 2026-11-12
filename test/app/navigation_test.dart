@@ -26,6 +26,14 @@ void main() {
       }
     });
 
+    test('el perfil del vendedor exige sesión', () {
+      const path = '/vendedor/6716a0000000000000000001';
+      expect(
+        sessionRedirect(signedIn: false, location: Uri.parse(path)),
+        '/iniciar-sesion?desde=${Uri.encodeQueryComponent(path)}',
+      );
+    });
+
     test('el visitante explora Inicio y Se busca sin cuenta', () {
       expect(
         sessionRedirect(signedIn: false, location: Uri.parse('/')),

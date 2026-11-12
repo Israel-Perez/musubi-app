@@ -29,6 +29,7 @@ import 'package:musubi_app/features/notifications/presentation/notifications_scr
 import 'package:musubi_app/features/orders/presentation/order_payment_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
+import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/settings_screen.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/my_wanted_screen.dart';
@@ -122,6 +123,12 @@ abstract final class AppRoutes {
   /// Un pedido (HU-23); siempre con sesion.
   static String order(String id) => '$orders/${Uri.encodeComponent(id)}';
 
+  /// Perfil publico de otra persona (HU-05); siempre con sesion.
+  static const seller = '/vendedor';
+
+  static String sellerProfile(String id) =>
+      '$seller/${Uri.encodeComponent(id)}';
+
   /// Parametro con la ruta a la que se vuelve despues de iniciar sesion.
   static const returnParam = 'desde';
 
@@ -179,7 +186,8 @@ String? sessionRedirect({
       AppRoutes.requiresSession.contains(path) ||
       path == AppRoutes.chat ||
       path.startsWith('${AppRoutes.chat}/') ||
-      path.startsWith('${AppRoutes.orders}/');
+      path.startsWith('${AppRoutes.orders}/') ||
+      path.startsWith('${AppRoutes.seller}/');
   if (!signedIn && needsSession) {
     return Uri(
       path: AppRoutes.signIn,
@@ -313,6 +321,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           productId: state.pathParameters['id']!,
           preview: state.extra is ProductSummary
               ? state.extra! as ProductSummary
+              : null,
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.seller}/:id',
+        builder: (context, state) => SellerProfileScreen(
+          sellerId: state.pathParameters['id']!,
+          origin: state.extra is SellerProfileOrigin
+              ? state.extra! as SellerProfileOrigin
               : null,
         ),
       ),

@@ -318,4 +318,93 @@ void main() {
       );
     });
   });
+
+  group('perfil del vendedor (HU-05)', () {
+    test('sellerListings: sellerId, hideSoldOut, limit y page', () async {
+      serve(nextCursor: 'next');
+
+      final page = await repository.sellerListings(
+        '6716a0000000000000000001',
+        page: 2,
+      );
+
+      final request = adapter.requests.single;
+      expect(request.path, ApiPaths.products);
+      expect(request.queryParameters, {
+        'sellerId': '6716a0000000000000000001',
+        'hideSoldOut': true,
+        'limit': HttpCatalogRepository.pageSize,
+        'page': 2,
+      });
+      expect(page.items.single.title, startsWith('Calculadora'));
+      expect(page.total, 48);
+      expect(page.nextCursor, 'next');
+    });
+
+    test('sellerListings: "Ver más" manda cursor y no page', () async {
+      serve(nextCursor: 'next');
+
+      await repository.sellerListings(
+        '6716a0000000000000000001',
+        cursor: 'next',
+      );
+
+      expect(adapter.requests.single.queryParameters, {
+        'sellerId': '6716a0000000000000000001',
+        'hideSoldOut': true,
+        'limit': HttpCatalogRepository.pageSize,
+        'cursor': 'next',
+      });
+    });
+
+    test('sellerListings: una forma inesperada se traduce a ApiFailure', () {
+      adapter = FakeHttpAdapter(
+        (_) async => FakeHttpAdapter.json({
+          'items': ['no-es-un-producto'],
+          'total': 1,
+        }),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.sellerListings('6716a0000000000000000001'),
+        throwsA(
+          isA<ApiFailure>()
+              .having((f) => f.code, 'code', ApiFailure.serverError)
+              .having(
+                (f) => f.message,
+                'message',
+                'El servidor respondió algo inesperado.',
+              ),
+        ),
+      );
+    });
+
+    test('sellerListings: 400 listings.invalid_page llega con su code', () {
+      adapter = FakeHttpAdapter(
+        (_) async => FakeHttpAdapter.json({
+          'code': 'listings.invalid_page',
+          'title': 'Elige una página válida.',
+        }, status: 400),
+      );
+      repository = HttpCatalogRepository(
+        Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+          ..httpClientAdapter = adapter,
+        Uri.parse('https://api.musubi.example'),
+      );
+
+      expect(
+        () => repository.sellerListings('6716a0000000000000000001', page: 0),
+        throwsA(
+          isA<ApiFailure>()
+              .having((f) => f.code, 'code', 'listings.invalid_page')
+              .having((f) => f.status, 'status', 400),
+        ),
+      );
+    });
+  });
 }

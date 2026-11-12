@@ -179,6 +179,18 @@ void main() {
     expect(categories, hasLength(5));
   });
 
+  test('perfil del vendedor: demo-<vendedor> devuelve sus activas', () async {
+    final page = await repository.sellerListings('demo-valeria-c');
+    final missing = await repository.sellerListings('demo-no-existe');
+    final second = await repository.sellerListings('demo-valeria-c', page: 2);
+
+    expect(page.total, 2);
+    expect(page.items.map((p) => p.id), ['casio-991es', 'compas']);
+    expect(page.items.first.publishedAt, isNotNull);
+    expect(missing.items, isEmpty);
+    expect(second.items, isEmpty);
+  });
+
   test('pocas piezas: "Último" con 1 y "Quedan 2" con 2 (maqueta)', () {
     ProductSummary withStock(int stock) =>
         ProductSummary(id: 'x', title: 'x', priceCents: 100, stock: stock);

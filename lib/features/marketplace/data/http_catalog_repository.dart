@@ -143,17 +143,55 @@ class HttpCatalogRepository implements CatalogRepository {
           'page': page,
         },
       );
-      final body = response.data ?? const <String, dynamic>{};
-      return ProductPage(
-        items: [
-          for (final item in body['items'] as List<dynamic>? ?? const [])
-            productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
-        ],
-        total: (body['total'] as num?)?.toInt() ?? 0,
-        nextCursor: body['nextCursor'] as String?,
-      );
+      return _page(response.data);
     } on DioException catch (error) {
       throw ApiFailure.fromDio(error);
+    }
+  }
+
+  /// Publicaciones activas de una persona (`GET /products?sellerId=`, fila
+  /// "M-03", spec `musubi-api:HU-05`). Misma pagina de 20 que la vitrina;
+  /// `total` es el numero de "Publicaciones (N)".
+  @override
+  Future<ProductPage> sellerListings(
+    String sellerId, {
+    int page = 1,
+    String? cursor,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiPaths.products,
+        queryParameters: {
+          'sellerId': sellerId,
+          'hideSoldOut': true,
+          'limit': pageSize,
+          'cursor': ?cursor,
+          if (cursor == null) 'page': page,
+        },
+      );
+      return _page(response.data);
+    } on DioException catch (error) {
+      throw ApiFailure.fromDio(error);
+    }
+  }
+
+  /// `ProductPage` de la vitrina (`items[]`, `total` y `nextCursor`).
+  ProductPage _page(Map<String, dynamic>? body) {
+    try {
+      return ProductPage(
+        items: [
+          for (final item in body?['items'] as List<dynamic>? ?? const [])
+            productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
+        ],
+        total: (body?['total'] as num?)?.toInt() ?? 0,
+        nextCursor: body?['nextCursor'] as String?,
+      );
+    } on Object {
+      // Forma inesperada: estado de error, nunca un crash.
+      throw const ApiFailure(
+        code: ApiFailure.serverError,
+        message: 'El servidor respondió algo inesperado.',
+      );
     }
   }
 

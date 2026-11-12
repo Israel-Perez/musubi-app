@@ -15,9 +15,11 @@ import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
+import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/in_memory_token_store.dart';
 
@@ -87,6 +89,10 @@ class ChatHarness {
           catalogRepositoryProvider.overrideWithValue(
             FakeCatalogRepository([_feed])..details['p1'] = _detail,
           ),
+          profileRepositoryProvider.overrideWithValue(
+            FakeProfileRepository()
+              ..publicProfiles[valeria.id] = FakeProfileRepository.publicSample,
+          ),
           sessionApiProvider.overrideWithValue(FakeSessionApi()),
           clockProvider.overrideWithValue(() => _now),
           tokenStoreProvider.overrideWithValue(InMemoryTokenStore(session)),
@@ -142,6 +148,38 @@ void main() {
       );
       expect(find.text('Escribe un mensaje…'), findsOneWidget);
       expect(harness.chat.read, ['c1']);
+    });
+
+    testWidgets('"Ver perfil" abre el perfil de Valeria (HU-05)', (
+      tester,
+    ) async {
+      final harness = ChatHarness(tester);
+      await harness.open(AppRoutes.conversation('c1'));
+
+      await harness.tap(find.bySemanticsLabel('Más opciones'));
+      await harness.tap(find.text('Ver perfil'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Arquitectura · 8º cuatrimestre'), findsOneWidget);
+    });
+
+    testWidgets('"Mensaje" en el perfil regresa a la conversación (HU-05)', (
+      tester,
+    ) async {
+      final harness = ChatHarness(tester);
+      await harness.open(AppRoutes.conversation('c1'));
+
+      await harness.tap(find.bySemanticsLabel('Más opciones'));
+      await harness.tap(find.text('Ver perfil'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('seller-mensaje')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Escribe un mensaje…'), findsOneWidget);
+      expect(find.byKey(const Key('seller-mensaje')), findsNothing);
+      expect(harness.chat.started, isEmpty);
     });
 
     testWidgets(

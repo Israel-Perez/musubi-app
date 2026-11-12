@@ -30,6 +30,7 @@ import 'package:musubi_app/features/notifications/presentation/notifications_scr
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/orders/presentation/order_summary_sheet.dart';
+import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 
@@ -39,7 +40,8 @@ import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 /// HU-21: la tarjeta de la publicacion y "Ver" (abre su detalle, HU-11).
 /// "Mas opciones" (`chatMoreSheet`): "Bloquear a …" (HU-57) y "Reportar"
 /// (HU-28); con un bloqueo, un aviso en lugar de la caja de texto.
-/// NOTE (HU-05): "Ver perfil" y "En linea" / "Activa hace 5 min".
+/// "En linea" / "Activa hace 5 min" no se muestran: la API no expone
+/// presencia.
 /// NOTE (HU-31): "Silenciar conversación" (sin avisos push no hay que callar).
 /// NOTE (HU-27): la calificacion de la otra persona.
 /// "Resumir acuerdo" (HU-32/33/34): cualquiera de los dos le pide a la IA la
@@ -196,7 +198,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (picked == null || !mounted) return;
     switch (picked) {
       case 'profile':
-        _soon('El perfil de ${person.firstName}');
+        unawaited(
+          context.push(
+            AppRoutes.sellerProfile(person.id),
+            extra: const SellerProfileOrigin.chat(),
+          ),
+        );
       case 'mute':
         _soon('Silenciar conversaciones');
       case 'block':

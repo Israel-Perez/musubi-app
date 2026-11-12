@@ -446,6 +446,45 @@ class DemoCatalogRepository implements CatalogRepository {
     return buffer.toString();
   }
 
+  /// Publicaciones del perfil de muestra (HU-05): mismo `sellerId` estable por
+  /// persona que arma [product] (`demo-valeria-c`), sin agotadas.
+  @override
+  Future<ProductPage> sellerListings(
+    String sellerId, {
+    int page = 1,
+    String? cursor,
+  }) async {
+    if (cursor != null || page > 1) return const ProductPage();
+    final now = _clock();
+    final items = <ProductSummary>[
+      for (final (product, minutes) in _products)
+        if (!product.soldOut &&
+            product.sellerName != null &&
+            _sellerId(product.sellerName!) == sellerId)
+          ProductSummary(
+            id: product.id,
+            title: product.title,
+            priceCents: product.priceCents,
+            stock: product.stock,
+            photoUrl: product.photoUrl,
+            views: product.views,
+            category: product.category,
+            condition: product.condition,
+            sellerName: product.sellerName,
+            sellerRating: product.sellerRating,
+            publishedAt: now.subtract(Duration(minutes: minutes)),
+          ),
+    ];
+    return ProductPage(items: items, total: items.length);
+  }
+
+  /// Id estable de quien vende ("Valeria C." → `demo-valeria-c`), como el
+  /// `sellerId` de la API.
+  static String _sellerId(String name) {
+    final slug = _fold(name).replaceAll(RegExp('[^a-z0-9]+'), '-');
+    return 'demo-${slug.replaceAll(RegExp(r'^-+|-+$'), '')}';
+  }
+
   /// Detalle de muestra (HU-11) armado con la tarjeta de la vitrina.
   @override
   Future<ProductDetail> product(String id) async {
@@ -472,7 +511,9 @@ class DemoCatalogRepository implements CatalogRepository {
       status: summary.soldOut ? 'soldOut' : 'active',
       photoUrls: [?summary.photoUrl],
       publishedAt: _clock().subtract(Duration(minutes: minutes)),
-      sellerId: summary.sellerName == null ? null : 'demo-${summary.id}',
+      sellerId: summary.sellerName == null
+          ? null
+          : _sellerId(summary.sellerName!),
       sellerName: summary.sellerName,
     );
   }

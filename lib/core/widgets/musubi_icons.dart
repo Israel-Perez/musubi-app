@@ -409,6 +409,14 @@ abstract final class MusubiIcons {
     IconCircle(12, 7, 4),
   ]);
 
+  /// `user-plus` ("Seguir" en `Perfil-vendedor`).
+  static const userPlus = MusubiIconData([
+    IconPath('M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'),
+    IconCircle(9, 7, 4),
+    IconPath('M19 8v6'),
+    IconPath('M22 11h-6'),
+  ]);
+
   /// `user-round`.
   static const userRound = MusubiIconData([
     IconCircle(12, 8, 5),
