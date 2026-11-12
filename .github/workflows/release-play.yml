@@ -30,7 +30,7 @@ env:
 jobs:
   release:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     environment: google-play
     steps:
@@ -115,7 +115,7 @@ jobs:
           packageName: com.musubi.app
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           releaseName: ${{ steps.version.outputs.version }}
-          track: ${{ inputs.track }}
+          tracks: ${{ inputs.track }}
           status: ${{ inputs.status }}
           whatsNewDirectory: docs/play/whatsnew
 

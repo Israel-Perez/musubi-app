@@ -18,6 +18,12 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T45 — Mantenimiento de los workflows (12-Nov-2026, SCRUM-97)
+
+- `release-play` usa `tracks` (el `track` de `upload-google-play` está obsoleto y daba un aviso en cada publicación).
+- `ci-pr.yml` y `release-play.yml` usan `ubuntu-24.04`, no `ubuntu-latest` (cambiará a Ubuntu 26).
+- La fila compartida `0.5.0-alpha.24` es de la API (tope de 10 piezas al liberar un pedido); la app no cambia de versión.
+
 ## T44 — Consultar mis pedidos (12-Nov-2026, SCRUM-44, HU-25)
 
 **Qué se hizo**
