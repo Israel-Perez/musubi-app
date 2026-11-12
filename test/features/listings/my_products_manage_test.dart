@@ -115,7 +115,8 @@ class _Harness {
 
 // HU-07: el menu de `Mis-productos` (Ver, Editar, Pausar/Reactivar, Eliminar)
 // y "Editar publicación" con `Vender-2…4`. HU-08: pestanas con los conteos de
-// la API, "Marcar como vendido" y "Vendidos".
+// la API, "Marcar como vendido" y "Vendidos". HU-50: "Cambiar piezas" y
+// "Reponer".
 void main() {
   setUp(() {
     TestWidgetsFlutterBinding.instance.platformDispatcher.implicitView!
@@ -341,6 +342,7 @@ void main() {
     expect(find.text('Editar'), findsNothing);
     expect(find.text('Marcar como vendido'), findsNothing);
     expect(find.text('Pausar publicación'), findsNothing);
+    expect(find.text('Cambiar piezas'), findsNothing);
   });
 
   testWidgets('Ver más: trae la siguiente pagina de la pestana', (
@@ -358,5 +360,66 @@ void main() {
 
     expect(find.byKey(const Key('my-product-libro')), findsOneWidget);
     expect(find.byKey(const Key('my-products-more')), findsNothing);
+  });
+
+  testWidgets('cambiar piezas: el selector de Vender-4 de 0 a 10', (
+    tester,
+  ) async {
+    final h = _Harness(tester)..listings.own = [_listing(stock: 2)];
+    await h.open();
+
+    await h.manage('calc', 'Cambiar piezas');
+
+    expect(find.byKey(const Key('my-product-stock')), findsOneWidget);
+    expect(find.text('Piezas disponibles'), findsOneWidget);
+    await h.tapKey('sell-quantity--1');
+    await h.tapKey('sell-quantity--1');
+    // Con 0 queda agotada; ya no baja de 0.
+    expect(find.text('Con 0 queda como agotado'), findsOneWidget);
+    await h.tapKey('sell-quantity--1');
+    await h.tapKey('my-product-stock-save');
+
+    expect(h.listings.stockChanges, {'calc': 0});
+    expect(
+      find.text('Guardamos las piezas. Ya aparece como agotado.'),
+      findsOneWidget,
+    );
+    expect(find.text('Activos (0)'), findsOneWidget);
+    expect(find.text('Agotados (1)'), findsOneWidget);
+  });
+
+  testWidgets('Reponer en Agotados la deja con 1 pieza', (tester) async {
+    final h = _Harness(tester)
+      ..listings.own = [
+        _listing(id: 'agotada', stock: 0, status: ListingStatus.soldOut),
+      ];
+    await h.open();
+
+    await h.tapText('Agotados (1)');
+    await h.tapKey('my-product-restock-agotada');
+
+    expect(h.listings.stockChanges, {'agotada': 1});
+    expect(
+      find.text(
+        'Repusiste «Calculadora Casio fx-991ES Plus». Ya está disponible',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Activos (1)'), findsOneWidget);
+    expect(find.text('Agotados (0)'), findsOneWidget);
+  });
+
+  testWidgets('una pausada sigue pausada al cambiar piezas', (tester) async {
+    final h = _Harness(tester)
+      ..listings.own = [_listing(status: ListingStatus.hidden)];
+    await h.open();
+
+    await h.manage('calc', 'Cambiar piezas');
+    await h.tapKey('sell-quantity-1');
+    await h.tapKey('my-product-stock-save');
+
+    expect(h.listings.stockChanges, {'calc': 2});
+    expect(h.listings.own.single.paused, isTrue);
+    expect(find.text(r'$450 · Pausada · Quedan 2'), findsOneWidget);
   });
 }

@@ -93,6 +93,15 @@ class HttpListingsRepository implements ListingsRepository {
       });
 
   @override
+  Future<OwnListing> setStock(String id, int stock) => _guard(() async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      ApiPaths.productStock(id),
+      data: {'stock': stock},
+    );
+    return _own(_body(response));
+  });
+
+  @override
   Future<OwnListing> markSold(String id) => _guard(() async {
     final response = await _dio.post<Map<String, dynamic>>(
       ApiPaths.productSold(id),

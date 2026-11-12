@@ -1,50 +1,54 @@
 # HU-50 — Manejar la cantidad disponible de un producto (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-50 / SCRUM-67 / por asignar / M-03 / [musubi-api:HU-50](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m03-listings/HU-50-cantidad-disponible)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-50 / SCRUM-67 / Sprint 4 (9 – 20 nov 2026) / M-03 / [musubi-api:HU-50](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m03-listings/HU-50-cantidad-disponible)
 
 ## Contexto
 Jira (SCRUM-67): Como **vendedor**, quiero **indicar cuántas piezas tengo de un producto**, para **vender varias unidades con una sola publicación y que los compradores sepan cuántas quedan**.
 
-- Maqueta: `Vender-4`, `Producto`, `Mis-productos`.
-- Trazabilidad: sin RF/RNF en Jira (historia que nació de la maqueta, SCRUM-75).
-- Origen: maqueta (secciones 3, 5 y 10; G-03).
+- Maqueta: `Vender-4` ("Piezas disponibles"), `Producto` ("Quedan N", "Último", "Agotado") y `Mis-productos` (piezas en cada fila y "Reponer" en las agotadas: "Repusiste «…». Ya está disponible").
+- **Decisión de la usuaria (12-Nov-2026):** "Cambiar piezas" en el menú, como pidió el PO, con el selector de `Vender-4` en una hoja, y además "Reponer" en las filas de Agotados, como la maqueta. Una sola petición por cambio.
+- Desde HU-24 las piezas apartadas en un pedido aceptado ya no cuentan: la hoja dice "piezas disponibles".
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-06`, `HU-23`.
+**Depende de:** `HU-07`, `HU-08` y la fila de `musubi-api:HU-50`.
 
 ## Requisitos
-1. Al publicar se captura la cantidad disponible (paso "Estado y cantidad").
-2. El detalle muestra "Quedan N", "Último" o "Agotado" según el inventario.
-3. Un apartado o una venta descuenta la cantidad de forma atómica, sin vender de más.
-4. El buscador permite ocultar los agotados.
-
-RNF que aplican: se confirman al detallar.
+1. **Al publicar se elige la cantidad** (`Vender-4`, 1 a 10). Ya existe (HU-06).
+2. **El detalle dice "Quedan N", "Último" o "Agotado".** Ya existe (HU-11).
+3. **Un pedido aparta piezas sin vender de más.** Lo hace la API (HU-24).
+4. **"Ocultar agotados" en Filtrar.** Ya existe (HU-10).
+5. **"Cambiar piezas" (nuevo):** opción del menú de una publicación no vendida, que muestra cuántas tiene ("2 piezas disponibles").
+   - Abre una hoja con el selector de `Vender-4`, de 0 a 10, y "Guardar". Con 0 avisa que queda como agotada.
+   - Al guardar, `PUT /products/{id}/stock` y se refrescan las pestañas.
+6. **"Reponer" (nuevo):** el botón oscuro de la maqueta en cada fila de Agotados. La deja con 1 pieza y avisa "Repusiste «…». Ya está disponible".
+7. **Una pausada sigue pausada** al cambiar sus piezas, y una vendida no ofrece "Cambiar piezas".
 
 ## Diseño
-- Feature `lib/features/listings/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-50. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-50)` (skill `deferred-scope-fakes`).
+- `ListingsRepository.setStock` (`HttpListingsRepository` y el fake) y `ApiPaths.productStock`.
+- `QuantityRow` sale de `sell_condition_screen.dart` a `quantity_row.dart`, con `min` (1 al publicar, 0 al cambiar), `note` y `margin`, para usar el mismo selector en las dos pantallas.
+- `MyProductsScreen`: opción "Cambiar piezas" (`_StockPanel`), botón "Reponer" en la fila agotada y avisos.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-50, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Fila `PUT /api/v1/products/{id}/stock` de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (M-03). Errores: `listings.invalid_stock`, `listings.product_sold` y `listings.product_not_found`.
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- `tool/screenshots_test.dart`: escenas de las pantallas, comparadas con la maqueta en claro y oscuro.
+- `test/features/listings/http_listings_repository_test.dart` (+1): `PUT /stock` con `{ stock }`.
+- `test/features/listings/my_products_manage_test.dart` (+3, y una vendida no ofrece "Cambiar piezas"):
+  - cambiar a 0;
+  - "Reponer";
+  - una pausada sigue pausada.
+- `tool/screenshots_test.dart`: `cambiar-piezas` y `mis-productos-agotados`.
+- **Ya existentes:** `sell_flow_test.dart` (cantidad al publicar), `demo_catalog_repository_test.dart` ("Último" y "Quedan 2") y `widgets_test.dart` ("Ocultar agotados").
 
 ## Criterios
-- [ ] Al publicar se captura la cantidad disponible (paso "Estado y cantidad").
-- [ ] El detalle muestra "Quedan N", "Último" o "Agotado" según el inventario.
-- [ ] Un apartado o una venta descuenta la cantidad de forma atómica, sin vender de más.
-- [ ] El buscador permite ocultar los agotados.
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] "Cambiar piezas" y "Reponer": `my_products_manage_test.dart` en verde. Mutación: sin "Reponer" en la fila agotada, en rojo.
+- [x] `dart format` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` 0 · `flutter test` 569/569 · critic PASS (Flutter 3.47.7).
 
 ## Límites
-- Decisión pendiente (Jira): si un apartado vencido regresa la unidad al inventario de forma automática (relación con HU-52).
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- `NOTE (musubi-api:HU-52)`: un apartado vencido regresa la pieza solo.
+- Fijar el número puede pisar un apartado que entra en el mismo instante (decisión de la usuaria; ver la spec del back).
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 12-Nov-2026
+- **Detalle:** detallada desde Jira (SCRUM-67 y el comentario del PO), la maqueta y la fila de `musubi-api:HU-50`.

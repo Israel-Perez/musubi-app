@@ -1,10 +1,15 @@
-# plan.md — HU-50 Manejar la cantidad disponible de un producto (borrador)
+# plan.md — HU-50 Manejar la cantidad disponible de un producto (app)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
-
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+1. **Componentes:**
+   - `domain/listings_repository.dart`, `data/http_listings_repository.dart` y `core/network/api_paths.dart` (`setStock` y `productStock`);
+   - `presentation/quantity_row.dart` (nuevo; sale de `sell_condition_screen.dart`) y `presentation/my_products_screen.dart`;
+   - pruebas y 2 escenas de captura.
+2. **Decisiones:**
+   - **Menú y "Reponer"** (decisión de la usuaria): la hoja con el selector cubre cualquier número, y "Reponer" es el atajo de la maqueta para una agotada.
+   - **Una petición por cambio:** la hoja manda el número final al tocar "Guardar", no un `+1/−1` por toque.
+   - **El mismo selector que `Vender-4`** (`QuantityRow`), con un mínimo de 0 al cambiar.
+   - **El aviso dice qué pasó:** "Ya aparece como agotado" con 0.
+3. **Excepciones al stack (00-01):** ninguna.
+4. **Guardarraíles:** sin Dio en la UI; el error de la API se muestra por `code`.
+5. **Validación:** pruebas, capturas, formato, análisis, pruebas completas y critic.
+6. **Secuencia:** datos → `QuantityRow` compartido → menú y "Reponer" → pruebas → capturas → documentación.

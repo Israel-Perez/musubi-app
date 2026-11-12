@@ -8,7 +8,7 @@ Jira (SCRUM-34): Como **usuario**, quiero **consultar el perfil y la reputación
 - **Maqueta `Perfil-vendedor`:** foto (o iniciales), nombre, carrera y periodo, reputación con estrella, número de calificaciones, ventas, “En Musubi desde {mes año}” y dos pestañas: **Publicaciones (N)** y **Opiniones (N)**. Se abre desde la tarjeta de quien vende en `Producto` y desde “Ver perfil” en `Chat-Valeria`.
 - **Alcance de Jira (08-Nov-2026):** la pantalla `Perfil-vendedor` de la maqueta, que se abre desde el detalle del producto, con nombre, foto, campus y publicaciones activas; la reputación se muestra como **“Sin calificaciones”** mientras no existan calificaciones (RN-26). No se expone el correo ni datos privados (RNF-05).
 - **Revisión del PR (12-Nov-2026):** la pantalla sigue a la maqueta pieza por pieza (lineamiento 4: no se le quitan funciones). “Mensaje” abre el chat (HU-20 ya existe); “Seguir” y “Compartir” avisan “… llega muy pronto.” (la API no tiene seguidores ni enlaces públicos, como “Compartir” en `Producto`); “A tiempo” se muestra con “—”. “Responde en” queda fuera, como en HU-11.
-- **Contraparte en Borrador con evidencia (11-Nov-2026):** `musubi-api:HU-05` (`0.5.0-alpha.21`, esquema 19) reutiliza `GET /profiles/{id}` y `GET /products?sellerId=&hideSoldOut=true`; no hay DTO ni ruta nueva.
+- **Contraparte en Borrador con evidencia (11-Nov-2026):** `musubi-api:HU-05` (`0.5.0-alpha.22`, esquema 19) reutiliza `GET /profiles/{id}` y `GET /products?sellerId=&hideSoldOut=true`; no hay DTO ni ruta nueva.
 - Trazabilidad: RF-05, RF-14, RF-36 · CU-03 · RN-26.
 
 **Depende de:** `02-01` (tokens y cliente HTTP), `02-03` (sesión y errores), `02-04` (piezas de la maqueta), `HU-04` (perfil y visibilidad), `HU-11` (detalle del producto) y `HU-20` (chat). **Diferido:** `HU-27`/`HU-45` (calificaciones y opiniones).
@@ -146,7 +146,7 @@ RNF que aplican: RNF-05 (datos mínimos), RNF-07 (privacidad), RNF-12 (indicador
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
 - **Fecha:** 11-Nov-2026
 - **Detalle:**
-  - spec escrita desde Jira (SCRUM-34), la maqueta (`Producto`, `Perfil-vendedor`, `Chat-Valeria`) y `musubi-api:HU-05` (`0.5.0-alpha.21`); se aprueba el enfoque A: solo lo que Jira y la API sostienen, sin “Seguir”, “Responde en” ni “Mensaje”.
+  - spec escrita desde Jira (SCRUM-34), la maqueta (`Producto`, `Perfil-vendedor`, `Chat-Valeria`) y `musubi-api:HU-05` (`0.5.0-alpha.22`); se aprueba el enfoque A: solo lo que Jira y la API sostienen, sin “Seguir”, “Responde en” ni “Mensaje”.
   - la reputación queda en `null`/`0` hasta HU-27/HU-45, como indicó Jira el 08-Nov-2026; la unidad del periodo se resuelve con `GET /careers` y un fallback sin unidad.
   - T6 (11-Nov-2026): `flutter test` 596/596, `flutter analyze` 0, `dart format` 0, `critic` PASS (32 archivos), `semgrep` 0 hallazgos, `security-reviewer` PASS (se corrigió el parseo tolerante de perfil y vitrina) y `traceability-clerk` OK tras completar pruebas y `NOTE (HU-21)`. Sin revisor designado, no corresponde “Aprobado”.
   - Revisión del PR (12-Nov-2026): la pantalla se rehízo con la maqueta `Perfil-vendedor` (cabecera centrada, “Seguir”, “Mensaje”, cifras y barra con “Compartir”), comparada con la captura de Edge; la versión de la app regresa a `0.8.0+10` y se quita su fila de `docs/versionado.md`. `flutter test` 604/604.

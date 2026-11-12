@@ -134,6 +134,11 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-08`): "Marcar como vendido"; idempotente.
   static String productSold(String id) => '${product(id)}/sold';
 
+  /// `PUT /api/v1/products/{id}/stock` — fila "M-03"
+  /// (spec `musubi-api:HU-50`): `{ stock }` de 0 a 10; una pausada sigue
+  /// pausada y una vendida responde `409 listings.product_sold`.
+  static String productStock(String id) => '${product(id)}/stock';
+
   /// `GET /api/v1/profiles/{id}` — fila "M-02" (spec `musubi-api:HU-04`;
   /// HU-05 lo amplia): perfil publico, con sesion.
   static String publicProfile(String id) =>

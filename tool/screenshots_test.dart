@@ -457,6 +457,20 @@ final List<OwnListing> _myListings = [
     status: ListingStatus.active,
     description: 'La usé un cuatrimestre.',
   ),
+  // HU-50: una agotada con "Reponer" (la maqueta: "Cálculo de una variable").
+  const OwnListing(
+    product: ProductSummary(
+      id: 'p-quimica',
+      title: 'Química general, Chang',
+      priceCents: 30000,
+      stock: 0,
+      condition: 'Usado',
+      photoUrl: 'asset:assets/products/quimica.webp',
+      category: 'libros',
+    ),
+    status: ListingStatus.soldOut,
+    description: 'Con algunas notas a lápiz.',
+  ),
   // HU-08: una vendida (la maqueta: "Calculadora Casio fx-82LA Plus", 28 sep).
   OwnListing(
     product: const ProductSummary(
@@ -791,6 +805,22 @@ final Map<String, (bool, _Scene)> _scenes = {
       await _pick(s, 'Editar');
       await s.tap(find.text('Continuar'));
       await s.tap(find.text('Continuar'));
+    },
+  ),
+  // HU-50: "Cambiar piezas" y "Reponer" en Agotados.
+  'cambiar-piezas': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.byKey(const Key('my-product-p-bata')));
+      await _pick(s, 'Cambiar piezas');
+    },
+  ),
+  'mis-productos-agotados': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.text('Agotados (1)'));
     },
   ),
   // HU-08: "Vendidos" y el dialogo de "Marcar como vendido".

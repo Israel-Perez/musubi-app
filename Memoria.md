@@ -10,18 +10,33 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **API en producción:** `0.5.0-alpha.19`, esquema 18 (`infra-up` del 11-Nov-2026). La matriz está en `docs/versionado.md`.
 - **HU-31 (push):** en `main` (#52), con la API `0.5.0-alpha.18`. Proyecto de Firebase `musubi-2a78e` listo y secreto `GOOGLE_SERVICES_JSON_B64` en el repo (11-Nov-2026).
 - **HU-24 (aceptar y actualizar pedidos):** app en `feature/SCRUM-43-aceptar-actualizar-pedidos`, con la API `0.5.0-alpha.20` (musubi-api #72). Ver T41.
-- **HU-05 (perfil del vendedor):** fila compartida `0.5.0-alpha.21` de musubi-api en `docs/versionado.md` (esquema 19, el de HU-24/#72; la API se rebasa antes del merge); la app está en `feature/SCRUM-34-perfil-publico` con T2–T6 hechos, versión `0.8.0+10` (se publica en el siguiente lote) y spec en “Borrador con evidencia” (ver T42); faltan el revisor y el PR.
+- **HU-05 (perfil del vendedor):** fila compartida `0.5.0-alpha.22` de musubi-api (`alpha.21` quedó para HU-50, fusionada antes) en `docs/versionado.md` (esquema 19, el de HU-24/#72; la API se rebasa antes del merge); la app está en `feature/SCRUM-34-perfil-publico` con T2–T6 hechos, versión `0.8.0+10` (se publica en el siguiente lote) y spec en “Borrador con evidencia” (ver T43); faltan el revisor y el PR.
 - **Push verificado en un celular real (11-Nov-2026)** con la llave nueva de Firebase. El fallo anterior era de la API: llave en otra región, guardada en varias líneas y revocada.
 - **Siguiente:** desplegar `alpha.20` y probar HU-24 en el celular; luego HU-25. Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** API y app en `main` (#50).
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
-## T42 — Specs y datos del perfil del vendedor (11-Nov-2026, SCRUM-34, HU-05)
+## T42 — Manejar la cantidad disponible (12-Nov-2026, SCRUM-67, HU-50)
+
+**Qué se hizo**
+- "Cambiar piezas" en el menú de `Mis-productos`: una hoja con el selector de `Vender-4` (0 a 10) y "Guardar".
+- "Reponer" en cada fila de Agotados (la deja con 1 pieza), con el botón y el aviso de la maqueta.
+- `QuantityRow` pasó a `quantity_row.dart` (con `min`, `note` y `margin`) y lo usan `Vender-4` y la hoja.
+- `ListingsRepository.setStock` y `ApiPaths.productStock`. Pruebas: +4; 569 en total. Capturas: `cambiar-piezas` y `mis-productos-agotados`.
+
+**Decisiones (con su porqué)** (usuaria, 12-Nov-2026)
+- **Menú y "Reponer":** el menú es lo que pidió el PO y "Reponer" es lo que muestra la maqueta. Una sola petición por cambio, no una por toque.
+- **La hoja aclara que las apartadas en un pedido ya no cuentan** (HU-24).
+
+**Errores a evitar**
+- **Un heredoc largo en Bash vuelve a fallar** ("unexpected EOF"): los archivos de documentación se escriben con la herramienta de archivos o con un script en el scratchpad.
+
+## T43 — Specs y datos del perfil del vendedor (11-Nov-2026, SCRUM-34, HU-05)
 
 **Qué se hizo**
 - `specs/m02-profile/HU-05-perfil-publico/spec.md`, `plan.md` y `task.md` completos, sobre `feature/SCRUM-34-perfil-publico`.
-- Se verificó que `musubi-app` está al día con `origin/main` y que `musubi-api` está al día con `feature/SCRUM-34-perfil-publico` (`dee5c0e`, `0.5.0-alpha.21`).
+- Se verificó que `musubi-app` está al día con `origin/main` y que `musubi-api` está al día con `feature/SCRUM-34-perfil-publico` (hoy `0.5.0-alpha.22`).
 - **T2 (datos):** `PublicProfile` con `campusShortName`, `memberSince` y `term`; `HttpProfileRepository.publicProfile` los parsea; `CatalogRepository.sellerListings`/`HttpCatalogRepository` leen `GET /products?sellerId=&hideSoldOut=true&limit=20&page=`; `DemoCatalogRepository` y `FakeCatalogRepository` lo implementan.
 - **T3 (estado):** `publicProfileProvider` compartido (deja de tragarse el error y `product_screen.dart` usa `.value`) y `sellerListingsProvider` para la primera página; `FakeProfileRepository.failPublicProfile` y `FakeCatalogRepository.failSellerListings` para los estados de error.
 - **T4 (pantalla y entradas):** `SellerProfileScreen` (`Perfil-vendedor`) con cabecera, pestañas, publicaciones activas y “Ver más” por cursor, opiniones vacía y estados de carga/error/404; ruta `/vendedor/:id` con guardia de sesión; entradas desde la tarjeta del vendedor en `Producto` (mi publicación va a `Perfil`) y desde “Ver perfil” en `Chat-Valeria`; `MusubiTopBar` recorta nombres largos.
