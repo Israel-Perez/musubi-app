@@ -189,11 +189,32 @@ final Order _accepted = _orderOf(
   paysCash: true,
 );
 
+/// HU-25: las otras compras de la seccion "Mis pedidos" de `Perfil`.
+final Order _algebra = _orderOf(
+  'o4',
+  title: 'Álgebra lineal, Grossman',
+  priceCents: 29000,
+  photo: 'calculo',
+);
+final Order _arduino = _orderOf(
+  'o5',
+  status: OrderStatus.completed,
+  paysCash: true,
+  title: 'Kit Arduino UNO con sensores',
+  priceCents: 42000,
+  photo: 'arduino',
+  updatedAt: DateTime(2026, 9, 26, 13).toUtc(),
+);
+
 Order _orderOf(
   String id, {
   OrderStatus status = OrderStatus.pending,
   bool isBuyer = true,
   bool paysCash = false,
+  String title = 'Calculadora Casio fx-991ES Plus',
+  int priceCents = 45000,
+  String photo = 'casio',
+  DateTime? updatedAt,
 }) => Order(
   id: id,
   number: 'MS-2481',
@@ -202,17 +223,18 @@ Order _orderOf(
   paysCash: paysCash,
   // Otra conversacion: la de `c1` sigue sin pedido ("Resumir acuerdo").
   conversationId: 'c9',
-  item: const OrderItem(
-    title: 'Calculadora Casio fx-991ES Plus',
-    priceCents: 45000,
+  item: OrderItem(
+    title: title,
+    priceCents: priceCents,
     quantity: 1,
-    totalCents: 45000,
-    photoUrl: 'asset:assets/products/casio.webp',
+    totalCents: priceCents,
+    photoUrl: 'asset:assets/products/$photo.webp',
   ),
   buyerName: 'Ana Sofía Ramírez',
   sellerName: 'Valeria Cruz',
   pointName: 'Biblioteca',
   deliveryAt: DateTime(2026, 10, 8, 13).toUtc(),
+  updatedAt: updatedAt,
 );
 
 final _chat = FakeChatRepository(
@@ -628,7 +650,11 @@ class _Shot {
             chatRepositoryProvider.overrideWithValue(_chat),
             // HU-23: el pedido de la calculadora (`Pedido-pago`).
             orderRepositoryProvider.overrideWithValue(
-              FakeOrderRepository(orders: [_order, _sale, _accepted]),
+              // Del mas viejo al mas nuevo: "Mis pedidos" de Perfil muestra
+              // la Casio confirmada, el libro sin pago y el Arduino (HU-25).
+              FakeOrderRepository(
+                orders: [_order, _sale, _arduino, _algebra, _accepted],
+              ),
             ),
             chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
             // HU-31: los avisos de `Notificaciones` (sin Firebase aqui).
@@ -1093,6 +1119,7 @@ final Map<String, (bool, _Scene)> _scenes = {
   // entrega (`Pedido-entrega`) y el motivo de "Rechazar pedido".
   'tu-venta': (true, (s) => s.go(AppRoutes.order('o2'))),
   'pedido-entrega': (true, (s) => s.go(AppRoutes.order('o3'))),
+  'mis-pedidos': (true, (s) => s.go(AppRoutes.myOrders)),
   'pedido-cancelar': (
     true,
     (s) async {

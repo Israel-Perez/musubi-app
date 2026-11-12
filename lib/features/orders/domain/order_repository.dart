@@ -19,6 +19,10 @@ abstract interface class OrderRepository {
   /// "Tu pedido".
   Future<Order> get(String id);
 
+  /// "Mis pedidos" (HU-25): mis compras de una pestana (sin pestana, todas),
+  /// con los numeros de las tres. [limit] de 1 a 50 (20 si no se manda).
+  Future<MyOrdersPage> mine({MyOrdersTab? tab, String? cursor, int? limit});
+
   /// "Confirmar pago en efectivo" (RN-18).
   Future<Order> payCash(String id);
 

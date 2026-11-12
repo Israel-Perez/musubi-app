@@ -29,7 +29,7 @@ import 'package:musubi_app/features/marketplace/presentation/home_providers.dart
 /// "Pausar publicación" o "Reactivar" y "Eliminar". Una vendida solo se ve
 /// o se elimina.
 ///
-/// NOTE (HU-25): en "Vendidos", el comprador y el monto real del pedido; hoy
+/// NOTE (HU-26): en "Vendidos", el comprador y el monto real del pedido; hoy
 /// se suma el precio publicado.
 /// NOTE (HU-11): "Llevan tiempo sin venderse" con las vistas y los mensajes.
 /// HU-50: "Cambiar piezas" en el menu y "Reponer" en las agotadas.
@@ -685,7 +685,7 @@ class _InventoryRow extends StatelessWidget {
 }
 
 /// "N ventas" y el total, arriba de "Vendidos" (maqueta `Mis-productos`).
-/// NOTE (HU-25): el monto real llega con los pedidos; hoy es el precio
+/// NOTE (HU-26): el monto real llega con los pedidos; hoy es el precio
 /// publicado de las vendidas que se ven.
 class _SalesTotal extends StatelessWidget {
   const new({required this.count, required this.totalCents});

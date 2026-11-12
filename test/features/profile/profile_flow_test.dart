@@ -10,6 +10,7 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
+import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/domain/theme_preference.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
@@ -21,6 +22,7 @@ import '../../helpers/fake_account_repository.dart';
 import '../../helpers/fake_chat.dart' show jwtFor;
 import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_listings_repository.dart';
+import '../../helpers/fake_orders.dart';
 import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_status_repository.dart';
 import '../../helpers/fake_theme_preference_repository.dart';
@@ -39,6 +41,7 @@ class ProfileHarness {
   final picker = FakePhotoPicker();
   final favorites = FakeFavoritesRepository();
   final theme = FakeThemePreferenceRepository();
+  final orders = FakeOrderRepository();
   final SessionTokens _tokens;
   final InMemoryTokenStore store;
   late ProviderContainer container;
@@ -58,6 +61,7 @@ class ProfileHarness {
             FakeListingsRepository(),
           ),
           favoritesRepositoryProvider.overrideWithValue(favorites),
+          orderRepositoryProvider.overrideWithValue(orders),
           photoPickerProvider.overrideWithValue(picker),
           statusRepositoryProvider.overrideWithValue(
             FakeStatusRepository([const ApiOnline(version: 'v1')]),

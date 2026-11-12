@@ -24,6 +24,9 @@ Order sampleOrder({
   bool buyerConfirmed = false,
   bool sellerConfirmed = false,
   OrderCancellation? cancellation,
+  String title = 'Calculadora Casio fx-991ES Plus',
+  int priceCents = 45000,
+  DateTime? updatedAt,
 }) => Order(
   id: id,
   number: 'MS-1001',
@@ -31,10 +34,10 @@ Order sampleOrder({
   isBuyer: isBuyer,
   conversationId: 'c1',
   item: OrderItem(
-    title: 'Calculadora Casio fx-991ES Plus',
-    priceCents: 45000,
+    title: title,
+    priceCents: priceCents,
     quantity: quantity,
-    totalCents: 45000 * quantity,
+    totalCents: priceCents * quantity,
     productId: 'p1',
   ),
   buyerName: 'Ana Sofía Ramírez',
@@ -46,6 +49,7 @@ Order sampleOrder({
   buyerConfirmed: buyerConfirmed,
   sellerConfirmed: sellerConfirmed,
   cancellation: cancellation,
+  updatedAt: updatedAt,
 );
 
 /// Repositorio de pedidos en memoria: guarda lo que se le pide.
@@ -109,6 +113,58 @@ class FakeOrderRepository implements OrderRepository {
 
   @override
   Future<Order> get(String id) async => stored.firstWhere((o) => o.id == id);
+
+  /// Lo que pidio "Mis pedidos" (HU-25): pestana, cursor y limite.
+  final List<(MyOrdersTab?, String?, int?)> mineCalls = [];
+
+  /// Falla la siguiente lectura de "Mis pedidos".
+  ApiFailure? mineFailure;
+
+  /// Mis compras, del mas nuevo (el ultimo de [stored]) al mas viejo, con
+  /// cursor = id del ultimo de la pagina.
+  @override
+  Future<MyOrdersPage> mine({
+    MyOrdersTab? tab,
+    String? cursor,
+    int? limit,
+  }) async {
+    mineCalls.add((tab, cursor, limit));
+    final failure = mineFailure;
+    if (failure != null) {
+      mineFailure = null;
+      throw failure;
+    }
+    bool inTab(Order o, MyOrdersTab t) => switch (t) {
+      MyOrdersTab.active => o.status.open,
+      MyOrdersTab.completed => o.status == OrderStatus.completed,
+      MyOrdersTab.cancelled => o.status == OrderStatus.cancelled,
+    };
+    final mine = [
+      for (final o in stored.reversed)
+        if (o.isBuyer) o,
+    ];
+    final inPage = [
+      for (final o in mine)
+        if (tab == null || inTab(o, tab)) o,
+    ];
+    final start = cursor == null
+        ? 0
+        : inPage.indexWhere((o) => o.id == cursor) + 1;
+    final size = limit ?? 20;
+    final page = inPage.skip(start).take(size).toList();
+    final more = start + size < inPage.length;
+    int count(MyOrdersTab t) => mine.where((o) => inTab(o, t)).length;
+    return MyOrdersPage(
+      items: page,
+      nextCursor: more ? page.last.id : null,
+      total: inPage.length,
+      counts: MyOrdersCounts(
+        active: count(MyOrdersTab.active),
+        completed: count(MyOrdersTab.completed),
+        cancelled: count(MyOrdersTab.cancelled),
+      ),
+    );
+  }
 
   final List<String> accepted = [];
   final List<(String, CancelReason)> cancelled = [];

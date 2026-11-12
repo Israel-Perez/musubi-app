@@ -179,6 +179,11 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-23`).
   static const meetingPoints = '$orders/meeting-points';
 
+  /// `GET /api/v1/orders/mine` — fila "M-08" (spec `musubi-api:HU-25`):
+  /// mis compras por pestana (`active`, `completed`, `cancelled`), con
+  /// `counts` y cursor.
+  static const myOrders = '$orders/mine';
+
   /// `GET /api/v1/orders/{id}` — fila "M-08" (spec `musubi-api:HU-23`).
   static String order(String id) => '$orders/$id';
 

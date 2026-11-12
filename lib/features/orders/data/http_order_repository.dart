@@ -6,7 +6,8 @@ import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/domain/order_repository.dart';
 
 /// [OrderRepository] sobre las filas "M-08" de `musubi-api/docs/endpoints.md`
-/// (specs `musubi-api:HU-23` y `musubi-api:HU-24`). Siempre con sesion.
+/// (specs `musubi-api:HU-23`, `musubi-api:HU-24` y `musubi-api:HU-25`).
+/// Siempre con sesion.
 class HttpOrderRepository implements OrderRepository {
   new(this._dio, this._apiBaseUrl);
 
@@ -67,6 +68,37 @@ class HttpOrderRepository implements OrderRepository {
     final response = await _dio.get<Map<String, dynamic>>(ApiPaths.order(id));
     return orderFromJson(response.data ?? const {}, _apiBaseUrl);
   });
+
+  @override
+  Future<MyOrdersPage> mine({MyOrdersTab? tab, String? cursor, int? limit}) =>
+      _guard(() async {
+        final response = await _dio.get<Map<String, dynamic>>(
+          ApiPaths.myOrders,
+          queryParameters: {
+            'tab': ?tab?.code,
+            'cursor': ?cursor,
+            'limit': ?limit,
+          },
+        );
+        final body = response.data ?? const <String, dynamic>{};
+        final counts = body['counts'] as Map<String, dynamic>? ?? const {};
+        int count(Object? value) => (value as num? ?? 0).toInt();
+        return MyOrdersPage(
+          items: [
+            for (final item
+                in (body['items'] as List<dynamic>? ?? const [])
+                    .cast<Map<String, dynamic>>())
+              orderFromJson(item, _apiBaseUrl),
+          ],
+          nextCursor: body['nextCursor'] as String?,
+          total: count(body['total']),
+          counts: MyOrdersCounts(
+            active: count(counts['active']),
+            completed: count(counts['completed']),
+            cancelled: count(counts['cancelled']),
+          ),
+        );
+      });
 
   @override
   Future<Order> payCash(String id) => _guard(() async {
@@ -144,5 +176,9 @@ Order orderFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
             bySystem: cancellation['by'] == 'system',
             reason: CancelReason.parse(cancellation['reason']),
           ),
+    updatedAt: switch (json['updatedAt']) {
+      final String at => DateTime.parse(at).toUtc(),
+      _ => null,
+    },
   );
 }
