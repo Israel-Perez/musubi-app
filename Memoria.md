@@ -16,6 +16,21 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T42 — Manejar la cantidad disponible (12-Nov-2026, SCRUM-67, HU-50)
+
+**Qué se hizo**
+- "Cambiar piezas" en el menú de `Mis-productos`: una hoja con el selector de `Vender-4` (0 a 10) y "Guardar".
+- "Reponer" en cada fila de Agotados (la deja con 1 pieza), con el botón y el aviso de la maqueta.
+- `QuantityRow` pasó a `quantity_row.dart` (con `min`, `note` y `margin`) y lo usan `Vender-4` y la hoja.
+- `ListingsRepository.setStock` y `ApiPaths.productStock`. Pruebas: +4; 569 en total. Capturas: `cambiar-piezas` y `mis-productos-agotados`.
+
+**Decisiones (con su porqué)** (usuaria, 12-Nov-2026)
+- **Menú y "Reponer":** el menú es lo que pidió el PO y "Reponer" es lo que muestra la maqueta. Una sola petición por cambio, no una por toque.
+- **La hoja aclara que las apartadas en un pedido ya no cuentan** (HU-24).
+
+**Errores a evitar**
+- **Un heredoc largo en Bash vuelve a fallar** ("unexpected EOF"): los archivos de documentación se escriben con la herramienta de archivos o con un script en el scratchpad.
+
 ## T41 — Aceptar y actualizar mis pedidos (11-Nov-2026, SCRUM-43, HU-24)
 
 **Qué se hizo**

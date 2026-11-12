@@ -23,6 +23,10 @@ abstract interface class ListingsRepository {
   /// "Marcar como vendido" (HU-08): sale de la vitrina y pasa a "Vendidos".
   Future<OwnListing> markSold(String id);
 
+  /// "Cambiar piezas" y "Reponer" (HU-50): fija las piezas disponibles (0 a
+  /// 10). Con 0 queda agotada.
+  Future<OwnListing> setStock(String id, int stock);
+
   /// Rango de precios de la categoria, o `null` si aun no hay suficientes
   /// publicaciones para que sea honesto.
   Future<PriceRange?> priceRange(String category);

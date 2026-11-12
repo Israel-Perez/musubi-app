@@ -1,17 +1,21 @@
-# HU-50 — Manejar la cantidad disponible de un producto (tareas)
+# HU-50 — Manejar la cantidad disponible de un producto (app, tareas)
 
 ## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+- **Estado:** ✅ Hecho (12-Nov-2026). Decisión de la usuaria: menú y "Reponer".
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-50)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Datos
+- **Cambiar:** `setStock`, `ApiPaths.productStock` y el fake.
+- **Verificar:** `http_listings_repository_test.dart` (+1).
+- **Estado:** ✅ Hecho (12-Nov-2026).
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+## T3 — Pantalla
+- **Cambiar:** `QuantityRow` compartido, "Cambiar piezas" y "Reponer" en `Mis-productos`.
+- **Verificar:** `my_products_manage_test.dart` (+3).
+- **Estado:** ✅ Hecho (12-Nov-2026).
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## T4 — Capturas y documentación
+- **Qué:** escenas `cambiar-piezas` y `mis-productos-agotados`; spec, plan y task; la fila de HU-50 en `docs/trazabilidad.md`; `Memoria.md`.
+- **Estado:** ✅ Hecho (12-Nov-2026).
+
+## Pendientes
+- `NOTE (musubi-api:HU-52)`: un apartado vencido regresa la pieza solo.

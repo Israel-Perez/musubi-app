@@ -15,6 +15,7 @@ import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
+import 'package:musubi_app/features/listings/presentation/quantity_row.dart';
 import 'package:musubi_app/features/listings/presentation/sell_done_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/listings/presentation/sell_edit.dart';
@@ -182,10 +183,12 @@ class _SellConditionScreenState extends ConsumerState<SellConditionScreen> {
             ],
           ),
         ),
-        _QuantityRow(
+        QuantityRow(
           quantity: draft.quantity,
-          // Al editar no se cambian: "Reponer" es de HU-50.
+          // Al editar no se cambian aqui: "Cambiar piezas" y "Reponer" estan en
+          // `Mis-productos` (HU-50).
           onStep: widget.editing ? null : notifier.step,
+          note: widget.editing ? 'Cámbialas desde Mis productos' : null,
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -379,116 +382,6 @@ class _DetailChip extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// "Piezas disponibles" con quitar y agregar (1 a 10, HU-50). Sin [onStep]
-/// (al editar, HU-07) se ve la cantidad sin poder cambiarla.
-class _QuantityRow extends StatelessWidget {
-  const new({required this.quantity, required this.onStep});
-
-  final int quantity;
-  final ValueChanged<int>? onStep;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.musubi;
-    Widget button({
-      required MusubiIconData icon,
-      required String label,
-      required bool enabled,
-      required int delta,
-    }) => Pressable(
-      key: Key('sell-quantity-$delta'),
-      onTap: enabled && onStep != null ? () => onStep!(delta) : null,
-      semanticLabel: label,
-      builder: (context, pressed) => SizedBox.square(
-        dimension: MusubiSizes.minTouch,
-        child: Center(
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: enabled ? c.inverse : c.surface,
-              borderRadius: BorderRadius.circular(MusubiSizes.radiusThumb),
-            ),
-            child: Center(
-              child: MusubiIcon(
-                icon,
-                size: 18,
-                strokeWidth: 2.4,
-                color: enabled ? const Color(0xFFFFFFFF) : c.disabledIcon,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-      padding: const EdgeInsets.fromLTRB(16, 10, 6, 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(MusubiSizes.radiusButton),
-        border: Border.all(color: c.border, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 2,
-              children: [
-                Text(
-                  'Piezas disponibles',
-                  style: MusubiType.style(
-                    15,
-                    weight: FontWeight.w800,
-                    color: c.textPrimary,
-                  ),
-                ),
-                if (onStep == null)
-                  Text(
-                    'Cámbialas desde Mis productos',
-                    key: const Key('sell-quantity-locked'),
-                    style: MusubiType.style(
-                      12,
-                      weight: FontWeight.w600,
-                      color: c.textSecondary,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          button(
-            icon: MusubiIcons.minus,
-            label: 'Quitar uno',
-            enabled: onStep != null && quantity > 1,
-            delta: -1,
-          ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 24),
-            child: Semantics(
-              liveRegion: true,
-              child: Text(
-                '$quantity',
-                textAlign: TextAlign.center,
-                style: MusubiType.style(
-                  18,
-                  weight: FontWeight.w800,
-                  color: c.textPrimary,
-                ),
-              ),
-            ),
-          ),
-          button(
-            icon: MusubiIcons.plus,
-            label: 'Agregar uno',
-            enabled: onStep != null && quantity < SellDraft.maxQuantity,
-            delta: 1,
-          ),
-        ],
       ),
     );
   }
