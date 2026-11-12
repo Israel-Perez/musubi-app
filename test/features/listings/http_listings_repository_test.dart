@@ -296,4 +296,18 @@ void main() {
     expect(adapter.requests.single.path, ApiPaths.productSold('a1'));
     expect(sold.sold, isTrue);
   });
+
+  // HU-50: "Cambiar piezas" y "Reponer" (fila "M-03" de musubi-api:HU-50).
+  test('cambiar piezas: PUT /stock con { stock }', () async {
+    serve(productJson(status: 'soldOut', stock: 0));
+
+    final changed = await repository.setStock('a1', 0);
+
+    final request = adapter.requests.single;
+    expect(request.method, 'PUT');
+    expect(request.path, ApiPaths.productStock('a1'));
+    expect(request.data, {'stock': 0});
+    expect(changed.status, ListingStatus.soldOut);
+    expect(changed.product.soldOut, isTrue);
+  });
 }

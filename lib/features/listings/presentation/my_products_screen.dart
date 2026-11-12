@@ -17,6 +17,7 @@ import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
+import 'package:musubi_app/features/listings/presentation/quantity_row.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
@@ -31,7 +32,7 @@ import 'package:musubi_app/features/marketplace/presentation/home_providers.dart
 /// NOTE (HU-25): en "Vendidos", el comprador y el monto real del pedido; hoy
 /// se suma el precio publicado.
 /// NOTE (HU-11): "Llevan tiempo sin venderse" con las vistas y los mensajes.
-/// NOTE (HU-50): cambiar las piezas desde la lista.
+/// HU-50: "Cambiar piezas" en el menu y "Reponer" en las agotadas.
 class MyProductsScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -113,6 +114,14 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
                 label: 'Editar',
                 icon: MusubiIcons.fileText,
               ),
+              MusubiOption(
+                value: 'stock',
+                label: 'Cambiar piezas',
+                sub: listing.product.stock == 1
+                    ? '1 pieza disponible'
+                    : '${listing.product.stock} piezas disponibles',
+                icon: MusubiIcons.package,
+              ),
               const MusubiOption(
                 value: 'sold',
                 label: 'Marcar como vendido',
@@ -157,6 +166,8 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
       case 'edit':
         ref.read(sellEditDraftProvider.notifier).load(listing);
         unawaited(context.push(AppRoutes.editListing));
+      case 'stock':
+        await _changeStock(listing);
       case 'sold':
         await _markSold(listing);
       case 'pause':
@@ -166,6 +177,48 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
       case 'delete':
         await _delete(listing);
     }
+  }
+
+  /// "Cambiar piezas" (HU-50): el selector de `Vender-4` de 0 a 10. Las
+  /// apartadas en un pedido aceptado ya no cuentan (HU-24).
+  Future<void> _changeStock(OwnListing listing) async {
+    final stock = await showMusubiPanel<int>(
+      context,
+      builder: (context) => _StockPanel(initial: listing.product.stock),
+    );
+    if (stock == null || stock == listing.product.stock || !mounted) return;
+    await _setStock(
+      listing,
+      stock,
+      done: stock == 0
+          ? 'Guardamos las piezas. Ya aparece como agotado.'
+          : 'Guardamos las piezas disponibles.',
+    );
+  }
+
+  /// "Reponer" en una agotada (maqueta: la deja con 1 pieza).
+  Future<void> _restock(OwnListing listing) => _setStock(
+    listing,
+    1,
+    done: 'Repusiste «${listing.product.title}». Ya está disponible',
+  );
+
+  Future<void> _setStock(
+    OwnListing listing,
+    int stock, {
+    required String done,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(listingsRepositoryProvider)
+          .setStock(listing.product.id, stock);
+    } on ApiFailure catch (failure) {
+      _failed(messenger, failure);
+      return;
+    }
+    _refreshAll();
+    showMusubiSnack(messenger, done);
   }
 
   /// "Marcar como vendido" con el dialogo de la maqueta (`Producto`, HU-08).
@@ -407,6 +460,10 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
                         _InventoryRow(
                           listing: listing,
                           onTap: () => unawaited(_manage(listing)),
+                          // HU-50: "Reponer" en las agotadas (maqueta).
+                          onRestock: listing.status == ListingStatus.soldOut
+                              ? () => unawaited(_restock(listing))
+                              : null,
                         ),
                       if (cursor != null)
                         Padding(
@@ -502,10 +559,13 @@ class _Tabs extends StatelessWidget {
 /// Fila de "Tu inventario": foto de 52, nombre y "$180 · Quedan 2". Al
 /// tocarla, su menu (HU-07).
 class _InventoryRow extends StatelessWidget {
-  const new({required this.listing, required this.onTap});
+  const new({required this.listing, required this.onTap, this.onRestock});
 
   final OwnListing listing;
   final VoidCallback onTap;
+
+  /// "Reponer" (HU-50), solo en una agotada.
+  final VoidCallback? onRestock;
 
   @override
   Widget build(BuildContext context) {
@@ -584,6 +644,30 @@ class _InventoryRow extends StatelessWidget {
               ],
             ),
           ),
+          // Maqueta `Mis-productos` → "Agotados": "Reponer" a la derecha.
+          if (onRestock case final restock?)
+            Pressable(
+              key: Key('my-product-restock-${product.id}'),
+              onTap: restock,
+              semanticLabel: 'Reponer ${product.title}',
+              builder: (context, _) => Container(
+                height: MusubiSizes.minTouch,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.inverse,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  'Reponer',
+                  style: MusubiType.style(
+                    13.5,
+                    weight: FontWeight.w800,
+                    color: const Color(0xFFFFFFFF),
+                  ),
+                ),
+              ),
+            ),
           // Maqueta `Mis-productos` → "Vendidos": la marca a la derecha.
           if (listing.sold)
             Text(
@@ -643,4 +727,50 @@ class _SalesTotal extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "Cambiar piezas" (HU-50): "Piezas disponibles" de 0 a 10 y "Guardar".
+/// Devuelve las piezas elegidas al cerrar.
+class _StockPanel extends StatefulWidget {
+  const new({required this.initial});
+
+  final int initial;
+
+  @override
+  State<_StockPanel> createState() => _StockPanelState();
+}
+
+class _StockPanelState extends State<_StockPanel> {
+  late int _stock = widget.initial.clamp(0, SellDraft.maxQuantity);
+
+  @override
+  Widget build(BuildContext context) => MusubiPanel(
+    key: const Key('my-product-stock'),
+    title: 'Cambiar piezas',
+    bodyInset: 12,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        QuantityRow(
+          quantity: _stock,
+          min: 0,
+          margin: EdgeInsets.zero,
+          note: _stock == 0
+              ? 'Con 0 queda como agotado'
+              : 'Las apartadas en un pedido ya no cuentan',
+          onStep: (delta) => setState(
+            () => _stock = (_stock + delta).clamp(0, SellDraft.maxQuantity),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: MusubiButton(
+            key: const Key('my-product-stock-save'),
+            label: 'Guardar',
+            onPressed: () => Navigator.of(context).pop(_stock),
+          ),
+        ),
+      ],
+    ),
+  );
 }

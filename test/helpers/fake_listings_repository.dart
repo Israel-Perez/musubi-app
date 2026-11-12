@@ -144,6 +144,48 @@ class FakeListingsRepository implements ListingsRepository {
     );
   }
 
+  /// Piezas fijadas por id (HU-50).
+  final Map<String, int> stockChanges = {};
+
+  @override
+  Future<OwnListing> setStock(String id, int stock) async {
+    _failIfAsked();
+    final current = _find(id);
+    if (current.sold) {
+      throw const ApiFailure(
+        code: 'listings.product_sold',
+        message: 'Esta publicación ya se vendió.',
+        status: 409,
+      );
+    }
+    stockChanges[id] = stock;
+    final p = current.product;
+    final changed = OwnListing(
+      product: ProductSummary(
+        id: p.id,
+        title: p.title,
+        priceCents: p.priceCents,
+        stock: stock,
+        photoUrl: p.photoUrl,
+        category: p.category,
+        condition: p.condition,
+        sellerName: p.sellerName,
+        publishedAt: p.publishedAt,
+      ),
+      // Una pausada sigue pausada; si no, el estado sale de las piezas.
+      status: current.paused
+          ? ListingStatus.hidden
+          : stock > 0
+          ? ListingStatus.active
+          : ListingStatus.soldOut,
+      description: current.description,
+      condition: current.condition,
+      usedDetail: current.usedDetail,
+    );
+    _replace(changed);
+    return changed;
+  }
+
   @override
   Future<OwnListing> markSold(String id) async {
     _failIfAsked();
