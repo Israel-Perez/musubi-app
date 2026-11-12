@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/data/http_profile_repository.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/domain/profile_repository.dart';
@@ -72,5 +75,22 @@ class MyProfileController extends AsyncNotifier<MyProfile> {
 final FutureProvider<CareersCatalog> careersProvider =
     FutureProvider.autoDispose<CareersCatalog>(
       (ref) => ref.watch(profileRepositoryProvider).careers(),
+      retry: (_, _) => null,
+    );
+
+/// Perfil publico de otra persona (`GET /profiles/{id}`, HU-05). La tarjeta
+/// del vendedor (`Producto`) usa `.value`; la pantalla decide por el error.
+final FutureProviderFamily<PublicProfile, String> publicProfileProvider =
+    FutureProvider.autoDispose.family<PublicProfile, String>(
+      (ref, id) => ref.watch(profileRepositoryProvider).publicProfile(id),
+      retry: (_, _) => null,
+    );
+
+/// Publicaciones activas de un perfil (`GET /products?sellerId=`, HU-05):
+/// primera pagina; "Ver mas" pide las siguientes con el repositorio.
+final FutureProviderFamily<ProductPage, String> sellerListingsProvider =
+    FutureProvider.autoDispose.family<ProductPage, String>(
+      (ref, sellerId) =>
+          ref.watch(catalogRepositoryProvider).sellerListings(sellerId),
       retry: (_, _) => null,
     );

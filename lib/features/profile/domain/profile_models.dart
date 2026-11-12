@@ -205,27 +205,45 @@ String monthYear(DateTime date) {
   return '${_months[local.month - 1]} ${local.year}';
 }
 
-/// Perfil publico de otra persona del campus (`GET /profiles/{id}`): lo que
-/// muestra la tarjeta del vendedor en `Producto` (HU-11). La pantalla
-/// `Perfil-vendedor` completa llega con HU-05.
+/// Perfil publico de otra persona del campus (`GET /profiles/{id}`, HU-05):
+/// cabecera de `Perfil-vendedor`. La tarjeta del vendedor en `Producto`
+/// (HU-11) usa un subconjunto.
+///
+/// NOTE (HU-27): el promedio y las opiniones llegan con HU-27/HU-45; sin
+/// calificaciones, `ratingAvg` es `null` y `ratingCount` es `0` (RN-26).
 @immutable
 class PublicProfile {
   const new({
     required this.id,
     required this.fullName,
+    required this.campusShortName,
+    required this.memberSince,
     required this.ratingCount,
     this.photoUrl,
     this.careerShortName,
+    this.term,
     this.ratingAvg,
     this.sales,
   });
 
   final String id;
   final String fullName;
+
+  /// Siglas del campus ("UTTT"); la API solo devuelve perfiles del campus.
+  final String campusShortName;
+
+  /// "En Musubi desde oct 2024": cuando verifico su correo o se creo la
+  /// cuenta.
+  final DateTime memberSince;
+
   final String? photoUrl;
 
   /// `null` si oculta su carrera ("Quien te ve", HU-04).
   final String? careerShortName;
+
+  /// Periodo actual, o `null` si oculta la carrera.
+  final int? term;
+
   final double? ratingAvg;
   final int ratingCount;
 

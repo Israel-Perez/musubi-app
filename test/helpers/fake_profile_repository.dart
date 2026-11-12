@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/domain/profile_repository.dart';
@@ -47,10 +49,29 @@ class FakeProfileRepository implements ProfileRepository {
     academicTerm: term,
   );
 
+  /// Perfil publico de la maqueta (`Perfil-vendedor`): Valeria.
+  static final publicSample = PublicProfile(
+    id: '6716a0000000000000000001',
+    fullName: 'Valeria Cruz',
+    campusShortName: 'UTTT',
+    memberSince: DateTime(2025, 2, 15),
+    careerShortName: 'Arquitectura',
+    term: 8,
+    ratingAvg: 4.6,
+    ratingCount: 18,
+    sales: 15,
+  );
+
   MyProfile profile;
 
   /// Falla la carga de [me] (estado de error con "Reintentar").
   bool failLoad = false;
+
+  /// Falla la carga del perfil publico (estado de error con "Reintentar").
+  bool failPublicProfile = false;
+
+  /// Nunca responde hasta completarse (estado "cargando").
+  Completer<PublicProfile>? pendingPublicProfile;
 
   /// Falla guardar la visibilidad (el interruptor regresa).
   bool failVisibility = false;
@@ -107,11 +128,17 @@ class FakeProfileRepository implements ProfileRepository {
     profile = _copy(career: profile.career, term: profile.term);
   }
 
+  /// Falla la carga de carreras (fallback del periodo sin unidad).
+  bool failCareers = false;
+
   @override
-  Future<CareersCatalog> careers() async => const CareersCatalog(
-    academicTerm: term,
-    careers: [software, mechatronics, accounting],
-  );
+  Future<CareersCatalog> careers() async {
+    if (failCareers) throw _offline;
+    return const CareersCatalog(
+      academicTerm: term,
+      careers: [software, mechatronics, accounting],
+    );
+  }
 
   MyProfile _copy({
     required Career? career,
@@ -137,6 +164,9 @@ class FakeProfileRepository implements ProfileRepository {
 
   @override
   Future<PublicProfile> publicProfile(String id) async {
+    final pending = pendingPublicProfile;
+    if (pending != null) return await pending.future;
+    if (failPublicProfile) throw _offline;
     final found = publicProfiles[id];
     if (found == null) {
       throw const ApiFailure(

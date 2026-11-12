@@ -74,6 +74,31 @@ class FakeCatalogRepository implements CatalogRepository {
   @override
   Future<List<CatalogCategory>> categories() async => categoriesResponse;
 
+  /// Consultas de "Publicaciones" del perfil (HU-05).
+  final List<String> sellerIds = [];
+  final List<int> sellerPages = [];
+  final List<String?> sellerCursors = [];
+
+  /// Paginas por cursor ("Ver más"); sin entrada, la respuesta por defecto.
+  final Map<String?, ProductPage> sellerListingsByCursor = {};
+  ProductPage sellerListingsResponse = const ProductPage();
+
+  /// Falla las publicaciones del perfil (estado de error en la pestaña).
+  bool failSellerListings = false;
+
+  @override
+  Future<ProductPage> sellerListings(
+    String sellerId, {
+    int page = 1,
+    String? cursor,
+  }) async {
+    sellerIds.add(sellerId);
+    sellerPages.add(page);
+    sellerCursors.add(cursor);
+    if (failSellerListings) throw offlineFailure;
+    return sellerListingsByCursor[cursor] ?? sellerListingsResponse;
+  }
+
   /// Detalles por id (HU-11). Sin el id: 404 como la API.
   final Map<String, ProductDetail> details = {};
 

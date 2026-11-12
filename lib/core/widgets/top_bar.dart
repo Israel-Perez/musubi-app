@@ -66,6 +66,8 @@ class MusubiTopBar extends StatelessWidget {
                     header: true,
                     child: Text(
                       title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: MusubiType.style(
                         20,
                         weight: FontWeight.w800,
@@ -83,6 +85,8 @@ class MusubiTopBar extends StatelessWidget {
                     child: Text(
                       title,
                       textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: MusubiType.style(
                         17,
                         weight: FontWeight.w800,

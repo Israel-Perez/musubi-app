@@ -489,12 +489,16 @@ class RecentTile extends StatelessWidget {
     required this.onSave,
     super.key,
     this.onTap,
+    this.showSeller = true,
   });
 
   final ProductSummary product;
   final DateTime now;
   final ValueChanged<ProductSummary> onSave;
   final VoidCallback? onTap;
+
+  /// En el perfil de quien vende no se repite su nombre en cada tarjeta.
+  final bool showSeller;
 
   @override
   Widget build(BuildContext context) {
@@ -503,7 +507,7 @@ class RecentTile extends StatelessWidget {
     final published = product.publishedAt;
     final meta = [
       if (published != null) timeAgo(published, now),
-      ?product.sellerName,
+      if (showSeller) ?product.sellerName,
     ].join(' · ');
     final tile = Pressable(
       onTap: onTap,

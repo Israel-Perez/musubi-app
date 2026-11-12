@@ -34,17 +34,6 @@ final FutureProviderFamily<ProductDetail, String> productDetailProvider =
       retry: (_, _) => null,
     );
 
-/// Tarjeta del vendedor (`GET /profiles/{id}`, con sesion). Si no carga, la
-/// tarjeta muestra solo el nombre del detalle.
-final FutureProviderFamily<PublicProfile?, String> sellerProfileProvider =
-    FutureProvider.autoDispose.family<PublicProfile?, String>((ref, id) async {
-      try {
-        return await ref.watch(profileRepositoryProvider).publicProfile(id);
-      } on ApiFailure {
-        return null;
-      }
-    }, retry: (_, _) => null);
-
 /// `ProductDetail` → tarjeta que usa el estado de favoritos (HU-53).
 ProductSummary _summaryOf(ProductDetail detail) => ProductSummary(
   id: detail.id,
@@ -167,7 +156,17 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
           onNotify: () =>
               signedIn ? _soon('El aviso') : _gate(AccountGateMotive.save),
           onSimilar: () => _soon('Ver parecidos'),
-          onSeller: () => _soon('El perfil de quien vende'),
+          onSeller: () {
+            final sellerId = value.sellerId;
+            if (sellerId == null) return;
+            unawaited(
+              context.push(
+                myId != null && sellerId == myId
+                    ? AppRoutes.profile
+                    : AppRoutes.sellerProfile(sellerId),
+              ),
+            );
+          },
           onMessage: () => _chat(value, signedIn: signedIn, buy: false),
           onBuy: () => _chat(value, signedIn: signedIn, buy: true),
           onMine: () => unawaited(context.push(AppRoutes.myProducts)),
@@ -296,7 +295,7 @@ class _Loaded extends ConsumerWidget {
     final sellerId = detail.sellerId;
     final profile = sellerId == null
         ? null
-        : ref.watch(sellerProfileProvider(sellerId)).value;
+        : ref.watch(publicProfileProvider(sellerId)).value;
     // Como la maqueta: "Último" y "Quedan 2" cuando quedan pocas.
     final stock = switch (detail.stock) {
       _ when soldOut => 'Agotado',

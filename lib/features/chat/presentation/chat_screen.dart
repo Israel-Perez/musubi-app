@@ -39,7 +39,7 @@ import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 /// HU-21: la tarjeta de la publicacion y "Ver" (abre su detalle, HU-11).
 /// "Mas opciones" (`chatMoreSheet`): "Bloquear a …" (HU-57) y "Reportar"
 /// (HU-28); con un bloqueo, un aviso en lugar de la caja de texto.
-/// NOTE (HU-05): "Ver perfil" y "En linea" / "Activa hace 5 min".
+/// NOTE (HU-21): "En linea" / "Activa hace 5 min".
 /// NOTE (HU-31): "Silenciar conversación" (sin avisos push no hay que callar).
 /// NOTE (HU-27): la calificacion de la otra persona.
 /// "Resumir acuerdo" (HU-32/33/34): cualquiera de los dos le pide a la IA la
@@ -196,7 +196,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (picked == null || !mounted) return;
     switch (picked) {
       case 'profile':
-        _soon('El perfil de ${person.firstName}');
+        unawaited(context.push(AppRoutes.sellerProfile(person.id)));
       case 'mute':
         _soon('Silenciar conversaciones');
       case 'block':

@@ -28,4 +28,13 @@ abstract interface class CatalogRepository {
 
   /// Detalle de una publicacion (HU-11). Sin sesion, sin el vendedor.
   Future<ProductDetail> product(String id);
+
+  /// Publicaciones activas de una persona (`GET /products?sellerId=`, fila
+  /// "M-03", spec `musubi-api:HU-05`). `total` es el contador de
+  /// "Publicaciones (N)" de `Perfil-vendedor`; "Ver más" usa [cursor].
+  Future<ProductPage> sellerListings(
+    String sellerId, {
+    int page = 1,
+    String? cursor,
+  });
 }

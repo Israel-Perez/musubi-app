@@ -567,14 +567,40 @@ class _Shot {
             photoPickerProvider.overrideWithValue(_FilePicker()),
             profileRepositoryProvider.overrideWithValue(
               FakeProfileRepository(initial: _anaProfile)
-                // Tarjeta de quien vende en `Producto` (HU-11).
-                ..publicProfiles['demo-casio-991es'] = const PublicProfile(
-                  id: 'demo-casio-991es',
+                // Tarjeta de quien vende en `Producto` (HU-11) y cabecera de
+                // `Perfil-vendedor` (HU-05).
+                ..publicProfiles['demo-valeria-c'] = PublicProfile(
+                  id: 'demo-valeria-c',
                   fullName: 'Valeria Cruz',
+                  campusShortName: 'UTTT',
+                  memberSince: DateTime(2025, 2, 15),
                   careerShortName: 'Arquitectura',
+                  term: 8,
                   ratingAvg: 4.6,
                   ratingCount: 18,
                   sales: 15,
+                )
+                // `Perfil-vendedor` sin calificaciones (RN-26).
+                ..publicProfiles['demo-diego-h'] = PublicProfile(
+                  id: 'demo-diego-h',
+                  fullName: 'Diego Hernández',
+                  campusShortName: 'UTTT',
+                  memberSince: DateTime(2024, 8, 20),
+                  careerShortName: 'Ing. Civil',
+                  term: 7,
+                  ratingCount: 0,
+                )
+                // `Perfil-vendedor` sin publicaciones activas.
+                ..publicProfiles['demo-paulina-r'] = PublicProfile(
+                  id: 'demo-paulina-r',
+                  fullName: 'Paulina Ruiz',
+                  campusShortName: 'UTTT',
+                  memberSince: DateTime(2025, 3, 10),
+                  careerShortName: 'Diseño Industrial',
+                  term: 5,
+                  ratingAvg: 5,
+                  ratingCount: 3,
+                  sales: 2,
                 ),
             ),
             themePreferenceRepositoryProvider.overrideWithValue(
@@ -819,6 +845,18 @@ final Map<String, (bool, _Scene)> _scenes = {
   'mensajes': (true, (s) => s.go(AppRoutes.messages)),
   'producto': (true, (s) => s.go(AppRoutes.product('casio-991es'))),
   'producto-visitante': (false, (s) => s.go(AppRoutes.product('casio-991es'))),
+  'perfil-vendedor': (
+    true,
+    (s) => s.go(AppRoutes.sellerProfile('demo-valeria-c')),
+  ),
+  'perfil-vendedor-sin-calificaciones': (
+    true,
+    (s) => s.go(AppRoutes.sellerProfile('demo-diego-h')),
+  ),
+  'perfil-vendedor-vacio': (
+    true,
+    (s) => s.go(AppRoutes.sellerProfile('demo-paulina-r')),
+  ),
   'inicio-visitante': (false, (s) async {}),
   'busqueda': (
     false,

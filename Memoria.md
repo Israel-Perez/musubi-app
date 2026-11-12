@@ -10,11 +10,37 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **API en producción:** `0.5.0-alpha.19`, esquema 18 (`infra-up` del 11-Nov-2026). La matriz está en `docs/versionado.md`.
 - **HU-31 (push):** en `main` (#52), con la API `0.5.0-alpha.18`. Proyecto de Firebase `musubi-2a78e` listo y secreto `GOOGLE_SERVICES_JSON_B64` en el repo (11-Nov-2026).
 - **HU-24 (aceptar y actualizar pedidos):** app en `feature/SCRUM-43-aceptar-actualizar-pedidos`, con la API `0.5.0-alpha.20` (musubi-api #72). Ver T41.
+- **HU-05 (perfil del vendedor):** fila compartida `0.5.0-alpha.21` de musubi-api en `docs/versionado.md` (esquema 19, el de HU-24/#72; la API se rebasa antes del merge); la app está en `feature/SCRUM-34-perfil-publico` con T2–T6 hechos, versión `0.9.0+11` y spec en “Borrador con evidencia” (ver T42); faltan el revisor y el PR.
 - **Push verificado en un celular real (11-Nov-2026)** con la llave nueva de Firebase. El fallo anterior era de la API: llave en otra región, guardada en varias líneas y revocada.
 - **Siguiente:** desplegar `alpha.20` y probar HU-24 en el celular; luego HU-25. Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** API y app en `main` (#50).
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T42 — Specs y datos del perfil del vendedor (11-Nov-2026, SCRUM-34, HU-05)
+
+**Qué se hizo**
+- `specs/m02-profile/HU-05-perfil-publico/spec.md`, `plan.md` y `task.md` completos, sobre `feature/SCRUM-34-perfil-publico`.
+- Se verificó que `musubi-app` está al día con `origin/main` y que `musubi-api` está al día con `feature/SCRUM-34-perfil-publico` (`dee5c0e`, `0.5.0-alpha.21`).
+- **T2 (datos):** `PublicProfile` con `campusShortName`, `memberSince` y `term`; `HttpProfileRepository.publicProfile` los parsea; `CatalogRepository.sellerListings`/`HttpCatalogRepository` leen `GET /products?sellerId=&hideSoldOut=true&limit=20&page=`; `DemoCatalogRepository` y `FakeCatalogRepository` lo implementan.
+- **T3 (estado):** `publicProfileProvider` compartido (deja de tragarse el error y `product_screen.dart` usa `.value`) y `sellerListingsProvider` para la primera página; `FakeProfileRepository.failPublicProfile` y `FakeCatalogRepository.failSellerListings` para los estados de error.
+- **T4 (pantalla y entradas):** `SellerProfileScreen` (`Perfil-vendedor`) con cabecera, pestañas, publicaciones activas y “Ver más” por cursor, opiniones vacía y estados de carga/error/404; ruta `/vendedor/:id` con guardia de sesión; entradas desde la tarjeta del vendedor en `Producto` (mi publicación va a `Perfil`) y desde “Ver perfil” en `Chat-Valeria`; `MusubiTopBar` recorta nombres largos.
+- **T5 (evidencia):** escenas `perfil-vendedor`, `perfil-vendedor-sin-calificaciones` y `perfil-vendedor-vacio` en claro y oscuro; `RecentTile.showSeller` para no repetir el nombre en las tarjetas del perfil; la vitrina de muestra usa `demo-valeria-c` (un id estable por vendedor); versión `0.9.0+11` en `pubspec.yaml`, `lib/app/app_version.dart` y la fila de la app en `docs/versionado.md`.
+- **T6 (gates):** `critic` PASS (32 archivos), `semgrep` 0 hallazgos, `security-reviewer` PASS tras corregir el parseo tolerante de perfil y vitrina, y `traceability-clerk` OK tras añadir las pruebas de visitante, mi perfil, fallback de `careers`, `NOTE (HU-21)` y el estado de la spec. Spec en “🚧 Borrador con evidencia”.
+- Verificación: `dart format` 0, `flutter analyze --fatal-infos --fatal-warnings` 0, `flutter test` 596/596 (4 de perfil, 4 de providers, 13 de pantalla, 4 de vitrina, 1 de la vitrina de muestra, 3 de producto, 1 de chat y 1 de navegación), `test/versioning_test.dart` 3/3 y las 6 capturas generadas.
+
+**Decisiones**
+- **Enfoque A (aprobado):** solo lo que Jira y la API sostienen; “Seguir”, “Responde en” y “Mensaje desde el perfil” quedan fuera (`NOTE (HU-20)`).
+- **`sellerListings` en `CatalogRepository` (M-04):** la ruta es la vitrina y `ProductPage` ya vive ahí; M-02 solo aporta el perfil.
+- **Un solo `publicProfileProvider`:** se mueve de `product_screen.dart` y deja de convertir el error en `null`; la pantalla distingue 404 de red/5xx.
+- **Unidad del periodo:** `PublicProfileResponse` no trae `academicTerm`; se toma de `GET /careers` (`careersProvider`) y, si falla, se muestra `9º` sin unidad. No se inventa “cuatrimestre”.
+- **Reputación vacía:** “Sin calificaciones” y “Opiniones (0)” con `NOTE (HU-27)` hasta HU-27/HU-45.
+- **Paginación:** “Ver más” con cursor; no hay scroll infinito. Si alguien supera 20 publicaciones activas, medir si conviene.
+
+**Errores a evitar**
+- No reintentar un `404 profiles.not_found`: es inexistente, de otro campus o bloqueado; solo lleva a “Regresar”.
+- No duplicar el mapeo de productos en `ProfileRepository` ni agregar `activeListings` al perfil.
+- Una forma inesperada del back se traduce a `ApiFailure`; un `TypeError` deja “Reintentar” en bucle.
 
 ## T41 — Aceptar y actualizar mis pedidos (11-Nov-2026, SCRUM-43, HU-24)
 
