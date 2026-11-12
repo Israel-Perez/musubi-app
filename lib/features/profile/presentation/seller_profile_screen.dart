@@ -27,15 +27,32 @@ import 'package:musubi_app/features/profile/presentation/profile_providers.dart'
 
 enum _SellerTab { publications, reviews }
 
-/// `Perfil-vendedor` (HU-05): cabecera publica, publicaciones activas y
-/// opiniones. Se abre desde `Producto` y desde "Ver perfil" del chat.
+/// Desde donde se abrio `Perfil-vendedor`: decide a que conversacion lleva
+/// "Mensaje" (como `mensajeV` de la maqueta).
+@immutable
+class SellerProfileOrigin {
+  /// Desde el detalle (`Producto`): "Mensaje" abre el chat de esa publicacion.
+  const new product(ProductSummary this.product) : fromChat = false;
+
+  /// Desde "Ver perfil" del chat: "Mensaje" regresa a esa conversacion.
+  const new chat() : product = null, fromChat = true;
+
+  final ProductSummary? product;
+  final bool fromChat;
+}
+
+/// `Perfil-vendedor` (HU-05): cabecera publica, "Seguir" y "Mensaje", cifras,
+/// publicaciones activas y opiniones. Se abre desde `Producto` y desde
+/// "Ver perfil" del chat.
 ///
-/// NOTE (HU-20): "Mensaje" desde el perfil no se abre aqui; la conversacion
-/// es de HU-20. NOTE (HU-27): promedio, calificaciones y opiniones.
+/// NOTE (HU-27): promedio, calificaciones, opiniones y "A tiempo".
+/// "Seguir" y "Compartir" avisan que llegan pronto (la API no tiene
+/// seguidores ni enlaces publicos); "Responde en" queda fuera como en HU-11.
 class SellerProfileScreen extends ConsumerStatefulWidget {
-  const new({required this.sellerId, super.key});
+  const new({required this.sellerId, super.key, this.origin});
 
   final String sellerId;
+  final SellerProfileOrigin? origin;
 
   @override
   ConsumerState<SellerProfileScreen> createState() =>
@@ -86,6 +103,35 @@ class _SellerProfileScreenState extends ConsumerState<SellerProfileScreen> {
     ref.invalidate(sellerListingsProvider(widget.sellerId));
   }
 
+  void _soon(String what) => showMusubiSnack(
+    ScaffoldMessenger.of(context),
+    '$what llega muy pronto.',
+    icon: MusubiIcons.clock,
+    tone: SnackTone.info,
+  );
+
+  /// "Mensaje" (`mensajeV` de la maqueta): desde el chat regresa a esa
+  /// conversacion; si no, abre la de la publicacion de origen o la de su
+  /// primera publicacion activa (el chat es por publicacion, HU-20).
+  void _message(PublicProfile profile, List<ProductSummary> items) {
+    final origin = widget.origin;
+    if (origin != null && origin.fromChat) {
+      _back();
+      return;
+    }
+    final product = origin?.product ?? (items.isEmpty ? null : items.first);
+    if (product == null) {
+      showMusubiSnack(
+        ScaffoldMessenger.of(context),
+        '${profile.firstName} no tiene publicaciones activas para escribirle.',
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.info,
+      );
+      return;
+    }
+    unawaited(context.push(AppRoutes.chat, extra: product));
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(publicProfileProvider(widget.sellerId));
@@ -103,6 +149,9 @@ class _SellerProfileScreenState extends ConsumerState<SellerProfileScreen> {
           onLoadMore: _loadMore,
           onRetryListings: _retryListings,
           onBack: _back,
+          onShare: () => _soon('Compartir'),
+          onFollow: () => _soon('Seguir a ${value.firstName}'),
+          onMessage: (items) => _message(value, items),
         ),
         AsyncError(:final error)
             when error is ApiFailure && error.code == 'profiles.not_found' =>
@@ -132,6 +181,9 @@ class _Loaded extends ConsumerWidget {
     required this.onLoadMore,
     required this.onRetryListings,
     required this.onBack,
+    required this.onShare,
+    required this.onFollow,
+    required this.onMessage,
   });
 
   final String sellerId;
@@ -144,6 +196,9 @@ class _Loaded extends ConsumerWidget {
   final ValueChanged<String> onLoadMore;
   final VoidCallback onRetryListings;
   final VoidCallback onBack;
+  final VoidCallback onShare;
+  final VoidCallback onFollow;
+  final ValueChanged<List<ProductSummary>> onMessage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -160,9 +215,18 @@ class _Loaded extends ConsumerWidget {
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
-            child: MusubiTopBar(title: profile.fullName, onBack: onBack),
+            child: _TopBar(onBack: onBack, onShare: onShare),
           ),
           SliverToBoxAdapter(child: _Header(profile: profile)),
+          SliverToBoxAdapter(
+            child: _Actions(
+              onFollow: onFollow,
+              onMessage: () => onMessage(items),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _Stats(sales: profile.sales, publications: page?.total),
+          ),
           SliverToBoxAdapter(
             child: _Tabs(
               tab: tab,
@@ -281,7 +345,56 @@ class _Loaded extends ConsumerWidget {
   }
 }
 
-/// Foto, nombre, campus, carrera y periodo, reputación y "En Musubi desde".
+/// "Regresar" y "Compartir" (`header` de `Perfil-vendedor`: 44 de alto con
+/// 8 a los lados).
+class _TopBar extends StatelessWidget {
+  const new({required this.onBack, required this.onShare});
+
+  final VoidCallback onBack;
+  final VoidCallback onShare;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    Widget button(
+      String label,
+      MusubiIconData icon,
+      double size,
+      VoidCallback onTap,
+    ) => Pressable(
+      key: Key('seller-${label.toLowerCase()}'),
+      onTap: onTap,
+      semanticLabel: label,
+      builder: (context, _) => SizedBox.square(
+        dimension: MusubiSizes.minTouch,
+        child: Center(
+          child: MusubiIcon(
+            icon,
+            size: size,
+            strokeWidth: 1.9,
+            color: c.textPrimary,
+          ),
+        ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: SizedBox(
+        height: MusubiSizes.minTouch,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            button('Regresar', MusubiIcons.chevronLeft, 24, onBack),
+            button('Compartir', MusubiIcons.share, 21, onShare),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Foto con "Verificada", nombre, carrera y periodo, reputación y
+/// "En Musubi desde", centrados como en la maqueta.
 class _Header extends ConsumerWidget {
   const new({required this.profile});
 
@@ -294,143 +407,268 @@ class _Header extends ConsumerWidget {
     final unit = ref.watch(careersProvider).value?.academicTerm;
     final career = profile.careerShortName;
     final term = profile.term;
-    final subtitle = [
-      profile.campusShortName,
-      ?career,
-      if (career != null && term != null) unit?.label(term) ?? '$termº',
-    ].join(' · ');
+    // Como la maqueta: "Arquitectura · 8º semestre". Si oculta la carrera
+    // (HU-04), queda el campus para que la linea no se vacie.
+    final subtitle = career == null
+        ? profile.campusShortName
+        : [career, if (term != null) unit?.label(term) ?? '$termº'].join(' · ');
     final rating = profile.ratingAvg;
-    final sales = profile.sales;
     final palette = profile.id.codeUnits.fold(0, (sum, unit) => sum + unit) % 5;
+    final secondary = MusubiType.style(
+      14,
+      weight: FontWeight.w600,
+      color: c.textSecondary,
+    );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 12,
         children: [
-          Row(
-            spacing: 14,
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  ProfileAvatar(
-                    key: const Key('seller-avatar'),
-                    initials: initialsOf(profile.fullName),
-                    photoUrl: profile.photoUrl,
-                    size: 72,
-                    fontSize: 24,
-                    palette: palette,
-                  ),
-                  Positioned(
-                    right: -2,
-                    bottom: -2,
-                    // El anillo es blanco tambien en modo noche, como en
-                    // `Perfil`.
-                    child: Container(
-                      width: 26,
-                      height: 26,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFFFFF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(child: VerifiedBadge(size: 23)),
-                    ),
-                  ),
-                ],
+              ProfileAvatar(
+                key: const Key('seller-avatar'),
+                initials: initialsOf(profile.fullName),
+                photoUrl: profile.photoUrl,
+                size: 84,
+                fontSize: 26,
+                palette: palette,
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 3,
-                  children: [
-                    Text(
-                      profile.fullName,
-                      key: const Key('seller-name'),
-                      style: MusubiType.style(
-                        20,
-                        weight: FontWeight.w800,
-                        line: 25,
-                        em: -0.02,
-                        color: c.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      key: const Key('seller-subtitle'),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: MusubiType.style(
-                        13,
-                        weight: FontWeight.w600,
-                        color: c.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+              const Positioned(
+                right: -2,
+                bottom: 0,
+                child: VerifiedBadge(size: 26),
               ),
             ],
           ),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (rating != null) ...[
-                MusubiIcon(
-                  MusubiIcons.star,
-                  size: 16,
-                  fillColor: c.warning,
-                  color: c.warning,
-                  filled: true,
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              profile.fullName,
+              key: const Key('seller-name'),
+              textAlign: TextAlign.center,
+              style: MusubiType.style(
+                24,
+                weight: FontWeight.w800,
+                line: 30,
+                em: -0.025,
+                color: c.textPrimary,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              subtitle,
+              key: const Key('seller-subtitle'),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: secondary,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              key: const Key('seller-rating'),
+              mainAxisSize: MainAxisSize.min,
+              spacing: 5,
+              children: [
+                if (rating != null) ...[
+                  MusubiIcon(
+                    MusubiIcons.star,
+                    size: 16,
+                    color: c.warning,
+                    fillColor: c.warning,
+                    filled: true,
+                  ),
+                  Text(
+                    rating.toStringAsFixed(1),
+                    style: MusubiType.style(
+                      14,
+                      weight: FontWeight.w800,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    profile.ratingCount == 1
+                        ? '1 calificación'
+                        : '${profile.ratingCount} calificaciones',
+                    style: secondary,
+                  ),
+                ] else
+                  Text('Sin calificaciones', style: secondary),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Container(
+              key: const Key('seller-since'),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
+              ),
+              child: Text(
+                'En Musubi desde ${monthYear(profile.memberSince)}',
+                style: MusubiType.style(
+                  12.5,
+                  weight: FontWeight.w700,
+                  color: c.textPrimary,
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Seguir" (borde) y "Mensaje" (rojo), en dos columnas de 48 de alto.
+class _Actions extends StatelessWidget {
+  const new({required this.onFollow, required this.onMessage});
+
+  final VoidCallback onFollow;
+  final VoidCallback onMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    Widget action({
+      required String label,
+      required MusubiIconData icon,
+      required VoidCallback onTap,
+      required bool primary,
+    }) => Expanded(
+      child: Pressable(
+        key: Key('seller-${label.toLowerCase()}'),
+        onTap: onTap,
+        semanticLabel: label,
+        builder: (context, pressed) {
+          final ink = primary ? c.onBrand : c.textPrimary;
+          final background = switch ((primary, pressed)) {
+            (true, false) => c.brand,
+            (true, true) => c.brandPressed,
+            (false, true) => c.surface,
+            (false, false) => null,
+          };
+          return Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(14),
+              border: primary ? null : Border.all(color: c.border, width: 1.5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 8,
+              children: [
+                MusubiIcon(icon, size: 19, strokeWidth: 1.9, color: ink),
                 Text(
-                  rating.toStringAsFixed(1),
+                  label,
                   style: MusubiType.style(
-                    14,
+                    15,
+                    weight: FontWeight.w800,
+                    color: ink,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      child: Row(
+        spacing: 10,
+        children: [
+          action(
+            label: 'Seguir',
+            icon: MusubiIcons.userPlus,
+            onTap: onFollow,
+            primary: false,
+          ),
+          action(
+            label: 'Mensaje',
+            icon: MusubiIcons.messageCircle,
+            onTap: onMessage,
+            primary: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ventas, publicaciones y "A tiempo" en un recuadro de tres columnas.
+/// Sin el dato (ventas ocultas, publicaciones cargando) va "—", como en
+/// `Perfil`. NOTE (HU-27): "A tiempo" sale de las calificaciones.
+class _Stats extends StatelessWidget {
+  const new({required this.sales, required this.publications});
+
+  final int? sales;
+  final int? publications;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    Widget cell(String key, String value, String label, {bool last = false}) =>
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            decoration: BoxDecoration(
+              border: last ? null : Border(right: BorderSide(color: c.border)),
+            ),
+            child: Column(
+              spacing: 2,
+              children: [
+                Text(
+                  value,
+                  key: Key('seller-stat-$key'),
+                  style: MusubiType.style(
+                    18,
                     weight: FontWeight.w800,
                     color: c.textPrimary,
                   ),
                 ),
                 Text(
-                  '· ${profile.ratingCount} calificaciones',
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: MusubiType.style(
-                    12.5,
-                    weight: FontWeight.w600,
-                    color: c.textSecondary,
-                  ),
-                ),
-              ] else
-                Text(
-                  'Sin calificaciones',
-                  style: MusubiType.style(
-                    13,
+                    12,
                     weight: FontWeight.w700,
                     color: c.textSecondary,
                   ),
                 ),
-              if (sales != null)
-                Text(
-                  '· ${sales == 1 ? '1 venta' : '$sales ventas'}',
-                  style: MusubiType.style(
-                    12.5,
-                    weight: FontWeight.w600,
-                    color: c.textSecondary,
-                  ),
-                ),
-            ],
-          ),
-          Text(
-            'En Musubi desde ${monthYear(profile.memberSince)}',
-            key: const Key('seller-since'),
-            style: MusubiType.style(
-              12.5,
-              weight: FontWeight.w600,
-              color: c.textSecondary,
+              ],
             ),
           ),
-        ],
+        );
+    return Container(
+      key: const Key('seller-stats'),
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      decoration: BoxDecoration(
+        border: Border.all(color: c.border),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            cell('sales', sales == null ? '—' : '$sales', 'Ventas'),
+            cell(
+              'publications',
+              publications == null ? '—' : '$publications',
+              'Publicaciones',
+            ),
+            cell('on-time', '—', 'A tiempo', last: true),
+          ],
+        ),
       ),
     );
   }
@@ -461,9 +699,11 @@ class _Tabs extends StatelessWidget {
       _SellerTab.reviews => 'Opiniones ($reviews)',
     };
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      height: MusubiSizes.minTouch + 6,
-      padding: const EdgeInsets.all(3),
+      margin: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+      height: MusubiSizes.minTouch,
+      // Sin relleno vertical: el toque cubre los 44 (RNF-27) y la pastilla
+      // de 38 queda a 3 del borde, como en la maqueta.
+      padding: const EdgeInsets.symmetric(horizontal: 3),
       decoration: BoxDecoration(
         color: c.surface,
         borderRadius: BorderRadius.circular(MusubiSizes.radiusField),
@@ -478,7 +718,8 @@ class _Tabs extends StatelessWidget {
                 onTap: () => onSelect(value),
                 selected: value == tab,
                 semanticLabel: label(value),
-                builder: (context, _) => Center(
+                builder: (context, _) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     width: double.infinity,
@@ -530,7 +771,7 @@ class _Opinions extends StatelessWidget {
     icon: MusubiIcons.star,
     title: 'Todavía no hay opiniones',
     message:
-        'Cuando alguien califique a ${profile.fullName.split(' ').first}, '
+        'Cuando alguien califique a ${profile.firstName}, '
         'aparecerán aquí.',
   );
 }

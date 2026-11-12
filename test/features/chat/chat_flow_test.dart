@@ -161,10 +161,25 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('UTTT · Arquitectura · 8º cuatrimestre'),
-        findsOneWidget,
-      );
+      expect(find.text('Arquitectura · 8º cuatrimestre'), findsOneWidget);
+    });
+
+    testWidgets('"Mensaje" en el perfil regresa a la conversación (HU-05)', (
+      tester,
+    ) async {
+      final harness = ChatHarness(tester);
+      await harness.open(AppRoutes.conversation('c1'));
+
+      await harness.tap(find.bySemanticsLabel('Más opciones'));
+      await harness.tap(find.text('Ver perfil'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('seller-mensaje')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Escribe un mensaje…'), findsOneWidget);
+      expect(find.byKey(const Key('seller-mensaje')), findsNothing);
+      expect(harness.chat.started, isEmpty);
     });
 
     testWidgets(

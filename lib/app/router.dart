@@ -326,8 +326,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '${AppRoutes.seller}/:id',
-        builder: (context, state) =>
-            SellerProfileScreen(sellerId: state.pathParameters['id']!),
+        builder: (context, state) => SellerProfileScreen(
+          sellerId: state.pathParameters['id']!,
+          origin: state.extra is SellerProfileOrigin
+              ? state.extra! as SellerProfileOrigin
+              : null,
+        ),
       ),
       GoRoute(
         path: '${AppRoutes.orders}/:id',

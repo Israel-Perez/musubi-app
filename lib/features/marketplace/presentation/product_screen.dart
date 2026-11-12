@@ -26,6 +26,7 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 
 /// Detalle de una publicacion (HU-11). Publico, como la vitrina (HU-48).
 final FutureProviderFamily<ProductDetail, String> productDetailProvider =
@@ -160,11 +161,12 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
             final sellerId = value.sellerId;
             if (sellerId == null) return;
             unawaited(
-              context.push(
-                myId != null && sellerId == myId
-                    ? AppRoutes.profile
-                    : AppRoutes.sellerProfile(sellerId),
-              ),
+              myId != null && sellerId == myId
+                  ? context.push(AppRoutes.profile)
+                  : context.push(
+                      AppRoutes.sellerProfile(sellerId),
+                      extra: SellerProfileOrigin.product(_summaryOf(value)),
+                    ),
             );
           },
           onMessage: () => _chat(value, signedIn: signedIn, buy: false),

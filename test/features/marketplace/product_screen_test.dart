@@ -18,6 +18,7 @@ import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
@@ -134,8 +135,13 @@ void main() {
     await tester.tap(card);
     await tester.pumpAndSettle();
 
-    expect(find.text('UTTT · Arquitectura · 8º cuatrimestre'), findsOneWidget);
+    expect(find.text('Arquitectura · 8º cuatrimestre'), findsOneWidget);
     expect(find.text('Publicaciones (3)'), findsOneWidget);
+    // "Mensaje" del perfil abrira el chat de esta publicacion.
+    final screen = tester.widget<SellerProfileScreen>(
+      find.byType(SellerProfileScreen),
+    );
+    expect(screen.origin?.product?.id, _detail().id);
   });
 
   testWidgets('visitante: la tarjeta del vendedor pide la cuenta', (

@@ -6,7 +6,8 @@
 Jira (SCRUM-34): Como **usuario**, quiero **consultar el perfil y la reputación de otro usuario**, para **decidir si hago un trato con él**.
 
 - **Maqueta `Perfil-vendedor`:** foto (o iniciales), nombre, carrera y periodo, reputación con estrella, número de calificaciones, ventas, “En Musubi desde {mes año}” y dos pestañas: **Publicaciones (N)** y **Opiniones (N)**. Se abre desde la tarjeta de quien vende en `Producto` y desde “Ver perfil” en `Chat-Valeria`.
-- **Decisión de Jira (08-Nov-2026):** el alcance del sprint es nombre, foto, campus y publicaciones activas; la reputación se muestra como **“Sin calificaciones”** mientras no existan calificaciones (RN-26). No se expone el correo ni datos privados (RNF-05). “Seguir”, “Responde en” y “Mensaje” no entran (ver Límites).
+- **Alcance de Jira (08-Nov-2026):** la pantalla `Perfil-vendedor` de la maqueta, que se abre desde el detalle del producto, con nombre, foto, campus y publicaciones activas; la reputación se muestra como **“Sin calificaciones”** mientras no existan calificaciones (RN-26). No se expone el correo ni datos privados (RNF-05).
+- **Revisión del PR (12-Nov-2026):** la pantalla sigue a la maqueta pieza por pieza (lineamiento 4: no se le quitan funciones). “Mensaje” abre el chat (HU-20 ya existe); “Seguir” y “Compartir” avisan “… llega muy pronto.” (la API no tiene seguidores ni enlaces públicos, como “Compartir” en `Producto`); “A tiempo” se muestra con “—”. “Responde en” queda fuera, como en HU-11.
 - **Contraparte en Borrador con evidencia (11-Nov-2026):** `musubi-api:HU-05` (`0.5.0-alpha.21`, esquema 19) reutiliza `GET /profiles/{id}` y `GET /products?sellerId=&hideSoldOut=true`; no hay DTO ni ruta nueva.
 - Trazabilidad: RF-05, RF-14, RF-36 · CU-03 · RN-26.
 
@@ -15,7 +16,7 @@ Jira (SCRUM-34): Como **usuario**, quiero **consultar el perfil y la reputación
 ## Requisitos
 1. **Cabecera del perfil público (RF-05, RNF-05, RNF-07):**
    - `GET /api/v1/profiles/{id}` da foto, nombre, campus, carrera, periodo, “En Musubi desde” y `stats { ratingAvg, ratingCount, sales }`.
-   - La pantalla muestra la foto o las iniciales, el nombre con “Verificada”, el subtítulo `UTTT · Ing. Mecatrónica · 9º cuatrimestre` y “En Musubi desde oct 2024”.
+   - La pantalla muestra la foto o las iniciales, el nombre con “Verificada”, el subtítulo `Ing. Mecatrónica · 9º cuatrimestre` (como la maqueta) y el chip “En Musubi desde oct 2024”.
    - El subtítulo omite la carrera y el periodo si vienen en `null` (“Mostrar mi carrera” apagado, HU-04); sin carrera queda solo el campus.
    - La unidad del periodo (`cuatrimestre`, `semestre` o `trimestre`) sale de `GET /careers` del campus (`careersProvider`, mismo campus porque la API responde `404` fuera de él). Si esa llamada falla, se muestra el número sin unidad (`9º`), nunca una unidad inventada (RNF-21).
    - No se muestra el correo ni datos privados. Un `404 profiles.not_found` cubre cuenta inexistente, inactiva, de otro campus o con bloqueo en cualquier dirección (HU-57); la pantalla no revela cuál.
@@ -66,11 +67,14 @@ RNF que aplican: RNF-05 (datos mínimos), RNF-07 (privacidad), RNF-12 (indicador
   - `MusubiTopBar` con el nombre y “Regresar”; cabecera con `ProfileAvatar`/`InitialsAvatar`, `VerifiedBadge`, subtítulo, reputación, “En Musubi desde” y ventas.
   - Pestañas de dos opciones con el patrón de `favorites_screen.dart` (`Publicaciones (N)` / `Opiniones (N)`).
   - Publicaciones en `CustomScrollView` + `SliverGrid` de 2 columnas con `RecentTile` (`clockProvider`, `toggleFavorite` y apertura del producto).
-  - Opiniones con `EmptyView` y `NOTE (HU-27)`; `NOTE (HU-20)` para “Mensaje” desde el perfil (no se abre aquí).
+  - Cabecera centrada de la maqueta: avatar de 84 con “Verificada”, nombre de 24, subtítulo, reputación y el chip “En Musubi desde”; barra con “Regresar” y “Compartir”.
+  - “Seguir” (borde) y “Mensaje” (rojo) de 48; recuadro de tres cifras: Ventas (`sales`, “—” si las oculta), Publicaciones (`total`) y “A tiempo” (“—”, `NOTE (HU-27)`).
+  - “Mensaje” (`SellerProfileOrigin`): desde el chat regresa a la conversación; desde `Producto` abre el chat de esa publicación; si no, el de su primera publicación activa, y sin publicaciones lo explica.
+  - Opiniones con `EmptyView` y `NOTE (HU-27)`.
 - **Rutas — `lib/app/router.dart`:** `AppRoutes.seller = '/vendedor'`, `sellerProfile(id)`, la ruta `:id` con `SellerProfileScreen` y la guardia de sesión por prefijo en `sessionRedirect`.
 - **Entradas:**
   - `product_screen.dart`: se elimina el `sellerProfileProvider` local y pasa a `onSeller` → `context.push` de la ruta; si `mine`, va a `AppRoutes.profile`.
-  - `chat_screen.dart`: `case 'profile'` abre la ruta; el `NOTE (HU-21)` se queda solo para “En línea”.
+  - `chat_screen.dart`: `case 'profile'` abre la ruta con `SellerProfileOrigin.chat()`.
 - **Reutilización:** `ErrorView`, `EmptyView`, `SkeletonShimmer`/`SkeletonBox`, `RecentTile`, `toggleFavorite`, `ProfileAvatar`, `VerifiedBadge` y `monthYear`.
 - **Fake-first:** no aplica; los dos endpoints existen. Los fakes de `test/helpers/` se amplían para las pruebas.
 
@@ -110,7 +114,8 @@ RNF que aplican: RNF-05 (datos mínimos), RNF-07 (privacidad), RNF-12 (indicador
 ## Criterios
 - [x] La tarjeta de quien vende en `Producto` abre `Perfil-vendedor` con sesión → `product_screen_test` en verde; sin sesión, la hoja “Crea tu cuenta”; mi publicación lleva a `Perfil`.
 - [x] “Ver perfil” del chat abre el mismo perfil → `chat_flow_test` en verde.
-- [x] La cabecera muestra foto o iniciales, nombre, `UTTT · carrera · periodo`, “En Musubi desde {mes año}” y ventas → `perfil público: mapea…` y el widget test de datos.
+- [x] La cabecera muestra foto o iniciales, nombre, `carrera · periodo` (o solo el campus si oculta la carrera), “En Musubi desde {mes año}” y el recuadro de Ventas, Publicaciones y “A tiempo” → `perfil público: mapea…` y los widget tests de cabecera.
+- [x] “Mensaje” abre el chat de la publicación de origen o de la primera activa, regresa al chat si vino de ahí y lo explica sin publicaciones; “Seguir” y “Compartir” avisan que llegan pronto → `seller_profile_screen_test` y `chat_flow_test`.
 - [x] Sin `GET /careers`, el periodo se muestra sin unidad (`8º`) → widget test.
 - [x] Con `ratingAvg: null` dice “Sin calificaciones” y “Opiniones (0)” queda vacía → `perfil público: sin calificaciones…` y widget test.
 - [x] “Publicaciones (N)” usa `total` y muestra solo las activas de esa persona → `publicaciones del vendedor: sellerId…` y widget test.
@@ -119,15 +124,16 @@ RNF que aplican: RNF-05 (datos mínimos), RNF-07 (privacidad), RNF-12 (indicador
 - [x] Mientras carga se ve el esqueleto, y si solo fallan las publicaciones la cabecera sigue y el reintento las carga → widget tests.
 - [x] “Ver más” agrega la siguiente página con `nextCursor` → widget test.
 - [x] Una forma inesperada del back se traduce a `ApiFailure` (sin `TypeError`) → pruebas de data de perfil y vitrina.
-- [x] `dart format --output=none --set-exit-if-changed .` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` 0 · `flutter test` 596/596 · `pwsh scripts/critic-guardrails.ps1` PASS (32 archivos).
+- [x] `dart format --output=none --set-exit-if-changed .` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` 0 · `flutter test` 604/604 · `pwsh scripts/critic-guardrails.ps1` PASS (32 archivos).
 - [x] `semgrep scan --config=auto --config=.semgrep/semgrep.yaml --error` sin hallazgos (0 en 110 reglas; la pantalla nueva se escaneó aparte).
-- [x] `test/versioning_test.dart` en verde con `0.9.0+11` y la última fila de `docs/versionado.md`.
+- [x] `test/versioning_test.dart` en verde: la app sigue en `0.8.0+10` (se publica en el siguiente lote de Google Play, no por HU).
 
 ## Límites
-- **“Seguir”:** no está en los criterios de Jira y la API no tiene seguidores; no se muestra.
-- **“Responde en”:** la API no mide tiempos de respuesta; no se muestra.
-- **“Mensaje” desde el perfil:** la conversación es de HU-20; no se abre desde aquí. `NOTE (HU-20)`.
-- **“En línea” / “Activa hace 5 min”:** la API no expone presencia; `NOTE (HU-21)`.
+- **“Seguir”:** la API no tiene seguidores; el botón está y avisa “Seguir a Valeria llega muy pronto.”.
+- **“Responde en”:** la API no mide tiempos de respuesta; no se muestra (igual que en `Producto`, HU-11).
+- **“A tiempo”:** sale de las calificaciones; se muestra “—”. `NOTE (HU-27)`.
+- **“Compartir”:** sin enlaces públicos todavía; avisa “Compartir llega muy pronto.”, como en `Producto`.
+- **“En línea” / “Activa hace 5 min”:** la API no expone presencia; no se muestra.
 - **Opiniones y promedio:** `ratings`, el cálculo del promedio y la lista de opiniones son de HU-27/HU-45. `NOTE (HU-27)`. La app muestra “Sin calificaciones” con `ratingAvg: null`.
 - **Unidad del periodo:** no viene en `PublicProfileResponse`; se toma de `GET /careers` del campus. Si esa llamada falla, se muestra `9º` sin unidad. Si el back agrega `academicTerm` al perfil, se cambia la fuente sin tocar la pantalla.
 - **Paginación:** primera página de 20 y “Ver más” con cursor; no hay scroll infinito ni números de página.
@@ -142,4 +148,5 @@ RNF que aplican: RNF-05 (datos mínimos), RNF-07 (privacidad), RNF-12 (indicador
 - **Detalle:**
   - spec escrita desde Jira (SCRUM-34), la maqueta (`Producto`, `Perfil-vendedor`, `Chat-Valeria`) y `musubi-api:HU-05` (`0.5.0-alpha.21`); se aprueba el enfoque A: solo lo que Jira y la API sostienen, sin “Seguir”, “Responde en” ni “Mensaje”.
   - la reputación queda en `null`/`0` hasta HU-27/HU-45, como indicó Jira el 08-Nov-2026; la unidad del periodo se resuelve con `GET /careers` y un fallback sin unidad.
-  - T6 (11-Nov-2026): `flutter test` 596/596, `flutter analyze` 0, `dart format` 0, `critic` PASS (32 archivos), `semgrep` 0 hallazgos, `security-reviewer` PASS (se corrigió el parseo tolerante de perfil y vitrina) y `traceability-clerk` OK tras completar pruebas y `NOTE (HU-21)`. Versión `0.9.0+11`; sin revisor designado, no corresponde “Aprobado”.
+  - T6 (11-Nov-2026): `flutter test` 596/596, `flutter analyze` 0, `dart format` 0, `critic` PASS (32 archivos), `semgrep` 0 hallazgos, `security-reviewer` PASS (se corrigió el parseo tolerante de perfil y vitrina) y `traceability-clerk` OK tras completar pruebas y `NOTE (HU-21)`. Sin revisor designado, no corresponde “Aprobado”.
+  - Revisión del PR (12-Nov-2026): la pantalla se rehízo con la maqueta `Perfil-vendedor` (cabecera centrada, “Seguir”, “Mensaje”, cifras y barra con “Compartir”), comparada con la captura de Edge; la versión de la app regresa a `0.8.0+10` y se quita su fila de `docs/versionado.md`. `flutter test` 604/604.

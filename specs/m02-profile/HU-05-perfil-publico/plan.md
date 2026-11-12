@@ -17,7 +17,7 @@
    - **“Ver más” con cursor, como `Mis-productos`:** estado local (`_more`, `_moreCursor`, `_loadingMore`), sin scroll infinito ni provider de paginación nuevo.
    - **El 404 no se reintenta:** “No encontramos ese perfil.” y “Regresar”; un error de red o 5xx sí ofrece “Reintentar”. El error de publicaciones vive dentro de la pestaña para no tumbar la cabecera.
    - **La tarjeta de mi propia publicación lleva a `Perfil` (HU-04):** ver mi vista pública desde ahí no aporta y evita una pantalla duplicada de mí mismo.
-   - **Fuera de alcance por decisión A:** “Seguir”, “Responde en” y “Mensaje” (HU-20). Se declaran en `Límites`; no se dejan botones muertos.
+   - **Maqueta completa (revisión del 12-Nov-2026):** “Seguir” y “Compartir” avisan que llegan pronto, “Mensaje” abre el chat (HU-20) y “A tiempo” va con “—”; “Responde en” queda fuera como en HU-11.
    - **Sin fake-first:** los dos endpoints existen en `musubi-api:HU-05`; solo se amplían los fakes de prueba.
 3. **Excepciones al stack (00-01):** ninguna. No se agregan paquetes.
 4. **Guardarraíles:**

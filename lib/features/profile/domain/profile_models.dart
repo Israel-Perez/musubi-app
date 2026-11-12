@@ -249,4 +249,7 @@ class PublicProfile {
 
   /// `null` si oculta sus ventas.
   final int? sales;
+
+  /// "Valeria" en "Cuando alguien califique a Valeria…".
+  String get firstName => fullName.split(' ').first;
 }

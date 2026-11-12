@@ -9,12 +9,14 @@ import 'package:musubi_app/app/splash/brand_splash.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
+import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
@@ -71,12 +73,14 @@ class _Harness {
   final WidgetTester tester;
   final FakeProfileRepository profiles;
   final FakeCatalogRepository catalog;
+  final chat = FakeChatRepository();
   late ProviderContainer container;
 
   Future<void> open(
     String sellerId, {
     Size size = const Size(1170, 2532),
     bool settle = true,
+    SellerProfileOrigin? origin,
   }) async {
     tester.view
       ..physicalSize = size
@@ -96,6 +100,8 @@ class _Harness {
           clockProvider.overrideWithValue(() => _now),
           tokenStoreProvider.overrideWithValue(InMemoryTokenStore(session)),
           initialSessionTokensProvider.overrideWithValue(session),
+          chatRepositoryProvider.overrideWithValue(chat),
+          chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
         ],
         child: const MusubiApp(),
       ),
@@ -103,7 +109,9 @@ class _Harness {
     container = ProviderScope.containerOf(
       tester.element(find.byType(MusubiApp)),
     );
-    container.read(routerProvider).go(AppRoutes.sellerProfile(sellerId));
+    container
+        .read(routerProvider)
+        .go(AppRoutes.sellerProfile(sellerId), extra: origin);
     if (settle) {
       await tester.pumpAndSettle();
     } else {
@@ -127,12 +135,109 @@ void main() {
     await h.open(valeria.id);
 
     expect(find.text('Valeria Cruz'), findsWidgets);
-    expect(find.text('UTTT · Arquitectura · 8º cuatrimestre'), findsOneWidget);
+    expect(find.text('Arquitectura · 8º cuatrimestre'), findsOneWidget);
     expect(find.text('4.6'), findsOneWidget);
     expect(find.textContaining('18 calificaciones'), findsOneWidget);
-    expect(find.textContaining('15 ventas'), findsOneWidget);
     expect(find.text('En Musubi desde feb 2025'), findsOneWidget);
     expect(find.text('Publicaciones (3)'), findsOneWidget);
+    // Recuadro de la maqueta: ventas, publicaciones y "A tiempo" (sin dato).
+    String stat(String key) =>
+        tester.widget<Text>(find.byKey(Key('seller-stat-$key'))).data!;
+    expect(stat('sales'), '15');
+    expect(stat('publications'), '3');
+    expect(stat('on-time'), '—');
+    expect(find.text('Seguir'), findsOneWidget);
+    expect(find.text('Mensaje'), findsOneWidget);
+  });
+
+  testWidgets('ventas ocultas y publicaciones cargando se ven con "—"', (
+    tester,
+  ) async {
+    final h = _Harness(tester, profiles: _withProfile(_withoutRatings()));
+    h.catalog.pendingSellerListings = Completer<ProductPage>();
+
+    await h.open(valeria.id, settle: false);
+    await tester.pump();
+    await tester.pump();
+
+    String stat(String key) =>
+        tester.widget<Text>(find.byKey(Key('seller-stat-$key'))).data!;
+    expect(stat('sales'), '—');
+    expect(stat('publications'), '—');
+
+    h.catalog.pendingSellerListings!.complete(const ProductPage(total: 2));
+    await tester.pumpAndSettle();
+    expect(stat('publications'), '2');
+  });
+
+  testWidgets('"Mensaje" desde Producto abre el chat de esa publicación', (
+    tester,
+  ) async {
+    final h = _Harness(tester, profiles: _withProfile(valeria));
+    h.catalog.sellerListingsResponse = ProductPage(
+      items: [_product('p2', 'Laptop Lenovo')],
+      total: 2,
+    );
+
+    await h.open(
+      valeria.id,
+      origin: SellerProfileOrigin.product(_product('p1', 'Calculadora Casio')),
+    );
+    await tester.tap(find.byKey(const Key('seller-mensaje')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Escribe un mensaje…'), findsOneWidget);
+    expect(h.chat.started, ['p1']);
+  });
+
+  testWidgets('"Mensaje" sin origen usa su primera publicación activa', (
+    tester,
+  ) async {
+    final h = _Harness(tester, profiles: _withProfile(valeria));
+    h.catalog.sellerListingsResponse = ProductPage(
+      items: [_product('p2', 'Laptop Lenovo')],
+      total: 1,
+    );
+
+    await h.open(valeria.id);
+    await tester.tap(find.byKey(const Key('seller-mensaje')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Escribe un mensaje…'), findsOneWidget);
+    expect(h.chat.started, ['p2']);
+  });
+
+  testWidgets('"Mensaje" sin publicaciones lo explica', (tester) async {
+    final h = _Harness(tester, profiles: _withProfile(valeria));
+
+    await h.open(valeria.id);
+    await tester.tap(find.byKey(const Key('seller-mensaje')));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.text('Valeria no tiene publicaciones activas para escribirle.'),
+      findsOneWidget,
+    );
+    expect(find.text('Escribe un mensaje…'), findsNothing);
+    expect(h.chat.started, isEmpty);
+  });
+
+  testWidgets('"Seguir" avisa que llega pronto', (tester) async {
+    final h = _Harness(tester, profiles: _withProfile(valeria));
+
+    await h.open(valeria.id);
+    await tester.tap(find.byKey(const Key('seller-seguir')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Seguir a Valeria llega muy pronto.'), findsOneWidget);
+  });
+
+  testWidgets('"Compartir" avisa que llega pronto', (tester) async {
+    final h = _Harness(tester, profiles: _withProfile(valeria));
+
+    await h.open(valeria.id);
+    await tester.tap(find.byKey(const Key('seller-compartir')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Compartir llega muy pronto.'), findsOneWidget);
   });
 
   testWidgets('sin /careers muestra el periodo sin unidad', (tester) async {
@@ -143,8 +248,26 @@ void main() {
 
     await h.open(valeria.id);
 
-    expect(find.text('UTTT · Arquitectura · 8º'), findsOneWidget);
+    expect(find.text('Arquitectura · 8º'), findsOneWidget);
     expect(find.textContaining('cuatrimestre'), findsNothing);
+  });
+
+  testWidgets('con la carrera oculta queda solo el campus', (tester) async {
+    final hidden = PublicProfile(
+      id: valeria.id,
+      fullName: 'Valeria Cruz',
+      campusShortName: 'UTTT',
+      memberSince: DateTime(2025, 2, 15),
+      ratingCount: 0,
+    );
+    final h = _Harness(tester, profiles: _withProfile(hidden));
+
+    await h.open(valeria.id);
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('seller-subtitle'))).data,
+      'UTTT',
+    );
   });
 
   testWidgets('mientras carga muestra el esqueleto', (tester) async {
@@ -169,7 +292,7 @@ void main() {
 
     await h.open(valeria.id);
 
-    expect(find.text('UTTT · Arquitectura · 8º cuatrimestre'), findsOneWidget);
+    expect(find.text('Arquitectura · 8º cuatrimestre'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
 
     h.catalog
@@ -244,7 +367,7 @@ void main() {
     await tester.tap(find.text('Reintentar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('UTTT · Arquitectura · 8º cuatrimestre'), findsOneWidget);
+    expect(find.text('Arquitectura · 8º cuatrimestre'), findsOneWidget);
   });
 
   testWidgets('un perfil inexistente no revela el motivo', (tester) async {

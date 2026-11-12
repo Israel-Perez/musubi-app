@@ -86,6 +86,9 @@ class FakeCatalogRepository implements CatalogRepository {
   /// Falla las publicaciones del perfil (estado de error en la pestaña).
   bool failSellerListings = false;
 
+  /// Deja la primera pagina del perfil esperando (contadores en "—").
+  Completer<ProductPage>? pendingSellerListings;
+
   @override
   Future<ProductPage> sellerListings(
     String sellerId, {
@@ -96,6 +99,8 @@ class FakeCatalogRepository implements CatalogRepository {
     sellerPages.add(page);
     sellerCursors.add(cursor);
     if (failSellerListings) throw offlineFailure;
+    final pending = pendingSellerListings;
+    if (pending != null && cursor == null) return await pending.future;
     return sellerListingsByCursor[cursor] ?? sellerListingsResponse;
   }
 
