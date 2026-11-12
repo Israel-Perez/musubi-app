@@ -113,6 +113,13 @@ abstract final class MusubiIcons {
     IconPath('m9 12 2 2 4-4'),
   ]);
 
+  /// `circle-x` ("Cancelar pedido" en `Pedido-efectivo`).
+  static const circleX = MusubiIconData([
+    IconCircle(12, 12, 10),
+    IconPath('m15 9-6 6'),
+    IconPath('m9 9 6 6'),
+  ]);
+
   /// `clock`.
   static const clock = MusubiIconData([
     IconCircle(12, 12, 10),

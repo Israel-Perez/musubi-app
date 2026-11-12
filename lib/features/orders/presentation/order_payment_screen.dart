@@ -25,8 +25,11 @@ import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 /// Completado o Cancelado), lo que se compra con su entrega y "¿Cómo quieres
 /// pagar?". La transferencia sale deshabilitada ("… aún no registra su
 /// cuenta") hasta HU-55; "Confirmar pago en efectivo" lo registra (RN-18).
+/// HU-24 ("Tu venta" para quien vende): "Aceptar pedido" cuando ya se eligio
+/// el pago, "Confirmar entrega" de cada parte (`Pedido-entrega`) y "Rechazar"
+/// o "Cancelar pedido" con un motivo de la lista (`Pedido-efectivo`).
 /// NOTE (HU-55): `Pago-transferencia` y el codigo de entrega
-/// (`Pedido-efectivo`). NOTE (HU-24): lo que hace quien vende (aceptar).
+/// (`Pedido-efectivo`). NOTE (HU-27): "Calificar" al completarse.
 class OrderPaymentScreen extends ConsumerStatefulWidget {
   const new({required this.orderId, super.key});
 
@@ -38,6 +41,93 @@ class OrderPaymentScreen extends ConsumerStatefulWidget {
 
 class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
   bool _paying = false;
+
+  /// La accion de HU-24 en curso (gira su boton y no acepta otro toque).
+  _Action? _busy;
+
+  Future<void> _act(
+    Order order,
+    _Action action,
+    Future<Order> Function() call,
+    String done,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = action);
+    try {
+      await call();
+      if (!mounted) return;
+      ref
+        ..invalidate(orderProvider(order.id))
+        ..invalidate(openOrderProvider(order.conversationId));
+      showMusubiSnack(messenger, done, icon: MusubiIcons.circleCheck);
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      showMusubiSnack(
+        messenger,
+        failure.message,
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _accept(Order order) => _act(
+    order,
+    _Action.accept,
+    () => ref.read(orderRepositoryProvider).accept(order.id),
+    'Pedido aceptado. Le avisamos a ${_first(order.buyerName)}.',
+  );
+
+  Future<void> _handover(Order order) => _act(
+    order,
+    _Action.handover,
+    () => ref.read(orderRepositoryProvider).confirmHandover(order.id),
+    'Listo: confirmaste la entrega.',
+  );
+
+  Future<void> _cancel(Order order) async {
+    final rejecting = !order.isBuyer && order.status == OrderStatus.pending;
+    final reason = await showMusubiPanel<CancelReason>(
+      context,
+      builder: (context) => MusubiPanel(
+        key: const Key('order-cancel-reasons'),
+        title: rejecting ? 'Rechazar pedido' : 'Cancelar pedido',
+        bodyInset: 12,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            MusubiOptions<CancelReason>(
+              plain: true,
+              options: [
+                for (final reason
+                    in order.isBuyer
+                        ? CancelReason.forBuyer
+                        : CancelReason.forSeller)
+                  MusubiOption(value: reason, label: reason.label),
+              ],
+              onPick: (reason) => Navigator.of(context).pop(reason),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: PanelNote(
+                'Elige el motivo. Le avisaremos a '
+                '${_first(order.otherName)}.',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (reason == null || !mounted) return;
+    await _act(
+      order,
+      _Action.cancel,
+      () => ref.read(orderRepositoryProvider).cancel(order.id, reason),
+      rejecting ? 'Rechazaste el pedido.' : 'Cancelaste el pedido.',
+    );
+  }
 
   Future<void> _payCash(Order order) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -78,9 +168,17 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
         ),
       ],
       child: Text(
-        'Tu pedido queda Pendiente hasta que ${_first(order.sellerName)} lo '
-        'acepte. Se ven en ${order.pointName} el día acordado y pagas al '
-        'recibir. Musubi no cobra comisión ni procesa el dinero.',
+        order.isBuyer
+            ? 'Tu pedido queda Pendiente hasta que '
+                  '${_first(order.sellerName)} lo acepte. Se ven en '
+                  '${order.pointName} el día acordado y pagas al recibir. '
+                  'Cuando los dos confirmen la entrega, se completa. Musubi '
+                  'no cobra comisión ni procesa el dinero.'
+            : 'Acepta el pedido cuando ${_first(order.buyerName)} elija cómo '
+                  'pagar: la pieza queda apartada. Se ven en '
+                  '${order.pointName} el día acordado y, cuando los dos '
+                  'confirmen la entrega, se completa. Musubi no cobra '
+                  'comisión ni procesa el dinero.',
         style: MusubiType.style(
           14,
           line: 20,
@@ -100,9 +198,13 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
         AsyncData(:final value) => _Body(
           order: value,
           paying: _paying,
+          busy: _busy,
           onBack: () => context.pop(),
           onHelp: () => unawaited(_help(value)),
           onPayCash: () => unawaited(_payCash(value)),
+          onAccept: () => unawaited(_accept(value)),
+          onHandover: () => unawaited(_handover(value)),
+          onCancel: () => unawaited(_cancel(value)),
         ),
         AsyncError(:final error) => SafeArea(
           child: ErrorView(
@@ -120,20 +222,141 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
 
 String _first(String name) => name.trim().split(RegExp(r'\s+')).first;
 
+/// Las acciones de HU-24.
+enum _Action { accept, handover, cancel }
+
 class _Body extends StatelessWidget {
   const new({
     required this.order,
     required this.paying,
+    required this.busy,
     required this.onBack,
     required this.onHelp,
     required this.onPayCash,
+    required this.onAccept,
+    required this.onHandover,
+    required this.onCancel,
   });
 
   final Order order;
   final bool paying;
+  final _Action? busy;
   final VoidCallback onBack;
   final VoidCallback onHelp;
   final VoidCallback onPayCash;
+  final VoidCallback onAccept;
+  final VoidCallback onHandover;
+  final VoidCallback onCancel;
+
+  /// El aviso gris debajo del pedido: como se paga, que falta y como termino.
+  (MusubiIconData, String) _notice() {
+    final buyer = _first(order.buyerName);
+    final other = _first(order.otherName);
+    final cancellation = order.cancellation;
+    switch (order.status) {
+      case OrderStatus.cancelled:
+        final reason = cancellation?.reason.label ?? 'Otro motivo';
+        final who = switch (cancellation) {
+          OrderCancellation(bySystem: true) => 'Se canceló',
+          OrderCancellation(:final byBuyer) when byBuyer == order.isBuyer =>
+            'Cancelaste',
+          _ => '$other canceló',
+        };
+        return (MusubiIcons.circleX, '$who el pedido: $reason.');
+      case OrderStatus.completed:
+        return (
+          MusubiIcons.circleCheck,
+          'Pedido completado. ¡Gracias por usar Musubi!',
+        );
+      case OrderStatus.confirmed:
+        if (order.iConfirmed) {
+          return (
+            MusubiIcons.clock,
+            'Ya confirmaste la entrega. Falta que $other la confirme.',
+          );
+        }
+        final otherConfirmed = order.isBuyer
+            ? order.sellerConfirmed
+            : order.buyerConfirmed;
+        if (otherConfirmed) {
+          return (
+            MusubiIcons.circleCheck,
+            order.isBuyer
+                ? '$other marcó el pedido como entregado. Confírmalo cuando '
+                      'lo tengas.'
+                : '$other confirmó que lo recibió. Confirma que lo '
+                      'entregaste.',
+          );
+        }
+        return (
+          MusubiIcons.banknote,
+          order.isBuyer
+              ? 'Pedido aceptado. Pagas en efectivo al recibir.'
+              : '$buyer pagará en efectivo al recibir.',
+        );
+      case OrderStatus.pending:
+        if (order.isBuyer) {
+          return (MusubiIcons.banknote, 'Pagas en efectivo al recibir.');
+        }
+        return order.paysCash
+            ? (
+                MusubiIcons.banknote,
+                '$buyer pagará en efectivo al recibir. Acepta el pedido para '
+                    'apartar la pieza.',
+              )
+            : (
+                MusubiIcons.clock,
+                '$buyer aún no elige cómo pagar. Podrás aceptar el pedido '
+                    'cuando lo elija.',
+              );
+    }
+  }
+
+  /// El boton principal segun el estado y quien mira.
+  Widget _primary() {
+    final choosing = order.isBuyer && order.status == OrderStatus.pending;
+    if (choosing && !order.paysCash) {
+      return MusubiButton(
+        key: const Key('order-pay-cash-confirm'),
+        label: 'Confirmar pago en efectivo',
+        loadingLabel: 'Confirmando…',
+        loading: paying,
+        onPressed: paying ? null : onPayCash,
+      );
+    }
+    if (!order.isBuyer && order.status == OrderStatus.pending) {
+      return MusubiButton(
+        key: const Key('order-accept'),
+        label: 'Aceptar pedido',
+        loadingLabel: 'Aceptando…',
+        loading: busy == _Action.accept,
+        icon: MusubiIcons.circleCheck,
+        iconSize: 20,
+        iconStrokeWidth: 2.2,
+        dimmed: !order.paysCash,
+        onPressed: order.paysCash && busy == null ? onAccept : null,
+      );
+    }
+    if (order.status == OrderStatus.confirmed && !order.iConfirmed) {
+      return MusubiButton(
+        key: const Key('order-handover'),
+        label: order.isBuyer ? 'Confirmar entrega' : 'Marcar como entregado',
+        loadingLabel: 'Confirmando…',
+        loading: busy == _Action.handover,
+        icon: MusubiIcons.circleCheck,
+        iconSize: 20,
+        iconStrokeWidth: 2.2,
+        onPressed: busy == null ? onHandover : null,
+      );
+    }
+    return MusubiButton(
+      key: const Key('order-back-to-chat'),
+      label: 'Volver al chat',
+      kind: MusubiButtonKind.secondary,
+      icon: MusubiIcons.messageCircle,
+      onPressed: onBack,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -257,20 +480,20 @@ class _Body extends StatelessWidget {
                     steps: [
                       'Se ven en ${order.pointName} el ${shortDate(at)}',
                       'Revisas que todo esté bien y le pagas $total',
-                      '$seller confirma la entrega y se completa tu pedido',
+                      'Los dos confirman la entrega y se completa tu pedido',
                     ],
                   ),
                 ] else ...[
                   const SizedBox(height: 18),
-                  _Notice(
-                    text: order.paysCash
-                        ? (buyer
-                              ? 'Pagas en efectivo al recibir.'
-                              : '${_first(order.buyerName)} pagará en '
-                                    'efectivo al recibir.')
-                        : '${_first(order.buyerName)} aún no elige cómo '
-                              'pagar.',
-                  ),
+                  _Notice(icon: _notice().$1, text: _notice().$2),
+                  if (order.status == OrderStatus.confirmed &&
+                      order.isBuyer &&
+                      !order.iConfirmed) ...[
+                    const SizedBox(height: 10),
+                    const _Hint(
+                      'Revisa el producto antes de confirmar la entrega.',
+                    ),
+                  ],
                 ],
               ],
             ),
@@ -283,49 +506,57 @@ class _Body extends StatelessWidget {
           ),
           child: Padding(
             padding: EdgeInsets.fromLTRB(20, 12, 20, bottom),
-            child: Row(
-              spacing: 16,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 4,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                Row(
+                  spacing: 16,
                   children: [
-                    Text(
-                      'Total',
-                      style: MusubiType.style(
-                        12,
-                        weight: FontWeight.w700,
-                        color: c.textSecondary,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Total',
+                          style: MusubiType.style(
+                            12,
+                            weight: FontWeight.w700,
+                            color: c.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          formatPrice(order.item.totalCents),
+                          style: MusubiType.style(
+                            22,
+                            weight: FontWeight.w800,
+                            em: -0.02,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      formatPrice(order.item.totalCents),
-                      style: MusubiType.style(
-                        22,
-                        weight: FontWeight.w800,
-                        em: -0.02,
-                        color: c.textPrimary,
-                      ),
-                    ),
+                    Expanded(child: _primary()),
                   ],
                 ),
-                Expanded(
-                  child: choosing && !order.paysCash
-                      ? MusubiButton(
-                          key: const Key('order-pay-cash-confirm'),
-                          label: 'Confirmar pago en efectivo',
-                          loadingLabel: 'Confirmando…',
-                          loading: paying,
-                          onPressed: paying ? null : onPayCash,
-                        )
-                      : MusubiButton(
-                          key: const Key('order-back-to-chat'),
-                          label: 'Volver al chat',
-                          kind: MusubiButtonKind.secondary,
-                          icon: MusubiIcons.messageCircle,
-                          onPressed: onBack,
-                        ),
-                ),
+                if (order.status.open)
+                  MusubiButton(
+                    key: const Key('order-cancel'),
+                    label: !buyer && order.status == OrderStatus.pending
+                        ? 'Rechazar pedido'
+                        : 'Cancelar pedido',
+                    loadingLabel: 'Cancelando…',
+                    loading: busy == _Action.cancel,
+                    kind: MusubiButtonKind.quiet,
+                    height: 44,
+                    icon: MusubiIcons.circleX,
+                    iconSize: 16,
+                    iconStrokeWidth: 2.2,
+                    fontSize: 14,
+                    gap: 6,
+                    foreground: c.error,
+                    onPressed: busy == null ? onCancel : null,
+                  ),
               ],
             ),
           ),
@@ -958,10 +1189,11 @@ class _HowItWorks extends StatelessWidget {
   }
 }
 
-/// Aviso gris (quien vende, o un pago ya elegido).
+/// Aviso gris: como se paga, que falta y como termino el pedido.
 class _Notice extends StatelessWidget {
-  const new({required this.text});
+  const new({required this.icon, required this.text});
 
+  final MusubiIconData icon;
   final String text;
 
   @override
@@ -977,7 +1209,11 @@ class _Notice extends StatelessWidget {
       child: Row(
         spacing: 10,
         children: [
-          MusubiIcon(MusubiIcons.banknote, size: 20, color: c.successText),
+          MusubiIcon(
+            icon,
+            size: 20,
+            color: icon == MusubiIcons.circleX ? c.error : c.successText,
+          ),
           Expanded(
             child: Text(
               text,
@@ -991,6 +1227,41 @@ class _Notice extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "Revisa que la calculadora funcione antes de confirmar." (`Pedido-entrega`):
+/// gris de 12.5 con el icono de informacion.
+class _Hint extends StatelessWidget {
+  const new(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Row(
+      spacing: 8,
+      children: [
+        MusubiIcon(
+          MusubiIcons.info,
+          size: 16,
+          strokeWidth: 1.9,
+          color: c.textSecondary,
+        ),
+        Expanded(
+          child: Text(
+            text,
+            style: MusubiType.style(
+              12.5,
+              line: 18,
+              weight: FontWeight.w600,
+              color: c.textSecondary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

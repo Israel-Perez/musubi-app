@@ -9,10 +9,35 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
   - Notas en `docs/play/whatsnew/whatsnew-es-419`; descripción y "Seguridad de los datos" en `docs/play/README.md` (**se pegan a mano en Play Console**). Desde `0.7.0` se declara que los mensajes se comparten con Google (Gemini) cuando alguien pide "Resumir acuerdo".
 - **API en producción:** `0.5.0-alpha.19`, esquema 18 (`infra-up` del 11-Nov-2026). La matriz está en `docs/versionado.md`.
 - **HU-31 (push):** en `main` (#52), con la API `0.5.0-alpha.18`. Proyecto de Firebase `musubi-2a78e` listo y secreto `GOOGLE_SERVICES_JSON_B64` en el repo (11-Nov-2026).
-- **Siguiente:** HU-24 y HU-25. Sprint 4: 9 al 20 de noviembre.
+- **HU-24 (aceptar y actualizar pedidos):** app en `feature/SCRUM-43-aceptar-actualizar-pedidos`, con la API `0.5.0-alpha.20` (musubi-api #72). Ver T41.
+- **Push verificado en un celular real (11-Nov-2026)** con la llave nueva de Firebase. El fallo anterior era de la API: llave en otra región, guardada en varias líneas y revocada.
+- **Siguiente:** desplegar `alpha.20` y probar HU-24 en el celular; luego HU-25. Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** API y app en `main` (#50).
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T41 — Aceptar y actualizar mis pedidos (11-Nov-2026, SCRUM-43, HU-24)
+
+**Qué se hizo**
+- "Tu venta":
+  - "Aceptar pedido" sale atenuado mientras quien compra no elige el pago;
+  - "Rechazar pedido" abre la hoja de motivos de quien vende.
+- "Tu pedido": "Cancelar pedido" muestra los motivos de quien compra.
+- Con el pedido confirmado:
+  - quien compra ve "Confirmar entrega" con la nota "Revisa el producto antes de confirmar la entrega.";
+  - quien vende ve "Marcar como entregado".
+- Avisos según el estado: qué falta, quién canceló y por qué, o completado.
+- Íconos de `order_confirmed`, `order_cancelled`, `order_handover` y `order_completed` en Notificaciones. Ícono nuevo `circleX`.
+- Capturas `tu-venta`, `pedido-entrega` (claro y oscuro) y `pedido-cancelar`.
+
+**Decisiones**
+- **Las acciones viven en `OrderPaymentScreen`.** La maqueta no tiene pantalla de aceptar; se arma con las piezas de `Pedido-entrega` y `Pedido-efectivo`.
+- **Elegir el motivo cancela.** Es igual que en "Reportar un problema", y la hoja ya se titula "Rechazar/Cancelar pedido".
+- **El texto de cada motivo vive en `CancelReason`.** La API solo guarda el código.
+
+**Errores a evitar**
+- `MusubiOptions` llama a `onPick` 160 ms después. En las pruebas, `pumpAndSettle` no avanza ese temporizador, así que hay que usar `pump(200 ms)` (helper `pick` del `_Harness`).
+- Los scripts de Python con comillas sueltas fallan en un heredoc del Bash de Claude Code. Escríbelos a un archivo.
 
 ## T40 — Modo noche (10 y 11-Nov-2026, SCRUM-71, HU-54, Alejandro)
 

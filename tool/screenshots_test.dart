@@ -178,11 +178,28 @@ final _notices = FakeNotificationRepository(
 /// La IA de las escenas (HU-32/33/34); cada escena la ajusta.
 final _ai = FakeAgreementRepository();
 
-final _order = Order(
-  id: 'o1',
+final Order _order = _orderOf('o1');
+
+/// HU-24: el mismo pedido como "Tu venta" (pendiente y pagado en efectivo) y
+/// como "Tu pedido" confirmado, listo para "Confirmar entrega".
+final Order _sale = _orderOf('o2', isBuyer: false, paysCash: true);
+final Order _accepted = _orderOf(
+  'o3',
+  status: OrderStatus.confirmed,
+  paysCash: true,
+);
+
+Order _orderOf(
+  String id, {
+  OrderStatus status = OrderStatus.pending,
+  bool isBuyer = true,
+  bool paysCash = false,
+}) => Order(
+  id: id,
   number: 'MS-2481',
-  status: OrderStatus.pending,
-  isBuyer: true,
+  status: status,
+  isBuyer: isBuyer,
+  paysCash: paysCash,
   // Otra conversacion: la de `c1` sigue sin pedido ("Resumir acuerdo").
   conversationId: 'c9',
   item: const OrderItem(
@@ -571,7 +588,7 @@ class _Shot {
             chatRepositoryProvider.overrideWithValue(_chat),
             // HU-23: el pedido de la calculadora (`Pedido-pago`).
             orderRepositoryProvider.overrideWithValue(
-              FakeOrderRepository(orders: [_order]),
+              FakeOrderRepository(orders: [_order, _sale, _accepted]),
             ),
             chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
             // HU-31: los avisos de `Notificaciones` (sin Firebase aqui).
@@ -1004,6 +1021,17 @@ final Map<String, (bool, _Scene)> _scenes = {
     },
   ),
   'pedido-pago': (true, (s) => s.go(AppRoutes.order('o1'))),
+  // HU-24: quien vende acepta o rechaza ("Tu venta"), quien compra confirma la
+  // entrega (`Pedido-entrega`) y el motivo de "Rechazar pedido".
+  'tu-venta': (true, (s) => s.go(AppRoutes.order('o2'))),
+  'pedido-entrega': (true, (s) => s.go(AppRoutes.order('o3'))),
+  'pedido-cancelar': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.order('o2'));
+      await s.tap(find.byKey(const Key('order-cancel')));
+    },
+  ),
   // HU-31: `Notificaciones` (Hoy y Ayer, dos sin leer).
   'notificaciones': (true, (s) => s.go(AppRoutes.notifications)),
   // HU-32/33/34: la propuesta de la IA (`Acuerdo-esperando`, sin fecha) y el
