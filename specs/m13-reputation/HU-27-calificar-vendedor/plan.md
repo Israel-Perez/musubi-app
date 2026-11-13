@@ -1,10 +1,14 @@
-# plan.md — HU-27 Calificar al vendedor al terminar un pedido (borrador)
+# HU-27 — Calificar al vendedor al terminar un pedido (plan, app)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
+Se implementó junto con HU-45.
 
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+1. **T1 — Spec:** decisiones de la usuaria del 12-Nov-2026. ✅
+2. **T2 — Datos:** modelos, `ReputationRepository.rate`/`opinions`, `Order.ratedByMe`/`rateUntil` y `PublicProfile.onTime`. ✅
+3. **T3 — `Calificar`:** `RateScreen` con las piezas de la maqueta y su ruta. ✅
+4. **T4 — "Tu pedido" y `Perfil-vendedor`:** "Calificar a …", paso a `Calificar` al completar, "Opiniones" y "A tiempo". ✅
+5. **T5 — Evidencia y documentación:** pruebas, capturas, trazabilidad, versionado (sección compartida) y Memoria. ✅
+
+**Decisiones:**
+- **D1 · Al completar, a `Calificar`:** como la maqueta (`Pedido-entrega` → `Calificar`); el aviso "Listo" se quita para que no tape "Ahora no".
+- **D2 · Al enviar, a Inicio:** como la maqueta, con el aviso de agradecimiento.
+- **D3 · El comentario va en un `TextField` propio:** la maqueta lo pone con "Opcional" junto a la etiqueta y dos líneas; `MusubiTextField` tiene otra forma.

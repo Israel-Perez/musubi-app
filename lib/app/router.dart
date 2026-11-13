@@ -39,6 +39,7 @@ import 'package:musubi_app/features/purchase_requests/presentation/need_details_
 import 'package:musubi_app/features/purchase_requests/presentation/need_done_screen.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_product_screen.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_board_screen.dart';
+import 'package:musubi_app/features/reputation/presentation/rate_screen.dart';
 
 /// Rutas de la app (02-01). Cada modulo reemplaza su seccion al implementar su
 /// HU; los nombres en espanol coinciden con la maqueta.
@@ -126,6 +127,9 @@ abstract final class AppRoutes {
 
   /// Un pedido (HU-23); siempre con sesion.
   static String order(String id) => '$orders/${Uri.encodeComponent(id)}';
+
+  /// `Calificar` un pedido completado (HU-27, HU-45); siempre con sesion.
+  static String rate(String id) => '${order(id)}/calificar';
 
   /// Perfil publico de otra persona (HU-05); siempre con sesion.
   static const seller = '/vendedor';
@@ -342,6 +346,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '${AppRoutes.orders}/:id',
         builder: (context, state) =>
             OrderPaymentScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '${AppRoutes.orders}/:id/calificar',
+        builder: (context, state) =>
+            RateScreen(orderId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '${AppRoutes.chat}/:id',

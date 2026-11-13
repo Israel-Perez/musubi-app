@@ -180,5 +180,10 @@ Order orderFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
       final String at => DateTime.parse(at).toUtc(),
       _ => null,
     },
+    ratedByMe: json['ratedByMe'] as bool? ?? false,
+    rateUntil: switch (json['rateUntil']) {
+      final String at => DateTime.parse(at).toUtc(),
+      _ => null,
+    },
   );
 }

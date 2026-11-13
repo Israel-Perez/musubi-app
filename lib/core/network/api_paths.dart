@@ -227,6 +227,15 @@ abstract final class ApiPaths {
   /// `PUT /api/v1/notifications/devices` — fila "M-09".
   static const notificationDevices = '$notifications/devices';
 
+  /// `POST /api/v1/orders/{id}/rating` — fila "M-13" (specs
+  /// `musubi-api:HU-27` y `HU-45`): "Enviar calificacion".
+  static String orderRating(String id) => '$orders/$id/rating';
+
+  /// `GET /api/v1/profiles/{id}/ratings` — fila "M-13" (spec
+  /// `musubi-api:HU-27`): "Opiniones" de `Perfil-vendedor`.
+  static String profileRatings(String id) =>
+      '/api/v1/profiles/${Uri.encodeComponent(id)}/ratings';
+
   /// `POST /api/v1/reports` — fila "M-13" (spec `musubi-api:HU-28`).
   static const reports = '/api/v1/reports';
 

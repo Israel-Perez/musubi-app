@@ -24,6 +24,8 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
+import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 
 enum _SellerTab { publications, reviews }
 
@@ -45,7 +47,7 @@ class SellerProfileOrigin {
 /// publicaciones activas y opiniones. Se abre desde `Producto` y desde
 /// "Ver perfil" del chat.
 ///
-/// NOTE (HU-27): promedio, calificaciones, opiniones y "A tiempo".
+/// Promedio, calificaciones, "Opiniones" y "A tiempo" salen de HU-27/HU-45.
 /// "Seguir" y "Compartir" avisan que llegan pronto (la API no tiene
 /// seguidores ni enlaces publicos); "Responde en" queda fuera como en HU-11.
 class SellerProfileScreen extends ConsumerStatefulWidget {
@@ -61,6 +63,11 @@ class SellerProfileScreen extends ConsumerStatefulWidget {
 
 class _SellerProfileScreenState extends ConsumerState<SellerProfileScreen> {
   _SellerTab _tab = _SellerTab.publications;
+
+  /// Paginas siguientes de "Opiniones" ("Ver más", HU-27).
+  final List<Opinion> _moreOpinions = [];
+  String? _opinionsCursor;
+  bool _loadingOpinions = false;
 
   /// Paginas siguientes de "Publicaciones" ("Ver más").
   final List<ProductSummary> _more = [];
@@ -93,6 +100,39 @@ class _SellerProfileScreenState extends ConsumerState<SellerProfileScreen> {
         tone: SnackTone.warn,
       );
     }
+  }
+
+  Future<void> _loadMoreOpinions(String cursor) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _loadingOpinions = true);
+    try {
+      final page = await ref
+          .read(reputationRepositoryProvider)
+          .opinions(widget.sellerId, cursor: cursor);
+      if (!mounted) return;
+      setState(() {
+        _moreOpinions.addAll(page.items);
+        _opinionsCursor = page.nextCursor ?? '';
+        _loadingOpinions = false;
+      });
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _loadingOpinions = false);
+      showMusubiSnack(
+        messenger,
+        failure.message,
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+    }
+  }
+
+  void _retryOpinions() {
+    setState(() {
+      _moreOpinions.clear();
+      _opinionsCursor = null;
+    });
+    ref.invalidate(opinionsProvider(widget.sellerId));
   }
 
   void _retryListings() {
@@ -149,6 +189,11 @@ class _SellerProfileScreenState extends ConsumerState<SellerProfileScreen> {
           onLoadMore: _loadMore,
           onRetryListings: _retryListings,
           onBack: _back,
+          moreOpinions: _moreOpinions,
+          opinionsCursor: _opinionsCursor,
+          loadingOpinions: _loadingOpinions,
+          onLoadMoreOpinions: _loadMoreOpinions,
+          onRetryOpinions: _retryOpinions,
           onShare: () => _soon('Compartir'),
           onFollow: () => _soon('Seguir a ${value.firstName}'),
           onMessage: (items) => _message(value, items),
@@ -184,6 +229,11 @@ class _Loaded extends ConsumerWidget {
     required this.onShare,
     required this.onFollow,
     required this.onMessage,
+    required this.moreOpinions,
+    required this.opinionsCursor,
+    required this.loadingOpinions,
+    required this.onLoadMoreOpinions,
+    required this.onRetryOpinions,
   });
 
   final String sellerId;
@@ -199,6 +249,11 @@ class _Loaded extends ConsumerWidget {
   final VoidCallback onShare;
   final VoidCallback onFollow;
   final ValueChanged<List<ProductSummary>> onMessage;
+  final List<Opinion> moreOpinions;
+  final String? opinionsCursor;
+  final bool loadingOpinions;
+  final ValueChanged<String> onLoadMoreOpinions;
+  final VoidCallback onRetryOpinions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -225,7 +280,11 @@ class _Loaded extends ConsumerWidget {
             ),
           ),
           SliverToBoxAdapter(
-            child: _Stats(sales: profile.sales, publications: page?.total),
+            child: _Stats(
+              sales: profile.sales,
+              publications: page?.total,
+              onTime: profile.onTime,
+            ),
           ),
           SliverToBoxAdapter(
             child: _Tabs(
@@ -236,9 +295,7 @@ class _Loaded extends ConsumerWidget {
             ),
           ),
           if (tab == _SellerTab.reviews)
-            SliverToBoxAdapter(
-              child: SizedBox(height: 340, child: _Opinions(profile: profile)),
-            )
+            ..._opinions(context, ref)
           else
             ..._publications(
               context,
@@ -253,6 +310,80 @@ class _Loaded extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// "Lo que dicen de Valeria" (HU-27): tarjetas, "Ver más", vacio y error.
+  List<Widget> _opinions(BuildContext context, WidgetRef ref) {
+    final c = context.musubi;
+    final opinions = ref.watch(opinionsProvider(sellerId));
+    final items = [...?opinions.value?.items, ...moreOpinions];
+    final next = opinionsCursor ?? opinions.value?.nextCursor;
+    if (opinions.hasError && !opinions.hasValue) {
+      final error = opinions.error;
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+            child: ErrorView(
+              message: error is ApiFailure
+                  ? error.message
+                  : 'No pudimos cargar las opiniones.',
+              onRetry: onRetryOpinions,
+            ),
+          ),
+        ),
+      ];
+    }
+    if (!opinions.hasValue) {
+      return const [
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 240,
+            child: LoadingView(message: 'Cargando opiniones…'),
+          ),
+        ),
+      ];
+    }
+    if (items.isEmpty) {
+      return [
+        SliverToBoxAdapter(
+          child: SizedBox(height: 340, child: _Opinions(profile: profile)),
+        ),
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+        sliver: SliverList.list(
+          children: [
+            Text(
+              'Lo que dicen de ${profile.firstName}',
+              style: MusubiType.style(
+                16,
+                weight: FontWeight.w800,
+                color: c.textPrimary,
+              ),
+            ),
+            for (final opinion in items)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: _OpinionCard(opinion: opinion),
+              ),
+            if (next != null && next.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 18),
+                child: MusubiButton(
+                  key: const Key('seller-opinions-more'),
+                  label: loadingOpinions ? 'Cargando…' : 'Ver más',
+                  onPressed: loadingOpinions
+                      ? null
+                      : () => onLoadMoreOpinions(next),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ];
   }
 
   List<Widget> _publications(
@@ -605,13 +736,19 @@ class _Actions extends StatelessWidget {
 }
 
 /// Ventas, publicaciones y "A tiempo" en un recuadro de tres columnas.
-/// Sin el dato (ventas ocultas, publicaciones cargando) va "—", como en
-/// `Perfil`. NOTE (HU-27): "A tiempo" sale de las calificaciones.
+/// Sin el dato (ventas ocultas, publicaciones cargando, sin calificaciones)
+/// va "—", como en `Perfil`. "A tiempo" es el porcentaje con "Puntual"
+/// (HU-27).
 class _Stats extends StatelessWidget {
-  const new({required this.sales, required this.publications});
+  const new({
+    required this.sales,
+    required this.publications,
+    required this.onTime,
+  });
 
   final int? sales;
   final int? publications;
+  final int? onTime;
 
   @override
   Widget build(BuildContext context) {
@@ -666,7 +803,12 @@ class _Stats extends StatelessWidget {
               publications == null ? '—' : '$publications',
               'Publicaciones',
             ),
-            cell('on-time', '—', 'A tiempo', last: true),
+            cell(
+              'on-time',
+              onTime == null ? '—' : '$onTime%',
+              'A tiempo',
+              last: true,
+            ),
           ],
         ),
       ),
@@ -760,7 +902,7 @@ class _Tabs extends StatelessWidget {
   }
 }
 
-/// NOTE (HU-27): las opiniones llegan con HU-27/HU-45.
+/// "Opiniones" sin calificaciones todavia (RN-26).
 class _Opinions extends StatelessWidget {
   const new({required this.profile});
 
@@ -774,6 +916,79 @@ class _Opinions extends StatelessWidget {
         'Cuando alguien califique a ${profile.firstName}, '
         'aparecerán aquí.',
   );
+}
+
+/// Una opinion (maqueta: `article` gris de radio 18): estrellas y fecha,
+/// el comentario y "Luis M. · Puntual".
+class _OpinionCard extends StatelessWidget {
+  const new({required this.opinion});
+
+  final Opinion opinion;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final comment = opinion.comment;
+    final tag = opinion.tags.isEmpty ? null : opinion.tags.first.label;
+    return Semantics(
+      container: true,
+      label: '${opinion.stars} de 5 estrellas',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 6,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ExcludeSemantics(
+                  child: Row(
+                    spacing: 1,
+                    children: [
+                      for (var n = 1; n <= 5; n++)
+                        MusubiIcon(
+                          MusubiIcons.star,
+                          size: 14,
+                          filled: true,
+                          fillColor: n <= opinion.stars ? c.warning : c.border,
+                          color: n <= opinion.stars ? c.warning : c.border,
+                        ),
+                    ],
+                  ),
+                ),
+                Text(
+                  dayMonth(opinion.createdAt.toLocal()),
+                  style: MusubiType.style(
+                    12,
+                    weight: FontWeight.w600,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            if (comment != null)
+              Text(
+                comment,
+                style: MusubiType.style(14, line: 20, color: c.textPrimary),
+              ),
+            Text(
+              tag == null ? opinion.raterName : '${opinion.raterName} · $tag',
+              style: MusubiType.style(
+                12.5,
+                weight: FontWeight.w700,
+                color: c.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _Loading extends StatelessWidget {

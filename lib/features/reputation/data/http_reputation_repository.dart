@@ -6,8 +6,8 @@ import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_repository.dart';
 
 /// [ReputationRepository] sobre las filas "M-13" de
-/// `musubi-api/docs/endpoints.md` (specs `musubi-api:HU-28` y `HU-57`). Usa
-/// el cliente con sesion.
+/// `musubi-api/docs/endpoints.md` (specs `musubi-api:HU-28`, `HU-57`, `HU-27`
+/// y `HU-45`). Usa el cliente con sesion.
 class HttpReputationRepository implements ReputationRepository {
   new(this._dio, this._apiBaseUrl);
 
@@ -66,6 +66,47 @@ class HttpReputationRepository implements ReputationRepository {
         ),
     ];
   });
+
+  @override
+  Future<void> rate(String orderId, NewRating rating) => _guard(() async {
+    await _dio.post<void>(
+      ApiPaths.orderRating(orderId),
+      data: {
+        'stars': rating.stars,
+        'tags': [for (final tag in rating.tags) tag.code],
+        'comment': ?rating.comment,
+      },
+    );
+  });
+
+  @override
+  Future<OpinionPage> opinions(String userId, {String? cursor}) =>
+      _guard(() async {
+        final response = await _dio.get<Map<String, dynamic>>(
+          ApiPaths.profileRatings(userId),
+          queryParameters: {'cursor': ?cursor},
+        );
+        final body = response.data ?? const <String, dynamic>{};
+        return OpinionPage(
+          items: [
+            for (final item
+                in (body['items'] as List<dynamic>? ?? const [])
+                    .cast<Map<String, dynamic>>())
+              Opinion(
+                id: item['id'] as String,
+                stars: (item['stars'] as num).toInt(),
+                raterName: item['raterName'] as String,
+                createdAt: DateTime.parse(item['createdAt'] as String).toUtc(),
+                comment: item['comment'] as String?,
+                tags: [
+                  for (final code in item['tags'] as List<dynamic>? ?? const [])
+                    ?RatingTag.parse(code),
+                ],
+              ),
+          ],
+          nextCursor: body['nextCursor'] as String?,
+        );
+      });
 
   static Future<T> _guard<T>(Future<T> Function() call) async {
     try {

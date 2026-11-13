@@ -116,8 +116,8 @@ class ProfileVisibility {
   int get hashCode => Object.hash(career, sales, online);
 }
 
-/// Estadisticas de `Perfil`. NOTE (HU-23)/NOTE (HU-27): las mueven los pedidos
-/// y las calificaciones.
+/// Estadisticas de `Perfil`. La reputacion la mueven las calificaciones
+/// (HU-27); NOTE (HU-26): ventas y compras con los pedidos completados.
 @immutable
 class ProfileStats {
   const new({
@@ -209,8 +209,9 @@ String monthYear(DateTime date) {
 /// cabecera de `Perfil-vendedor`. La tarjeta del vendedor en `Producto`
 /// (HU-11) usa un subconjunto.
 ///
-/// NOTE (HU-27): el promedio y las opiniones llegan con HU-27/HU-45; sin
-/// calificaciones, `ratingAvg` es `null` y `ratingCount` es `0` (RN-26).
+/// La reputacion es un solo promedio de lo recibido como quien vende y como
+/// quien compra (HU-27/HU-45); sin calificaciones, `ratingAvg` es `null` y
+/// `ratingCount` es `0` (RN-26).
 @immutable
 class PublicProfile {
   const new({
@@ -224,6 +225,7 @@ class PublicProfile {
     this.term,
     this.ratingAvg,
     this.sales,
+    this.onTime,
   });
 
   final String id;
@@ -249,6 +251,10 @@ class PublicProfile {
 
   /// `null` si oculta sus ventas.
   final int? sales;
+
+  /// "A tiempo" (HU-27): porcentaje de calificaciones con "Puntual", o `null`
+  /// sin calificaciones.
+  final int? onTime;
 
   /// "Valeria" en "Cuando alguien califique a Valeria…".
   String get firstName => fullName.split(' ').first;

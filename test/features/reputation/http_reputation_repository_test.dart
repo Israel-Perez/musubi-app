@@ -128,4 +128,104 @@ void main() {
       throwsA(isA<ApiFailure>().having((f) => f.code, 'code', 'blocks.self')),
     );
   });
+
+  group('calificaciones (HU-27, HU-45)', () {
+    test(
+      'calificar manda estrellas, chips por codigo y el comentario',
+      () async {
+        serve(
+          (_) => FakeHttpAdapter.json({
+            'stars': 4,
+            'tags': ['on_time'],
+            'comment': 'Muy puntual.',
+            'createdAt': '2026-11-12T18:00:00Z',
+          }, status: 201),
+        );
+
+        await repository.rate(
+          'o1',
+          const NewRating(
+            stars: 4,
+            tags: [RatingTag.onTime, RatingTag.paidAsAgreed],
+            comment: 'Muy puntual.',
+          ),
+        );
+
+        final request = adapter.requests.single;
+        expect(request.path, ApiPaths.orderRating('o1'));
+        expect(request.data, {
+          'stars': 4,
+          'tags': ['on_time', 'paid_as_agreed'],
+          'comment': 'Muy puntual.',
+        });
+      },
+    );
+
+    test('sin comentario no lo manda', () async {
+      serve((_) => FakeHttpAdapter.json(<String, Object?>{}, status: 201));
+
+      await repository.rate('o1', const NewRating(stars: 5));
+
+      expect(adapter.requests.single.data, {'stars': 5, 'tags': <String>[]});
+    });
+
+    test('las opiniones se leen con cursor y chips conocidos', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'items': [
+            {
+              'id': 'r1',
+              'stars': 5,
+              'tags': ['on_time', 'algo_nuevo'],
+              'comment': 'Súper puntual.',
+              'raterName': 'Luis M.',
+              'role': 'seller',
+              'createdAt': '2026-09-28T18:00:00Z',
+            },
+          ],
+          'nextCursor': 'r1',
+        }),
+      );
+
+      final page = await repository.opinions('u2', cursor: 'r0');
+
+      expect(adapter.requests.single.path, ApiPaths.profileRatings('u2'));
+      expect(adapter.requests.single.queryParameters, {'cursor': 'r0'});
+      final opinion = page.items.single;
+      expect((opinion.stars, opinion.raterName), (5, 'Luis M.'));
+      expect(opinion.tags, [RatingTag.onTime]);
+      expect(opinion.createdAt, DateTime.utc(2026, 9, 28, 18));
+      expect(page.nextCursor, 'r1');
+    });
+
+    test('ya calificado llega como ApiFailure', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'code': 'ratings.already_rated',
+          'title': 'Ya calificaste este pedido.',
+          'status': 409,
+        }, status: 409),
+      );
+
+      await expectLater(
+        repository.rate('o1', const NewRating(stars: 5)),
+        throwsA(
+          isA<ApiFailure>().having(
+            (f) => f.code,
+            'code',
+            'ratings.already_rated',
+          ),
+        ),
+      );
+    });
+
+    test('las palabras de las estrellas son las de la maqueta', () {
+      expect(
+        [for (var n = 1; n <= 5; n++) ratingWords(n)],
+        ['Muy mala', 'Mala', 'Regular', 'Muy buena', '¡Excelente!'],
+      );
+      expect(RatingTag.forBuyer, isNot(contains(RatingTag.asDescribed)));
+      expect(RatingTag.forBuyer, contains(RatingTag.paidAsAgreed));
+    });
+  });
 }

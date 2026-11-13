@@ -71,3 +71,101 @@ class BlockedUser {
   /// Pareja de colores de sus iniciales: la misma que en el chat.
   int get palette => id.codeUnits.fold(0, (sum, unit) => sum + unit) % 5;
 }
+
+/// "¿Que destacas?" (maqueta `Calificar`, HU-27 y HU-45). A quien vende se le
+/// ponen los cinco de la maqueta; a quien compra, los suyos (decision de la
+/// usuaria del 12-Nov-2026).
+enum RatingTag {
+  onTime('on_time', 'Puntual'),
+  asDescribed('as_described', 'Como se describió'),
+  goodCommunication('good_communication', 'Buena comunicación'),
+  fairPrice('fair_price', 'Precio justo'),
+  friendly('friendly', 'Amable'),
+  paidAsAgreed('paid_as_agreed', 'Pagó lo acordado');
+
+  new(this.code, this.label);
+
+  /// Valor de la API.
+  final String code;
+
+  /// Texto del chip.
+  final String label;
+
+  /// Los que se le ponen a quien vende (los califica quien compra).
+  static const List<RatingTag> forSeller = [
+    onTime,
+    asDescribed,
+    goodCommunication,
+    fairPrice,
+    friendly,
+  ];
+
+  /// Los que se le ponen a quien compra (los califica quien vende).
+  static const List<RatingTag> forBuyer = [
+    onTime,
+    goodCommunication,
+    friendly,
+    paidAsAgreed,
+  ];
+
+  /// El chip de un codigo, o `null` si la app no lo conoce.
+  static RatingTag? parse(Object? value) {
+    for (final tag in values) {
+      if (tag.code == value) return tag;
+    }
+    return null;
+  }
+}
+
+/// Lo que dice la maqueta debajo de las estrellas (`RATE_TEXT`).
+String ratingWords(int stars) => switch (stars) {
+  1 => 'Muy mala',
+  2 => 'Mala',
+  3 => 'Regular',
+  4 => 'Muy buena',
+  _ => '¡Excelente!',
+};
+
+/// "Enviar calificacion".
+@immutable
+class NewRating {
+  const new({required this.stars, this.tags = const [], this.comment});
+
+  /// De 1 a 5.
+  final int stars;
+  final List<RatingTag> tags;
+
+  /// "Cuentale a la comunidad", o `null`.
+  final String? comment;
+}
+
+/// Una opinion de `Perfil-vendedor` ("Lo que dicen de Valeria").
+@immutable
+class Opinion {
+  const new({
+    required this.id,
+    required this.stars,
+    required this.raterName,
+    required this.createdAt,
+    this.tags = const [],
+    this.comment,
+  });
+
+  final String id;
+  final int stars;
+
+  /// "Luis M.".
+  final String raterName;
+  final DateTime createdAt;
+  final List<RatingTag> tags;
+  final String? comment;
+}
+
+/// Una pagina de opiniones, de la mas nueva a la mas vieja.
+@immutable
+class OpinionPage {
+  const new({this.items = const [], this.nextCursor});
+
+  final List<Opinion> items;
+  final String? nextCursor;
+}

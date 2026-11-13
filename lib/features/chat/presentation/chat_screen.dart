@@ -30,6 +30,7 @@ import 'package:musubi_app/features/notifications/presentation/notifications_scr
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/orders/presentation/order_summary_sheet.dart';
+import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
@@ -43,7 +44,7 @@ import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 /// "En linea" / "Activa hace 5 min" no se muestran: la API no expone
 /// presencia.
 /// NOTE (HU-31): "Silenciar conversación" (sin avisos push no hay que callar).
-/// NOTE (HU-27): la calificacion de la otra persona.
+/// La calificacion de la otra persona va bajo su nombre (HU-27).
 /// "Resumir acuerdo" (HU-32/33/34): cualquiera de los dos le pide a la IA la
 /// propuesta (la primera vez, con el aviso de RN-40); con un acuerdo vigente,
 /// el aviso lo muestra y lo abre, y con un pedido abierto, el pedido (HU-23).
@@ -439,15 +440,31 @@ class _Header extends StatelessWidget {
                         if (person != null) const VerifiedBadge(size: 15),
                       ],
                     ),
-                    Text(
-                      'Estudiante verificado de tu campus',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: MusubiType.style(
-                        12,
-                        weight: FontWeight.w600,
-                        color: c.textSecondary,
-                      ),
+                    // Maqueta: "★ 4.6 · Activa hace 5 min". Con calificaciones
+                    // (HU-27) va el promedio; la presencia no la expone la API.
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final id = person?.id;
+                        final rating = id == null
+                            ? null
+                            : ref
+                                  .watch(publicProfileProvider(id))
+                                  .value
+                                  ?.ratingAvg;
+                        return Text(
+                          rating == null
+                              ? 'Estudiante verificado de tu campus'
+                              : '★ ${rating.toStringAsFixed(1)}',
+                          key: const Key('chat-header-subtitle'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: MusubiType.style(
+                            12,
+                            weight: FontWeight.w600,
+                            color: c.textSecondary,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

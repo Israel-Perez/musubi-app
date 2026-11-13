@@ -42,4 +42,45 @@ class FakeReputationRepository implements ReputationRepository {
 
   @override
   Future<List<BlockedUser>> blocked() async => List.of(blockedUsers);
+
+  /// Calificaciones enviadas (HU-27, HU-45): pedido y calificacion.
+  final List<(String, NewRating)> rated = [];
+
+  /// Falla la siguiente calificacion.
+  ApiFailure? rateFailure;
+
+  /// Opiniones por persona (HU-27); "Ver más" pide la pagina de su cursor.
+  final Map<String, List<Opinion>> opinionsByUser = {};
+
+  /// Tamaño de pagina de las opiniones.
+  int opinionsPageSize = 20;
+
+  /// Falla la siguiente lectura de opiniones.
+  ApiFailure? opinionsFailure;
+
+  @override
+  Future<void> rate(String orderId, NewRating rating) async {
+    final failure = rateFailure;
+    if (failure != null) {
+      rateFailure = null;
+      throw failure;
+    }
+    rated.add((orderId, rating));
+  }
+
+  @override
+  Future<OpinionPage> opinions(String userId, {String? cursor}) async {
+    final failure = opinionsFailure;
+    if (failure != null) {
+      opinionsFailure = null;
+      throw failure;
+    }
+    final all = opinionsByUser[userId] ?? const <Opinion>[];
+    final start = cursor == null
+        ? 0
+        : all.indexWhere((o) => o.id == cursor) + 1;
+    final page = all.skip(start).take(opinionsPageSize).toList();
+    final more = start + opinionsPageSize < all.length;
+    return OpinionPage(items: page, nextCursor: more ? page.last.id : null);
+  }
 }

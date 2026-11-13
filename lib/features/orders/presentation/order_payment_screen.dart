@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
@@ -15,6 +16,7 @@ import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_panel.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
+import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/presentation/chat_format.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
@@ -29,7 +31,9 @@ import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 /// el pago, "Confirmar entrega" de cada parte (`Pedido-entrega`) y "Rechazar"
 /// o "Cancelar pedido" con un motivo de la lista (`Pedido-efectivo`).
 /// NOTE (HU-55): `Pago-transferencia` y el codigo de entrega
-/// (`Pedido-efectivo`). NOTE (HU-27): "Calificar" al completarse.
+/// (`Pedido-efectivo`). Completado y dentro del plazo: "Calificar a Diego"
+/// (HU-27, HU-45); al confirmar la entrega que lo completa, abre `Calificar`
+/// como la maqueta.
 class OrderPaymentScreen extends ConsumerStatefulWidget {
   const new({required this.orderId, super.key});
 
@@ -45,7 +49,9 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
   /// La accion de HU-24 en curso (gira su boton y no acepta otro toque).
   _Action? _busy;
 
-  Future<void> _act(
+  /// Corre una accion de HU-24; regresa el pedido como quedo, o `null` si
+  /// fallo.
+  Future<Order?> _act(
     Order order,
     _Action action,
     Future<Order> Function() call,
@@ -54,38 +60,54 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = action);
     try {
-      await call();
-      if (!mounted) return;
+      final changed = await call();
+      if (!mounted) return null;
       ref
         ..invalidate(orderProvider(order.id))
         ..invalidate(openOrderProvider(order.conversationId));
       showMusubiSnack(messenger, done, icon: MusubiIcons.circleCheck);
+      return changed;
     } on ApiFailure catch (failure) {
-      if (!mounted) return;
+      if (!mounted) return null;
       showMusubiSnack(
         messenger,
         failure.message,
         icon: MusubiIcons.circleAlert,
         tone: SnackTone.warn,
       );
+      return null;
     } finally {
       if (mounted) setState(() => _busy = null);
     }
   }
 
-  Future<void> _accept(Order order) => _act(
-    order,
-    _Action.accept,
-    () => ref.read(orderRepositoryProvider).accept(order.id),
-    'Pedido aceptado. Le avisamos a ${_first(order.buyerName)}.',
-  );
+  Future<void> _accept(Order order) async {
+    await _act(
+      order,
+      _Action.accept,
+      () => ref.read(orderRepositoryProvider).accept(order.id),
+      'Pedido aceptado. Le avisamos a ${_first(order.buyerName)}.',
+    );
+  }
 
-  Future<void> _handover(Order order) => _act(
-    order,
-    _Action.handover,
-    () => ref.read(orderRepositoryProvider).confirmHandover(order.id),
-    'Listo: confirmaste la entrega.',
-  );
+  Future<void> _handover(Order order) async {
+    final changed = await _act(
+      order,
+      _Action.handover,
+      () => ref.read(orderRepositoryProvider).confirmHandover(order.id),
+      'Listo: confirmaste la entrega.',
+    );
+    // Con las dos confirmaciones se completa: como la maqueta, a `Calificar`.
+    if (changed != null &&
+        mounted &&
+        changed.canRate(ref.read(clockProvider)())) {
+      // Sin el aviso de "Listo": taparia "Ahora no" (la maqueta pasa directo).
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      unawaited(context.push(AppRoutes.rate(changed.id)));
+    }
+  }
+
+  void _rate(Order order) => unawaited(context.push(AppRoutes.rate(order.id)));
 
   Future<void> _cancel(Order order) async {
     final rejecting = !order.isBuyer && order.status == OrderStatus.pending;
@@ -205,6 +227,8 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
           onAccept: () => unawaited(_accept(value)),
           onHandover: () => unawaited(_handover(value)),
           onCancel: () => unawaited(_cancel(value)),
+          onRate: () => _rate(value),
+          now: ref.watch(clockProvider)(),
         ),
         AsyncError(:final error) => SafeArea(
           child: ErrorView(
@@ -236,6 +260,8 @@ class _Body extends StatelessWidget {
     required this.onAccept,
     required this.onHandover,
     required this.onCancel,
+    required this.onRate,
+    required this.now,
   });
 
   final Order order;
@@ -247,6 +273,10 @@ class _Body extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onHandover;
   final VoidCallback onCancel;
+  final VoidCallback onRate;
+
+  /// Para saber si aun se puede calificar (HU-27).
+  final DateTime now;
 
   /// El aviso gris debajo del pedido: como se paga, que falta y como termino.
   (MusubiIconData, String) _notice() {
@@ -266,7 +296,9 @@ class _Body extends StatelessWidget {
       case OrderStatus.completed:
         return (
           MusubiIcons.circleCheck,
-          'Pedido completado. ¡Gracias por usar Musubi!',
+          order.ratedByMe
+              ? 'Pedido completado. Ya calificaste a $other.'
+              : 'Pedido completado. ¡Gracias por usar Musubi!',
         );
       case OrderStatus.confirmed:
         if (order.iConfirmed) {
@@ -347,6 +379,16 @@ class _Body extends StatelessWidget {
         iconSize: 20,
         iconStrokeWidth: 2.2,
         onPressed: busy == null ? onHandover : null,
+      );
+    }
+    if (order.canRate(now)) {
+      return MusubiButton(
+        key: const Key('order-rate'),
+        label: 'Calificar a ${_first(order.otherName)}',
+        icon: MusubiIcons.star,
+        iconSize: 20,
+        iconStrokeWidth: 2.2,
+        onPressed: onRate,
       );
     }
     return MusubiButton(

@@ -670,14 +670,36 @@ class _Shot {
             // HU-57: Diego bloqueado, como `APP.blocked` de la maqueta.
             reputationRepositoryProvider.overrideWithValue(
               FakeReputationRepository(
-                blockedUsers: [
-                  BlockedUser(
-                    id: 'diego',
-                    name: 'Diego Hernández',
-                    blockedAt: _now,
+                  blockedUsers: [
+                    BlockedUser(
+                      id: 'diego',
+                      name: 'Diego Hernández',
+                      blockedAt: _now,
+                    ),
+                  ],
+                )
+                // HU-27: "Lo que dicen de Valeria" de `Perfil-vendedor`.
+                ..opinionsByUser['demo-valeria-c'] = [
+                  Opinion(
+                    id: 'r2',
+                    stars: 5,
+                    raterName: 'Luis M.',
+                    createdAt: DateTime(2026, 9, 28, 12),
+                    tags: const [RatingTag.onTime],
+                    comment:
+                        'Súper puntual y la maqueta llegó tal cual las fotos.',
+                  ),
+                  Opinion(
+                    id: 'r1',
+                    stars: 4,
+                    raterName: 'Fernanda O.',
+                    createdAt: DateTime(2026, 9, 12, 12),
+                    tags: const [RatingTag.asDescribed],
+                    comment:
+                        'Todo bien con el escalímetro, solo tardó un poco en '
+                        'responder.',
                   ),
                 ],
-              ),
             ),
             // `Mis-solicitudes`: 2 activas y 4 cerradas (HU-13); el tablero
             // de `Se-busca` y `Se-busca-visitante` (HU-15).
@@ -913,6 +935,15 @@ final Map<String, (bool, _Scene)> _scenes = {
     true,
     (s) => s.go(AppRoutes.sellerProfile('demo-paulina-r')),
   ),
+  'perfil-vendedor-opiniones': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.sellerProfile('demo-valeria-c'));
+      await s.tap(find.byKey(const Key('seller-tab-reviews')));
+    },
+  ),
+  // HU-27: la Casio de Valeria (como la maqueta, con Diego en su lugar).
+  'calificar': (true, (s) => s.go(AppRoutes.rate('o3'))),
   'inicio-visitante': (false, (s) async {}),
   'busqueda': (
     false,
