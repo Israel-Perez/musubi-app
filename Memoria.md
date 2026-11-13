@@ -2,12 +2,12 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (11-Nov-2026)
+## Estado actual (13-Nov-2026)
 
-- **En Google Play:** `0.9.0+11` a la prueba cerrada el 12-Nov-2026 (SCRUM-87): pedidos completos (HU-24), "Mis pedidos" (HU-25), perfil de quien vende (HU-05) y cambiar piezas (HU-50), con la API `0.5.0-alpha.23` en producción (`infra-up` del 12-Nov-2026). Sin datos nuevos en "Seguridad de los datos". Antes: `0.8.0+10` (11-Nov-2026) con HU-07, HU-08, HU-31 y HU-54.
+- **En Google Play:** `0.10.0+12` a la prueba cerrada el 13-Nov-2026 (SCRUM-87): calificar y "Opiniones" (HU-27, HU-45), "Vendidos" con mis ventas (HU-26) y avisos de solicitudes (HU-19, HU-30), con la API `0.5.0-alpha.27` en producción (`infra-up` del 13-Nov-2026). Las calificaciones caben en "Otro contenido generado por el usuario" (ya declarado). Antes: `0.9.0+11` (12-Nov-2026) con HU-24, HU-25, HU-05 y HU-50.
   - **Antes de enviar la revisión en Play Console:** "Seguridad de los datos" declara el ID de instalación de Firebase (`docs/play/README.md`).
   - Notas en `docs/play/whatsnew/whatsnew-es-419`; descripción y "Seguridad de los datos" en `docs/play/README.md` (**se pegan a mano en Play Console**). Desde `0.7.0` se declara que los mensajes se comparten con Google (Gemini) cuando alguien pide "Resumir acuerdo".
-- **API en producción:** `0.5.0-alpha.23`, esquema 19 (`infra-up` del 12-Nov-2026). La matriz está en `docs/versionado.md`.
+- **API en producción:** `0.5.0-alpha.27`, esquema 21 (`infra-up` del 13-Nov-2026). La matriz está en `docs/versionado.md`.
 - **HU-31 (push):** en `main` (#52), con la API `0.5.0-alpha.18`. Proyecto de Firebase `musubi-2a78e` listo y secreto `GOOGLE_SERVICES_JSON_B64` en el repo (11-Nov-2026).
 - **HU-24 (aceptar y actualizar pedidos):** app en `feature/SCRUM-43-aceptar-actualizar-pedidos`, con la API `0.5.0-alpha.20` (musubi-api #72). Ver T41.
 - **HU-05 (perfil del vendedor):** fila compartida `0.5.0-alpha.22` de musubi-api (`alpha.21` quedó para HU-50, fusionada antes) en `docs/versionado.md` (esquema 19, el de HU-24/#72; la API se rebasa antes del merge); la app está en `feature/SCRUM-34-perfil-publico` con T2–T6 hechos, versión `0.8.0+10` (se publica en el siguiente lote) y spec en “Borrador con evidencia” (ver T43); faltan el revisor y el PR.
