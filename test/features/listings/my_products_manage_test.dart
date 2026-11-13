@@ -15,9 +15,12 @@ import 'package:musubi_app/features/listings/presentation/listings_providers.dar
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_listings_repository.dart';
+import '../../helpers/fake_orders.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/in_memory_token_store.dart';
 
@@ -46,12 +49,32 @@ OwnListing _listing({
   soldAt: soldAt,
 );
 
-/// App con sesion y `Mis-productos` abierto, con el fake de publicaciones.
+/// Una venta completada de Valeria (HU-26), cerrada el 10 de noviembre.
+Order _sale({
+  String id = 's1',
+  String title = 'Calculadora Casio fx-991ES Plus',
+  int priceCents = 45000,
+  int quantity = 1,
+}) => sampleOrder(
+  id: id,
+  isBuyer: false,
+  status: OrderStatus.completed,
+  title: title,
+  priceCents: priceCents,
+  quantity: quantity,
+  buyerConfirmed: true,
+  sellerConfirmed: true,
+  updatedAt: _now,
+);
+
+/// App con sesion y `Mis-productos` abierto, con los fakes de publicaciones y
+/// de pedidos.
 class _Harness {
   new(this.tester);
 
   final WidgetTester tester;
   final listings = FakeListingsRepository();
+  final orders = FakeOrderRepository();
   late ProviderContainer container;
 
   Future<void> open() async {
@@ -73,6 +96,7 @@ class _Harness {
             FakeCatalogRepository([sampleFeed]),
           ),
           listingsRepositoryProvider.overrideWithValue(listings),
+          orderRepositoryProvider.overrideWithValue(orders),
           sessionApiProvider.overrideWithValue(FakeSessionApi()),
           clockProvider.overrideWithValue(() => _now),
           tokenStoreProvider.overrideWithValue(InMemoryTokenStore(tokens)),
@@ -312,7 +336,7 @@ void main() {
     expect(find.text('Vendidos (1)'), findsOneWidget);
   });
 
-  testWidgets('Vendidos: total, fecha y la marca; solo se ve o se elimina', (
+  testWidgets('Vendidos a mano: fecha y la marca; solo se ve o se elimina', (
     tester,
   ) async {
     final h = _Harness(tester)
@@ -330,9 +354,9 @@ void main() {
 
     await h.tapText('Vendidos (2)');
 
-    expect(find.text('2 ventas'), findsOneWidget);
-    expect(find.text(r'$750'), findsOneWidget);
-    expect(find.text(r'$450 · 10 nov'), findsOneWidget);
+    // Sin pedidos completados no hay tarjeta: no hay un monto real.
+    expect(find.byKey(const Key('my-products-sales')), findsNothing);
+    expect(find.text(r'$450 · 10 nov · Marcado a mano'), findsOneWidget);
     expect(find.text('Vendido'), findsNWidgets(2));
 
     await h.tapKey('my-product-v1');
@@ -343,6 +367,104 @@ void main() {
     expect(find.text('Marcar como vendido'), findsNothing);
     expect(find.text('Pausar publicación'), findsNothing);
     expect(find.text('Cambiar piezas'), findsNothing);
+  });
+
+  // HU-26: el historial de ventas en "Vendidos".
+  testWidgets('Vendidos: mis ventas con quien compró y el total real', (
+    tester,
+  ) async {
+    final h = _Harness(tester)
+      ..listings.own = [
+        _listing(id: 'mano', status: ListingStatus.sold, soldAt: _now),
+      ]
+      ..orders.stored.addAll([
+        _sale(),
+        _sale(
+          id: 's2',
+          title: 'Libro de Cálculo',
+          priceCents: 30000,
+          quantity: 2,
+        ),
+        // Ni una compra ni una venta sin completar son ventas.
+        sampleOrder(id: 'compra', status: OrderStatus.completed),
+        sampleOrder(id: 'abierta', isBuyer: false),
+      ]);
+    await h.open();
+
+    // Dos ventas y una marcada a mano.
+    await h.tapText('Vendidos (3)');
+
+    expect(find.text('2 ventas'), findsOneWidget);
+    expect(find.text(r'$1,050'), findsOneWidget);
+    expect(
+      find.text(r'$600 · 10 nov · 2 piezas · Ana Sofía Ramírez'),
+      findsOneWidget,
+    );
+    expect(find.text(r'$450 · 10 nov · Ana Sofía Ramírez'), findsOneWidget);
+    expect(find.text(r'$450 · 10 nov · Marcado a mano'), findsOneWidget);
+    expect(find.byKey(const Key('my-sale-compra')), findsNothing);
+    expect(find.byKey(const Key('my-sale-abierta')), findsNothing);
+    // La mas nueva primero y lo marcado a mano al final.
+    expect(
+      tester.getTopLeft(find.byKey(const Key('my-sale-s2'))).dy,
+      lessThan(tester.getTopLeft(find.byKey(const Key('my-sale-s1'))).dy),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('my-sale-s1'))).dy,
+      lessThan(tester.getTopLeft(find.byKey(const Key('my-product-mano'))).dy),
+    );
+
+    await h.tapKey('my-sale-s2');
+
+    final router = GoRouter.of(tester.element(find.byType(Scaffold).last));
+    expect(router.state.uri.path, AppRoutes.order('s2'));
+  });
+
+  testWidgets('Vendidos: Ver más trae ventas y luego lo marcado a mano', (
+    tester,
+  ) async {
+    final h = _Harness(tester)
+      ..listings.own = [
+        _listing(id: 'mano', status: ListingStatus.sold, soldAt: _now),
+      ]
+      ..orders.salesPageSize = 1
+      ..orders.stored.addAll([_sale(), _sale(id: 's2')]);
+    await h.open();
+    await h.tapText('Vendidos (3)');
+
+    expect(find.byKey(const Key('my-sale-s2')), findsOneWidget);
+    expect(find.byKey(const Key('my-sale-s1')), findsNothing);
+    expect(find.byKey(const Key('my-product-mano')), findsNothing);
+    // La tarjeta cuenta todas, no solo la pagina.
+    expect(find.text('2 ventas'), findsOneWidget);
+
+    await h.tapKey('my-products-more');
+
+    expect(h.orders.salesCalls.last, 's2');
+    expect(find.byKey(const Key('my-sale-s1')), findsOneWidget);
+    expect(find.byKey(const Key('my-product-mano')), findsOneWidget);
+    expect(find.byKey(const Key('my-products-more')), findsNothing);
+  });
+
+  testWidgets('Vendidos: si las ventas no cargan, lo explica y reintenta', (
+    tester,
+  ) async {
+    final h = _Harness(tester)
+      ..orders.salesFailure = const ApiFailure(
+        code: ApiFailure.serverError,
+        message: 'Algo salió mal. Intenta de nuevo.',
+      )
+      ..orders.stored.add(_sale());
+    await h.open();
+
+    await h.tapText('Vendidos (0)');
+
+    expect(find.text('Algo salió mal. Intenta de nuevo.'), findsOneWidget);
+
+    await h.tapText('Reintentar');
+
+    expect(find.byKey(const Key('my-sale-s1')), findsOneWidget);
+    expect(find.text('Vendidos (1)'), findsOneWidget);
   });
 
   testWidgets('Ver más: trae la siguiente pagina de la pestana', (

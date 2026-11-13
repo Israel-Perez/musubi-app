@@ -53,6 +53,14 @@ final FutureProvider<MyOrdersPage> recentOrdersProvider =
       retry: (_, _) => null,
     );
 
+/// La primera pagina de mis ventas (HU-26): "Vendidos" de `Mis-productos`.
+/// "Ver más" pide las siguientes con el repositorio.
+final FutureProvider<SalesPage> salesProvider =
+    FutureProvider.autoDispose<SalesPage>(
+      (ref) => ref.watch(orderRepositoryProvider).sales(),
+      retry: (_, _) => null,
+    );
+
 /// La primera pagina de una pestana de "Mis pedidos" (HU-25); "Ver más" pide
 /// las siguientes con el repositorio.
 final FutureProviderFamily<MyOrdersPage, MyOrdersTab> myOrdersProvider =

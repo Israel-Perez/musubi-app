@@ -184,6 +184,10 @@ abstract final class ApiPaths {
   /// `counts` y cursor.
   static const myOrders = '$orders/mine';
 
+  /// `GET /api/v1/orders/sales` — fila "M-08" (spec `musubi-api:HU-26`):
+  /// mis ventas completadas con `count`, `totalCents` y cursor.
+  static const orderSales = '$orders/sales';
+
   /// `GET /api/v1/orders/{id}` — fila "M-08" (spec `musubi-api:HU-23`).
   static String order(String id) => '$orders/$id';
 

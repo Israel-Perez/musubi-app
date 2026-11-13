@@ -23,6 +23,10 @@ abstract interface class OrderRepository {
   /// con los numeros de las tres. [limit] de 1 a 50 (20 si no se manda).
   Future<MyOrdersPage> mine({MyOrdersTab? tab, String? cursor, int? limit});
 
+  /// "Vendidos" de `Mis-productos` (HU-26): mis ventas completadas, con el
+  /// numero y el total de todas.
+  Future<SalesPage> sales({String? cursor});
+
   /// "Confirmar pago en efectivo" (RN-18).
   Future<Order> payCash(String id);
 

@@ -315,6 +315,29 @@ class MyOrdersPage {
   final MyOrdersCounts counts;
 }
 
+/// Una pagina de mis ventas (`GET /api/v1/orders/sales`, HU-26): los pedidos
+/// completados en los que vendi, del mas nuevo al mas viejo.
+@immutable
+class SalesPage {
+  const new({
+    this.items = const [],
+    this.nextCursor,
+    this.count = 0,
+    this.totalCents = 0,
+  });
+
+  final List<Order> items;
+
+  /// Cursor de la pagina siguiente, o `null` si no hay mas.
+  final String? nextCursor;
+
+  /// Todas mis ventas completadas (no solo las de la pagina).
+  final int count;
+
+  /// Lo que suman todas, en centavos.
+  final int totalCents;
+}
+
 /// "Crear pedido" desde el resumen del chat.
 @immutable
 class NewOrder {

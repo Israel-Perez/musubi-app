@@ -206,6 +206,18 @@ final Order _arduino = _orderOf(
   updatedAt: DateTime(2026, 9, 26, 13).toUtc(),
 );
 
+/// HU-26: una venta completada de Valeria para "Vendidos" (maqueta
+/// `Mis-productos`: "$1,400 · 30 sep").
+final Order _soldCasio = _orderOf(
+  'o6',
+  isBuyer: false,
+  status: OrderStatus.completed,
+  paysCash: true,
+  title: 'Calculadora graficadora TI-84',
+  priceCents: 140000,
+  updatedAt: DateTime(2026, 9, 30, 13).toUtc(),
+);
+
 Order _orderOf(
   String id, {
   OrderStatus status = OrderStatus.pending,
@@ -653,7 +665,14 @@ class _Shot {
               // Del mas viejo al mas nuevo: "Mis pedidos" de Perfil muestra
               // la Casio confirmada, el libro sin pago y el Arduino (HU-25).
               FakeOrderRepository(
-                orders: [_order, _sale, _arduino, _algebra, _accepted],
+                orders: [
+                  _soldCasio,
+                  _order,
+                  _sale,
+                  _arduino,
+                  _algebra,
+                  _accepted,
+                ],
               ),
             ),
             chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
@@ -871,12 +890,13 @@ final Map<String, (bool, _Scene)> _scenes = {
       await s.tap(find.text('Agotados (1)'));
     },
   ),
-  // HU-08: "Vendidos" y el dialogo de "Marcar como vendido".
+  // HU-08 y HU-26: "Vendidos" (una venta y una marcada a mano) y el
+  // dialogo de "Marcar como vendido".
   'mis-productos-vendidos': (
     true,
     (s) async {
       await s.go(AppRoutes.myProducts);
-      await s.tap(find.text('Vendidos (1)'));
+      await s.tap(find.text('Vendidos (2)'));
     },
   ),
   'marcar-vendido': (

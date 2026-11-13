@@ -1,10 +1,10 @@
-# plan.md — HU-26 Consultar mi historial de ventas (borrador)
+# HU-26 — Consultar mi historial de ventas (plan, app)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
+1. **T1 — Spec:** decisiones de la usuaria ("Vendidos" de `Mis-productos`). ✅
+2. **T2 — Datos:** `SalesPage`, `OrderRepository.sales`, `salesProvider` y el fake. ✅
+3. **T3 — "Vendidos":** tarjeta con el total real, filas de venta, "Tu venta" al tocar, lo marcado a mano abajo y "Ver más". ✅
+4. **T4 — Pruebas, captura y documentación.** ✅
 
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+**Decisiones:**
+- **D1 · La tarjeta solo cuenta ventas completadas:** lo marcado a mano no tiene monto real; es el mismo número que "Ventas" del perfil.
+- **D2 · Lo marcado a mano va después de la última venta:** son dos listas con su propio cursor; mezclarlas por fecha obligaría a pedir las dos completas.

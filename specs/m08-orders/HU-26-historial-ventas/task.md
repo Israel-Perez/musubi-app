@@ -1,17 +1,19 @@
-# HU-26 — Consultar mi historial de ventas (tareas)
+# HU-26 — Consultar mi historial de ventas (tareas, app)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Spec
+- **Estado:** ✅ Hecho (13-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-26)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Datos
+- **Prueba:** `order_data_test.dart` → "Mis ventas (HU-26)".
+- **Estado:** ✅ Hecho.
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+## T3 — "Vendidos"
+- **Prueba:** `my_products_manage_test.dart` (4 pruebas de "Vendidos").
+- **Estado:** ✅ Hecho.
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
+## T4 — Pruebas, captura y documentación
+- **Estado:** ✅ Hecho: `flutter test` 648 · captura `mis-productos-vendidos`.
+
+## T5 — Prueba en el celular
+- **Qué:** con la API `0.5.0-alpha.26` desplegada, completar un pedido y ver la venta en "Vendidos" y en "Ventas" del perfil.
 - **Estado:** ⏳ Por hacer.

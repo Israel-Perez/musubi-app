@@ -22,6 +22,8 @@ import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 
 /// `Mis-productos`: tus publicaciones por pestana (HU-08: "Activos",
 /// "Vendidos" y "Agotados" con los conteos de la API). Al tocar una, su menu
@@ -29,8 +31,9 @@ import 'package:musubi_app/features/marketplace/presentation/home_providers.dart
 /// "Pausar publicación" o "Reactivar" y "Eliminar". Una vendida solo se ve
 /// o se elimina.
 ///
-/// NOTE (HU-26): en "Vendidos", el comprador y el monto real del pedido; hoy
-/// se suma el precio publicado.
+/// HU-26: "Vendidos" empieza con mis ventas completadas (quien compro, las
+/// piezas, el monto y la fecha; al tocar una, "Tu venta") y la tarjeta con su
+/// numero y su total real; abajo, lo marcado como vendido a mano.
 /// NOTE (HU-11): "Llevan tiempo sin venderse" con las vistas y los mensajes.
 /// HU-50: "Cambiar piezas" en el menu y "Reponer" en las agotadas.
 class MyProductsScreen extends ConsumerStatefulWidget {
@@ -48,25 +51,57 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
   String? _moreCursor;
   bool _loadingMore = false;
 
+  /// Paginas siguientes de mis ventas (HU-26). El cursor sigue la regla de
+  /// [_moreCursor]: `null` = aun no se pide, `''` = ya no hay mas.
+  final List<Order> _moreSales = [];
+  String? _salesCursor;
+
   /// Ultimos conteos: no parpadean a 0 mientras carga otra pestana.
   MyListingsCounts _counts = const MyListingsCounts();
+  int _salesCount = 0;
 
   void _select(MyProductsTab tab) => setState(() {
     _tab = tab;
-    _more.clear();
-    _moreCursor = null;
+    _clearPages();
   });
 
-  /// Despues de cambiar una publicacion: las pestanas, el Perfil y la vitrina.
+  void _clearPages() {
+    _more.clear();
+    _moreCursor = null;
+    _moreSales.clear();
+    _salesCursor = null;
+  }
+
+  /// Despues de cambiar una publicacion: las pestanas, las ventas, el Perfil
+  /// y la vitrina.
   void _refreshAll() {
-    setState(() {
-      _more.clear();
-      _moreCursor = null;
-    });
+    setState(_clearPages);
     ref
       ..invalidate(myListingsTabProvider)
+      ..invalidate(salesProvider)
       ..invalidate(myListingsProvider)
       ..invalidate(homeFeedProvider);
+  }
+
+  /// "Ver más" en "Vendidos": la siguiente pagina de mis ventas.
+  Future<void> _loadMoreSales(String cursor) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _loadingMore = true);
+    try {
+      final page = await ref
+          .read(orderRepositoryProvider)
+          .sales(cursor: cursor);
+      if (!mounted) return;
+      setState(() {
+        _moreSales.addAll(page.items);
+        _salesCursor = page.nextCursor ?? '';
+        _loadingMore = false;
+      });
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _loadingMore = false);
+      _failed(messenger, failure);
+    }
   }
 
   /// "Ver más": la siguiente pagina de la pestana.
@@ -316,11 +351,30 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
     // HU-08: cada pestana la arma la API (Activos = disponibles y pausadas).
     final mine = ref.watch(myListingsTabProvider(_tab));
     if (mine.value case final page?) _counts = page.counts;
+    // HU-26: las ventas completadas tambien cuentan en "Vendidos (n)".
+    final sales = ref.watch(salesProvider);
+    if (sales.value case final page?) _salesCount = page.count;
+    final soldTab = _tab == MyProductsTab.sold;
+    final firstSales = soldTab ? sales.value : null;
+    final shownSales = [...?firstSales?.items, if (soldTab) ..._moreSales];
+    final salesNext = !soldTab
+        ? null
+        : _salesCursor == null
+        ? firstSales?.nextCursor
+        : (_salesCursor!.isEmpty ? null : _salesCursor);
     final first = mine.value;
-    final shown = [...?first?.items, ..._more];
+    // Lo marcado a mano sale despues de la ultima venta.
+    final shown = salesNext == null
+        ? [...?first?.items, ..._more]
+        : const <OwnListing>[];
     final cursor = _moreCursor == null
         ? first?.nextCursor
         : (_moreCursor!.isEmpty ? null : _moreCursor);
+    void retry() {
+      ref.invalidate(myListingsTabProvider(_tab));
+      if (soldTab) ref.invalidate(salesProvider);
+    }
+
     return Scaffold(
       backgroundColor: c.background,
       body: SafeArea(
@@ -401,49 +455,59 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: _Tabs(
                 tab: _tab,
-                counts: (_counts.active, _counts.sold, _counts.soldOut),
+                counts: (
+                  _counts.active,
+                  _counts.sold + _salesCount,
+                  _counts.soldOut,
+                ),
                 onSelect: _select,
               ),
             ),
             Expanded(
               child: switch (mine) {
-                AsyncError(:final error) => ErrorView(
-                  message: error is ApiFailure
-                      ? error.message
-                      : 'No pudimos cargar tus productos.',
-                  onRetry: () => ref.invalidate(myListingsTabProvider(_tab)),
+                AsyncError(:final error) => _ErrorView(
+                  error: error,
+                  onRetry: retry,
                 ),
-                AsyncData() when shown.isEmpty => EmptyView(
-                  title: _tab == MyProductsTab.active
-                      ? 'Aún no publicas nada'
-                      : 'Nada por aquí',
-                  message: _tab == MyProductsTab.sold
-                      ? 'Aquí verás lo que vendas en Musubi.'
-                      : 'Publica algo que ya no uses: fotos, precio y listo.',
-                  icon: MusubiIcons.tag,
-                  actionLabel: 'Vender un producto',
-                  onAction: () {
-                    ref.read(sellDraftProvider.notifier).start();
-                    unawaited(context.push(AppRoutes.sell));
-                  },
+                _ when soldTab && sales.hasError => _ErrorView(
+                  error: sales.error,
+                  onRetry: retry,
                 ),
+                AsyncData() when soldTab && !sales.hasValue =>
+                  const LoadingView(message: 'Cargando tus productos…'),
+                AsyncData() when shown.isEmpty && shownSales.isEmpty =>
+                  EmptyView(
+                    title: _tab == MyProductsTab.active
+                        ? 'Aún no publicas nada'
+                        : 'Nada por aquí',
+                    message: _tab == MyProductsTab.sold
+                        ? 'Aquí verás lo que vendas en Musubi.'
+                        : 'Publica algo que ya no uses: fotos, precio y listo.',
+                    icon: MusubiIcons.tag,
+                    actionLabel: 'Vender un producto',
+                    onAction: () {
+                      ref.read(sellDraftProvider.notifier).start();
+                      unawaited(context.push(AppRoutes.sell));
+                    },
+                  ),
                 AsyncData() => RefreshIndicator(
                   color: c.brand,
-                  onRefresh: () {
+                  onRefresh: () async {
                     _refreshAll();
-                    return ref.read(myListingsTabProvider(_tab).future);
+                    await ref.read(myListingsTabProvider(_tab).future);
+                    if (soldTab) await ref.read(salesProvider.future);
                   },
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
                     children: [
-                      if (_tab == MyProductsTab.sold)
-                        _SalesTotal(
-                          count: _counts.sold,
-                          totalCents: shown.fold(
-                            0,
-                            (sum, l) => sum + l.product.priceCents,
-                          ),
-                        )
+                      if (soldTab)
+                        // La tarjeta: las ventas completadas y su total real.
+                        if (firstSales
+                            case SalesPage(:final count, :final totalCents)
+                            when count > 0)
+                          _SalesTotal(count: count, totalCents: totalCents)
+                        else
+                          const SizedBox.shrink()
                       else
                         Padding(
                           padding: const EdgeInsets.only(bottom: 4),
@@ -456,6 +520,12 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
                             ),
                           ),
                         ),
+                      for (final sale in shownSales)
+                        _SaleRow(
+                          order: sale,
+                          onTap: () =>
+                              unawaited(context.push(AppRoutes.order(sale.id))),
+                        ),
                       for (final listing in shown)
                         _InventoryRow(
                           listing: listing,
@@ -465,7 +535,9 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
                               ? () => unawaited(_restock(listing))
                               : null,
                         ),
-                      if (cursor != null)
+                      // Primero las ventas que faltan y luego lo marcado a
+                      // mano.
+                      if (salesNext ?? cursor case final next?)
                         Padding(
                           padding: const EdgeInsets.only(top: 16),
                           child: MusubiButton(
@@ -473,7 +545,11 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
                             label: 'Ver más',
                             kind: MusubiButtonKind.secondary,
                             loading: _loadingMore,
-                            onPressed: () => unawaited(_loadMore(cursor)),
+                            onPressed: () => unawaited(
+                              salesNext != null
+                                  ? _loadMoreSales(next)
+                                  : _loadMore(next),
+                            ),
                           ),
                         ),
                     ],
@@ -579,9 +655,12 @@ class _InventoryRow extends StatelessWidget {
         : product.stock == 1
         ? '1 disponible'
         : '${product.stock} disponibles';
+    // HU-26: las vendidas por un pedido salen como venta; aqui queda lo
+    // marcado a mano, sin comprador.
     final detail = switch (listing) {
-      OwnListing(sold: true, :final soldAt?) => dayMonth(soldAt.toLocal()),
-      OwnListing(sold: true) => 'Vendido',
+      OwnListing(sold: true, :final soldAt?) =>
+        '${dayMonth(soldAt.toLocal())} · Marcado a mano',
+      OwnListing(sold: true) => 'Marcado a mano',
       OwnListing(paused: true) => 'Pausada · $stock',
       _ => stock,
     };
@@ -684,9 +763,106 @@ class _InventoryRow extends StatelessWidget {
   }
 }
 
-/// "N ventas" y el total, arriba de "Vendidos" (maqueta `Mis-productos`).
-/// NOTE (HU-26): el monto real llega con los pedidos; hoy es el precio
-/// publicado de las vendidas que se ven.
+/// La pantalla de error de una pestana, con el mensaje de la API.
+class _ErrorView extends StatelessWidget {
+  const new({required this.error, required this.onRetry});
+
+  final Object? error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => ErrorView(
+    message: switch (error) {
+      ApiFailure(:final message) => message,
+      _ => 'No pudimos cargar tus productos.',
+    },
+    onRetry: onRetry,
+  );
+}
+
+/// Una venta completada (HU-26): foto de 52, nombre, "$900 · 10 nov · 2
+/// piezas · Ana Sofía Ramírez" y la marca "Vendido". Al tocarla, "Tu venta"
+/// (`Pedido-pago`).
+class _SaleRow extends StatelessWidget {
+  const new({required this.order, required this.onTap});
+
+  final Order order;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final item = order.item;
+    final line = [
+      formatPrice(item.totalCents),
+      dayMonth((order.updatedAt ?? order.deliveryAt).toLocal()),
+      if (item.quantity > 1) '${item.quantity} piezas',
+      order.buyerName,
+    ].join(' · ');
+    return Pressable(
+      key: Key('my-sale-${order.id}'),
+      onTap: onTap,
+      semanticLabel: '${item.title}, $line. Ver la venta',
+      builder: (context, _) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: c.divider)),
+        ),
+        child: Row(
+          spacing: 12,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(MusubiSizes.radiusThumb),
+              child: SizedBox.square(
+                dimension: 52,
+                child: ProductPhoto(url: item.photoUrl),
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 2,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: MusubiType.style(
+                      14,
+                      weight: FontWeight.w700,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    line,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: MusubiType.style(
+                      12,
+                      weight: FontWeight.w600,
+                      color: c.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              'Vendido',
+              style: MusubiType.style(
+                12,
+                weight: FontWeight.w800,
+                color: c.successText,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "N ventas" y el total real de mis ventas completadas, arriba de
+/// "Vendidos" (maqueta `Mis-productos`, HU-26).
 class _SalesTotal extends StatelessWidget {
   const new({required this.count, required this.totalCents});
 

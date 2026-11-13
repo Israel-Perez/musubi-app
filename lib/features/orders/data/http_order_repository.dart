@@ -70,6 +70,26 @@ class HttpOrderRepository implements OrderRepository {
   });
 
   @override
+  Future<SalesPage> sales({String? cursor}) => _guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.orderSales,
+      queryParameters: {'cursor': ?cursor},
+    );
+    final body = response.data ?? const <String, dynamic>{};
+    return SalesPage(
+      items: [
+        for (final item
+            in (body['items'] as List<dynamic>? ?? const [])
+                .cast<Map<String, dynamic>>())
+          orderFromJson(item, _apiBaseUrl),
+      ],
+      nextCursor: body['nextCursor'] as String?,
+      count: (body['count'] as num? ?? 0).toInt(),
+      totalCents: (body['totalCents'] as num? ?? 0).toInt(),
+    );
+  });
+
+  @override
   Future<MyOrdersPage> mine({MyOrdersTab? tab, String? cursor, int? limit}) =>
       _guard(() async {
         final response = await _dio.get<Map<String, dynamic>>(
