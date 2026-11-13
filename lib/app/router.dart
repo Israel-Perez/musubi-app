@@ -24,6 +24,7 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
+import 'package:musubi_app/features/marketplace/presentation/recent_products_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
 import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:musubi_app/features/orders/presentation/my_orders_screen.dart';
@@ -56,6 +57,7 @@ abstract final class AppRoutes {
   static const terms = '/terminos';
   static const forgotPassword = '/recuperar-contrasena';
   static const search = '/buscar';
+  static const recentProducts = '/recien-publicados';
   static const notifications = '/notificaciones';
   static const settings = '/ajustes';
 
@@ -177,7 +179,7 @@ abstract final class AppRoutes {
   /// Ruta de regreso segura: solo rutas internas conocidas (evita redirigir a
   /// un destino arbitrario con `?desde=`).
   static String safeReturn(String? candidate) {
-    const known = {home, wanted, messages, profile};
+    const known = {home, wanted, messages, profile, recentProducts};
     return candidate != null && known.contains(candidate) ? candidate : home;
   }
 }
@@ -415,6 +417,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.search,
         builder: (context, state) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.recentProducts,
+        builder: (context, state) => const RecentProductsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        // NOTE (HU-31): avisos de la app.
+        builder: (context, state) => const UpcomingSection(
+          title: 'Notificaciones',
+          message: 'Aquí verás ofertas, mensajes y avisos de tu campus.',
+          icon: MusubiIcons.bell,
+          canGoBack: true,
+        ),
       ),
       GoRoute(
         path: AppRoutes.signIn,

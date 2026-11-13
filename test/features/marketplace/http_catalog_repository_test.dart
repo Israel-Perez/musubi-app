@@ -43,6 +43,11 @@ void main() {
           ],
           'nextCursor': null,
         }),
+        ApiPaths.popularProducts => FakeHttpAdapter.json({
+          'items': <Map<String, dynamic>>[],
+          'nextCursor': null,
+          'total': 0,
+        }),
         ApiPaths.products when status != 200 => FakeHttpAdapter.json({
           'title': 'Sin conexión',
           'code': 'server.unavailable',
@@ -75,7 +80,6 @@ void main() {
     expect(feed.recentTotal, 48);
     expect(feed.categories.map((c) => c.slug), ['calculadoras', 'electronica']);
     expect(feed.categories.first.photoUrl, 'asset:assets/products/casio.webp');
-    // "Populares" llega con HU-49.
     expect(feed.popular, isEmpty);
     // "Se busca" sale del tablero (HU-15).
     expect(feed.wanted.map((w) => (w.id, w.category)), [
@@ -95,6 +99,28 @@ void main() {
       (r) => r.path == ApiPaths.products,
     );
     expect(products.queryParameters, {'limit': HttpCatalogRepository.pageSize});
+    expect(
+      adapter.requests
+          .firstWhere((r) => r.path == ApiPaths.popularProducts)
+          .queryParameters,
+      {'period': 'today', 'limit': 6},
+    );
+  });
+
+  test('recientes pagina por cursor y oculta agotados', () async {
+    serve(nextCursor: 'next-page');
+
+    final page = await repository.recentProducts(cursor: 'cursor-1');
+
+    expect(page.items.single.id, '6716a0000000000000000099');
+    expect(page.nextCursor, 'next-page');
+    expect(page.total, 48);
+    expect(adapter.requests.single.queryParameters, {
+      'sort': 'newest',
+      'hideSoldOut': true,
+      'limit': recentProductsPageSize,
+      'cursor': 'cursor-1',
+    });
   });
 
   test('el filtro de Inicio va en la consulta', () async {

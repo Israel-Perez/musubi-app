@@ -149,6 +149,9 @@ class ProductPage {
 /// Resultados por pagina de la busqueda (fila 73 de la API).
 const searchPageSize = 20;
 
+/// Tamaño de página de "Más antiguas" (HU-49); coincide con el límite API.
+const recentProductsPageSize = 20;
+
 /// Lo que muestra Inicio.
 @immutable
 class HomeFeed {

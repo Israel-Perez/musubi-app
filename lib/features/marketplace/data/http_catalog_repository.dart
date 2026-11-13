@@ -16,7 +16,6 @@ import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 ///
 /// "Se busca" sale del tablero (`GET /api/v1/wanted`, HU-15).
 ///
-/// NOTE (HU-49): "Populares" llega con las vistas del detalle (HU-11).
 class HttpCatalogRepository implements CatalogRepository {
   new(this._dio, this._apiBaseUrl);
 
@@ -39,6 +38,10 @@ class HttpCatalogRepository implements CatalogRepository {
       final wantedFuture = _wanted();
       final responses = await Future.wait([
         _dio.get<Map<String, dynamic>>(
+          ApiPaths.popularProducts,
+          queryParameters: {'period': period.name, 'limit': 6},
+        ),
+        _dio.get<Map<String, dynamic>>(
           ApiPaths.products,
           queryParameters: {
             'category': ?filter.category,
@@ -49,9 +52,21 @@ class HttpCatalogRepository implements CatalogRepository {
         _dio.get<List<dynamic>>(ApiPaths.categories),
       ]);
       final wanted = await wantedFuture;
-      final page = responses[0].data as Map<String, dynamic>? ?? const {};
-      final categories = responses[1].data as List<dynamic>? ?? const [];
+      final popularBody =
+          responses[0].data as Map<String, dynamic>? ?? const {};
+      final page = responses[1].data as Map<String, dynamic>? ?? const {};
+      final categories = responses[2].data as List<dynamic>? ?? const [];
       return HomeFeed(
+        popular: [
+          for (final item
+              in (popularBody['items'] as List<dynamic>? ?? const [])
+                  .cast<Map<String, dynamic>>())
+            productFromJson(
+              item['product'] as Map<String, dynamic>,
+              _apiBaseUrl,
+              views: (item['views'] as num).toInt(),
+            ),
+        ],
         recent: [
           for (final item in page['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
@@ -192,6 +207,32 @@ class HttpCatalogRepository implements CatalogRepository {
         code: ApiFailure.serverError,
         message: 'El servidor respondió algo inesperado.',
       );
+    }
+  }
+
+  @override
+  Future<ProductPage> recentProducts({String? cursor}) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiPaths.products,
+        queryParameters: {
+          'sort': 'newest',
+          'hideSoldOut': true,
+          'limit': recentProductsPageSize,
+          'cursor': ?cursor,
+        },
+      );
+      final body = response.data ?? const <String, dynamic>{};
+      return ProductPage(
+        items: [
+          for (final item in body['items'] as List<dynamic>? ?? const [])
+            productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
+        ],
+        total: (body['total'] as num?)?.toInt() ?? 0,
+        nextCursor: body['nextCursor'] as String?,
+      );
+    } on DioException catch (error) {
+      throw ApiFailure.fromDio(error);
     }
   }
 
