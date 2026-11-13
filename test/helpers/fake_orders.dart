@@ -166,6 +166,41 @@ class FakeOrderRepository implements OrderRepository {
     );
   }
 
+  /// Cursores que pidio "Vendidos" (HU-26).
+  final List<String?> salesCalls = [];
+
+  /// Tamano de pagina de las ventas.
+  int salesPageSize = 20;
+
+  /// Falla la siguiente lectura de las ventas.
+  ApiFailure? salesFailure;
+
+  /// Mis ventas completadas, de la mas nueva (la ultima de [stored]) a la
+  /// mas vieja, con cursor = id de la ultima de la pagina.
+  @override
+  Future<SalesPage> sales({String? cursor}) async {
+    salesCalls.add(cursor);
+    final failure = salesFailure;
+    if (failure != null) {
+      salesFailure = null;
+      throw failure;
+    }
+    final mine = [
+      for (final o in stored.reversed)
+        if (!o.isBuyer && o.status == OrderStatus.completed) o,
+    ];
+    final start = cursor == null
+        ? 0
+        : mine.indexWhere((o) => o.id == cursor) + 1;
+    final page = mine.skip(start).take(salesPageSize).toList();
+    return SalesPage(
+      items: page,
+      nextCursor: start + salesPageSize < mine.length ? page.last.id : null,
+      count: mine.length,
+      totalCents: mine.fold(0, (sum, o) => sum + o.item.totalCents),
+    );
+  }
+
   final List<String> accepted = [];
   final List<(String, CancelReason)> cancelled = [];
   final List<String> handovers = [];

@@ -117,7 +117,7 @@ class ProfileVisibility {
 }
 
 /// Estadisticas de `Perfil`. La reputacion la mueven las calificaciones
-/// (HU-27); NOTE (HU-26): ventas y compras con los pedidos completados.
+/// (HU-27); "Ventas" y "Compras", los pedidos completados (HU-26).
 @immutable
 class ProfileStats {
   const new({

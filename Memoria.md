@@ -19,6 +19,21 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T47 — Consultar mi historial de ventas (13-Nov-2026, SCRUM-45, HU-26)
+
+**Qué se hizo**
+- "Vendidos" de `Mis-productos`: arriba, la tarjeta con el número y el total real de mis ventas completadas (`GET /orders/sales`, `salesProvider`). Luego una fila por venta con foto, nombre y "$900 · 10 nov · 2 piezas · Ana Sofía Ramírez"; al tocarla, "Tu venta". Al final, lo marcado como vendido a mano ("· Marcado a mano").
+- "Vendidos (n)" suma las ventas y lo marcado a mano. "Ver más" trae primero las ventas que faltan y después lo marcado a mano.
+- `OrderRepository.sales`, `SalesPage` y `ApiPaths.orderSales`; el fake (`FakeOrderRepository.sales`) pagina igual que la API.
+- Pruebas: +5 (648 en total). Captura: `mis-productos-vendidos` (una venta y una marcada a mano).
+
+**Decisiones (con su porqué)** (usuaria, 13-Nov-2026)
+- **El historial va en "Vendidos" de `Mis-productos`** y lo marcado a mano sigue apareciendo, sin comprador.
+- **La tarjeta solo cuenta los pedidos completados:** lo marcado a mano no tiene un monto real, así que no se suma. Sin ventas completadas no hay tarjeta. Es el mismo número que "Ventas" del perfil.
+
+**Errores a evitar**
+- `tool/screenshots_test.dart` no crea la carpeta de `SHOTS`: hay que crearla antes.
+
 ## T46 — Calificar al terminar un pedido (12-Nov-2026, SCRUM-46 y SCRUM-50, HU-27 y HU-45)
 
 **Qué se hizo**

@@ -406,4 +406,43 @@ void main() {
       );
     });
   });
+
+  group('Mis ventas (HU-26)', () {
+    test('pide el cursor y lee las ventas, el numero y el total', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'items': [orderJson(role: 'seller', status: 'completed')],
+          'nextCursor': '6716a00000000000000000a1',
+          'count': 12,
+          'totalCents': 1450000,
+        }),
+      );
+
+      final page = await repository.sales(cursor: 'abc');
+
+      expect(adapter.requests.single.path, ApiPaths.orderSales);
+      expect(adapter.requests.single.queryParameters, {'cursor': 'abc'});
+      expect(page.items.single.isBuyer, isFalse);
+      expect(page.items.single.status, OrderStatus.completed);
+      expect(page.nextCursor, '6716a00000000000000000a1');
+      expect((page.count, page.totalCents), (12, 1450000));
+    });
+
+    test('la primera pagina no manda cursor', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'items': <Object?>[],
+          'nextCursor': null,
+          'count': 0,
+          'totalCents': 0,
+        }),
+      );
+
+      final page = await repository.sales();
+
+      expect(adapter.requests.single.queryParameters, isEmpty);
+      expect(page.items, isEmpty);
+      expect(page.nextCursor, isNull);
+    });
+  });
 }

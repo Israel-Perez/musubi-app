@@ -20,7 +20,8 @@ import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 /// "Mis pedidos" (HU-25): mis compras por pestana (Activos, Completados y
 /// Cancelados, decision de la usuaria del 12-Nov-2026). La maqueta no tiene
 /// esta pantalla: se arma con las pestanas de `Mis-productos` y las filas de
-/// la seccion "Mis pedidos" de `Perfil`. Las ventas son de HU-26.
+/// la seccion "Mis pedidos" de `Perfil`. Las ventas estan en "Vendidos" de
+/// `Mis-productos` (HU-26).
 class MyOrdersScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
