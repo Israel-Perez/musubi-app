@@ -3,7 +3,11 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 /// `ProductResponse` de musubi-api (fixture `product.json`) → tarjeta de la
 /// vitrina. Las fotos llegan como rutas (`/media/...`) relativas a la URL
 /// base de la API: CloudFront sirve la API y las imagenes en el mismo dominio.
-ProductSummary productFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
+ProductSummary productFromJson(
+  Map<String, dynamic> json,
+  Uri apiBaseUrl, {
+  int views = 0,
+}) {
   final photos = (json['photos'] as List<dynamic>).cast<String>();
   final seller = json['seller'] as Map<String, dynamic>?;
   return ProductSummary(
@@ -11,6 +15,7 @@ ProductSummary productFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
     title: json['title'] as String,
     priceCents: (json['priceCents'] as num).toInt(),
     stock: json['status'] == 'soldOut' ? 0 : (json['stock'] as num).toInt(),
+    views: views,
     photoUrl: photos.isEmpty ? null : mediaUrl(photos.first, apiBaseUrl),
     category: json['category'] as String?,
     condition: json['condition'] == 'new' ? 'Nuevo' : 'Usado',

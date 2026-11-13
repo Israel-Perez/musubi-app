@@ -401,6 +401,20 @@ class DemoCatalogRepository implements CatalogRepository {
     return ProductPage(items: items, total: items.length);
   }
 
+  @override
+  Future<ProductPage> recentProducts({String? cursor}) async {
+    final all = await homeFeed(period: PopularPeriod.today);
+    final start = int.tryParse(cursor ?? '') ?? 0;
+    final items = all.newestFirst.where((product) => !product.soldOut).toList();
+    final page = items.skip(start).take(recentProductsPageSize).toList();
+    final next = start + page.length;
+    return ProductPage(
+      items: page,
+      total: items.length,
+      nextCursor: next < items.length ? '$next' : null,
+    );
+  }
+
   static bool _passes(ProductSummary product, SearchFilter filter) =>
       (filter.categories.isEmpty ||
           filter.categories.contains(product.category)) &&

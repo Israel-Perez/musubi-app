@@ -1,5 +1,20 @@
 # Memoria del proyecto — musubi-app
 
+## HU-49 — Inicio popular y lista de recientes (12-Nov-2026, SCRUM-69)
+
+- Se detallaron `spec.md`, `plan.md` y `task.md` para app en paralelo con `musubi-api:HU-49`; Sprint 4 según comentario Jira.
+- La spec cubre la lista de recientes con cursor existente y corrige el destino previsto de “Ver todo” (hoy navega a Búsqueda).
+- Decisión del usuario: cada apertura válida cuenta, incluidas anónimas y repetidas, excepto la del vendedor; Hoy es el día UTC actual y Semana los últimos 7 días UTC.
+- Recientes: repositorio HTTP con cursor, fake, provider paginado con deduplicación, ruta `/recien-publicados` y navegación desde “Ver todo”. Ranking: Inicio solicita `popular?period=today|week` y convierte `views` a `ProductSummary.views`.
+- Implementación de populares y recientes está presente en la rama aislada basada en `origin/main`; ranking conectado al contrato de `musubi-api:HU-49` y lista con cursor/deduplicación.
+- Verificación actual (13-Nov-2026): no se pudieron ejecutar format/analyze ni `flutter test` en este worktree; el Dart disponible es 3.12.2 y `pubspec.yaml` requiere ^3.13.5. Las pruebas widget/navegación/capturas y la suite completa quedan pendientes. No cerrar HU hasta ejecutar con SDK compatible y revisar ambos PR.
+
+## Trabajo en curso — HU-54 (SCRUM-71, 10-Nov-2026)
+
+- Selector claro/oscuro/sistema en Ajustes conectado a `ThemeMode`; repositorio usa GET/PUT de musubi-api y mantiene estado reactivo por cuenta.
+- La preferencia por cuenta es la fuente de verdad; no se agregó almacenamiento local. Notificaciones quedan fuera porque Jira no concreta el MVP.
+- Verificación final (10-Nov-2026) con Flutter 3.47.7/Dart 3.13.5: `flutter pub get` pasó; `flutter analyze --fatal-infos --fatal-warnings` sin issues; `dart format --output=none --set-exit-if-changed .` sin cambios; suite completa 470/470. `critic` PASS (15 archivos, 0 avisos). `pub get` avisó que 15 paquetes tienen versiones más nuevas incompatibles con las restricciones actuales; no se cambiaron dependencias. Los ajustes finales de formato y pruebas quedan sin commit. Sin push.
+
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
 ## Estado actual (11-Nov-2026)

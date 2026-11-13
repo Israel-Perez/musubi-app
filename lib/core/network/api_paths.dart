@@ -47,6 +47,9 @@ abstract final class ApiPaths {
   /// HU-09, spec `musubi-api:HU-09`) y `POST` (publicar, HU-06).
   static const products = '/api/v1/products';
 
+  /// `GET /api/v1/products/popular` — ranking HU-49.
+  static const popularProducts = '/api/v1/products/popular';
+
   /// `POST /api/v1/products/photos` — fila "M-03" (spec `musubi-api:HU-06`).
   static const productPhotos = '/api/v1/products/photos';
 

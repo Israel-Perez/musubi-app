@@ -985,8 +985,7 @@ class _MemberRecent extends ConsumerWidget {
     final rows = [
       for (var i = 0; i < shown.length; i += 2) shown.skip(i).take(2).toList(),
     ];
-    // NOTE (HU-49): "Ver todo" abre la lista completa.
-    void seeAll() => unawaited(context.push(AppRoutes.search));
+    void seeAll() => unawaited(context.push(AppRoutes.recentProducts));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
