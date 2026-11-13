@@ -19,6 +19,18 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T48 — Avisos de solicitudes (13-Nov-2026, SCRUM-41 y SCRUM-48, HU-19 y HU-30)
+
+**Qué se hizo**
+- HU-30: el aviso de una oferta (`target: wanted`) abre `Mis-solicitudes` con esa solicitud elegida, en su pestaña (`AppRoutes.myWantedRequest`, `?solicitud=`), con sus ofertas.
+- HU-19: destino nuevo `NotificationTarget.wantedBoard` (`wanted_board`): abre el tablero y "Yo tengo este producto" de esa solicitud (`AppRoutes.wantedOffer`, `?ofrecer=`; `WantedRepository.get`). Si ya no está activa: "Esta solicitud ya no está activa.".
+- Íconos de la maqueta: `wanted_match` con el megáfono de "Se busca" en rosa; `offer_closed` con la X en gris y sin destino (`none` → `unknown`).
+- Pruebas: +4 (652 en total). Capturas: `notificaciones` (con el aviso de la maqueta de las 7:40 p. m.) y `notificaciones-coincidencias`.
+
+**Decisiones (con su porqué)** (usuaria, 13-Nov-2026)
+- Las reglas de "compatible", el límite de 3 al día y avisar al cerrar viven en la API (`musubi-api:HU-19`, `HU-30`).
+- **Rutas con parámetro en lugar de pantallas nuevas:** la maqueta no tiene una pantalla de "una solicitud"; el tablero y `Mis-solicitudes` ya muestran todo.
+
 ## T47 — Consultar mi historial de ventas (13-Nov-2026, SCRUM-45, HU-26)
 
 **Qué se hizo**

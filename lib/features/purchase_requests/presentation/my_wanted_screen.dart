@@ -27,7 +27,11 @@ import 'package:musubi_app/features/purchase_requests/presentation/wanted_provid
 /// sus ofertas ("Compara las ofertas", HU-17). En una activa, "Cambiar" abre
 /// "Tu solicitud" (HU-14): ver otra, editarla, "Ya lo conseguí" o cancelarla.
 class MyWantedScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.initialId});
+
+  /// HU-30: el aviso de una oferta abre esta solicitud (en su pestana) con sus
+  /// ofertas.
+  final String? initialId;
 
   @override
   ConsumerState<MyWantedScreen> createState() => _MyWantedScreenState();
@@ -37,6 +41,15 @@ class _MyWantedScreenState extends ConsumerState<MyWantedScreen> {
   bool _closed = false;
   String? _selectedId;
   bool _busy = false;
+
+  /// La solicitud que pidio el aviso, hasta que la lista cargue.
+  late String? _initialId = widget.initialId;
+
+  @override
+  void didUpdateWidget(MyWantedScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialId != oldWidget.initialId) _initialId = widget.initialId;
+  }
 
   /// "Tu solicitud" (HU-14): las acciones de la elegida, y "Ver otra
   /// solicitud" si hay mas en la pestana.
@@ -185,6 +198,16 @@ class _MyWantedScreenState extends ConsumerState<MyWantedScreen> {
     final c = context.musubi;
     final mine = ref.watch(myWantedProvider);
     final all = mine.value ?? const <WantedRequest>[];
+    // HU-30: la del aviso, en la pestana donde esta (activa o cerrada).
+    if (_initialId case final id? when mine.hasValue) {
+      _initialId = null;
+      for (final r in all) {
+        if (r.id == id) {
+          _closed = !r.isActive;
+          _selectedId = id;
+        }
+      }
+    }
     final active = [...all.where((r) => r.isActive)];
     final closed = [...all.where((r) => !r.isActive)];
     final tab = _closed ? closed : active;

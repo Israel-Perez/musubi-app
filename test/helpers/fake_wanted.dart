@@ -137,6 +137,23 @@ class FakeWantedRepository implements WantedRepository {
   @override
   Future<List<WantedRequest>> mine() async => List.of(stored);
 
+  /// Lo que pidio "Yo tengo este producto" desde un aviso (HU-19).
+  final List<String> gets = [];
+
+  /// Una del tablero o de las mias; si no esta, `wanted.not_found` como la
+  /// API.
+  @override
+  Future<WantedRequest> get(String id) async {
+    gets.add(id);
+    for (final r in [...boardItems, ...stored]) {
+      if (r.id == id) return r;
+    }
+    throw const ApiFailure(
+      code: 'wanted.not_found',
+      message: 'No encontramos esta solicitud.',
+    );
+  }
+
   /// Lo que se mando con "Guardar cambios" (HU-14): `(id, datos)`.
   final List<(String, NewWanted)> updates = [];
 

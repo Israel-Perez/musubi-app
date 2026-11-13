@@ -1,52 +1,43 @@
 # HU-19 — Aviso al vendedor de solicitud compatible (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-19 / SCRUM-41 / Sprint 3 (26 oct – 6 nov 2026) / M-06 / [musubi-api:HU-19](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m06-matching/HU-19-aviso-solicitud-compatible)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-19 / SCRUM-41 / Sprint 4 (9 – 20 nov 2026) / M-06 / [musubi-api:HU-19](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m06-matching/HU-19-aviso-solicitud-compatible)
 
 ## Contexto
 Jira (SCRUM-41): Como **vendedor**, quiero **que el sistema me avise cuando una solicitud sea compatible con alguno de mis productos**, para **ofrecerlo a tiempo**.
 
-- Maqueta: sin pantalla propia. Se diseña con la guía de estilo de la maqueta; el lineamiento 4 permite agregar, nunca quitar.
+- Maqueta: `Notificaciones` → "Coincidencias": "Hay una solicitud compatible con tu producto · Fernanda busca una bata de laboratorio talla M. Tu publicación coincide.", con el megáfono de "Se busca".
 - Trazabilidad: RF-23, RF-39 · CU-13, CU-14 · RN-28 a RN-31.
-- Origen: Propuesta inicial §11.
+- Las reglas (compatible, una vez, 3 al día, nunca lo propio) viven en la API; decisiones de la usuaria del 13-Nov-2026 en [musubi-api:HU-19](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m06-matching/HU-19-aviso-solicitud-compatible).
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-18`, `HU-31`.
+**Depende de:** `HU-16` ("Yo tengo este producto") y `HU-31` (avisos).
 
 ## Requisitos
-1. Cuando se publica una solicitud compatible con un producto **Disponible**, el vendedor recibe una notificación (RF-39).
-2. Solo se notifican coincidencias que superen el umbral de relevancia (RN-28).
-3. Una misma coincidencia no se notifica más de una vez (RN-29) y se respeta el límite diario (RN-30).
-4. No se notifican coincidencias sobre publicaciones o solicitudes propias (RN-31).
-5. Desde la notificación el vendedor abre la solicitud y puede responder "Yo tengo este producto".
-
-RNF que aplican: se confirman al detallar.
+1. **R1 · Aviso:** `wanted_match` sale en "Coincidencias" con el ícono de la maqueta.
+2. **R2 · Abrir:** al tocarlo (o el push), se abre el tablero con "Yo tengo este producto" de esa solicitud (`target.type: wanted_board`).
+3. **R3 · Ya no activa:** si la solicitud se cerró o venció, se queda en el tablero con "Esta solicitud ya no está activa.".
 
 ## Diseño
-- Feature `lib/features/matching/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-19. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-19)` (skill `deferred-scope-fakes`).
-- Avisos push con FCM (HU-31) y su permiso pedido en contexto (L-16f).
+- `NotificationTarget.wantedBoard` y `routeFor` → `AppRoutes.wantedOffer(id)` (`/se-busca?ofrecer=`).
+- `WantedBoardScreen(offerTo:)` trae la solicitud con `WantedRepository.get` y abre `showOfferSheet`.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-19, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Filas `GET /api/v1/notifications` (destino `wanted_board`) y `GET /api/v1/wanted/{id}` de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md), enlazadas desde `ApiPaths`.
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- Widget tests de las pantallas nuevas (sin escena de maqueta).
+- `test/features/notifications/notification_flow_test.dart`: el aviso abre "Yo tengo este producto" y, si ya no está activa, lo dice.
+- `test/features/notifications/notification_data_test.dart`: `wanted_board` y su ruta.
+- Capturas `notificaciones` y `notificaciones-coincidencias`.
 
 ## Criterios
-- [ ] Cuando se publica una solicitud compatible con un producto **Disponible**, el vendedor recibe una notificación (RF-39).
-- [ ] Solo se notifican coincidencias que superen el umbral de relevancia (RN-28).
-- [ ] Una misma coincidencia no se notifica más de una vez (RN-29) y se respeta el límite diario (RN-30).
-- [ ] No se notifican coincidencias sobre publicaciones o solicitudes propias (RN-31).
-- [ ] Desde la notificación el vendedor abre la solicitud y puede responder "Yo tengo este producto".
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] Desde la notificación el vendedor abre la solicitud y puede responder "Yo tengo este producto" → `notification_flow_test.dart`.
+- [x] El resto de los criterios (umbral, no repetir, límite diario, nunca lo propio) → `musubi-api:HU-19`.
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 652 al 100 % · critic PASS.
 
 ## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- Las pruebas en el celular necesitan la API `0.5.0-alpha.27` desplegada.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 29-Oct-2026 (borrador ligero) · 13-Nov-2026 (detallado e implementado)
+- **Detalle:** con las decisiones de la usuaria del 13-Nov-2026.
