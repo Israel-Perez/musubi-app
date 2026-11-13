@@ -17,11 +17,14 @@ import 'package:musubi_app/features/marketplace/presentation/home_providers.dart
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
+import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
+import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
 import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_profile_repository.dart';
+import '../../helpers/fake_reputation.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/in_memory_token_store.dart';
 
@@ -74,6 +77,7 @@ class _Harness {
   final FakeProfileRepository profiles;
   final FakeCatalogRepository catalog;
   final chat = FakeChatRepository();
+  final reputation = FakeReputationRepository();
   late ProviderContainer container;
 
   Future<void> open(
@@ -101,6 +105,7 @@ class _Harness {
           tokenStoreProvider.overrideWithValue(InMemoryTokenStore(session)),
           initialSessionTokensProvider.overrideWithValue(session),
           chatRepositoryProvider.overrideWithValue(chat),
+          reputationRepositoryProvider.overrideWithValue(reputation),
           chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
         ],
         child: const MusubiApp(),
@@ -445,5 +450,98 @@ void main() {
     await h.open(valeria.id, size: const Size(800 * 3, 1280 * 3));
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Opiniones: tarjetas como la maqueta y "Ver más" (HU-27)', (
+    tester,
+  ) async {
+    final h = _Harness(tester, profiles: _withProfile(valeria));
+    h.reputation
+      ..opinionsPageSize = 2
+      ..opinionsByUser[valeria.id] = [
+        Opinion(
+          id: 'r3',
+          stars: 5,
+          raterName: 'Luis M.',
+          createdAt: DateTime(2026, 9, 28, 12),
+          tags: const [RatingTag.onTime],
+          comment: 'Súper puntual y la maqueta llegó tal cual las fotos.',
+        ),
+        Opinion(
+          id: 'r2',
+          stars: 4,
+          raterName: 'Fernanda O.',
+          createdAt: DateTime(2026, 9, 12, 12),
+          tags: const [RatingTag.asDescribed],
+          comment: 'Todo bien con el escalímetro.',
+        ),
+        Opinion(
+          id: 'r1',
+          stars: 3,
+          raterName: 'Diego H.',
+          createdAt: DateTime(2026, 9, 2, 12),
+        ),
+      ];
+
+    await h.open(valeria.id);
+    await tester.ensureVisible(find.text('Opiniones (18)'));
+    await tester.tap(find.text('Opiniones (18)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lo que dicen de Valeria'), findsOneWidget);
+    expect(find.text('Luis M. · Puntual'), findsOneWidget);
+    expect(find.text('Fernanda O. · Como se describió'), findsOneWidget);
+    expect(find.text('28 sep'), findsOneWidget);
+    expect(find.text('Diego H.'), findsNothing);
+
+    await tester.ensureVisible(find.byKey(const Key('seller-opinions-more')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('seller-opinions-more')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Diego H.'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text('Diego H.'), findsOneWidget);
+    expect(find.byKey(const Key('seller-opinions-more')), findsNothing);
+  });
+
+  testWidgets('"A tiempo" sale del porcentaje con "Puntual" (HU-27)', (
+    tester,
+  ) async {
+    final onTime = PublicProfile(
+      id: valeria.id,
+      fullName: 'Valeria Cruz',
+      campusShortName: 'UTTT',
+      memberSince: DateTime(2025, 2, 15),
+      ratingAvg: 4.6,
+      ratingCount: 18,
+      onTime: 98,
+    );
+    final h = _Harness(tester, profiles: _withProfile(onTime));
+
+    await h.open(valeria.id);
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('seller-stat-on-time'))).data,
+      '98%',
+    );
+  });
+
+  testWidgets('si fallan las opiniones, se reintenta', (tester) async {
+    final h = _Harness(tester, profiles: _withProfile(valeria));
+    h.reputation.opinionsFailure = offlineFailure;
+
+    await h.open(valeria.id);
+    await tester.ensureVisible(find.text('Opiniones (18)'));
+    await tester.tap(find.text('Opiniones (18)'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Reintentar'));
+    await tester.tap(find.text('Reintentar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Todavía no hay opiniones'), findsOneWidget);
   });
 }

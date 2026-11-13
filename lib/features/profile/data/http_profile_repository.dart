@@ -166,6 +166,7 @@ class HttpProfileRepository implements ProfileRepository {
         ratingAvg: (stats['ratingAvg'] as num?)?.toDouble(),
         ratingCount: (stats['ratingCount'] as num?)?.toInt() ?? 0,
         sales: (stats['sales'] as num?)?.toInt(),
+        onTime: (stats['onTime'] as num?)?.toInt(),
       );
     } on ApiFailure {
       rethrow;

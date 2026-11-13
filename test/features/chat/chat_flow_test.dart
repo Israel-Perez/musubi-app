@@ -164,6 +164,19 @@ void main() {
       expect(find.text('Arquitectura · 8º cuatrimestre'), findsOneWidget);
     });
 
+    testWidgets('el encabezado muestra la calificacion de la otra persona', (
+      tester,
+    ) async {
+      // HU-27: maqueta "★ 4.6 · Activa hace 5 min" (sin presencia en la API).
+      final harness = ChatHarness(tester);
+      await harness.open(AppRoutes.conversation('c1'));
+
+      expect(
+        tester.widget<Text>(find.byKey(const Key('chat-header-subtitle'))).data,
+        '★ 4.6',
+      );
+    });
+
     testWidgets('"Mensaje" en el perfil regresa a la conversación (HU-05)', (
       tester,
     ) async {

@@ -164,6 +164,8 @@ class Order {
     this.sellerConfirmed = false,
     this.cancellation,
     this.updatedAt,
+    this.ratedByMe = false,
+    this.rateUntil,
   });
 
   final String id;
@@ -206,6 +208,20 @@ class Order {
   /// Ultimo cambio (UTC): cuando se completo o se cancelo (HU-25).
   final DateTime? updatedAt;
 
+  /// Quien mira ya califico el pedido (HU-27, HU-45).
+  final bool ratedByMe;
+
+  /// Hasta cuando se puede calificar (7 dias despues de completado), o `null`
+  /// si no esta completado.
+  final DateTime? rateUntil;
+
+  /// "Calificar a Diego": completado, sin calificar y dentro del plazo.
+  bool canRate(DateTime now) =>
+      status == OrderStatus.completed &&
+      !ratedByMe &&
+      rateUntil != null &&
+      now.isBefore(rateUntil!);
+
   /// Quien mira ya confirmo su lado de la entrega.
   bool get iConfirmed => isBuyer ? buyerConfirmed : sellerConfirmed;
 
@@ -220,6 +236,8 @@ class Order {
     bool? buyerConfirmed,
     bool? sellerConfirmed,
     OrderCancellation? cancellation,
+    bool? ratedByMe,
+    DateTime? rateUntil,
   }) => Order(
     id: id,
     number: number,
@@ -238,6 +256,8 @@ class Order {
     sellerConfirmed: sellerConfirmed ?? this.sellerConfirmed,
     cancellation: cancellation ?? this.cancellation,
     updatedAt: updatedAt,
+    ratedByMe: ratedByMe ?? this.ratedByMe,
+    rateUntil: rateUntil ?? this.rateUntil,
   );
 }
 

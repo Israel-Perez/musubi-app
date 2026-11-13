@@ -173,6 +173,9 @@ class FakeOrderRepository implements OrderRepository {
   /// Falla la siguiente accion de HU-24 (aceptar, cancelar o entregar).
   ApiFailure? actionFailure;
 
+  /// Hasta cuando se puede calificar un pedido que se completa (HU-27).
+  DateTime completedRateUntil = DateTime.utc(2099);
+
   @override
   Future<Order> payCash(String id) async {
     paid.add(id);
@@ -211,6 +214,8 @@ class FakeOrderRepository implements OrderRepository {
         buyerConfirmed: buyer,
         sellerConfirmed: seller,
         status: buyer && seller ? OrderStatus.completed : null,
+        // Como la API (HU-27): al completarse empieza el plazo para calificar.
+        rateUntil: buyer && seller ? completedRateUntil : null,
       );
     });
   }

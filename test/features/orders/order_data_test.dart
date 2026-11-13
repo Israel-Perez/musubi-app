@@ -310,6 +310,28 @@ void main() {
     );
   });
 
+  test('ratedByMe y rateUntil dicen si aun se puede calificar (HU-27)', () {
+    final json = orderJson(status: 'completed')
+      ..['ratedByMe'] = false
+      ..['rateUntil'] = '2026-11-19T18:00:00Z';
+    final order = orderFromJson(json, Uri.parse('https://api.musubi.example'));
+
+    expect(order.rateUntil, DateTime.utc(2026, 11, 19, 18));
+    expect(order.canRate(DateTime.utc(2026, 11, 12)), isTrue);
+    expect(order.canRate(DateTime.utc(2026, 11, 20)), isFalse);
+    expect(
+      order.copyWith(ratedByMe: true).canRate(DateTime.utc(2026, 11, 12)),
+      isFalse,
+    );
+    expect(
+      orderFromJson(
+        orderJson(),
+        Uri.parse('https://x'),
+      ).canRate(DateTime.utc(2026, 11, 12)),
+      isFalse,
+    );
+  });
+
   group('Mis pedidos (HU-25)', () {
     test('pide la pestana, el cursor y el limite, y lee la pagina', () async {
       serve(

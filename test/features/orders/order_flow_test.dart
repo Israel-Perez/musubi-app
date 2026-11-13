@@ -594,11 +594,18 @@ void main() {
       );
       await h.tap(find.byKey(const Key('order-handover')));
 
+      // HU-27: completar abre `Calificar` (como la maqueta); "Ahora no"
+      // regresa.
+      expect(find.text('¿Cómo te fue con Ana?'), findsOneWidget);
+      await h.tap(find.byKey(const Key('rate-later')));
+
       expect(find.bySemanticsLabel('Estado del pedido: Completado'), findsOne);
       expect(
         find.text('Pedido completado. ¡Gracias por usar Musubi!'),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('order-rate')), findsOneWidget);
+      expect(find.text('Calificar a Ana'), findsOneWidget);
       expect(find.byKey(const Key('order-cancel')), findsNothing);
     });
 

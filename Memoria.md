@@ -12,11 +12,29 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-24 (aceptar y actualizar pedidos):** app en `feature/SCRUM-43-aceptar-actualizar-pedidos`, con la API `0.5.0-alpha.20` (musubi-api #72). Ver T41.
 - **HU-05 (perfil del vendedor):** fila compartida `0.5.0-alpha.22` de musubi-api (`alpha.21` quedó para HU-50, fusionada antes) en `docs/versionado.md` (esquema 19, el de HU-24/#72; la API se rebasa antes del merge); la app está en `feature/SCRUM-34-perfil-publico` con T2–T6 hechos, versión `0.8.0+10` (se publica en el siguiente lote) y spec en “Borrador con evidencia” (ver T43); faltan el revisor y el PR.
 - **Push verificado en un celular real (11-Nov-2026)** con la llave nueva de Firebase. El fallo anterior era de la API: llave en otra región, guardada en varias líneas y revocada.
+- **HU-27/HU-45 (calificar):** app en `feature/SCRUM-46-calificaciones` con la API `0.5.0-alpha.25` (`db/020`). Ver T46.
 - **HU-25 (mis pedidos):** app en `feature/SCRUM-44-mis-pedidos` con la API `0.5.0-alpha.23` (fila compartida). Ver T44.
 - **Siguiente:** desplegar la API (`alpha.20` a `alpha.23` juntas) y probar HU-24, HU-50, HU-05 y HU-25 en el celular. Sprint 4: 9 al 20 de noviembre.
 - **HU-07 (Kazumi):** API y app en `main` (#50).
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T46 — Calificar al terminar un pedido (12-Nov-2026, SCRUM-46 y SCRUM-50, HU-27 y HU-45)
+
+**Qué se hizo**
+- `Calificar` (`RateScreen`, `/pedido/:id/calificar`), como la maqueta: estrellas, "¿Qué destacas?" con los chips de la otra parte, comentario opcional, "Enviar calificación" (a Inicio con el aviso) y "Ahora no".
+- "Tu pedido": al confirmar la entrega que lo completa se abre `Calificar`; completado y dentro del plazo muestra "Calificar a Diego"; ya calificado, "Ya calificaste a Diego.".
+- `Perfil-vendedor`: "Opiniones" con las tarjetas de la maqueta y "Ver más"; "A tiempo" con el porcentaje.
+- Pruebas: +22 (643 en total). Capturas: `calificar` y `perfil-vendedor-opiniones`.
+
+**Decisiones (con su porqué)** (usuaria, 12-Nov-2026)
+- **Un solo promedio**, **7 días** para calificar, **"A tiempo" con "Puntual"** y **chips propios de quien compra** (Pagó lo acordado en lugar de Como se describió y Precio justo).
+- **Los chips empiezan sin marcar:** la maqueta los muestra marcados como ejemplo; marcarlos de antemano inclinaría la calificación.
+
+**Errores a evitar**
+- Un `Center` dentro de un `Wrap` se estira a todo el renglón: cada chip quedaba en su propia línea. Usar una `Row` con `mainAxisSize.min`.
+- Un aviso abierto tapa los botones de abajo de la pantalla siguiente: al pasar a `Calificar` se quita el de "Listo".
+- Las pruebas usan una fuente más ancha: una fila de textos fijos sin `Flexible` se desborda a 360 de ancho.
 
 ## T44 — Consultar mis pedidos (12-Nov-2026, SCRUM-44, HU-25)
 
