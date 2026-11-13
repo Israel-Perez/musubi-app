@@ -63,6 +63,14 @@ class HttpWantedRepository implements WantedRepository {
   });
 
   @override
+  Future<WantedRequest> get(String id) => _guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.wantedById(id),
+    );
+    return wantedFromJson(response.data ?? const {}, apiBaseUrl: _apiBaseUrl);
+  });
+
+  @override
   Future<WantedRequest> update(String id, NewWanted request) =>
       _guard(() async {
         final response = await _dio.put<Map<String, dynamic>>(

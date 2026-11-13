@@ -80,7 +80,12 @@ String? routeFor(NotificationTarget target, String id) => switch (target) {
     id,
   ),
   NotificationTarget.order when id.isNotEmpty => AppRoutes.order(id),
-  NotificationTarget.wanted => AppRoutes.myWanted,
+  // HU-30: "Mis solicitudes" con esa solicitud y sus ofertas.
+  NotificationTarget.wanted => AppRoutes.myWantedRequest(id),
+  // HU-19: el tablero con "Yo tengo este producto" de esa solicitud.
+  NotificationTarget.wantedBoard when id.isNotEmpty => AppRoutes.wantedOffer(
+    id,
+  ),
   _ => null,
 };
 

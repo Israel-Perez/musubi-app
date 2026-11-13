@@ -1,17 +1,19 @@
-# HU-19 — Aviso al vendedor de solicitud compatible (tareas)
+# HU-19 — Aviso al vendedor de solicitud compatible (tareas, app)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Spec
+- **Estado:** ✅ Hecho (13-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-19)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Destino `wanted_board`
+- **Prueba:** `notification_data_test.dart`.
+- **Estado:** ✅ Hecho.
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+## T3 — Tablero
+- **Prueba:** `notification_flow_test.dart`.
+- **Estado:** ✅ Hecho.
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
+## T4 — Ícono, pruebas y capturas
+- **Estado:** ✅ Hecho: `flutter test` 652 · capturas `notificaciones` y `notificaciones-coincidencias`.
+
+## T5 — Prueba en el celular
+- **Qué:** con la API desplegada, publicar una solicitud desde otra cuenta y tocar el aviso.
 - **Estado:** ⏳ Por hacer.

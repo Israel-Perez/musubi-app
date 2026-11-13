@@ -19,13 +19,22 @@ enum NotificationTab {
 enum NotificationTarget {
   conversation,
   order,
+
+  /// Mi solicitud, con sus ofertas (HU-30).
   wanted,
+
+  /// Una solicitud del tablero, para responder "Yo tengo este producto"
+  /// (HU-19).
+  wantedBoard,
+
+  /// Nada que abrir (`none`) o un destino que esta version no conoce.
   unknown;
 
   static NotificationTarget parse(String? value) => switch (value) {
     'conversation' => conversation,
     'order' => order,
     'wanted' => wanted,
+    'wanted_board' => wantedBoard,
     _ => unknown,
   };
 }

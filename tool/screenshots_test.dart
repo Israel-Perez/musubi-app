@@ -161,6 +161,19 @@ final _notices = FakeNotificationRepository(
       targetId: 'w1',
       createdAt: DateTime.utc(2026, 10, 6, 2, 5),
     ),
+    // HU-19: "Hay una solicitud compatible con tu producto" (7:40 p. m.).
+    sampleNotification(
+      id: 'n4',
+      type: 'wanted_match',
+      category: 'matches',
+      title: 'Hay una solicitud compatible con tu producto',
+      body:
+          'Fernanda busca una bata de laboratorio talla M. Tu publicación '
+          'coincide.',
+      target: NotificationTarget.wantedBoard,
+      targetId: 'r-bata',
+      createdAt: DateTime.utc(2026, 10, 6, 1, 40),
+    ),
     sampleNotification(
       id: 'n3',
       type: 'request_expiring',
@@ -1180,6 +1193,13 @@ final Map<String, (bool, _Scene)> _scenes = {
   ),
   // HU-31: `Notificaciones` (Hoy y Ayer, dos sin leer).
   'notificaciones': (true, (s) => s.go(AppRoutes.notifications)),
+  'notificaciones-coincidencias': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.notifications);
+      await s.tap(find.text('Coincidencias'));
+    },
+  ),
   // HU-32/33/34: la propuesta de la IA (`Acuerdo-esperando`, sin fecha) y el
   // acuerdo confirmado por los dos (`Acuerdo-confirmado`).
   'acuerdo-esperando': (

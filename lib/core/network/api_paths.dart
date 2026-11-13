@@ -161,7 +161,8 @@ abstract final class ApiPaths {
   static String offerAction(String requestId, String offerId, String action) =>
       '$wanted/$requestId/offers/$offerId/$action';
 
-  /// `PUT /api/v1/wanted/{id}` — fila "M-05" (spec `musubi-api:HU-14`).
+  /// `GET /api/v1/wanted/{id}` y `PUT` — filas "M-05" (specs `musubi-api:HU-13`
+  /// y `HU-14`).
   static String wantedById(String id) => '$wanted/$id';
 
   /// `POST /api/v1/wanted/{id}/close` y `cancel` — filas "M-05" (spec
