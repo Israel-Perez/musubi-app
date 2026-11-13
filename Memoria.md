@@ -36,6 +36,12 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - Un aviso abierto tapa los botones de abajo de la pantalla siguiente: al pasar a `Calificar` se quita el de "Listo".
 - Las pruebas usan una fuente más ancha: una fila de textos fijos sin `Flexible` se desborda a 360 de ancho.
 
+## T45 — Mantenimiento de los workflows (12-Nov-2026, SCRUM-97)
+
+- `release-play` usa `tracks` (el `track` de `upload-google-play` está obsoleto y daba un aviso en cada publicación).
+- `ci-pr.yml` y `release-play.yml` usan `ubuntu-24.04`, no `ubuntu-latest` (cambiará a Ubuntu 26).
+- La fila compartida `0.5.0-alpha.24` es de la API (tope de 10 piezas al liberar un pedido); la app no cambia de versión.
+
 ## T44 — Consultar mis pedidos (12-Nov-2026, SCRUM-44, HU-25)
 
 **Qué se hizo**
