@@ -16,7 +16,6 @@ import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 ///
 /// "Se busca" sale del tablero (`GET /api/v1/wanted`, HU-15).
 ///
-/// NOTE (HU-49): "Populares" llega con las vistas del detalle (HU-11).
 class HttpCatalogRepository implements CatalogRepository {
   new(this._dio, this._apiBaseUrl);
 
@@ -35,8 +34,10 @@ class HttpCatalogRepository implements CatalogRepository {
     CatalogFilter filter = const CatalogFilter(),
   }) async {
     try {
-      // "Se busca" nunca falla (ver _wanted); productos y categorias si.
+      // "Se busca" y "Populares" nunca fallan (ver _wanted y _popular);
+      // productos y categorias si.
       final wantedFuture = _wanted();
+      final popularFuture = _popular(period);
       final responses = await Future.wait([
         _dio.get<Map<String, dynamic>>(
           ApiPaths.products,
@@ -49,9 +50,11 @@ class HttpCatalogRepository implements CatalogRepository {
         _dio.get<List<dynamic>>(ApiPaths.categories),
       ]);
       final wanted = await wantedFuture;
+      final popular = await popularFuture;
       final page = responses[0].data as Map<String, dynamic>? ?? const {};
       final categories = responses[1].data as List<dynamic>? ?? const [];
       return HomeFeed(
+        popular: popular,
         recent: [
           for (final item in page['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
@@ -80,6 +83,30 @@ class HttpCatalogRepository implements CatalogRepository {
             in (response.data?['items'] as List<dynamic>? ?? const [])
                 .cast<Map<String, dynamic>>())
           _wantedSummary(item),
+      ];
+    } on DioException {
+      return const [];
+    }
+  }
+
+  /// "Populares" de Inicio (HU-49). Tambien es secundaria: si el ranking no
+  /// responde (por ejemplo, una API anterior a `0.5.0-alpha.30`), Inicio sale
+  /// con su estado vacio y las demas secciones.
+  Future<List<ProductSummary>> _popular(PopularPeriod period) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiPaths.popularProducts,
+        queryParameters: {'period': period.name, 'limit': 6},
+      );
+      return [
+        for (final item
+            in (response.data?['items'] as List<dynamic>? ?? const [])
+                .cast<Map<String, dynamic>>())
+          productFromJson(
+            item['product'] as Map<String, dynamic>,
+            _apiBaseUrl,
+            views: (item['views'] as num).toInt(),
+          ),
       ];
     } on DioException {
       return const [];
@@ -192,6 +219,32 @@ class HttpCatalogRepository implements CatalogRepository {
         code: ApiFailure.serverError,
         message: 'El servidor respondió algo inesperado.',
       );
+    }
+  }
+
+  @override
+  Future<ProductPage> recentProducts({String? cursor}) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiPaths.products,
+        queryParameters: {
+          'sort': 'newest',
+          'hideSoldOut': true,
+          'limit': recentProductsPageSize,
+          'cursor': ?cursor,
+        },
+      );
+      final body = response.data ?? const <String, dynamic>{};
+      return ProductPage(
+        items: [
+          for (final item in body['items'] as List<dynamic>? ?? const [])
+            productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
+        ],
+        total: (body['total'] as num?)?.toInt() ?? 0,
+        nextCursor: body['nextCursor'] as String?,
+      );
+    } on DioException catch (error) {
+      throw ApiFailure.fromDio(error);
     }
   }
 

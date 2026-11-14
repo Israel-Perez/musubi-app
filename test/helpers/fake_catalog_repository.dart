@@ -13,20 +13,24 @@ class FakeCatalogRepository implements CatalogRepository {
   new([
     List<Object> responses = const [HomeFeed()],
     List<Object> searchResponses = const [ProductPage()],
+    List<Object> recentResponses = const [ProductPage()],
   ]) : _responses = [...responses],
-       _searchResponses = [...searchResponses];
+       _searchResponses = [...searchResponses],
+       _recentResponses = [...recentResponses];
 
   /// Nunca responde (estado "cargando").
   factory pending() => FakeCatalogRepository([Completer<HomeFeed>()]);
 
   final List<Object> _responses;
   final List<Object> _searchResponses;
+  final List<Object> _recentResponses;
   final List<PopularPeriod> periods = [];
   final List<CatalogFilter> filters = [];
   final List<String> queries = [];
   final List<SearchFilter> searchFilters = [];
   final List<SearchSort> sorts = [];
   final List<int> pages = [];
+  final List<String?> recentCursors = [];
 
   /// Categorias que devuelve `categories()`.
   List<CatalogCategory> categoriesResponse = const [];
@@ -63,6 +67,20 @@ class FakeCatalogRepository implements CatalogRepository {
     final next = _searchResponses.length > 1
         ? _searchResponses.removeAt(0)
         : _searchResponses.first;
+    return switch (next) {
+      final ProductPage page => Future.value(page),
+      final ApiFailure failure => Future.error(failure),
+      final Completer<ProductPage> completer => completer.future,
+      _ => throw StateError('Respuesta no soportada: $next'),
+    };
+  }
+
+  @override
+  Future<ProductPage> recentProducts({String? cursor}) {
+    recentCursors.add(cursor);
+    final next = _recentResponses.length > 1
+        ? _recentResponses.removeAt(0)
+        : _recentResponses.first;
     return switch (next) {
       final ProductPage page => Future.value(page),
       final ApiFailure failure => Future.error(failure),

@@ -23,6 +23,9 @@ abstract interface class CatalogRepository {
     int page = 1,
   });
 
+  /// Publicaciones disponibles, newest first, paginadas con cursor (HU-49).
+  Future<ProductPage> recentProducts({String? cursor});
+
   /// Categorias del campus para los chips de `Busqueda-filtros`.
   Future<List<CatalogCategory>> categories();
 
