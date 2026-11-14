@@ -9,18 +9,24 @@ import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
+import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
+import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/domain/theme_preference.dart';
+import 'package:musubi_app/features/profile/presentation/interests_providers.dart';
+import 'package:musubi_app/features/profile/presentation/interests_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
 import '../../helpers/fake_account_repository.dart';
 import '../../helpers/fake_chat.dart' show jwtFor;
 import '../../helpers/fake_favorites_repository.dart';
+import '../../helpers/fake_interests_repository.dart';
 import '../../helpers/fake_listings_repository.dart';
 import '../../helpers/fake_orders.dart';
 import '../../helpers/fake_profile_repository.dart';
@@ -41,6 +47,7 @@ class ProfileHarness {
   final picker = FakePhotoPicker();
   final favorites = FakeFavoritesRepository();
   final theme = FakeThemePreferenceRepository();
+  final interests = FakeInterestsRepository();
   final orders = FakeOrderRepository();
   final SessionTokens _tokens;
   final InMemoryTokenStore store;
@@ -56,6 +63,8 @@ class ProfileHarness {
         overrides: [
           profileRepositoryProvider.overrideWithValue(profile),
           themePreferenceRepositoryProvider.overrideWithValue(theme),
+          interestsRepositoryProvider.overrideWithValue(interests),
+          categoriesProvider.overrideWith((ref) async => campusCategories),
           accountRepositoryProvider.overrideWithValue(account),
           listingsRepositoryProvider.overrideWithValue(
             FakeListingsRepository(),
@@ -112,6 +121,18 @@ MyProfile profileWith({Career? career, int? term}) {
     term: term,
   );
 }
+
+/// Categorias del campus para "¿Qué te interesa?" (HU-66).
+const campusCategories = [
+  CatalogCategory(slug: 'calculadoras', name: 'Calculadoras'),
+  CatalogCategory(slug: 'libros', name: 'Libros'),
+  CatalogCategory(slug: 'laptops', name: 'Laptops'),
+  CatalogCategory(slug: 'dibujo', name: 'Dibujo'),
+];
+
+bool chipSelected(String slug) =>
+    (find.byKey(Key('interest-$slug')).evaluate().single.widget as NeedChip)
+        .selected;
 
 // HU-04: maquetas Perfil, Ajustes (y sus hojas) y Privacidad.
 SessionTokens jwtProfileSession() => SessionTokens(
@@ -518,6 +539,117 @@ void main() {
         h.container.read(myProfileProvider).value?.visibility.sales,
         isTrue,
       );
+    });
+  });
+
+  group('Intereses (HU-66)', () {
+    testWidgets('Ajustes: "Mis intereses" elige, guarda y resume', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      await h.open(AppRoutes.settings);
+      expect(find.text('Sin elegir'), findsOneWidget);
+
+      await h.tapKey('settings-interests');
+      expect(find.text('Mis intereses'), findsWidgets);
+      expect(find.text('Solo tú las ves: no salen en tu perfil.'), findsOne);
+      await h.tapKey('interest-libros');
+      await h.tapKey('interest-laptops');
+      await h.tapKey('interests-save');
+
+      expect(h.interests.saves.single, ['libros', 'laptops']);
+      expect(find.byType(InterestsScreen), findsNothing);
+      expect(find.text('Guardamos tus intereses'), findsOneWidget);
+      expect(find.text('2 categorías'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('Ajustes: parte de lo guardado y se puede vaciar', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      h.interests.saved = ['dibujo'];
+      await h.open(AppRoutes.settingsInterests);
+
+      expect(chipSelected('dibujo'), isTrue);
+      expect(chipSelected('libros'), isFalse);
+      await h.tapKey('interest-dibujo');
+      await h.tapKey('interests-save');
+
+      expect(h.interests.saves.single, isEmpty);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('si no se guarda, se queda con el aviso y lo elegido', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      h.interests.failSave = true;
+      await h.open(AppRoutes.settingsInterests);
+
+      await h.tapKey('interest-libros');
+      await h.tapKey('interests-save');
+
+      expect(find.byType(InterestsScreen), findsOneWidget);
+      expect(chipSelected('libros'), isTrue);
+      expect(find.textContaining('No hay conexión'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('si no se pueden leer, ofrece reintentar sin editar', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      h.interests.failLoad = true;
+      await h.open(AppRoutes.settingsInterests);
+
+      expect(find.byKey(const Key('interests-save')), findsNothing);
+      h.interests.failLoad = false;
+      await h.tapText('Reintentar');
+
+      expect(find.byKey(const Key('interest-libros')), findsOneWidget);
+      expect(h.interests.loads, 2);
+    });
+
+    testWidgets('al entrar: opcional, "Ahora no" no guarda nada', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      await h.open(AppRoutes.interests);
+
+      expect(find.text('¿Qué te interesa?'), findsOneWidget);
+      expect(h.interests.loads, 0);
+      await h.tapKey('interests-skip');
+
+      expect(find.byType(InterestsScreen), findsNothing);
+      expect(h.interests.saves, isEmpty);
+    });
+
+    testWidgets('al entrar: "Continuar" guarda lo elegido y sigue', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      await h.open(AppRoutes.interests);
+
+      await h.tapKey('interest-calculadoras');
+      await h.tapKey('interest-libros');
+      await h.tapKey('interest-calculadoras');
+      await h.tapKey('interests-save');
+
+      expect(h.interests.saves.single, ['libros']);
+      expect(find.byType(InterestsScreen), findsNothing);
+    });
+
+    testWidgets('al entrar: "Continuar" sin elegir sigue sin guardar', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester);
+      await h.open(AppRoutes.interests);
+
+      await h.tapKey('interests-save');
+
+      expect(h.interests.saves, isEmpty);
+      expect(find.byType(InterestsScreen), findsNothing);
     });
   });
 }

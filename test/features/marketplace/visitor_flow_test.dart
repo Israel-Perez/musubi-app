@@ -313,6 +313,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       await h.tapText('Empezar a explorar');
+      // HU-66: "¿Qué te interesa?" en medio; al saltarla vuelve igual.
+      await h.tapText('Ahora no');
 
       expect(h.signedIn, isTrue);
       expect(h.location, AppRoutes.wanted);

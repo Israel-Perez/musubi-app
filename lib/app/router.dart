@@ -28,6 +28,7 @@ import 'package:musubi_app/features/marketplace/presentation/search_screen.dart'
 import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:musubi_app/features/orders/presentation/my_orders_screen.dart';
 import 'package:musubi_app/features/orders/presentation/order_payment_screen.dart';
+import 'package:musubi_app/features/profile/presentation/interests_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
@@ -61,6 +62,12 @@ abstract final class AppRoutes {
 
   /// `Privacidad` (HU-46; "Quien te ve" llega con HU-04).
   static const accountPrivacy = '/ajustes/privacidad';
+
+  /// "¿Qué te interesa?" después de verificar el correo (HU-66).
+  static const interests = '/intereses';
+
+  /// "Mis intereses" desde `Ajustes` (HU-66).
+  static const settingsInterests = '/ajustes/intereses';
 
   /// "Vender un producto" (HU-06): `Vender-1…4` y `Vender-listo`.
   static const sell = '/vender';
@@ -158,6 +165,8 @@ abstract final class AppRoutes {
     profile,
     settings,
     accountPrivacy,
+    interests,
+    settingsInterests,
     sell,
     sellDetails,
     sellPrice,
@@ -426,6 +435,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.accountPrivacy,
         builder: (context, state) => const PrivacyScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsInterests,
+        builder: (context, state) => const InterestsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.interests,
+        builder: (context, state) => const InterestsScreen(onboarding: true),
       ),
       GoRoute(
         path: AppRoutes.search,

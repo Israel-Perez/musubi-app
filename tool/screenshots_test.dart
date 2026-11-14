@@ -46,6 +46,7 @@ import 'package:musubi_app/features/notifications/presentation/notification_prov
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
+import 'package:musubi_app/features/profile/presentation/interests_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
@@ -61,6 +62,7 @@ import '../test/helpers/fake_auth_repository.dart';
 import '../test/helpers/fake_catalog_repository.dart';
 import '../test/helpers/fake_chat.dart';
 import '../test/helpers/fake_favorites_repository.dart';
+import '../test/helpers/fake_interests_repository.dart';
 import '../test/helpers/fake_listings_repository.dart';
 import '../test/helpers/fake_notifications.dart';
 import '../test/helpers/fake_orders.dart';
@@ -667,6 +669,10 @@ class _Shot {
             themePreferenceRepositoryProvider.overrideWithValue(
               FakeThemePreferenceRepository(),
             ),
+            // HU-66: "Mis intereses" con dos categorías guardadas.
+            interestsRepositoryProvider.overrideWithValue(
+              FakeInterestsRepository(saved: ['libros', 'tecnologia']),
+            ),
             statusRepositoryProvider.overrideWithValue(
               FakeStatusRepository([const ApiOnline(version: 'v1')]),
             ),
@@ -1097,6 +1103,16 @@ final Map<String, (bool, _Scene)> _scenes = {
   'favoritos': (true, (s) => s.go(AppRoutes.favorites)),
   'ajustes': (true, (s) => s.go(AppRoutes.settings)),
   'privacidad': (true, (s) => s.go(AppRoutes.accountPrivacy)),
+  // HU-66: la maqueta no la tiene; se arma con sus piezas.
+  'intereses': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.interests);
+      await s.tap(find.byKey(const Key('interest-calculadoras')));
+      await s.tap(find.byKey(const Key('interest-tecnologia')));
+    },
+  ),
+  'mis-intereses': (true, (s) => s.go(AppRoutes.settingsInterests)),
   'datos-personales': (
     true,
     (s) async {

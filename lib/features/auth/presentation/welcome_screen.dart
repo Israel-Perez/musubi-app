@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:musubi_app/app/return_path.dart';
+import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/avatars.dart';
@@ -35,9 +35,9 @@ class WelcomeScreen extends ConsumerWidget {
           label: 'Empezar a explorar',
           trailingIcon: MusubiIcons.arrowRight,
           iconSize: 20,
-          // Vuelve a donde estaba al abrir "Crea tu cuenta" (HU-48).
-          onPressed: () =>
-              context.go(ref.read(returnPathProvider.notifier).take()),
+          // HU-66: primero "¿Qué te interesa?" (se puede saltar); de ahí
+          // vuelve a donde estaba al abrir "Crea tu cuenta" (HU-48).
+          onPressed: () => context.go(AppRoutes.interests),
         ),
       ],
       children: [
