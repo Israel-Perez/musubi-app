@@ -652,4 +652,37 @@ void main() {
       expect(find.byType(InterestsScreen), findsNothing);
     });
   });
+
+  // HU-35: "Recomendaciones según tu actividad" (finalidad adicional del
+  // aviso de privacidad, HU-47).
+  group('Privacidad: recomendaciones (HU-35)', () {
+    testWidgets('empieza encendido; apagarlo avisa y manda el tema actual', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester)..theme.preference = ThemePreference.dark;
+      await h.open(AppRoutes.accountPrivacy);
+
+      expect(find.text('Recomendaciones según tu actividad'), findsOneWidget);
+      await h.tapKey('privacy-recommendations');
+
+      expect(
+        find.text('Borramos tu historial y ya no lo usamos para recomendarte'),
+        findsOneWidget,
+      );
+      expect(h.theme.recommendationSaves, [(false, ThemePreference.dark)]);
+      expect(h.container.read(recommendationsPreferenceProvider).value, false);
+    });
+
+    testWidgets('si falla, el interruptor regresa y lo explica', (
+      tester,
+    ) async {
+      final h = ProfileHarness(tester)..theme.failSave = true;
+      await h.open(AppRoutes.accountPrivacy);
+
+      await h.tapKey('privacy-recommendations');
+
+      expect(find.textContaining('No pudimos guardar el cambio'), findsOne);
+      expect(h.container.read(recommendationsPreferenceProvider).value, true);
+    });
+  });
 }

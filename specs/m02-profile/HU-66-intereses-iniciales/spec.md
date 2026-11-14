@@ -32,7 +32,7 @@ Jira (SCRUM-106): Como **estudiante nuevo**, quiero **elegir las categorías que
 - [x] Se guardan en la cuenta y se cambian en Ajustes: grupo HU-66 de `profile_flow_test.dart` y `musubi-api:HU-66`.
 - [ ] HU-35 los usa en el arranque en frío (RN-46): "Para ti" todavía no existe (`NOTE (HU-35)` en la API).
 - [x] Privados (RNF-07): la API no los pone en el perfil público (`musubi-api:HU-66`) y la pantalla lo dice.
-- [x] `dart format` sin cambios, `flutter analyze --fatal-infos --fatal-warnings` sin observaciones y `flutter test` 663/663.
+- [x] `dart format` sin cambios, `flutter analyze --fatal-infos --fatal-warnings` sin observaciones y `flutter test` 676/676 (con HU-35 de `main`).
 
 ## Límites
 - Se muestra una vez, justo después de verificar. Quien la saltó la encuentra en `Ajustes`; no se vuelve a preguntar.

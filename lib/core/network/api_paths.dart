@@ -126,6 +126,15 @@ abstract final class ApiPaths {
   /// cualquier otra persona, 404 `listings.product_not_found`.
   static String product(String id) => '$products/${Uri.encodeComponent(id)}';
 
+  /// `GET /api/v1/products/{id}/similar` — fila "M-11" (spec
+  /// `musubi-api:HU-35`): "Ver parecidos"; publico, el vendedor solo con
+  /// sesion.
+  static String productSimilar(String id) => '${product(id)}/similar';
+
+  /// `GET /api/v1/recommendations` — fila "M-11" (spec `musubi-api:HU-35`):
+  /// "Recomendado para ti", con sesion.
+  static const recommendations = '/api/v1/recommendations';
+
   /// `POST /api/v1/products/{id}/pause` — fila "M-03"
   /// (spec `musubi-api:HU-07`): idempotente.
   static String productPause(String id) => '${product(id)}/pause';

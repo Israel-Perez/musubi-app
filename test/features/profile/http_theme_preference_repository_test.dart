@@ -50,4 +50,32 @@ void main() {
 
     expect(await repository.getTheme(), ThemePreference.system);
   });
+
+  // HU-35: "Recomendarte productos según tu actividad".
+  test('recomendaciones: sin valor es si, y el PUT manda el tema', () async {
+    final adapter = FakeHttpAdapter(
+      (options) async => FakeHttpAdapter.json(
+        options.method == 'PUT'
+            ? {'theme': 'dark', 'recommendations': false}
+            : {'theme': 'dark'},
+      ),
+    );
+    final repository = HttpThemePreferenceRepository(
+      Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+        ..httpClientAdapter = adapter,
+    );
+
+    final current = await repository.getRecommendations();
+    final saved = await repository.setRecommendations(
+      enabled: false,
+      theme: ThemePreference.dark,
+    );
+
+    expect(current, isTrue);
+    expect(saved, isFalse);
+    expect(adapter.requests.last.data, {
+      'theme': 'dark',
+      'recommendations': false,
+    });
+  });
 }

@@ -19,13 +19,13 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
-## T49 — Elegir mis intereses (14-Nov-2026, SCRUM-106, HU-66, Kazumi)
+## T50 — Elegir mis intereses (14-Nov-2026, SCRUM-106, HU-66, Kazumi)
 
 **Qué se hizo**
 - "¿Qué te interesa?" (`InterestsScreen(onboarding: true)`, `/intereses`): sale al tocar "Empezar a explorar" en `Verificacion-lista`, con las categorías del campus como `NeedChip`. "Continuar" guarda lo elegido y "Ahora no" no guarda nada; las dos siguen a donde iba la persona (`returnPathProvider`).
 - `Ajustes` → Preferencias → "Mis intereses" ("Sin elegir", "1 categoría", "N categorías") abre la misma pantalla con lo guardado (`/ajustes/intereses`).
-- `InterestsRepository`/`HttpInterestsRepository`, `myInterestsProvider` y `ApiPaths.myInterests` (filas `musubi-api:HU-66`, API `0.5.0-alpha.28`).
-- Pruebas: +11 (663 en total). Capturas: `intereses` y `mis-intereses`.
+- `InterestsRepository`/`HttpInterestsRepository`, `myInterestsProvider` y `ApiPaths.myInterests` (filas `musubi-api:HU-66`, API `0.5.0-alpha.29`; `alpha.28` quedó para HU-35, fusionada antes).
+- Pruebas: +11 (676 en total, con HU-35). Capturas: `intereses` y `mis-intereses`.
 
 **Decisiones (con su porqué)**
 - **La maqueta no tiene la pantalla:** se armó con `AuthLayout` (como `Verificacion-lista`), `NeedChip` (`Necesidad-1`) y `SettingsRow`. El diseño lo revisa la usuaria.
@@ -36,6 +36,24 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **`context.pop()` falla si la pantalla se abrió con `go`** (lo detectó la prueba que abre `/ajustes/intereses` directo): se usa `canPop()` y, si no, `go(AppRoutes.settings)`.
 - **Los datos de muestra de las capturas no tienen `laptops`:** sus slugs son `calculadoras`, `libros`, `tecnologia`, `laboratorio` y `dibujo`.
 - **Un paso nuevo después de verificar cambia dos pruebas viejas** (`auth_flow_test` y `visitor_flow_test`): ahora tocan "Ahora no".
+
+## T49 — Ver productos recomendados (14-Nov-2026, SCRUM-58, HU-35)
+
+**Qué se hizo**
+- `lib/features/recommendations/`: `RecommendationRepository` (`forYou`, `similar`), `HttpRecommendationRepository`, `forYouProvider` y `similarProductsProvider`. En modo demo, `EmptyRecommendationRepository`.
+- `Inicio` (con sesión): "Recomendado para ti" (título de la guía de estilo) entre "Se busca" y "Publicaciones recientes", con `RecentTile` de 156 de ancho en fila horizontal. Cargando, con error o vacía, no ocupa lugar.
+- `Producto`: "Productos parecidos" al final; "Ver parecidos" de una agotada baja hasta ellos (`Scrollable.ensureVisible`) o avisa si no hay.
+- `Privacidad` → "Tus datos": "Recomendaciones según tu actividad" (`recommendationsPreferenceProvider`). El aviso de privacidad ya la prometía como finalidad adicional rechazable; apagarla borra el historial en la API.
+- Pruebas: +13 (665 en total). Capturas: `inicio-para-ti` y `producto-parecidos`.
+
+**Decisiones (con su porqué)** (usuaria, 13-Nov-2026)
+- Inicio + Producto; señales: ver, favorito, chat y compra; 90 días.
+- **El interruptor manda el tema actual:** la API pide `theme` en cada `PUT /profiles/me/preferences`.
+- **Aviso de privacidad y Play:** se detalla qué se guarda y por cuánto; en el siguiente lote, "Personalización" en "Interacciones con la app".
+
+**Errores a evitar**
+- Una fila al final de un `SingleChildScrollView` no puede subir hasta arriba con `ensureVisible`: la prueba compara contra la posición anterior.
+- Si la sección de abajo no se mueve igual que el bloque con `Transform.translate`, queda un hueco.
 
 ## T48 — Avisos de solicitudes (13-Nov-2026, SCRUM-41 y SCRUM-48, HU-19 y HU-30)
 

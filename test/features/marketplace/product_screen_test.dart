@@ -19,12 +19,14 @@ import 'package:musubi_app/features/marketplace/presentation/favorites_providers
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
+import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
 import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_http_adapter.dart';
 import '../../helpers/fake_profile_repository.dart';
+import '../../helpers/fake_recommendations.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/in_memory_token_store.dart';
 
@@ -55,6 +57,7 @@ Future<FakeCatalogRepository> _open(
   required ProductDetail? detail,
   SessionTokens? session,
   FakeFavoritesRepository? favorites,
+  FakeRecommendationRepository? recommendations,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 3;
@@ -79,6 +82,9 @@ Future<FakeCatalogRepository> _open(
         initialSessionTokensProvider.overrideWithValue(session),
         chatRepositoryProvider.overrideWithValue(FakeChatRepository()),
         chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
+        recommendationRepositoryProvider.overrideWithValue(
+          recommendations ?? FakeRecommendationRepository(),
+        ),
       ],
       child: const MusubiApp(),
     ),
@@ -332,5 +338,98 @@ void main() {
     const card = ProductSummary(id: 'p1', title: 'x', priceCents: 1, stock: 1);
     expect(card.soldOut, isFalse);
     expect(const Visitor(), isA<SessionState>());
+  });
+
+  // HU-35: "Productos parecidos" y "Ver parecidos" (ML de la API).
+  group('Productos parecidos (HU-35)', () {
+    FakeRecommendationRepository withSimilar() => FakeRecommendationRepository(
+      similarItems: {
+        'p1': [
+          ProductSummary(
+            id: 'p2',
+            title: 'Calculadora Casio fx-82',
+            priceCents: 28000,
+            stock: 1,
+            sellerName: 'Diego H.',
+            publishedAt: _now.subtract(const Duration(hours: 3)),
+          ),
+        ],
+      },
+    );
+
+    testWidgets('al final del detalle; tocar uno abre su detalle', (
+      tester,
+    ) async {
+      final recommendations = withSimilar();
+      final catalog = await _open(
+        tester,
+        detail: _detail(),
+        session: chatTokens(_now),
+        recommendations: recommendations,
+      );
+      catalog.details['p2'] = _detail();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('similar-p2')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Productos parecidos'), findsOneWidget);
+      expect(recommendations.similarCalls, ['p1']);
+
+      await tester.tap(find.byKey(const Key('similar-p2')));
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MusubiApp)),
+      );
+      expect(
+        container
+            .read(routerProvider)
+            .routerDelegate
+            .currentConfiguration
+            .last
+            .matchedLocation,
+        AppRoutes.product('p2'),
+      );
+    });
+
+    testWidgets('agotado: "Ver parecidos" baja hasta ellos', (tester) async {
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0),
+        session: chatTokens(_now),
+        recommendations: withSimilar(),
+      );
+      final before = tester.getTopLeft(find.text('Productos parecidos')).dy;
+
+      await tester.tap(find.text('Ver parecidos'));
+      await tester.pumpAndSettle();
+
+      // Sube y queda a la vista, lejos de la barra de abajo (es lo ultimo del
+      // detalle: no puede quedar hasta arriba).
+      final after = tester.getTopLeft(find.text('Productos parecidos')).dy;
+      expect(after, lessThan(before - 200));
+      expect(after, lessThan(600));
+    });
+
+    testWidgets('sin parecidos, la seccion no se muestra y el boton lo dice', (
+      tester,
+    ) async {
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0),
+        session: chatTokens(_now),
+      );
+
+      expect(find.text('Productos parecidos'), findsNothing);
+      await tester.tap(find.text('Ver parecidos'));
+      await tester.pump();
+
+      expect(
+        find.text('Aún no encontramos productos parecidos.'),
+        findsOneWidget,
+      );
+    });
   });
 }
