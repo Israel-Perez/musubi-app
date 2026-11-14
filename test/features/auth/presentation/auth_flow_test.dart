@@ -209,6 +209,9 @@ void main() {
     expect(h.store.saved?.refreshToken, 'refresh');
 
     await h.tapText('Empezar a explorar');
+    // HU-66: "¿Qué te interesa?" es opcional.
+    expect(find.text('¿Qué te interesa?'), findsOneWidget);
+    await h.tapText('Ahora no');
     expect(find.text('Musubi'), findsOneWidget);
   });
 

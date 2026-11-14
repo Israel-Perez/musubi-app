@@ -95,6 +95,10 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-54`).
   static const myPreferences = '/api/v1/profiles/me/preferences';
 
+  /// `GET` y `PUT /api/v1/profiles/me/interests` — filas M-02
+  /// (spec `musubi-api:HU-66`).
+  static const myInterests = '/api/v1/profiles/me/interests';
+
   /// `GET /api/v1/careers` — fila "M-02" (spec `musubi-api:HU-04`).
   static const careers = '/api/v1/careers';
 

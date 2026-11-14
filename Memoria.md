@@ -38,7 +38,25 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 
 - **No compilaba:** al traer `main` se coló una ruta vieja de `/notificaciones` (`UpcomingSection` con `MusubiIcons` sin importar). Se quitó: `main` ya tiene `NotificationsScreen`.
 - **"Populares" es secundaria, como "Se busca":** `HttpCatalogRepository._popular` regresa `[]` si el ranking falla. La API en producción (`alpha.27`) lee `/products/popular` como un detalle y responde 404; antes eso tiraba todo `Inicio`.
-- Fila compartida `0.5.0-alpha.30` (API #96). `flutter test` 668, analyze 0.
+- Fila compartida `0.5.0-alpha.30` (API #96), después de la `alpha.29` de HU-66. `flutter test` 679 (con HU-66), analyze 0.
+
+## T50 — Elegir mis intereses (14-Nov-2026, SCRUM-106, HU-66, Kazumi)
+
+**Qué se hizo**
+- "¿Qué te interesa?" (`InterestsScreen(onboarding: true)`, `/intereses`): sale al tocar "Empezar a explorar" en `Verificacion-lista`, con las categorías del campus como `NeedChip`. "Continuar" guarda lo elegido y "Ahora no" no guarda nada; las dos siguen a donde iba la persona (`returnPathProvider`).
+- `Ajustes` → Preferencias → "Mis intereses" ("Sin elegir", "1 categoría", "N categorías") abre la misma pantalla con lo guardado (`/ajustes/intereses`).
+- `InterestsRepository`/`HttpInterestsRepository`, `myInterestsProvider` y `ApiPaths.myInterests` (filas `musubi-api:HU-66`, API `0.5.0-alpha.29`; `alpha.28` quedó para HU-35, fusionada antes).
+- Pruebas: +11 (676 en total, con HU-35). Capturas: `intereses` y `mis-intereses`.
+
+**Decisiones (con su porqué)**
+- **La maqueta no tiene la pantalla:** se armó con `AuthLayout` (como `Verificacion-lista`), `NeedChip` (`Necesidad-1`) y `SettingsRow`. El diseño lo revisa la usuaria.
+- **Va después de `Verificacion-lista`, no en su lugar:** no se le quitan pantallas a la maqueta (lineamiento 4).
+- **Se muestra una vez:** quien la salta la encuentra en `Ajustes`; la API no guarda si ya se vio.
+
+**Errores a evitar**
+- **`context.pop()` falla si la pantalla se abrió con `go`** (lo detectó la prueba que abre `/ajustes/intereses` directo): se usa `canPop()` y, si no, `go(AppRoutes.settings)`.
+- **Los datos de muestra de las capturas no tienen `laptops`:** sus slugs son `calculadoras`, `libros`, `tecnologia`, `laboratorio` y `dibujo`.
+- **Un paso nuevo después de verificar cambia dos pruebas viejas** (`auth_flow_test` y `visitor_flow_test`): ahora tocan "Ahora no".
 
 ## T49 — Ver productos recomendados (14-Nov-2026, SCRUM-58, HU-35)
 
