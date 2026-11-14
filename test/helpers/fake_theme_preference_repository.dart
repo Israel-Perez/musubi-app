@@ -25,6 +25,26 @@ class FakeThemePreferenceRepository implements ThemePreferenceRepository {
     return preference = theme;
   }
 
+  /// HU-35: "Recomendarte productos según tu actividad".
+  bool recommendations = true;
+  final recommendationSaves = <(bool, ThemePreference)>[];
+
+  @override
+  Future<bool> getRecommendations() async {
+    if (failLoad) throw _offline;
+    return recommendations;
+  }
+
+  @override
+  Future<bool> setRecommendations({
+    required bool enabled,
+    required ThemePreference theme,
+  }) async {
+    recommendationSaves.add((enabled, theme));
+    if (failSave) throw _offline;
+    return recommendations = enabled;
+  }
+
   static const _offline = ApiFailure(
     code: ApiFailure.networkOffline,
     message: 'No hay conexión. Revisa tu internet e inténtalo de nuevo.',

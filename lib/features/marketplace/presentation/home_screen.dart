@@ -30,6 +30,7 @@ import 'package:musubi_app/features/marketplace/presentation/filter_sheet.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/notifications/presentation/notification_providers.dart';
+import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 
 /// Inicio: la vitrina del campus, igual a la maqueta `Inicio-visitante` (sin
 /// cuenta) e `Inicio` (con sesion), con `Inicio-cargando` e `Inicio-error`
@@ -66,7 +67,10 @@ class HomeScreen extends ConsumerWidget {
         bottom: false,
         child: RefreshIndicator(
           color: context.musubi.brand,
-          onRefresh: () => ref.refresh(homeFeedProvider.future),
+          onRefresh: () {
+            ref.invalidate(forYouProvider);
+            return ref.refresh(homeFeedProvider.future);
+          },
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -205,6 +209,10 @@ class HomeScreen extends ConsumerWidget {
             onEmptyAction: () => unawaited(context.push(AppRoutes.need)),
           ),
         ),
+      ),
+      // HU-35: "Recomendado para ti" (ML); sin recomendaciones no se muestra.
+      SliverToBoxAdapter(
+        child: _ForYouSection(onSave: save, onOpen: open),
       ),
       if (feed.recent.isNotEmpty)
         SliverToBoxAdapter(
@@ -963,6 +971,54 @@ class _WantedSection extends ConsumerWidget {
             ],
           ),
       ],
+    );
+  }
+}
+
+/// "Recomendado para ti" (HU-35, titulo de la guia de estilo de la maqueta):
+/// lo que el modelo de ML de la API elige para la persona, en una fila
+/// horizontal. Es secundaria: cargando, con error o sin nada, no ocupa lugar.
+class _ForYouSection extends ConsumerWidget {
+  const new({required this.onSave, required this.onOpen});
+
+  final ValueChanged<ProductSummary> onSave;
+
+  /// Tocar un producto: su detalle (HU-11).
+  final ValueChanged<ProductSummary> onOpen;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(forYouProvider).value?.items ?? const [];
+    if (items.isEmpty) return const SizedBox.shrink();
+    final now = ref.watch(clockProvider)();
+    return Padding(
+      key: const Key('home-for-you'),
+      padding: const EdgeInsets.only(top: 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _SectionTitle(title: 'Recomendado para ti', size: 19),
+          Padding(
+            padding: const EdgeInsets.only(top: 14),
+            child: _HorizontalRow(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              children: [
+                for (final product in items)
+                  SizedBox(
+                    width: 156,
+                    child: RecentTile(
+                      key: Key('for-you-${product.id}'),
+                      product: product,
+                      now: now,
+                      onSave: onSave,
+                      onTap: () => onOpen(product),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

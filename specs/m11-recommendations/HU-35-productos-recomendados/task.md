@@ -1,17 +1,27 @@
-# HU-35 — Ver productos recomendados (tareas)
+# HU-35 — Ver productos recomendados (tareas, app)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Spec
+- **Estado:** ✅ Hecho (14-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-35)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Datos
+- **Prueba:** `recommendation_data_test.dart`.
+- **Estado:** ✅ Hecho.
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+## T3 — Inicio
+- **Prueba:** `home_screen_test.dart` → "Recomendado para ti (HU-35)".
+- **Estado:** ✅ Hecho.
 
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
+## T4 — Producto
+- **Prueba:** `product_screen_test.dart` → "Productos parecidos (HU-35)".
+- **Estado:** ✅ Hecho.
+
+## T5 — Privacidad
+- **Prueba:** `profile_flow_test.dart` → "Privacidad: recomendaciones (HU-35)".
+- **Estado:** ✅ Hecho.
+
+## T6 — Pruebas y capturas
+- **Estado:** ✅ Hecho: `flutter test` 665 · `inicio-para-ti` y `producto-parecidos`.
+
+## T7 — Prueba en el celular
+- **Qué:** con la API `0.5.0-alpha.28` desplegada, ver y guardar productos y revisar "Recomendado para ti"; apagarlo en Privacidad.
 - **Estado:** ⏳ Por hacer.

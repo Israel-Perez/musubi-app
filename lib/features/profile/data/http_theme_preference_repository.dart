@@ -4,7 +4,7 @@ import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/profile/domain/theme_preference.dart';
 import 'package:musubi_app/features/profile/domain/theme_preference_repository.dart';
 
-/// Cliente HTTP del contrato HU-54 de musubi-api. Requiere sesión.
+/// Cliente HTTP del contrato HU-54 (y HU-35) de musubi-api. Requiere sesión.
 class HttpThemePreferenceRepository implements ThemePreferenceRepository {
   new(this._dio);
 
@@ -25,6 +25,26 @@ class HttpThemePreferenceRepository implements ThemePreferenceRepository {
       data: {'theme': theme.value},
     );
     return ThemePreference.parse(response.data?['theme']);
+  });
+
+  @override
+  Future<bool> getRecommendations() => _guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.myPreferences,
+    );
+    return response.data?['recommendations'] as bool? ?? true;
+  });
+
+  @override
+  Future<bool> setRecommendations({
+    required bool enabled,
+    required ThemePreference theme,
+  }) => _guard(() async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      ApiPaths.myPreferences,
+      data: {'theme': theme.value, 'recommendations': enabled},
+    );
+    return response.data?['recommendations'] as bool? ?? enabled;
   });
 
   static Future<T> _guard<T>(Future<T> Function() call) async {

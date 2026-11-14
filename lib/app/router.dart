@@ -92,6 +92,17 @@ abstract final class AppRoutes {
   /// `Mis-solicitudes` (HU-13).
   static const myWanted = '/mis-solicitudes';
 
+  /// `Mis-solicitudes` con una solicitud elegida (HU-30: el aviso de una
+  /// oferta abre esa solicitud con sus ofertas). Sin id, la primera.
+  static String myWantedRequest(String id) => id.isEmpty
+      ? myWanted
+      : '$myWanted?solicitud=${Uri.encodeQueryComponent(id)}';
+
+  /// El tablero con "Yo tengo este producto" de una solicitud abierto (HU-19:
+  /// el aviso de una solicitud compatible).
+  static String wantedOffer(String id) =>
+      '$wanted?ofrecer=${Uri.encodeQueryComponent(id)}';
+
   /// "Editar solicitud" (HU-14): `Necesidad-1` con los datos de la elegida.
   static const editNeed = '/editar-solicitud';
 
@@ -254,7 +265,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.wanted,
-                builder: (context, state) => const WantedBoardScreen(),
+                builder: (context, state) => WantedBoardScreen(
+                  offerTo: state.uri.queryParameters['ofrecer'],
+                ),
               ),
             ],
           ),
@@ -275,7 +288,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               // Con la barra y Perfil activo, como `Mis-solicitudes` (HU-13).
               GoRoute(
                 path: AppRoutes.myWanted,
-                builder: (context, state) => const MyWantedScreen(),
+                builder: (context, state) => MyWantedScreen(
+                  initialId: state.uri.queryParameters['solicitud'],
+                ),
               ),
               GoRoute(
                 path: AppRoutes.favorites,
@@ -421,16 +436,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.recentProducts,
         builder: (context, state) => const RecentProductsScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.notifications,
-        // NOTE (HU-31): avisos de la app.
-        builder: (context, state) => const UpcomingSection(
-          title: 'Notificaciones',
-          message: 'Aquí verás ofertas, mensajes y avisos de tu campus.',
-          icon: MusubiIcons.bell,
-          canGoBack: true,
-        ),
       ),
       GoRoute(
         path: AppRoutes.signIn,

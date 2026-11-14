@@ -9,17 +9,21 @@ import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
+import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/notifications/domain/notification_models.dart';
 import 'package:musubi_app/features/notifications/presentation/notification_providers.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
+import '../../helpers/fake_listings_repository.dart';
 import '../../helpers/fake_notifications.dart';
 import '../../helpers/fake_orders.dart';
 import '../../helpers/fake_session_api.dart';
+import '../../helpers/fake_wanted.dart';
 import '../../helpers/in_memory_token_store.dart';
 
 final _now = DateTime.utc(2026, 11, 6, 21);
@@ -31,7 +35,9 @@ class _Harness {
     List<AppNotification>? items,
     FakePushService? push,
     bool asked = false,
+    FakeWantedRepository? wanted,
   }) : notifications = FakeNotificationRepository(items: items),
+       wanted = wanted ?? FakeWantedRepository(),
        push = push ?? FakePushService(),
        ask = FakePushAskStore(wasAsked: asked);
 
@@ -39,6 +45,7 @@ class _Harness {
   final FakeNotificationRepository notifications;
   final FakePushService push;
   final FakePushAskStore ask;
+  final FakeWantedRepository wanted;
   final chat = FakeChatRepository();
   late ProviderContainer container;
 
@@ -66,6 +73,10 @@ class _Harness {
           notificationRepositoryProvider.overrideWithValue(notifications),
           pushServiceProvider.overrideWithValue(push),
           pushAskStoreProvider.overrideWithValue(ask),
+          wantedRepositoryProvider.overrideWithValue(wanted),
+          listingsRepositoryProvider.overrideWithValue(
+            FakeListingsRepository(),
+          ),
         ],
         child: const MusubiApp(),
       ),
@@ -133,6 +144,112 @@ void main() {
 
       expect(h.notifications.read, ['n1']);
       expect(h.here, AppRoutes.order('o1'));
+    });
+
+    // HU-30: el aviso de una oferta abre esa solicitud con sus ofertas.
+    testWidgets('una oferta abre esa solicitud en Mis solicitudes', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        items: [
+          sampleNotification(
+            type: 'offer_received',
+            category: 'requests',
+            title: 'Alguien tiene lo que buscas',
+            target: NotificationTarget.wanted,
+            targetId: 'w2',
+          ),
+        ],
+        wanted: FakeWantedRepository(
+          mine: [
+            sampleWanted(),
+            sampleWanted(id: 'w2', title: 'Bata de laboratorio', offers: 1),
+          ],
+        ),
+      );
+      await h.open(AppRoutes.notifications);
+
+      await h.tap(find.byKey(const Key('notification-n1')));
+
+      expect(h.here, AppRoutes.myWanted);
+      expect(find.text('Bata de laboratorio'), findsWidgets);
+      expect(find.text('Calculadora Casio fx-991ES Plus'), findsNothing);
+    });
+
+    // HU-19: el aviso de una solicitud compatible abre "Yo tengo este
+    // producto".
+    testWidgets('una solicitud compatible abre Yo tengo este producto', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        items: [
+          sampleNotification(
+            type: 'wanted_match',
+            category: 'matches',
+            title: 'Hay una solicitud compatible con tu producto',
+            body:
+                'Fernanda busca Bata de laboratorio talla M. Tu publicación '
+                '«Bata blanca» coincide.',
+            target: NotificationTarget.wantedBoard,
+            targetId: 'r-bata',
+          ),
+        ],
+        wanted: FakeWantedRepository(board: [boardWanted()]),
+      );
+      await h.open(AppRoutes.notifications);
+
+      await h.tap(find.byKey(const Key('notification-n1')));
+
+      expect(h.here, AppRoutes.wanted);
+      expect(h.wanted.gets, ['r-bata']);
+      expect(find.byKey(const Key('offer-send')), findsOneWidget);
+    });
+
+    testWidgets('si la solicitud ya no esta activa, lo dice', (tester) async {
+      final h = _Harness(
+        tester,
+        items: [
+          sampleNotification(
+            type: 'wanted_match',
+            category: 'matches',
+            target: NotificationTarget.wantedBoard,
+            targetId: 'cerrada',
+          ),
+        ],
+      );
+      await h.open(AppRoutes.notifications);
+
+      await h.tap(find.byKey(const Key('notification-n1')));
+
+      expect(h.here, AppRoutes.wanted);
+      expect(find.text('Esta solicitud ya no está activa.'), findsOneWidget);
+      expect(find.byKey(const Key('offer-send')), findsNothing);
+    });
+
+    // HU-30: "Esta solicitud ya no está activa" no abre nada.
+    testWidgets('un aviso sin destino se queda en Notificaciones', (
+      tester,
+    ) async {
+      final h = _Harness(
+        tester,
+        items: [
+          sampleNotification(
+            type: 'offer_closed',
+            category: 'requests',
+            title: 'Esta solicitud ya no está activa',
+            target: NotificationTarget.unknown,
+            targetId: '',
+          ),
+        ],
+      );
+      await h.open(AppRoutes.notifications);
+
+      await h.tap(find.byKey(const Key('notification-n1')));
+
+      expect(h.here, AppRoutes.notifications);
+      expect(h.notifications.read, ['n1']);
     });
 
     testWidgets('Marcar leidas las marca todas', (tester) async {

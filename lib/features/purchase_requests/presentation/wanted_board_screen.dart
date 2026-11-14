@@ -36,7 +36,11 @@ import 'package:musubi_app/features/purchase_requests/presentation/wanted_provid
 /// y "Filtrar solicitudes"; sin sesion, `Se-busca-visitante` (HU-48), que
 /// pide la cuenta para ofrecer o pedir algo.
 class WantedBoardScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.offerTo});
+
+  /// HU-19: el aviso de una solicitud compatible abre aqui "Yo tengo este
+  /// producto" de esa solicitud.
+  final String? offerTo;
 
   @override
   ConsumerState<WantedBoardScreen> createState() => _WantedBoardScreenState();
@@ -47,6 +51,44 @@ class _WantedBoardScreenState extends ConsumerState<WantedBoardScreen> {
   final _searchFocus = FocusNode();
   bool _searching = false;
   Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _offerFromNotice(widget.offerTo);
+  }
+
+  @override
+  void didUpdateWidget(WantedBoardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.offerTo != oldWidget.offerTo) _offerFromNotice(widget.offerTo);
+  }
+
+  /// HU-19: trae la solicitud del aviso y abre "Yo tengo este producto". Si
+  /// ya no esta activa, lo dice y se queda en el tablero.
+  void _offerFromNotice(String? id) {
+    if (id == null || id.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final WantedRequest request;
+      try {
+        request = await ref.read(wantedRepositoryProvider).get(id);
+      } on ApiFailure catch (failure) {
+        showMusubiSnack(
+          messenger,
+          failure.code == 'wanted.not_found'
+              ? 'Esta solicitud ya no está activa.'
+              : failure.message,
+          icon: MusubiIcons.circleAlert,
+          tone: SnackTone.warn,
+        );
+        return;
+      }
+      if (!mounted) return;
+      await _offer(request, signedIn: true);
+    });
+  }
 
   @override
   void dispose() {

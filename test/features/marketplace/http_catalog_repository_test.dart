@@ -15,7 +15,12 @@ void main() {
   late FakeHttpAdapter adapter;
   late HttpCatalogRepository repository;
 
-  void serve({int status = 200, String? nextCursor, int wantedStatus = 200}) {
+  void serve({
+    int status = 200,
+    String? nextCursor,
+    int wantedStatus = 200,
+    int popularStatus = 200,
+  }) {
     adapter = FakeHttpAdapter(
       (options) async => switch (options.path) {
         ApiPaths.wanted when wantedStatus != 200 => FakeHttpAdapter.json({
@@ -43,8 +48,15 @@ void main() {
           ],
           'nextCursor': null,
         }),
+        ApiPaths.popularProducts when popularStatus != 200 =>
+          FakeHttpAdapter.json({
+            'title': 'No encontramos esta publicación',
+            'code': 'listings.product_not_found',
+          }, status: popularStatus),
         ApiPaths.popularProducts => FakeHttpAdapter.json({
-          'items': <Map<String, dynamic>>[],
+          'items': [
+            {'product': productJson(), 'views': 7},
+          ],
           'nextCursor': null,
           'total': 0,
         }),
@@ -80,7 +92,9 @@ void main() {
     expect(feed.recentTotal, 48);
     expect(feed.categories.map((c) => c.slug), ['calculadoras', 'electronica']);
     expect(feed.categories.first.photoUrl, 'asset:assets/products/casio.webp');
-    expect(feed.popular, isEmpty);
+    expect(feed.popular.map((p) => (p.title.split(' ').first, p.views)), [
+      ('Calculadora', 7),
+    ]);
     // "Se busca" sale del tablero (HU-15).
     expect(feed.wanted.map((w) => (w.id, w.category)), [
       ('r1', 'laboratorio'),
@@ -147,6 +161,16 @@ void main() {
     final feed = await repository.homeFeed(period: PopularPeriod.today);
 
     expect(feed.wanted, isEmpty);
+    expect(feed.recent, hasLength(1));
+  });
+
+  test('si el ranking falla, Inicio sale sin "Populares"', () async {
+    // La API anterior a HU-49 lee /products/popular como un detalle: 404.
+    serve(popularStatus: 404);
+
+    final feed = await repository.homeFeed(period: PopularPeriod.today);
+
+    expect(feed.popular, isEmpty);
     expect(feed.recent, hasLength(1));
   });
 

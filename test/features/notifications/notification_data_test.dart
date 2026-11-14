@@ -98,7 +98,22 @@ void main() {
     );
     expect(routeFor(push.target, push.targetId), AppRoutes.conversation('c1'));
     expect(routeFor(NotificationTarget.order, 'o1'), AppRoutes.order('o1'));
-    expect(routeFor(NotificationTarget.wanted, 'w1'), AppRoutes.myWanted);
+    // HU-30 y HU-19: la solicitud del aviso.
+    expect(
+      routeFor(NotificationTarget.wanted, 'w1'),
+      '/mis-solicitudes?solicitud=w1',
+    );
+    expect(routeFor(NotificationTarget.wanted, ''), AppRoutes.myWanted);
+    expect(
+      routeFor(NotificationTarget.wantedBoard, 'w1'),
+      '/se-busca?ofrecer=w1',
+    );
+    expect(routeFor(NotificationTarget.wantedBoard, ''), isNull);
+    expect(
+      NotificationTarget.parse('wanted_board'),
+      NotificationTarget.wantedBoard,
+    );
+    expect(NotificationTarget.parse('none'), NotificationTarget.unknown);
     expect(routeFor(NotificationTarget.unknown, 'x'), isNull);
     expect(PushOpen.fromData(const {}).target, NotificationTarget.unknown);
   });

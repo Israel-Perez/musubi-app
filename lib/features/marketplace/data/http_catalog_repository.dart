@@ -34,13 +34,11 @@ class HttpCatalogRepository implements CatalogRepository {
     CatalogFilter filter = const CatalogFilter(),
   }) async {
     try {
-      // "Se busca" nunca falla (ver _wanted); productos y categorias si.
+      // "Se busca" y "Populares" nunca fallan (ver _wanted y _popular);
+      // productos y categorias si.
       final wantedFuture = _wanted();
+      final popularFuture = _popular(period);
       final responses = await Future.wait([
-        _dio.get<Map<String, dynamic>>(
-          ApiPaths.popularProducts,
-          queryParameters: {'period': period.name, 'limit': 6},
-        ),
         _dio.get<Map<String, dynamic>>(
           ApiPaths.products,
           queryParameters: {
@@ -52,21 +50,11 @@ class HttpCatalogRepository implements CatalogRepository {
         _dio.get<List<dynamic>>(ApiPaths.categories),
       ]);
       final wanted = await wantedFuture;
-      final popularBody =
-          responses[0].data as Map<String, dynamic>? ?? const {};
-      final page = responses[1].data as Map<String, dynamic>? ?? const {};
-      final categories = responses[2].data as List<dynamic>? ?? const [];
+      final popular = await popularFuture;
+      final page = responses[0].data as Map<String, dynamic>? ?? const {};
+      final categories = responses[1].data as List<dynamic>? ?? const [];
       return HomeFeed(
-        popular: [
-          for (final item
-              in (popularBody['items'] as List<dynamic>? ?? const [])
-                  .cast<Map<String, dynamic>>())
-            productFromJson(
-              item['product'] as Map<String, dynamic>,
-              _apiBaseUrl,
-              views: (item['views'] as num).toInt(),
-            ),
-        ],
+        popular: popular,
         recent: [
           for (final item in page['items'] as List<dynamic>? ?? const [])
             productFromJson(item as Map<String, dynamic>, _apiBaseUrl),
@@ -95,6 +83,30 @@ class HttpCatalogRepository implements CatalogRepository {
             in (response.data?['items'] as List<dynamic>? ?? const [])
                 .cast<Map<String, dynamic>>())
           _wantedSummary(item),
+      ];
+    } on DioException {
+      return const [];
+    }
+  }
+
+  /// "Populares" de Inicio (HU-49). Tambien es secundaria: si el ranking no
+  /// responde (por ejemplo, una API anterior a `0.5.0-alpha.30`), Inicio sale
+  /// con su estado vacio y las demas secciones.
+  Future<List<ProductSummary>> _popular(PopularPeriod period) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiPaths.popularProducts,
+        queryParameters: {'period': period.name, 'limit': 6},
+      );
+      return [
+        for (final item
+            in (response.data?['items'] as List<dynamic>? ?? const [])
+                .cast<Map<String, dynamic>>())
+          productFromJson(
+            item['product'] as Map<String, dynamic>,
+            _apiBaseUrl,
+            views: (item['views'] as num).toInt(),
+          ),
       ];
     } on DioException {
       return const [];

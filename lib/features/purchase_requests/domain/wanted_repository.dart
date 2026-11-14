@@ -19,6 +19,10 @@ abstract interface class WantedRepository {
   /// "Mis solicitudes", de la mas nueva a la mas vieja.
   Future<List<WantedRequest>> mine();
 
+  /// Una solicitud (HU-19: la que abre el aviso de una solicitud compatible).
+  /// Si ya no esta activa, `wanted.not_found`.
+  Future<WantedRequest> get(String id);
+
   /// "Editar solicitud" (HU-14): todos los datos, con las reglas de publicar.
   Future<WantedRequest> update(String id, NewWanted request);
 

@@ -12,6 +12,7 @@ Musubi es un proyecto estudiantil del equipo Start-Up 10IDGS-G3 de la Universida
 - Tu campus, que se detecta por el dominio de tu correo.
 - Lo que publicas: productos, solicitudes, ofertas, fotos, mensajes y calificaciones.
 - Datos de tus pedidos y apartados.
+- Para recomendarte productos: qué publicaciones abriste, guardaste, le escribiste a quien vende o compraste. Se borra solo a los 90 días, y al instante si apagas "Recomendaciones según tu actividad" en Privacidad o eliminas tu cuenta.
 - Si vendes por transferencia: banco, titular y CLABE, guardada cifrada y que solo ve quien te compra después de confirmar el acuerdo.
 - Datos técnicos mínimos: tipo de dispositivo y fecha de tus sesiones.
 
@@ -30,7 +31,7 @@ Finalidades necesarias para usar Musubi:
 
 Finalidades adicionales, que puedes rechazar desde Ajustes sin perder el servicio:
 
-- Recomendarte productos según tu actividad.
+- Recomendarte productos según tu actividad ("Recomendaciones según tu actividad", en Privacidad).
 - Generar estadísticas agregadas y anónimas para mejorar la app.
 
 ## Inteligencia artificial

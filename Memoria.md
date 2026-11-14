@@ -17,12 +17,12 @@
 
 Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de mantenimiento en `AGENTS.md` §2. Las lecciones permanentes viven en `specs/phase-00-constitution/00-04-lessons-learned/spec.md`.
 
-## Estado actual (11-Nov-2026)
+## Estado actual (13-Nov-2026)
 
-- **En Google Play:** `0.9.0+11` a la prueba cerrada el 12-Nov-2026 (SCRUM-87): pedidos completos (HU-24), "Mis pedidos" (HU-25), perfil de quien vende (HU-05) y cambiar piezas (HU-50), con la API `0.5.0-alpha.23` en producción (`infra-up` del 12-Nov-2026). Sin datos nuevos en "Seguridad de los datos". Antes: `0.8.0+10` (11-Nov-2026) con HU-07, HU-08, HU-31 y HU-54.
+- **En Google Play:** `0.10.0+12` a la prueba cerrada el 13-Nov-2026 (SCRUM-87): calificar y "Opiniones" (HU-27, HU-45), "Vendidos" con mis ventas (HU-26) y avisos de solicitudes (HU-19, HU-30), con la API `0.5.0-alpha.27` en producción (`infra-up` del 13-Nov-2026). Las calificaciones caben en "Otro contenido generado por el usuario" (ya declarado). Antes: `0.9.0+11` (12-Nov-2026) con HU-24, HU-25, HU-05 y HU-50.
   - **Antes de enviar la revisión en Play Console:** "Seguridad de los datos" declara el ID de instalación de Firebase (`docs/play/README.md`).
   - Notas en `docs/play/whatsnew/whatsnew-es-419`; descripción y "Seguridad de los datos" en `docs/play/README.md` (**se pegan a mano en Play Console**). Desde `0.7.0` se declara que los mensajes se comparten con Google (Gemini) cuando alguien pide "Resumir acuerdo".
-- **API en producción:** `0.5.0-alpha.23`, esquema 19 (`infra-up` del 12-Nov-2026). La matriz está en `docs/versionado.md`.
+- **API en producción:** `0.5.0-alpha.27`, esquema 21 (`infra-up` del 13-Nov-2026). La matriz está en `docs/versionado.md`.
 - **HU-31 (push):** en `main` (#52), con la API `0.5.0-alpha.18`. Proyecto de Firebase `musubi-2a78e` listo y secreto `GOOGLE_SERVICES_JSON_B64` en el repo (11-Nov-2026).
 - **HU-24 (aceptar y actualizar pedidos):** app en `feature/SCRUM-43-aceptar-actualizar-pedidos`, con la API `0.5.0-alpha.20` (musubi-api #72). Ver T41.
 - **HU-05 (perfil del vendedor):** fila compartida `0.5.0-alpha.22` de musubi-api (`alpha.21` quedó para HU-50, fusionada antes) en `docs/versionado.md` (esquema 19, el de HU-24/#72; la API se rebasa antes del merge); la app está en `feature/SCRUM-34-perfil-publico` con T2–T6 hechos, versión `0.8.0+10` (se publica en el siguiente lote) y spec en “Borrador con evidencia” (ver T43); faltan el revisor y el PR.
@@ -33,6 +33,42 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-07 (Kazumi):** API y app en `main` (#50).
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T51 — Populares y recién publicados al actualizar con main (14-Nov-2026, SCRUM-69, HU-49, Alejandro)
+
+- **No compilaba:** al traer `main` se coló una ruta vieja de `/notificaciones` (`UpcomingSection` con `MusubiIcons` sin importar). Se quitó: `main` ya tiene `NotificationsScreen`.
+- **"Populares" es secundaria, como "Se busca":** `HttpCatalogRepository._popular` regresa `[]` si el ranking falla. La API en producción (`alpha.27`) lee `/products/popular` como un detalle y responde 404; antes eso tiraba todo `Inicio`.
+- Fila compartida `0.5.0-alpha.30` (API #96). `flutter test` 668, analyze 0.
+
+## T49 — Ver productos recomendados (14-Nov-2026, SCRUM-58, HU-35)
+
+**Qué se hizo**
+- `lib/features/recommendations/`: `RecommendationRepository` (`forYou`, `similar`), `HttpRecommendationRepository`, `forYouProvider` y `similarProductsProvider`. En modo demo, `EmptyRecommendationRepository`.
+- `Inicio` (con sesión): "Recomendado para ti" (título de la guía de estilo) entre "Se busca" y "Publicaciones recientes", con `RecentTile` de 156 de ancho en fila horizontal. Cargando, con error o vacía, no ocupa lugar.
+- `Producto`: "Productos parecidos" al final; "Ver parecidos" de una agotada baja hasta ellos (`Scrollable.ensureVisible`) o avisa si no hay.
+- `Privacidad` → "Tus datos": "Recomendaciones según tu actividad" (`recommendationsPreferenceProvider`). El aviso de privacidad ya la prometía como finalidad adicional rechazable; apagarla borra el historial en la API.
+- Pruebas: +13 (665 en total). Capturas: `inicio-para-ti` y `producto-parecidos`.
+
+**Decisiones (con su porqué)** (usuaria, 13-Nov-2026)
+- Inicio + Producto; señales: ver, favorito, chat y compra; 90 días.
+- **El interruptor manda el tema actual:** la API pide `theme` en cada `PUT /profiles/me/preferences`.
+- **Aviso de privacidad y Play:** se detalla qué se guarda y por cuánto; en el siguiente lote, "Personalización" en "Interacciones con la app".
+
+**Errores a evitar**
+- Una fila al final de un `SingleChildScrollView` no puede subir hasta arriba con `ensureVisible`: la prueba compara contra la posición anterior.
+- Si la sección de abajo no se mueve igual que el bloque con `Transform.translate`, queda un hueco.
+
+## T48 — Avisos de solicitudes (13-Nov-2026, SCRUM-41 y SCRUM-48, HU-19 y HU-30)
+
+**Qué se hizo**
+- HU-30: el aviso de una oferta (`target: wanted`) abre `Mis-solicitudes` con esa solicitud elegida, en su pestaña (`AppRoutes.myWantedRequest`, `?solicitud=`), con sus ofertas.
+- HU-19: destino nuevo `NotificationTarget.wantedBoard` (`wanted_board`): abre el tablero y "Yo tengo este producto" de esa solicitud (`AppRoutes.wantedOffer`, `?ofrecer=`; `WantedRepository.get`). Si ya no está activa: "Esta solicitud ya no está activa.".
+- Íconos de la maqueta: `wanted_match` con el megáfono de "Se busca" en rosa; `offer_closed` con la X en gris y sin destino (`none` → `unknown`).
+- Pruebas: +4 (652 en total). Capturas: `notificaciones` (con el aviso de la maqueta de las 7:40 p. m.) y `notificaciones-coincidencias`.
+
+**Decisiones (con su porqué)** (usuaria, 13-Nov-2026)
+- Las reglas de "compatible", el límite de 3 al día y avisar al cerrar viven en la API (`musubi-api:HU-19`, `HU-30`).
+- **Rutas con parámetro en lugar de pantallas nuevas:** la maqueta no tiene una pantalla de "una solicitud"; el tablero y `Mis-solicitudes` ya muestran todo.
 
 ## T47 — Consultar mi historial de ventas (13-Nov-2026, SCRUM-45, HU-26)
 
