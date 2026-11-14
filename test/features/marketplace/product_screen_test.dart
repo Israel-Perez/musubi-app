@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,6 +69,7 @@ Future<FakeCatalogRepository> _open(
   final profiles = FakeProfileRepository();
   profiles.publicProfiles['6716a0000000000000000001'] =
       FakeProfileRepository.publicSample;
+  profiles.publicProfiles[myId] = FakeProfileRepository.publicSample;
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -165,7 +168,9 @@ void main() {
     expect(find.text('Crea tu perfil'), findsOneWidget);
   });
 
-  testWidgets('mi publicación: la tarjeta lleva a mi Perfil (HU-05)', (
+  // SCRUM-114: desde Inicio (con la barra abajo), empujar `Perfil` encima del
+  // detalle reservaba dos veces la misma llave del Navigator: pantalla gris.
+  testWidgets('mi publicación, desde Inicio: abre "así te ven" sin errores', (
     tester,
   ) async {
     await _open(
@@ -173,13 +178,23 @@ void main() {
       detail: _detail(sellerId: myId),
       session: chatTokens(_now),
     );
+    final router = ProviderScope.containerOf(
+      tester.element(find.byType(MusubiApp)),
+    ).read(routerProvider)..go(AppRoutes.home);
+    await tester.pumpAndSettle();
+    unawaited(router.push(AppRoutes.product('p1')));
+    await tester.pumpAndSettle();
 
-    final card = find.bySemanticsLabel('Ver perfil de Valeria C.');
+    final card = find.bySemanticsLabel(RegExp('^Ver perfil de Valeria'));
     await tester.ensureVisible(card);
     await tester.tap(card);
     await tester.pumpAndSettle();
 
-    expect(find.text('Mis publicaciones'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.byType(SellerProfileScreen), findsOneWidget);
+    expect(find.text('Así te ven los demás'), findsOneWidget);
+    expect(find.byKey(const Key('seller-mensaje')), findsNothing);
+    expect(find.byKey(const Key('seller-seguir')), findsNothing);
   });
 
   testWidgets('el corazon guarda y quita el producto', (tester) async {

@@ -34,6 +34,13 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T52 — Bug: mi perfil desde una publicación mía (14-Nov-2026, SCRUM-114)
+
+- **Causa:** desde una publicación propia, `Producto` hacía `context.push(AppRoutes.profile)`. `Perfil` es una rama de la barra (`StatefulShellRoute`); si la barra ya estaba debajo (se llega desde Inicio o Mis productos), el Navigator reservaba dos veces la misma llave (`'!keyReservation.contains(key)'`) y en la versión de Play eso se ve como pantalla gris. La prueba vieja entraba al producto con `go` directo, sin la barra debajo, y por eso pasaba.
+- **Arreglo:** también la publicación propia abre `Perfil-vendedor` (`/vendedor/<mi id>`, fuera de la barra). Con mi id es "Así te ven los demás": sin "Seguir" ni "Mensaje", con mis publicaciones y mis "Opiniones". En `Perfil`, la calificación (`profile-ratings`) abre esa vista directo en "Opiniones" (`SellerProfileOrigin.myOpinions`).
+- **Error a evitar:** nunca `push` a una ruta de una rama de la barra desde una ruta de pantalla completa; usa `go` o una ruta fuera de la barra. Las pruebas de navegación deben llegar por el camino real (Inicio → detalle), no con `go` directo.
+- Pruebas: +3 y una reescrita (682). Captura `perfil-propio`.
+
 ## T51 — Populares y recién publicados al actualizar con main (14-Nov-2026, SCRUM-69, HU-49, Alejandro)
 
 - **No compilaba:** al traer `main` se coló una ruta vieja de `/notificaciones` (`UpcomingSection` con `MusubiIcons` sin importar). Se quitó: `main` ya tiene `NotificationsScreen`.
