@@ -19,6 +19,24 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T49 — Ver productos recomendados (14-Nov-2026, SCRUM-58, HU-35)
+
+**Qué se hizo**
+- `lib/features/recommendations/`: `RecommendationRepository` (`forYou`, `similar`), `HttpRecommendationRepository`, `forYouProvider` y `similarProductsProvider`. En modo demo, `EmptyRecommendationRepository`.
+- `Inicio` (con sesión): "Recomendado para ti" (título de la guía de estilo) entre "Se busca" y "Publicaciones recientes", con `RecentTile` de 156 de ancho en fila horizontal. Cargando, con error o vacía, no ocupa lugar.
+- `Producto`: "Productos parecidos" al final; "Ver parecidos" de una agotada baja hasta ellos (`Scrollable.ensureVisible`) o avisa si no hay.
+- `Privacidad` → "Tus datos": "Recomendaciones según tu actividad" (`recommendationsPreferenceProvider`). El aviso de privacidad ya la prometía como finalidad adicional rechazable; apagarla borra el historial en la API.
+- Pruebas: +13 (665 en total). Capturas: `inicio-para-ti` y `producto-parecidos`.
+
+**Decisiones (con su porqué)** (usuaria, 13-Nov-2026)
+- Inicio + Producto; señales: ver, favorito, chat y compra; 90 días.
+- **El interruptor manda el tema actual:** la API pide `theme` en cada `PUT /profiles/me/preferences`.
+- **Aviso de privacidad y Play:** se detalla qué se guarda y por cuánto; en el siguiente lote, "Personalización" en "Interacciones con la app".
+
+**Errores a evitar**
+- Una fila al final de un `SingleChildScrollView` no puede subir hasta arriba con `ensureVisible`: la prueba compara contra la posición anterior.
+- Si la sección de abajo no se mueve igual que el bloque con `Transform.translate`, queda un hueco.
+
 ## T48 — Avisos de solicitudes (13-Nov-2026, SCRUM-41 y SCRUM-48, HU-19 y HU-30)
 
 **Qué se hizo**

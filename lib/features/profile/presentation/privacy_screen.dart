@@ -18,6 +18,8 @@ import 'package:musubi_app/features/auth/presentation/delete_account.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/settings_row.dart';
+import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
+import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 import 'package:musubi_app/features/reputation/presentation/blocked_users_sheet.dart';
 import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 
@@ -111,6 +113,8 @@ class PrivacyScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
+                      const _RecommendationsRow(),
+                      Container(height: 1, color: c.divider),
                       const _BlockedUsersRow(),
                       Container(height: 1, color: c.divider),
                       SettingsRow(
@@ -127,6 +131,104 @@ class PrivacyScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Recomendaciones según tu actividad" (HU-35): la finalidad adicional del
+/// aviso de privacidad (HU-47) que se puede rechazar. Apagarla borra el
+/// historial que usa "Recomendado para ti".
+class _RecommendationsRow extends ConsumerWidget {
+  const new();
+
+  static const title = 'Recomendaciones según tu actividad';
+
+  Future<void> _toggle(BuildContext context, WidgetRef ref, bool on) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(recommendationsPreferenceProvider.notifier)
+          .set(enabled: on);
+      ref.invalidate(forYouProvider);
+      showMusubiSnack(
+        messenger,
+        on
+            ? 'Te recomendaremos productos según lo que ves y guardas'
+            : 'Borramos tu historial y ya no lo usamos para recomendarte',
+        icon: on ? MusubiIcons.check : MusubiIcons.bellOff,
+        tone: SnackTone.info,
+        duration: const Duration(milliseconds: 2200),
+      );
+    } on ApiFailure catch (failure) {
+      showMusubiSnack(
+        messenger,
+        'No pudimos guardar el cambio. ${failure.message}',
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.musubi;
+    final enabled = ref.watch(recommendationsPreferenceProvider).value ?? true;
+    return Container(
+      constraints: const BoxConstraints(minHeight: 60),
+      padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+      child: Row(
+        spacing: 12,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Center(
+              child: MusubiIcon(
+                MusubiIcons.sparkle,
+                size: 20,
+                strokeWidth: 1.9,
+                color: c.textPrimary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
+              children: [
+                Text(
+                  title,
+                  style: MusubiType.style(
+                    15,
+                    weight: FontWeight.w700,
+                    line: 20,
+                    color: c.textPrimary,
+                  ),
+                ),
+                Text(
+                  'Usamos lo que ves, guardas y compras en Musubi',
+                  style: MusubiType.style(
+                    12.5,
+                    line: 17,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          MusubiSwitch(
+            key: const Key('privacy-recommendations'),
+            value: enabled,
+            semanticLabel: title,
+            knobColor: c.background,
+            onChanged: (on) => _toggle(context, ref, on),
           ),
         ],
       ),

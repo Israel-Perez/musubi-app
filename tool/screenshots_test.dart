@@ -51,6 +51,7 @@ import 'package:musubi_app/features/profile/presentation/theme_preference_provid
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
+import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
@@ -65,6 +66,7 @@ import '../test/helpers/fake_listings_repository.dart';
 import '../test/helpers/fake_notifications.dart';
 import '../test/helpers/fake_orders.dart';
 import '../test/helpers/fake_profile_repository.dart';
+import '../test/helpers/fake_recommendations.dart';
 import '../test/helpers/fake_reputation.dart';
 import '../test/helpers/fake_session_api.dart';
 import '../test/helpers/fake_status_repository.dart';
@@ -186,6 +188,74 @@ final _notices = FakeNotificationRepository(
       createdAt: DateTime.utc(2026, 10, 5, 1),
     ),
   ],
+);
+
+/// HU-35: lo que el modelo de ML le recomienda a Ana y los parecidos de la
+/// Casio (fotos de la maqueta).
+ProductSummary _rec(
+  String id,
+  String title,
+  int pesos,
+  String photo,
+  String seller,
+  int hoursAgo,
+) => ProductSummary(
+  id: id,
+  title: title,
+  priceCents: pesos * 100,
+  stock: 1,
+  photoUrl: 'asset:assets/products/$photo.webp',
+  sellerName: seller,
+  publishedAt: _now.subtract(Duration(hours: hoursAgo)),
+);
+
+final _recommendations = FakeRecommendationRepository(
+  forYouItems: [
+    _rec(
+      'casio-lax',
+      'Calculadora Casio fx-991LA X',
+      520,
+      'casio-lax',
+      'Luis M.',
+      3,
+    ),
+    _rec(
+      'stewart',
+      'Cálculo de una variable, Stewart 8a ed.',
+      380,
+      'calculo',
+      'Diego H.',
+      1,
+    ),
+    _rec(
+      'bata-s',
+      'Bata de laboratorio manga larga, talla S',
+      220,
+      'bata',
+      'Paola N.',
+      2,
+    ),
+  ],
+  similarItems: {
+    'casio-991es': [
+      _rec(
+        'casio-lax',
+        'Calculadora Casio fx-991LA X',
+        520,
+        'casio-lax',
+        'Luis M.',
+        3,
+      ),
+      _rec(
+        'stewart',
+        'Cálculo de una variable, Stewart 8a ed.',
+        380,
+        'calculo',
+        'Diego H.',
+        1,
+      ),
+    ],
+  },
 );
 
 /// La IA de las escenas (HU-32/33/34); cada escena la ajusta.
@@ -611,6 +681,9 @@ class _Shot {
           overrides: [
             brandSplashEnabledProvider.overrideWithValue(false),
             catalogRepositoryProvider.overrideWithValue(catalog),
+            recommendationRepositoryProvider.overrideWithValue(
+              _recommendations,
+            ),
             favoritesRepositoryProvider.overrideWithValue(
               FakeFavoritesRepository(
                 favorites: Favorites(items: _favoriteItems),
@@ -1093,6 +1166,15 @@ final Map<String, (bool, _Scene)> _scenes = {
   'aviso-privacidad': (false, (s) => s.go(AppRoutes.privacy)),
   'inicio': (true, (s) async {}),
   'inicio-scroll': (true, (s) => s.scroll(5000)),
+  // HU-35: "Recomendado para ti" y "Productos parecidos".
+  'inicio-para-ti': (true, (s) => s.scroll(560)),
+  'producto-parecidos': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.product('casio-991es'));
+      await s.scroll(5000);
+    },
+  ),
   'perfil': (true, (s) => s.tap(find.bySemanticsLabel('Perfil'))),
   'favoritos': (true, (s) => s.go(AppRoutes.favorites)),
   'ajustes': (true, (s) => s.go(AppRoutes.settings)),

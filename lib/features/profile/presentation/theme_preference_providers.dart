@@ -48,3 +48,42 @@ ThemeMode materialThemeMode(ThemePreference preference) => switch (preference) {
   ThemePreference.light => ThemeMode.light,
   ThemePreference.dark => ThemeMode.dark,
 };
+
+/// HU-35: "Recomendarte productos según tu actividad" (finalidad adicional del
+/// aviso de privacidad, se rechaza en `Privacidad`). Visitante: si.
+final recommendationsPreferenceProvider =
+    AsyncNotifierProvider<RecommendationsPreferenceController, bool>(
+      RecommendationsPreferenceController.new,
+      retry: (_, _) => null,
+    );
+
+class RecommendationsPreferenceController extends AsyncNotifier<bool> {
+  ThemePreferenceRepository get _repository =>
+      ref.read(themePreferenceRepositoryProvider);
+
+  @override
+  Future<bool> build() {
+    final signedIn = ref.watch(
+      sessionControllerProvider.select((session) => session is SignedIn),
+    );
+    return signedIn ? _repository.getRecommendations() : Future.value(true);
+  }
+
+  /// Cambia la preferencia; si falla, vuelve al valor anterior y avisa.
+  Future<void> set({required bool enabled}) async {
+    final previous = state.value ?? true;
+    state = AsyncData(enabled);
+    try {
+      state = AsyncData(
+        await _repository.setRecommendations(
+          enabled: enabled,
+          theme:
+              ref.read(themePreferenceProvider).value ?? ThemePreference.system,
+        ),
+      );
+    } on Object {
+      state = AsyncData(previous);
+      rethrow;
+    }
+  }
+}

@@ -27,6 +27,7 @@ import 'package:musubi_app/features/marketplace/presentation/home_providers.dart
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
+import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 
 /// Detalle de una publicacion (HU-11). Publico, como la vitrina (HU-48).
 final FutureProviderFamily<ProductDetail, String> productDetailProvider =
@@ -51,7 +52,9 @@ ProductSummary _summaryOf(ProductDetail detail) => ProductSummary(
 /// descripcion, quien vende y "Mensaje" / "Comprar" hacia el chat (HU-20).
 ///
 /// NOTE (HU-52): "Apartalo 24 h" y "Apartar".
-/// NOTE (HU-51): "Compara antes de comprar" y "Ver parecidos".
+/// NOTE (HU-51): "Compara antes de comprar".
+/// HU-35: "Productos parecidos" al final (ML de la API) y "Ver parecidos" de
+/// una agotada baja hasta ellos.
 /// NOTE (HU-53): "Guardar" y "Avisame".
 /// NOTE (HU-23): "Comprar" abre el chat (como la maqueta) hasta los pedidos.
 class ProductScreen extends ConsumerStatefulWidget {
@@ -68,7 +71,27 @@ class ProductScreen extends ConsumerStatefulWidget {
 
 class _ProductScreenState extends ConsumerState<ProductScreen> {
   final _pages = PageController();
+  final GlobalKey _similarKey = GlobalKey();
   int _page = 0;
+
+  /// "Ver parecidos" (HU-35): baja a la seccion; si no hay, lo dice.
+  void _showSimilar() {
+    final target = _similarKey.currentContext;
+    if (target == null) {
+      showMusubiSnack(
+        ScaffoldMessenger.of(context),
+        'Aún no encontramos productos parecidos.',
+        icon: MusubiIcons.search,
+        tone: SnackTone.info,
+      );
+      return;
+    }
+    Scrollable.ensureVisible(
+      target,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   void dispose() {
@@ -156,7 +179,14 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
               signedIn ? _soon('Apartar') : _gate(AccountGateMotive.buy),
           onNotify: () =>
               signedIn ? _soon('El aviso') : _gate(AccountGateMotive.save),
-          onSimilar: () => _soon('Ver parecidos'),
+          onSimilar: _showSimilar,
+          similarKey: _similarKey,
+          onOpenSimilar: (product) => unawaited(
+            context.push(AppRoutes.product(product.id), extra: product),
+          ),
+          onSaveSimilar: (product) => signedIn
+              ? unawaited(toggleFavorite(context, ref, product))
+              : _gate(AccountGateMotive.save),
           onSeller: () {
             final sellerId = value.sellerId;
             if (sellerId == null) return;
@@ -268,6 +298,9 @@ class _Loaded extends ConsumerWidget {
     required this.onMessage,
     required this.onBuy,
     required this.onMine,
+    required this.similarKey,
+    required this.onOpenSimilar,
+    required this.onSaveSimilar,
   });
 
   final ProductDetail detail;
@@ -289,6 +322,11 @@ class _Loaded extends ConsumerWidget {
   final VoidCallback onMessage;
   final VoidCallback onBuy;
   final VoidCallback onMine;
+
+  /// La seccion "Productos parecidos" (HU-35), para que "Ver parecidos" baje.
+  final GlobalKey similarKey;
+  final ValueChanged<ProductSummary> onOpenSimilar;
+  final ValueChanged<ProductSummary> onSaveSimilar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -460,6 +498,17 @@ class _Loaded extends ConsumerWidget {
                         const SizedBox(height: 24),
                       ],
                     ),
+                  ),
+                ),
+                // Sube lo mismo que el bloque de arriba (sin hueco).
+                Transform.translate(
+                  offset: const Offset(0, -22),
+                  child: _SimilarSection(
+                    sectionKey: similarKey,
+                    productId: detail.id,
+                    now: now,
+                    onOpen: onOpenSimilar,
+                    onSave: onSaveSimilar,
                   ),
                 ),
               ],
@@ -904,6 +953,79 @@ class _ReserveBanner extends StatelessWidget {
 
 /// Quien vende: iniciales, nombre verificado, calificacion, ventas y carrera.
 /// Sin sesion la API no lo dice (RNF-05): invita a crear la cuenta.
+/// "Productos parecidos" (HU-35): los vecinos mas cercanos que elige el modelo
+/// de ML de la API, en una fila horizontal. Sin parecidos no se muestra.
+class _SimilarSection extends ConsumerWidget {
+  const new({
+    required this.sectionKey,
+    required this.productId,
+    required this.now,
+    required this.onOpen,
+    required this.onSave,
+  });
+
+  final GlobalKey sectionKey;
+  final String productId;
+  final DateTime now;
+  final ValueChanged<ProductSummary> onOpen;
+  final ValueChanged<ProductSummary> onSave;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.musubi;
+    final items =
+        ref.watch(similarProductsProvider(productId)).value?.items ?? const [];
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      key: sectionKey,
+      padding: const EdgeInsets.only(bottom: 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 14,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Semantics(
+              header: true,
+              child: Text(
+                'Productos parecidos',
+                style: MusubiType.style(
+                  19,
+                  weight: FontWeight.w800,
+                  line: 24,
+                  em: -0.02,
+                  color: c.textPrimary,
+                ),
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: MusubiSizes.space3,
+              children: [
+                for (final product in items)
+                  SizedBox(
+                    width: 156,
+                    child: RecentTile(
+                      key: Key('similar-${product.id}'),
+                      product: product,
+                      now: now,
+                      onSave: onSave,
+                      onTap: () => onOpen(product),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SellerCard extends StatelessWidget {
   const new({
     required this.name,
