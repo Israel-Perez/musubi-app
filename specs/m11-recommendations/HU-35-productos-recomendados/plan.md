@@ -1,10 +1,12 @@
-# plan.md — HU-35 Ver productos recomendados (borrador)
+# HU-35 — Ver productos recomendados (plan, app)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
+1. **T1 — Spec.** ✅
+2. **T2 — Datos:** repositorio, providers y fake. ✅
+3. **T3 — Inicio:** "Recomendado para ti". ✅
+4. **T4 — Producto:** "Productos parecidos" y "Ver parecidos". ✅
+5. **T5 — Privacidad:** el interruptor y el aviso de privacidad. ✅
+6. **T6 — Pruebas y capturas.** ✅
 
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+**Decisiones:**
+- **D1 · Las secciones son secundarias:** si la API no responde, Inicio y Producto siguen iguales (sin mensaje de error).
+- **D2 · Mismo estilo que "Publicaciones recientes":** `RecentTile` en fila horizontal; la maqueta no dibuja la sección y la guía de estilo da el título.

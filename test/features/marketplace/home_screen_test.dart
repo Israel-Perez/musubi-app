@@ -15,9 +15,11 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_favorites_repository.dart';
+import '../../helpers/fake_recommendations.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/in_memory_token_store.dart';
 
@@ -41,6 +43,7 @@ Future<void> _open(
   required CatalogRepository catalog,
   SessionTokens? session,
   FakeFavoritesRepository? favorites,
+  FakeRecommendationRepository? recommendations,
   bool settle = true,
 }) async {
   await tester.pumpWidget(
@@ -55,6 +58,9 @@ Future<void> _open(
         clockProvider.overrideWithValue(() => _now),
         tokenStoreProvider.overrideWithValue(InMemoryTokenStore(session)),
         initialSessionTokensProvider.overrideWithValue(session),
+        recommendationRepositoryProvider.overrideWithValue(
+          recommendations ?? FakeRecommendationRepository(),
+        ),
       ],
       child: const MusubiApp(),
     ),
@@ -327,6 +333,81 @@ void main() {
       expect(find.text('Sin conexión a internet'), findsOneWidget);
       expect(find.text('Error de conexión'), findsOneWidget);
       expect(find.text('Reintentar'), findsOneWidget);
+    });
+  });
+
+  // HU-35: "Recomendado para ti" (ML de la API).
+  group('Recomendado para ti (HU-35)', () {
+    const casio = ProductSummary(
+      id: 'r1',
+      title: 'Calculadora Casio fx-82',
+      priceCents: 28000,
+      stock: 1,
+      sellerName: 'Diego H.',
+    );
+    const bata = ProductSummary(
+      id: 'r2',
+      title: 'Bata de laboratorio talla M',
+      priceCents: 25000,
+      stock: 1,
+    );
+
+    testWidgets('con sesion muestra lo que recomienda el modelo', (
+      tester,
+    ) async {
+      final recommendations = FakeRecommendationRepository(
+        forYouItems: const [casio, bata],
+      );
+      await _open(
+        tester,
+        catalog: FakeCatalogRepository([sampleFeed]),
+        session: _session(),
+        recommendations: recommendations,
+      );
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('home-for-you')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(find.text('Recomendado para ti'), findsOneWidget);
+      expect(find.byKey(const Key('for-you-r1')), findsOneWidget);
+      expect(find.text('Calculadora Casio fx-82'), findsOneWidget);
+      expect(recommendations.forYouCalls, 1);
+    });
+
+    testWidgets('sin recomendaciones o si fallan, no ocupa lugar', (
+      tester,
+    ) async {
+      final recommendations = FakeRecommendationRepository()
+        ..failure = const ApiFailure(
+          code: ApiFailure.serverError,
+          message: 'Algo salió mal.',
+        );
+      await _open(
+        tester,
+        catalog: FakeCatalogRepository([sampleFeed]),
+        session: _session(),
+        recommendations: recommendations,
+      );
+
+      expect(find.text('Recomendado para ti'), findsNothing);
+      expect(find.text('Algo salió mal.'), findsNothing);
+    });
+
+    testWidgets('el visitante no la ve ni la pide', (tester) async {
+      final recommendations = FakeRecommendationRepository(
+        forYouItems: const [casio],
+      );
+      await _open(
+        tester,
+        catalog: FakeCatalogRepository([sampleFeed]),
+        recommendations: recommendations,
+      );
+
+      expect(find.text('Recomendado para ti'), findsNothing);
+      expect(recommendations.forYouCalls, 0);
     });
   });
 }
