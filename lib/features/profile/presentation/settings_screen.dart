@@ -16,6 +16,7 @@ import 'package:musubi_app/features/auth/presentation/sign_out_button.dart';
 import 'package:musubi_app/features/profile/presentation/change_password_sheet.dart';
 import 'package:musubi_app/features/profile/presentation/dark_mode_row.dart';
 import 'package:musubi_app/features/profile/presentation/email_sheet.dart';
+import 'package:musubi_app/features/profile/presentation/interests_providers.dart';
 import 'package:musubi_app/features/profile/presentation/personal_data_sheet.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
@@ -128,7 +129,24 @@ class SettingsScreen extends ConsumerWidget {
                   ],
                 ),
                 const _SectionLabel('Preferencias'),
-                const _Group(children: [DarkModeRow()]),
+                _Group(
+                  children: [
+                    const DarkModeRow(),
+                    SettingsRow(
+                      key: const Key('settings-interests'),
+                      icon: MusubiIcons.heart,
+                      title: 'Mis intereses',
+                      value: switch (ref.watch(myInterestsProvider)) {
+                        AsyncData(value: []) => 'Sin elegir',
+                        AsyncData(value: [_]) => '1 categoría',
+                        AsyncData(:final value) => '${value.length} categorías',
+                        _ => null,
+                      },
+                      onTap: () =>
+                          unawaited(context.push(AppRoutes.settingsInterests)),
+                    ),
+                  ],
+                ),
                 const _SectionLabel('Privacidad y seguridad'),
                 _Group(
                   children: [
