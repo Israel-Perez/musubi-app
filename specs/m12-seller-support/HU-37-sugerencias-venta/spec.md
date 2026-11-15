@@ -1,49 +1,35 @@
 # HU-37 — Recibir sugerencias para vender (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-37 / SCRUM-60 / Sprint 5 (23 nov – 4 dic 2026) / M-12 / [musubi-api:HU-37](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m12-seller-support/HU-37-sugerencias-venta)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-37 / SCRUM-60 / Sprint 5 (14 nov – 1 dic 2026) / M-12 / [musubi-api:HU-37](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m12-seller-support/HU-37-sugerencias-venta)
 
 ## Contexto
 Jira (SCRUM-60): Como **vendedor**, quiero **recibir sugerencias como revisar el precio, mejorar la descripción o actualizar las fotografías**, para **aumentar la probabilidad de venta**.
 
-- Maqueta: sin pantalla propia. Se diseña con la guía de estilo de la maqueta; el lineamiento 4 permite agregar, nunca quitar.
+- Maqueta: sin pantalla propia (el aviso dice "Te damos ideas para venderla"); se agrega la hoja "Ideas para vender más rápido" con las piezas de la maqueta (lineamiento 4).
 - Trazabilidad: RF-52 · CU-23 · RN-38.
-- Origen: Propuesta inicial §11.
+- Decisiones de la usuaria (15-Nov-2026): una tarjeta por producto (hasta 3 y "Ver los N"); las ideas en una hoja al tocar la tarjeta; el aviso una sola vez, a las 3 semanas. Los 21 días salen de la maqueta ("2 productos con más de 3 semanas").
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-36`.
+**Depende de:** [musubi-api:HU-37](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m12-seller-support/HU-37-sugerencias-venta), `HU-08` (`Mis-productos`), `HU-16` (ofertas), `HU-31` (avisos). Se entrega con HU-36, HU-37 y HU-38.
 
 ## Requisitos
-1. Se muestran sugerencias predefinidas: revisar el precio, mejorar la descripción o actualizar las fotografías.
-2. Si el precio está por encima de los presupuestos de solicitudes similares, se sugiere revisarlo.
-3. Las sugerencias son orientativas: el sistema nunca cambia precios ni publicaciones por su cuenta (RN-38).
-4. Si el vendedor edita la publicación, el sistema vuelve a buscar coincidencias.
-
-RNF que aplican: se confirman al detallar.
+1. **R1 · Hoja:** al tocar una tarjeta del panel, "Ideas para vender más rápido" con las tres ideas de la API (primero las que aplican, con el icono en color de advertencia).
+2. **R2 · Orientativas (RN-38):** "Son ideas: tú decides qué cambiar. Musubi nunca cambia tu publicación por su cuenta."
+3. **R3 · Editar:** "Editar publicación" abre `Vender-2…4` con el borrador de edición (HU-07); al guardar, la API vuelve a buscar coincidencias.
 
 ## Diseño
-- Feature `lib/features/seller_support/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-37. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-37)` (skill `deferred-scope-fakes`).
+- `lib/features/seller_support/`: `SellerSupportRepository` / `HttpSellerSupportRepository`, `sellerSupportRepositoryProvider`, `slowListingsProvider`, `productDemandProvider`; `SlowListingsPanel`, `showSalesTipsSheet`, `showDemandSheet` y `PublishedDemandCard`.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-37, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Filas `GET /api/v1/products/mine/slow` y `GET /api/v1/products/{id}/demand` de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (`ApiPaths.slowProducts` y `ApiPaths.productDemand`).
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- Widget tests de las pantallas nuevas (sin escena de maqueta).
+- `test/features/seller_support/slow_listings_test.dart` (pantallas, hojas, `Vender-listo`, el aviso y `HttpSellerSupportRepository`); fake en `test/helpers/fake_seller_support.dart`.
 
 ## Criterios
-- [ ] Se muestran sugerencias predefinidas: revisar el precio, mejorar la descripción o actualizar las fotografías.
-- [ ] Si el precio está por encima de los presupuestos de solicitudes similares, se sugiere revisarlo.
-- [ ] Las sugerencias son orientativas: el sistema nunca cambia precios ni publicaciones por su cuenta (RN-38).
-- [ ] Si el vendedor edita la publicación, el sistema vuelve a buscar coincidencias.
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
-
-## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- [x] Las tres ideas y "Editar publicación" → `slow_listings_test.dart` (grupo HU-37) y captura `ideas-vender`.
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 29-Oct-2026 (borrador ligero) · 15-Nov-2026 (detallado e implementado, junto con HU-36, HU-37 y HU-38)

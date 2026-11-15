@@ -134,6 +134,15 @@ abstract final class ApiPaths {
   /// sesion.
   static String productSimilar(String id) => '${product(id)}/similar';
 
+  /// `GET /api/v1/products/mine/slow` — fila "M-12" (specs `musubi-api:HU-36`,
+  /// `HU-37` y `HU-38`): "Llevan tiempo sin venderse", con sesion.
+  static const slowProducts = '/api/v1/products/mine/slow';
+
+  /// `GET /api/v1/products/{id}/demand` — fila "M-12" (spec
+  /// `musubi-api:HU-38`): "Quienes la buscan"; solo el dueno (404 para otra
+  /// persona).
+  static String productDemand(String id) => '${product(id)}/demand';
+
   /// `GET /api/v1/recommendations` — fila "M-11" (spec `musubi-api:HU-35`):
   /// "Recomendado para ti", con sesion.
   static const recommendations = '/api/v1/recommendations';

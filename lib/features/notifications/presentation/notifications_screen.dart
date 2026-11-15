@@ -323,6 +323,12 @@ class _Row extends StatelessWidget {
       'product_match' => (MusubiIcons.search, c.brandSoft, c.brand),
       // HU-12: "¡Ya apareció lo que buscabas!" ("Avísame cuando aparezca").
       'saved_search_match' => (MusubiIcons.bell, c.brandSoft, c.brand),
+      // HU-36: mi publicacion lleva 3 semanas sin venderse.
+      'slow_listing' => (
+        MusubiIcons.trendingDown,
+        c.warningSoft,
+        c.warningText,
+      ),
       // HU-30: la solicitud a la que ofreciste ya no esta activa.
       'offer_closed' => (MusubiIcons.circleX, c.surface, c.textSecondary),
       _ => (MusubiIcons.bell, c.surface, c.textPrimary),
