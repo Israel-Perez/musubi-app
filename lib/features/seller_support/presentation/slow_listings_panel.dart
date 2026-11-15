@@ -44,6 +44,10 @@ String? shortName(String title) {
 String _students(int people, {required String one, required String many}) =>
     people == 1 ? '1 estudiante $one' : '$people estudiantes $many';
 
+/// "Editar publicación" (HU-37): con [ideas], con el nombre y la descripción de
+/// la IA ya escritos.
+typedef EditListing = void Function(OwnListing listing, [ListingIdeas? ideas]);
+
 /// "Llevan tiempo sin venderse" (maqueta `Mis-productos`, HU-36/37/38;
 /// decision de la usuaria del 15-Nov-2026: una tarjeta por producto). Al
 /// tocar una tarjeta, "Ideas para vender más rápido" (HU-37); al tocar
@@ -54,7 +58,7 @@ class SlowListingsPanel extends StatefulWidget {
   final SlowListings slow;
 
   /// "Editar publicación" desde las ideas.
-  final ValueChanged<OwnListing> onEdit;
+  final EditListing onEdit;
 
   @override
   State<SlowListingsPanel> createState() => _SlowListingsPanelState();
@@ -383,23 +387,58 @@ class _DemandLink extends StatelessWidget {
 Future<void> showSalesTipsSheet(
   BuildContext context,
   SlowListing item, {
-  required ValueChanged<OwnListing> onEdit,
+  required EditListing onEdit,
 }) async {
-  final edit = await showMusubiPanel<bool>(
+  final edit = await showMusubiPanel<({ListingIdeas? ideas})>(
     context,
     builder: (context) => _TipsPanel(item: item),
   );
-  if (edit ?? false) onEdit(item.listing);
+  if (edit != null) onEdit(item.listing, edit.ideas);
 }
 
-class _TipsPanel extends StatelessWidget {
+class _TipsPanel extends ConsumerStatefulWidget {
   const new({required this.item});
 
   final SlowListing item;
 
   @override
+  ConsumerState<_TipsPanel> createState() => _TipsPanelState();
+}
+
+class _TipsPanelState extends ConsumerState<_TipsPanel> {
+  bool _asking = false;
+  ListingIdeas? _ideas;
+  String? _error;
+
+  /// "Proponer con IA": solo a peticion (RNF-06). Si falla, quedan las ideas
+  /// predefinidas y el mensaje de la API (RNF-15).
+  Future<void> _ask() async {
+    setState(() {
+      _asking = true;
+      _error = null;
+    });
+    try {
+      final ideas = await ref
+          .read(sellerSupportRepositoryProvider)
+          .ideas(widget.item.listing.product.id);
+      if (!mounted) return;
+      setState(() {
+        _asking = false;
+        _ideas = ideas;
+      });
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _asking = false;
+        _error = failure.message;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final c = context.musubi;
+    final item = widget.item;
     return MusubiPanel(
       key: const Key('slow-tips'),
       title: 'Ideas para vender más rápido',
@@ -409,7 +448,7 @@ class _TipsPanel extends StatelessWidget {
           key: const Key('slow-tips-edit'),
           label: 'Editar publicación',
           icon: MusubiIcons.pencil,
-          onPressed: () => Navigator.of(context).pop(true),
+          onPressed: () => Navigator.of(context).pop((ideas: null)),
         ),
       ],
       child: Column(
@@ -422,6 +461,13 @@ class _TipsPanel extends StatelessWidget {
             style: MusubiType.style(14, line: 20, color: c.textSecondary),
           ),
           for (final tip in item.tips) _TipRow(tip: tip),
+          _AiIdeas(
+            asking: _asking,
+            ideas: _ideas,
+            error: _error,
+            onAsk: () => unawaited(_ask()),
+            onUse: (ideas) => Navigator.of(context).pop((ideas: ideas)),
+          ),
           Text(
             'Son ideas: tú decides qué cambiar. Musubi nunca cambia tu '
             'publicación por su cuenta.',
@@ -431,6 +477,172 @@ class _TipsPanel extends StatelessWidget {
               line: 17,
               color: c.textSecondary,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Nombre y descripción con IA" (HU-37): pide la propuesta, la muestra y
+/// "Usar en mi publicación" abre la edición con ella (RN-38: quien vende
+/// guarda).
+class _AiIdeas extends StatelessWidget {
+  const new({
+    required this.asking,
+    required this.ideas,
+    required this.error,
+    required this.onAsk,
+    required this.onUse,
+  });
+
+  final bool asking;
+  final ListingIdeas? ideas;
+  final String? error;
+  final VoidCallback onAsk;
+  final ValueChanged<ListingIdeas> onUse;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final proposal = ideas;
+    return Container(
+      key: const Key('slow-ai'),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 12,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: c.inverse,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                alignment: Alignment.center,
+                child: MusubiIcon(
+                  MusubiIcons.sparkle,
+                  size: 18,
+                  color: c.onBrand,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    Text(
+                      'Nombre y descripción con IA',
+                      style: MusubiType.style(
+                        15,
+                        weight: FontWeight.w800,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      proposal == null
+                          ? 'Te proponemos un texto más claro con lo que '
+                                'buscan los demás. Solo enviamos tu '
+                                'publicación, sin tu nombre ni tus datos.'
+                          : 'Revísalo antes de usarlo: tú decides qué se '
+                                'queda.',
+                      style: MusubiType.style(
+                        13.5,
+                        line: 19,
+                        color: c.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (proposal != null) ...[
+            _Proposal(
+              key: const Key('slow-ai-title'),
+              label: 'Nombre',
+              text: proposal.title,
+            ),
+            _Proposal(
+              key: const Key('slow-ai-description'),
+              label: 'Descripción',
+              text: proposal.description,
+            ),
+            MusubiButton(
+              key: const Key('slow-ai-use'),
+              label: 'Usar en mi publicación',
+              kind: MusubiButtonKind.secondary,
+              icon: MusubiIcons.pencil,
+              onPressed: () => onUse(proposal),
+            ),
+          ] else ...[
+            if (error case final message?)
+              Text(
+                message,
+                key: const Key('slow-ai-error'),
+                style: MusubiType.style(
+                  13,
+                  weight: FontWeight.w600,
+                  line: 18,
+                  color: c.warningText,
+                ),
+              ),
+            MusubiButton(
+              key: const Key('slow-ai-ask'),
+              label: error == null ? 'Proponer con IA' : 'Intentar de nuevo',
+              kind: MusubiButtonKind.secondary,
+              icon: MusubiIcons.sparkle,
+              loading: asking,
+              loadingLabel: 'Proponiendo…',
+              onPressed: asking ? null : onAsk,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Un campo de la propuesta: la etiqueta y el texto sobre fondo blanco.
+class _Proposal extends StatelessWidget {
+  const new({required this.label, required this.text, super.key});
+
+  final String label;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: c.elevated,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 2,
+        children: [
+          Text(
+            label,
+            style: MusubiType.style(
+              12,
+              weight: FontWeight.w700,
+              color: c.textSecondary,
+            ),
+          ),
+          Text(
+            text,
+            style: MusubiType.style(14, line: 20, color: c.textPrimary),
           ),
         ],
       ),

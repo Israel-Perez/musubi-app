@@ -1102,6 +1102,19 @@ final Map<String, (bool, _Scene)> _scenes = {
       await s.tap(find.byKey(const Key('slow-p-bata')));
     },
   ),
+  // HU-37 (criterio del 13-Nov-2026): "Nombre y descripción con IA" ya
+  // propuesto (no esta en la maqueta: se agrega por el lineamiento 4).
+  'ideas-ia': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.byKey(const Key('slow-p-bata')));
+      await s.tester.ensureVisible(find.byKey(const Key('slow-ai-ask')));
+      await s.tap(find.byKey(const Key('slow-ai-ask')));
+      await s.tester.ensureVisible(find.byKey(const Key('slow-ai-use')));
+      await s.settle();
+    },
+  ),
   'quienes-la-buscan': (
     true,
     (s) async {

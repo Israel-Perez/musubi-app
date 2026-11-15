@@ -4,6 +4,9 @@ import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/listings/data/http_listings_repository.dart';
 import 'package:musubi_app/features/seller_support/domain/seller_support.dart';
 
+/// Espera de "Proponer con IA": Gemini puede tardar (la API corta a los 20 s).
+const ideasReceiveTimeout = Duration(seconds: 30);
+
 /// [SellerSupportRepository] sobre las filas "M-12" de
 /// `musubi-api/docs/endpoints.md` (specs `musubi-api:HU-36`, `HU-37` y
 /// `HU-38`). Usa el cliente con sesion.
@@ -51,6 +54,19 @@ class HttpSellerSupportRepository implements SellerSupportRepository {
             expiresAt: DateTime.parse(item['expiresAt'] as String).toUtc(),
           ),
       ],
+    );
+  });
+
+  @override
+  Future<ListingIdeas> ideas(String productId) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiPaths.productIdeas(productId),
+      options: Options(receiveTimeout: ideasReceiveTimeout),
+    );
+    final body = response.data ?? const <String, dynamic>{};
+    return ListingIdeas(
+      title: body['title'] as String? ?? '',
+      description: body['description'] as String? ?? '',
     );
   });
 
