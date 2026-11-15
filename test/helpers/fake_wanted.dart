@@ -1,6 +1,7 @@
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_match.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_repository.dart';
 
@@ -243,6 +244,18 @@ class FakeWantedRepository implements WantedRepository {
   /// Lo que se decidio: `(accion, solicitud, oferta)`.
   final List<(String, String, String)> decisions = [];
   ApiFailure? decisionFailure;
+
+  /// HU-18: lo que coincide con cualquier solicitud.
+  List<WantedMatch> allMatches = [];
+  ApiFailure? matchesFailure;
+  final List<String> matchCalls = [];
+
+  @override
+  Future<List<WantedMatch>> matches(String requestId) async {
+    matchCalls.add(requestId);
+    if (matchesFailure != null) throw matchesFailure!;
+    return allMatches;
+  }
 
   @override
   Future<List<ReceivedOffer>> receivedOffers(String requestId) async => [

@@ -34,6 +34,16 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T53 — Coincidencias para quien busca (14-Nov-2026, SCRUM-40 y SCRUM-47, HU-18 y HU-29)
+
+**Qué se hizo**
+- `Necesidad-publicada`: "Ya coinciden con lo que buscas" ya no usa la búsqueda de HU-09; pide `GET /wanted/{id}/matches` (`wantedMatchesProvider`, `WantedRepository.matches`). Exacta y dentro del presupuesto: "Dentro de tu presupuesto"; exacta hasta 20 % arriba: "Arriba de tu presupuesto"; parecida: "Modelo parecido" (`MatchFit`). Si falla, la sección no sale.
+- Avisos: `NotificationTarget.product` (HU-29, `product_match`) abre la publicación; ícono de lupa.
+- Fila compartida `0.5.0-alpha.31` (API: esquema 24). Pruebas: +2 y dos reescritas. Captura `necesidad-publicada` con las tres de la maqueta.
+
+**Decisiones (con su porqué)** (usuaria, 14-Nov-2026)
+- Exactas y parecidas; el aviso como HU-19. "Ya hay 3 publicaciones parecidas" de `Necesidad-1` sigue con la búsqueda de HU-09 (antes de publicar no hay solicitud que consultar).
+
 ## T51 — Populares y recién publicados al actualizar con main (14-Nov-2026, SCRUM-69, HU-49, Alejandro)
 
 - **No compilaba:** al traer `main` se coló una ruta vieja de `/notificaciones` (`UpcomingSection` con `MusubiIcons` sin importar). Se quitó: `main` ya tiene `NotificationsScreen`.

@@ -185,6 +185,10 @@ abstract final class ApiPaths {
   /// `musubi-api:HU-14`).
   static String wantedAction(String id, String action) => '$wanted/$id/$action';
 
+  /// `GET /api/v1/wanted/{id}/matches` — fila "M-06" (spec
+  /// `musubi-api:HU-18`).
+  static String wantedMatches(String id) => '$wanted/$id/matches';
+
   /// `GET /api/v1/wanted/mine` — fila "M-05" (spec `musubi-api:HU-13`).
   static const myWanted = '$wanted/mine';
 

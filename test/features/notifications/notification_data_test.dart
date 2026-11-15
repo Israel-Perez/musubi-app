@@ -114,6 +114,10 @@ void main() {
       NotificationTarget.wantedBoard,
     );
     expect(NotificationTarget.parse('none'), NotificationTarget.unknown);
+    // HU-29: "Alguien publicó lo que buscas" abre la publicacion.
+    expect(NotificationTarget.parse('product'), NotificationTarget.product);
+    expect(routeFor(NotificationTarget.product, 'p1'), AppRoutes.product('p1'));
+    expect(routeFor(NotificationTarget.product, ''), isNull);
     expect(routeFor(NotificationTarget.unknown, 'x'), isNull);
     expect(PushOpen.fromData(const {}).target, NotificationTarget.unknown);
   });

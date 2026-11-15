@@ -8,6 +8,7 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/purchase_requests/data/http_wanted_repository.dart';
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_match.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_repository.dart';
 
@@ -285,6 +286,15 @@ final FutureProviderFamily<List<ProductSummary>, String> needMatchesProvider =
           .search(query: query);
       return page.items;
     }, retry: (_, _) => null);
+
+/// "Ya coinciden con lo que buscas" de mi solicitud (HU-18). Es una seccion
+/// secundaria: si falla, `Necesidad-publicada` sale sin ella.
+final FutureProviderFamily<List<WantedMatch>, String> wantedMatchesProvider =
+    FutureProvider.autoDispose.family<List<WantedMatch>, String>(
+      (ref, requestId) =>
+          ref.watch(wantedRepositoryProvider).matches(requestId),
+      retry: (_, _) => null,
+    );
 
 /// Hoy (para las fechas rapidas de `Necesidad-3`).
 DateTime todayFrom(Ref ref) => ref.read(clockProvider)().toLocal();
