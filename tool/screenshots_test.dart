@@ -792,6 +792,18 @@ class _Shot {
                   ratingAvg: 5,
                   ratingCount: 3,
                   sales: 2,
+                )
+                // SCRUM-114: mi propio `Perfil-vendedor` ("asi te ven").
+                ..publicProfiles[myId] = PublicProfile(
+                  id: myId,
+                  fullName: 'Ana Martínez',
+                  campusShortName: 'UTTT',
+                  memberSince: DateTime(2025, 1, 20),
+                  careerShortName: 'Ing. Software',
+                  term: 5,
+                  ratingAvg: 4.8,
+                  ratingCount: 6,
+                  sales: 4,
                 ),
             ),
             themePreferenceRepositoryProvider.overrideWithValue(
@@ -1109,6 +1121,8 @@ final Map<String, (bool, _Scene)> _scenes = {
       await s.tap(find.byKey(const Key('seller-tab-reviews')));
     },
   ),
+  // SCRUM-114: mi perfil como lo ven los demas (desde una publicacion mia).
+  'perfil-propio': (true, (s) => s.go(AppRoutes.sellerProfile(myId))),
   // HU-27: la Casio de Valeria (como la maqueta, con Diego en su lugar).
   'calificar': (true, (s) => s.go(AppRoutes.rate('o3'))),
   'inicio-visitante': (false, (s) async {}),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
@@ -34,13 +35,21 @@ enum _SellerTab { publications, reviews }
 @immutable
 class SellerProfileOrigin {
   /// Desde el detalle (`Producto`): "Mensaje" abre el chat de esa publicacion.
-  const new product(ProductSummary this.product) : fromChat = false;
+  const new product(ProductSummary this.product)
+    : fromChat = false,
+      opinions = false;
 
   /// Desde "Ver perfil" del chat: "Mensaje" regresa a esa conversacion.
-  const new chat() : product = null, fromChat = true;
+  const new chat() : product = null, fromChat = true, opinions = false;
+
+  /// Desde la calificacion de mi `Perfil` (SCRUM-114): abre en "Opiniones".
+  const new myOpinions() : product = null, fromChat = false, opinions = true;
 
   final ProductSummary? product;
   final bool fromChat;
+
+  /// Si abre en la pestana "Opiniones".
+  final bool opinions;
 }
 
 /// `Perfil-vendedor` (HU-05): cabecera publica, "Seguir" y "Mensaje", cifras,
@@ -50,6 +59,9 @@ class SellerProfileOrigin {
 /// Promedio, calificaciones, "Opiniones" y "A tiempo" salen de HU-27/HU-45.
 /// "Seguir" y "Compartir" avisan que llegan pronto (la API no tiene
 /// seguidores ni enlaces publicos); "Responde en" queda fuera como en HU-11.
+///
+/// Con el propio id (SCRUM-114) es "asi te ven los demas": sin "Seguir" ni
+/// "Mensaje", con sus publicaciones y sus opiniones.
 class SellerProfileScreen extends ConsumerStatefulWidget {
   const new({required this.sellerId, super.key, this.origin});
 
@@ -62,7 +74,9 @@ class SellerProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _SellerProfileScreenState extends ConsumerState<SellerProfileScreen> {
-  _SellerTab _tab = _SellerTab.publications;
+  late _SellerTab _tab = widget.origin?.opinions ?? false
+      ? _SellerTab.reviews
+      : _SellerTab.publications;
 
   /// Paginas siguientes de "Opiniones" ("Ver más", HU-27).
   final List<Opinion> _moreOpinions = [];
@@ -175,12 +189,16 @@ class _SellerProfileScreenState extends ConsumerState<SellerProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(publicProfileProvider(widget.sellerId));
+    final session = ref.watch(sessionControllerProvider);
+    final mine =
+        session is SignedIn && session.tokens.userId == widget.sellerId;
     return Scaffold(
       backgroundColor: context.musubi.background,
       body: switch (profile) {
         AsyncData(:final value) => _Loaded(
           sellerId: widget.sellerId,
           profile: value,
+          mine: mine,
           tab: _tab,
           onTab: (tab) => setState(() => _tab = tab),
           more: _more,
@@ -218,6 +236,7 @@ class _Loaded extends ConsumerWidget {
   const new({
     required this.sellerId,
     required this.profile,
+    required this.mine,
     required this.tab,
     required this.onTab,
     required this.more,
@@ -238,6 +257,9 @@ class _Loaded extends ConsumerWidget {
 
   final String sellerId;
   final PublicProfile profile;
+
+  /// Mi propio perfil (SCRUM-114): sin "Seguir" ni "Mensaje".
+  final bool mine;
   final _SellerTab tab;
   final ValueChanged<_SellerTab> onTab;
   final List<ProductSummary> more;
@@ -274,10 +296,12 @@ class _Loaded extends ConsumerWidget {
           ),
           SliverToBoxAdapter(child: _Header(profile: profile)),
           SliverToBoxAdapter(
-            child: _Actions(
-              onFollow: onFollow,
-              onMessage: () => onMessage(items),
-            ),
+            child: mine
+                ? const _MineNote()
+                : _Actions(
+                    onFollow: onFollow,
+                    onMessage: () => onMessage(items),
+                  ),
           ),
           SliverToBoxAdapter(
             child: _Stats(
@@ -659,6 +683,36 @@ class _Header extends ConsumerWidget {
 }
 
 /// "Seguir" (borde) y "Mensaje" (rojo), en dos columnas de 48 de alto.
+/// En mi propio perfil (SCRUM-114), en lugar de "Seguir" y "Mensaje".
+class _MineNote extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Padding(
+      key: const Key('seller-mine'),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 6,
+        children: [
+          MusubiIcon(MusubiIcons.eye, size: 16, color: c.textSecondary),
+          Text(
+            'Así te ven los demás',
+            style: MusubiType.style(
+              13,
+              weight: FontWeight.w600,
+              line: 18,
+              color: c.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Actions extends StatelessWidget {
   const new({required this.onFollow, required this.onMessage});
 

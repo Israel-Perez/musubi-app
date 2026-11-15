@@ -23,6 +23,7 @@ import 'package:musubi_app/features/marketplace/presentation/favorites_providers
 import 'package:musubi_app/features/orders/presentation/my_orders_widgets.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 /// Quien tiene la sesion, para pintar el nombre mientras carga el perfil.
@@ -44,6 +45,10 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.musubi;
     final session = sessionProfile(ref);
+    final myId = switch (ref.watch(sessionControllerProvider)) {
+      SignedIn(:final tokens) => tokens.userId,
+      _ => null,
+    };
     final profile = ref.watch(myProfileProvider);
     final me = profile.value;
     return Scaffold(
@@ -79,7 +84,18 @@ class ProfileScreen extends ConsumerWidget {
           ),
           ...switch (profile) {
             AsyncData(:final value) => [
-              _StatsRow(stats: value.stats),
+              _StatsRow(
+                stats: value.stats,
+                // SCRUM-114: las calificaciones y comentarios que recibi.
+                onRatings: myId == null
+                    ? null
+                    : () => unawaited(
+                        context.push(
+                          AppRoutes.sellerProfile(myId),
+                          extra: const SellerProfileOrigin.myOpinions(),
+                        ),
+                      ),
+              ),
               const _Tiles(),
               const _PrivacyRow(),
               const RecentOrdersSection(),
@@ -224,9 +240,12 @@ class _Identity extends StatelessWidget {
 
 /// Calificacion, ventas y compras: tres columnas con borde de 1 y radio 18.
 class _StatsRow extends StatelessWidget {
-  const new({required this.stats});
+  const new({required this.stats, this.onRatings});
 
   final ProfileStats stats;
+
+  /// Abre "Opiniones" de mi perfil publico (SCRUM-114).
+  final VoidCallback? onRatings;
 
   @override
   Widget build(BuildContext context) {
@@ -237,31 +256,41 @@ class _StatsRow extends StatelessWidget {
       1 => '1 calificación',
       final n => '$n calificaciones',
     };
-    Widget cell(Widget value, String label, {bool divider = true}) => Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        decoration: BoxDecoration(
-          border: divider ? Border(right: BorderSide(color: c.border)) : null,
-        ),
-        child: Column(
-          spacing: 2,
-          children: [
-            value,
-            // Numero y etiqueta con `line-height: normal`, como en Chrome.
-            CssLineBox(
-              fontSize: 11.5,
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: MusubiType.style(
-                  11.5,
-                  weight: FontWeight.w700,
-                  color: c.textSecondary,
+    Widget cell(
+      Widget value,
+      String label, {
+      bool divider = true,
+      VoidCallback? onTap,
+    }) => Expanded(
+      child: Pressable(
+        key: onTap == null ? null : const Key('profile-ratings'),
+        onTap: onTap,
+        semanticLabel: onTap == null ? null : 'Ver mis opiniones',
+        builder: (context, _) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          decoration: BoxDecoration(
+            border: divider ? Border(right: BorderSide(color: c.border)) : null,
+          ),
+          child: Column(
+            spacing: 2,
+            children: [
+              value,
+              // Numero y etiqueta con `line-height: normal`, como en Chrome.
+              CssLineBox(
+                fontSize: 11.5,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: MusubiType.style(
+                    11.5,
+                    weight: FontWeight.w700,
+                    color: c.textSecondary,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -302,6 +331,7 @@ class _StatsRow extends StatelessWidget {
                 ],
               ),
               ratings,
+              onTap: onRatings,
             ),
             cell(number('${stats.sales}'), 'Ventas'),
             cell(number('${stats.purchases}'), 'Compras', divider: false),

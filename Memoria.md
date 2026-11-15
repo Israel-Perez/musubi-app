@@ -44,6 +44,13 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 **Decisiones (con su porqué)** (usuaria, 14-Nov-2026)
 - Exactas y parecidas; el aviso como HU-19. "Ya hay 3 publicaciones parecidas" de `Necesidad-1` sigue con la búsqueda de HU-09 (antes de publicar no hay solicitud que consultar).
 
+## T52 — Bug: mi perfil desde una publicación mía (14-Nov-2026, SCRUM-114)
+
+- **Causa:** desde una publicación propia, `Producto` hacía `context.push(AppRoutes.profile)`. `Perfil` es una rama de la barra (`StatefulShellRoute`); si la barra ya estaba debajo (se llega desde Inicio o Mis productos), el Navigator reservaba dos veces la misma llave (`'!keyReservation.contains(key)'`) y en la versión de Play eso se ve como pantalla gris. La prueba vieja entraba al producto con `go` directo, sin la barra debajo, y por eso pasaba.
+- **Arreglo:** también la publicación propia abre `Perfil-vendedor` (`/vendedor/<mi id>`, fuera de la barra). Con mi id es "Así te ven los demás": sin "Seguir" ni "Mensaje", con mis publicaciones y mis "Opiniones". En `Perfil`, la calificación (`profile-ratings`) abre esa vista directo en "Opiniones" (`SellerProfileOrigin.myOpinions`).
+- **Error a evitar:** nunca `push` a una ruta de una rama de la barra desde una ruta de pantalla completa; usa `go` o una ruta fuera de la barra. Las pruebas de navegación deben llegar por el camino real (Inicio → detalle), no con `go` directo.
+- Pruebas: +3 y una reescrita (683 con HU-18 y HU-29 de `main`). Captura `perfil-propio`.
+
 ## T51 — Populares y recién publicados al actualizar con main (14-Nov-2026, SCRUM-69, HU-49, Alejandro)
 
 - **No compilaba:** al traer `main` se coló una ruta vieja de `/notificaciones` (`UpcomingSection` con `MusubiIcons` sin importar). Se quitó: `main` ya tiene `NotificationsScreen`.

@@ -190,13 +190,14 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
           onSeller: () {
             final sellerId = value.sellerId;
             if (sellerId == null) return;
+            // SCRUM-114: tambien la mia abre `Perfil-vendedor` ("asi te ven"),
+            // que vive fuera de la barra. Empujar `Perfil` (una rama de la
+            // barra) encima del detalle dejaba la pantalla en gris.
             unawaited(
-              myId != null && sellerId == myId
-                  ? context.push(AppRoutes.profile)
-                  : context.push(
-                      AppRoutes.sellerProfile(sellerId),
-                      extra: SellerProfileOrigin.product(_summaryOf(value)),
-                    ),
+              context.push(
+                AppRoutes.sellerProfile(sellerId),
+                extra: SellerProfileOrigin.product(_summaryOf(value)),
+              ),
             );
           },
           onMessage: () => _chat(value, signedIn: signedIn, buy: false),

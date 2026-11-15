@@ -544,4 +544,59 @@ void main() {
 
     expect(find.text('Todavía no hay opiniones'), findsOneWidget);
   });
+
+  group('mi propio perfil (SCRUM-114)', () {
+    FakeProfileRepository mine() =>
+        FakeProfileRepository()..publicProfiles[myId] = valeria;
+    final opinion = Opinion(
+      id: 'r1',
+      stars: 5,
+      raterName: 'Luis M.',
+      createdAt: DateTime(2026, 9, 28, 12),
+      tags: const [RatingTag.onTime],
+      comment: 'Súper puntual.',
+    );
+
+    testWidgets('"así te ven los demás": sin "Seguir" ni "Mensaje"', (
+      tester,
+    ) async {
+      final h = _Harness(tester, profiles: mine());
+
+      await h.open(myId);
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Así te ven los demás'), findsOneWidget);
+      expect(find.byKey(const Key('seller-mensaje')), findsNothing);
+      expect(find.byKey(const Key('seller-seguir')), findsNothing);
+    });
+
+    testWidgets('desde mi calificación abre directo en "Opiniones"', (
+      tester,
+    ) async {
+      final h = _Harness(tester, profiles: mine());
+      h.reputation.opinionsByUser[myId] = [opinion];
+
+      await h.open(myId, origin: const SellerProfileOrigin.myOpinions());
+
+      expect(find.text('Luis M. · Puntual'), findsOneWidget);
+      expect(find.text('Súper puntual.'), findsOneWidget);
+    });
+
+    testWidgets('en Perfil, tocar la calificación abre mis opiniones', (
+      tester,
+    ) async {
+      final h = _Harness(tester, profiles: mine());
+      h.reputation.opinionsByUser[myId] = [opinion];
+      await h.open(myId);
+      h.container.read(routerProvider).go(AppRoutes.profile);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('profile-ratings')));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Así te ven los demás'), findsOneWidget);
+      expect(find.text('Luis M. · Puntual'), findsOneWidget);
+    });
+  });
 }
