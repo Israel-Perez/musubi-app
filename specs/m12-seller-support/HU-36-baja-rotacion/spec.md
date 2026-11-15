@@ -1,45 +1,36 @@
 # HU-36 — Ver mis productos con baja rotación (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-36 / SCRUM-59 / Sprint 5 (23 nov – 4 dic 2026) / M-12 / [musubi-api:HU-36](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m12-seller-support/HU-36-baja-rotacion)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-36 / SCRUM-59 / Sprint 5 (14 nov – 1 dic 2026) / M-12 / [musubi-api:HU-36](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m12-seller-support/HU-36-baja-rotacion)
 
 ## Contexto
 Jira (SCRUM-59): Como **vendedor**, quiero **saber qué productos llevan mucho tiempo publicados sin venderse**, para **decidir qué hacer con ellos**.
 
-- Maqueta: sin pantalla propia. Se diseña con la guía de estilo de la maqueta; el lineamiento 4 permite agregar, nunca quitar.
-- Trazabilidad: RF-50, RF-51 · CU-22 · Flujo C · RN-35, RN-36.
-- Origen: Propuesta inicial §11.
+- Maqueta: `Mis-productos` (panel "Llevan tiempo sin venderse") y `Notificaciones` ("Tu bata lleva 34 días sin venderse").
+- Trazabilidad: RF-50, RF-51 · CU-22 · RN-35, RN-36.
+- Decisiones de la usuaria (15-Nov-2026): una tarjeta por producto (hasta 3 y "Ver los N"); las ideas en una hoja al tocar la tarjeta; el aviso una sola vez, a las 3 semanas. Los 21 días salen de la maqueta ("2 productos con más de 3 semanas").
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-08`.
+**Depende de:** [musubi-api:HU-36](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m12-seller-support/HU-36-baja-rotacion), `HU-08` (`Mis-productos`), `HU-16` (ofertas), `HU-31` (avisos). Se entrega con HU-36, HU-37 y HU-38.
 
 ## Requisitos
-1. Un proceso periódico detecta publicaciones **Disponibles** con más de [POR DEFINIR] días sin pedidos completados (RN-35, RN-36).
-2. El vendedor ve la lista con el aviso: "Estos productos llevan tiempo publicados sin venderse."
-
-RNF que aplican: se confirman al detallar.
+1. **R1 · Panel:** en "Activos", arriba de "Tu inventario", "Llevan tiempo sin venderse · N productos con más de 3 semanas" y una tarjeta por producto (foto de 60, nombre, "$250 · Publicada hace 34 días", vistas y mensajes), hasta 3 y "Ver los N".
+2. **R2 · Sin ruido:** no sale en "Vendidos" ni "Agotados"; sin nada o si falla, la pantalla sigue sin el panel.
+3. **R3 · Aviso:** `slow_listing` con `trendingDown` sobre fondo de advertencia; abre `Mis productos` (`my_products`).
 
 ## Diseño
-- Feature `lib/features/seller_support/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-36. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-36)` (skill `deferred-scope-fakes`).
+- `lib/features/seller_support/`: `SellerSupportRepository` / `HttpSellerSupportRepository`, `sellerSupportRepositoryProvider`, `slowListingsProvider`, `productDemandProvider`; `SlowListingsPanel`, `showSalesTipsSheet`, `showDemandSheet` y `PublishedDemandCard`.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-36, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Filas `GET /api/v1/products/mine/slow` y `GET /api/v1/products/{id}/demand` de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (`ApiPaths.slowProducts` y `ApiPaths.productDemand`).
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- Widget tests de las pantallas nuevas (sin escena de maqueta).
+- `test/features/seller_support/slow_listings_test.dart` (pantallas, hojas, `Vender-listo`, el aviso y `HttpSellerSupportRepository`); fake en `test/helpers/fake_seller_support.dart`.
 
 ## Criterios
-- [ ] Un proceso periódico detecta publicaciones **Disponibles** con más de [POR DEFINIR] días sin pedidos completados (RN-35, RN-36).
-- [ ] El vendedor ve la lista con el aviso: "Estos productos llevan tiempo publicados sin venderse."
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
-
-## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- [x] "Llevan tiempo sin venderse" como la maqueta → `slow_listings_test.dart` (grupo HU-36) y captura `mis-productos`.
+- [x] El aviso abre `Mis productos` → `el aviso "lleva N días sin venderse" abre Mis productos`.
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 29-Oct-2026 (borrador ligero) · 15-Nov-2026 (detallado e implementado, junto con HU-36, HU-37 y HU-38)

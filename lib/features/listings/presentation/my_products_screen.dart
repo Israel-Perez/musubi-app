@@ -24,6 +24,8 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
+import 'package:musubi_app/features/seller_support/presentation/seller_support_providers.dart';
+import 'package:musubi_app/features/seller_support/presentation/slow_listings_panel.dart';
 
 /// `Mis-productos`: tus publicaciones por pestana (HU-08: "Activos",
 /// "Vendidos" y "Agotados" con los conteos de la API). Al tocar una, su menu
@@ -34,7 +36,9 @@ import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 /// HU-26: "Vendidos" empieza con mis ventas completadas (quien compro, las
 /// piezas, el monto y la fecha; al tocar una, "Tu venta") y la tarjeta con su
 /// numero y su total real; abajo, lo marcado como vendido a mano.
-/// NOTE (HU-11): "Llevan tiempo sin venderse" con las vistas y los mensajes.
+/// HU-36/37/38: en "Activos", "Llevan tiempo sin venderse" (con las vistas,
+/// los mensajes, quien la busca e ideas para venderla) arriba de "Tu
+/// inventario".
 /// HU-50: "Cambiar piezas" en el menu y "Reponer" en las agotadas.
 class MyProductsScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -80,7 +84,14 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
       ..invalidate(myListingsTabProvider)
       ..invalidate(salesProvider)
       ..invalidate(myListingsProvider)
+      ..invalidate(slowListingsProvider)
       ..invalidate(homeFeedProvider);
+  }
+
+  /// "Editar publicación" desde "Ideas para vender más rápido" (HU-37).
+  void _edit(OwnListing listing) {
+    ref.read(sellEditDraftProvider.notifier).load(listing);
+    unawaited(context.push(AppRoutes.editListing));
   }
 
   /// "Ver más" en "Vendidos": la siguiente pagina de mis ventas.
@@ -199,8 +210,7 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
       case 'view':
         unawaited(context.push(AppRoutes.product(listing.product.id)));
       case 'edit':
-        ref.read(sellEditDraftProvider.notifier).load(listing);
-        unawaited(context.push(AppRoutes.editListing));
+        _edit(listing);
       case 'stock':
         await _changeStock(listing);
       case 'sold':
@@ -355,6 +365,10 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
     final sales = ref.watch(salesProvider);
     if (sales.value case final page?) _salesCount = page.count;
     final soldTab = _tab == MyProductsTab.sold;
+    // HU-36: solo en "Activos"; si falla, la pantalla sigue sin el panel.
+    final slow = _tab == MyProductsTab.active
+        ? ref.watch(slowListingsProvider).value
+        : null;
     final firstSales = soldTab ? sales.value : null;
     final shownSales = [...?firstSales?.items, if (soldTab) ..._moreSales];
     final salesNext = !soldTab
@@ -498,59 +512,76 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
                     if (soldTab) await ref.read(salesProvider.future);
                   },
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+                    padding: EdgeInsets.only(
+                      top: slow != null && slow.items.isNotEmpty ? 14 : 18,
+                      bottom: 32,
+                    ),
                     children: [
-                      if (soldTab)
-                        // La tarjeta: las ventas completadas y su total real.
-                        if (firstSales
-                            case SalesPage(:final count, :final totalCents)
-                            when count > 0)
-                          _SalesTotal(count: count, totalCents: totalCents)
+                      // Maqueta: el panel va a 16 de los lados y "Tu
+                      // inventario" a 20, 18 abajo de el.
+                      if (slow != null && slow.items.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+                          child: SlowListingsPanel(slow: slow, onEdit: _edit),
+                        ),
+                      for (final row in <Widget>[
+                        if (soldTab)
+                          // La tarjeta: las ventas completadas y su total real.
+                          if (firstSales
+                              case SalesPage(:final count, :final totalCents)
+                              when count > 0)
+                            _SalesTotal(count: count, totalCents: totalCents)
+                          else
+                            const SizedBox.shrink()
                         else
-                          const SizedBox.shrink()
-                      else
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            'Tu inventario',
-                            style: MusubiType.style(
-                              16,
-                              weight: FontWeight.w800,
-                              color: c.textPrimary,
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              'Tu inventario',
+                              style: MusubiType.style(
+                                16,
+                                weight: FontWeight.w800,
+                                color: c.textPrimary,
+                              ),
                             ),
                           ),
-                        ),
-                      for (final sale in shownSales)
-                        _SaleRow(
-                          order: sale,
-                          onTap: () =>
-                              unawaited(context.push(AppRoutes.order(sale.id))),
-                        ),
-                      for (final listing in shown)
-                        _InventoryRow(
-                          listing: listing,
-                          onTap: () => unawaited(_manage(listing)),
-                          // HU-50: "Reponer" en las agotadas (maqueta).
-                          onRestock: listing.status == ListingStatus.soldOut
-                              ? () => unawaited(_restock(listing))
-                              : null,
-                        ),
-                      // Primero las ventas que faltan y luego lo marcado a
-                      // mano.
-                      if (salesNext ?? cursor case final next?)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: MusubiButton(
-                            key: const Key('my-products-more'),
-                            label: 'Ver más',
-                            kind: MusubiButtonKind.secondary,
-                            loading: _loadingMore,
-                            onPressed: () => unawaited(
-                              salesNext != null
-                                  ? _loadMoreSales(next)
-                                  : _loadMore(next),
+                        for (final sale in shownSales)
+                          _SaleRow(
+                            order: sale,
+                            onTap: () => unawaited(
+                              context.push(AppRoutes.order(sale.id)),
                             ),
                           ),
+                        for (final listing in shown)
+                          _InventoryRow(
+                            listing: listing,
+                            onTap: () => unawaited(_manage(listing)),
+                            // HU-50: "Reponer" en las agotadas (maqueta).
+                            onRestock: listing.status == ListingStatus.soldOut
+                                ? () => unawaited(_restock(listing))
+                                : null,
+                          ),
+                        // Primero las ventas que faltan y luego lo marcado a
+                        // mano.
+                        if (salesNext ?? cursor case final next?)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: MusubiButton(
+                              key: const Key('my-products-more'),
+                              label: 'Ver más',
+                              kind: MusubiButtonKind.secondary,
+                              loading: _loadingMore,
+                              onPressed: () => unawaited(
+                                salesNext != null
+                                    ? _loadMoreSales(next)
+                                    : _loadMore(next),
+                              ),
+                            ),
+                          ),
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: row,
                         ),
                     ],
                   ),

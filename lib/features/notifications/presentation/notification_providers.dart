@@ -88,6 +88,8 @@ String? routeFor(NotificationTarget target, String id) => switch (target) {
   ),
   // HU-29: "Alguien publicó lo que buscas" abre la publicacion.
   NotificationTarget.product when id.isNotEmpty => AppRoutes.product(id),
+  // HU-36: "Tu bata lleva 34 días sin venderse" abre "Mis productos".
+  NotificationTarget.myProducts => AppRoutes.myProducts,
   _ => null,
 };
 

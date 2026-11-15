@@ -1,10 +1,9 @@
-# plan.md — HU-38 Saber si hay demanda para mis productos (borrador)
+# HU-38 — Saber si hay demanda para mis productos (plan, app)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
+Se implementa junto con HU-36, HU-37 y HU-38 (un PR por repositorio).
 
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+1. **T1 — Datos:** repositorio HTTP, providers y fake. ✅
+2. **T2 — Pantallas:** panel, hojas y tarjeta de `Vender-listo`. ✅
+3. **T3 — Pruebas y capturas.** ✅
+
+**Decisiones:** ver la spec (usuaria, 15-Nov-2026).

@@ -15,6 +15,7 @@ import 'package:musubi_app/core/widgets/musubi_sheet.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+import 'package:musubi_app/features/seller_support/presentation/slow_listings_panel.dart';
 
 /// Lo que llega a `Vender-listo`: la publicacion y la foto del telefono (se
 /// ve al instante, sin esperar a CloudFront).
@@ -233,8 +234,18 @@ class SellDoneScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  // NOTE (HU-18): "N estudiantes buscan algo similar" con las
-                  // solicitudes que coinciden (Vender-listo).
+                  // HU-38: "N estudiantes buscan algo similar" con las
+                  // solicitudes que coinciden.
+                  if (product != null)
+                    RiseIn(
+                      offset: 12,
+                      duration: ms(450),
+                      delay: ms(460),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        child: PublishedDemandCard(product: product),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -58,6 +58,8 @@ import 'package:musubi_app/features/purchase_requests/presentation/wanted_provid
 import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
+import 'package:musubi_app/features/seller_support/domain/seller_support.dart';
+import 'package:musubi_app/features/seller_support/presentation/seller_support_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
 
@@ -74,6 +76,7 @@ import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_recommendations.dart';
 import '../test/helpers/fake_reputation.dart';
 import '../test/helpers/fake_saved_searches.dart';
+import '../test/helpers/fake_seller_support.dart';
 import '../test/helpers/fake_session_api.dart';
 import '../test/helpers/fake_status_repository.dart';
 import '../test/helpers/fake_theme_preference_repository.dart';
@@ -593,6 +596,64 @@ final List<ReceivedOffer> _receivedOffers = [
 /// Fecha de la venta de ejemplo (HU-08).
 final DateTime _soldAt = DateTime.utc(2026, 9, 28, 18);
 
+/// HU-36/37/38: "Llevan tiempo sin venderse" de la maqueta (la bata: $250,
+/// "Publicada hace 34 días", 96 vistas, 0 mensajes y "3 estudiantes la
+/// buscan"); "2 productos con más de 3 semanas".
+final _support = FakeSellerSupportRepository(
+  slowItems: [
+    SlowListing(
+      listing: _myListings.first,
+      daysListed: 34,
+      views: 96,
+      people: 3,
+      requests: 2,
+      tips: sampleSlow().tips,
+    ),
+    SlowListing(
+      listing: _myListings[1],
+      daysListed: 23,
+      views: 41,
+      messages: 2,
+      tips: sampleSlow().tips,
+    ),
+  ],
+  demands: {
+    'p-bata': ProductDemand(
+      people: 3,
+      alerts: 1,
+      requests: [
+        DemandRequest(
+          id: 'r-bata',
+          title: 'Bata de laboratorio talla M, manga larga',
+          budgetCents: 22000,
+          requesterName: 'Fernanda O.',
+          expiresAt: DateTime.utc(2026, 10, 12, 18),
+        ),
+        DemandRequest(
+          id: 'r-quimica',
+          title: 'Bata para química, talla M',
+          budgetCents: 30000,
+          requesterName: 'Luis M.',
+          expiresAt: DateTime.utc(2026, 10, 9, 18),
+        ),
+      ],
+    ),
+  },
+  // `Vender-listo`: "2 estudiantes buscan algo similar".
+  anyDemand: ProductDemand(
+    people: 2,
+    requests: [
+      DemandRequest(
+        id: 'w-casio',
+        title: 'Calculadora Casio fx-991ES Plus',
+        budgetCents: 50000,
+        requesterName: 'Ana R.',
+        expiresAt: DateTime.utc(2026, 10, 12, 18),
+      ),
+    ],
+  ),
+);
+
 /// Mis publicaciones de `Yo-tengo-vincular` (HU-16).
 final List<OwnListing> _myListings = [
   const OwnListing(
@@ -816,6 +877,8 @@ class _Shot {
             interestsRepositoryProvider.overrideWithValue(
               FakeInterestsRepository(saved: ['libros', 'tecnologia']),
             ),
+            // HU-36/37/38: "Llevan tiempo sin venderse".
+            sellerSupportRepositoryProvider.overrideWithValue(_support),
             // HU-12: "Mis alertas" con dos busquedas guardadas.
             savedSearchRepositoryProvider.overrideWithValue(
               FakeSavedSearchRepository(
@@ -1029,6 +1092,23 @@ Future<void> _chatMore(_Shot s) async {
 }
 
 final Map<String, (bool, _Scene)> _scenes = {
+  // HU-36/37/38: `Mis-productos` con "Llevan tiempo sin venderse", "Ideas
+  // para vender más rápido" y "Quienes la buscan".
+  'mis-productos': (true, (s) => s.go(AppRoutes.myProducts)),
+  'ideas-vender': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.byKey(const Key('slow-p-bata')));
+    },
+  ),
+  'quienes-la-buscan': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.myProducts);
+      await s.tap(find.byKey(const Key('slow-demand-p-bata')));
+    },
+  ),
   // HU-07: el menu de una publicacion en `Mis-productos` y "Editar
   // publicación" (`Vender-2` y `Vender-4` con las piezas sin cambiarse).
   'mis-productos-menu': (

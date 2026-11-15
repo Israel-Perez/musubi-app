@@ -139,31 +139,8 @@ class HttpListingsRepository implements ListingsRepository {
   Future<void> delete(String id) =>
       _guard(() => _dio.delete<void>(ApiPaths.product(id)));
 
-  /// `ProductResponse` propio → publicacion con su estado y lo editable.
-  OwnListing _own(Map<String, dynamic> item) => OwnListing(
-    product: productFromJson(item, _apiBaseUrl),
-    status: switch (item['status']) {
-      'soldOut' => ListingStatus.soldOut,
-      'hidden' => ListingStatus.hidden,
-      // HU-08: sin esto, una vendida contaria como activa (ofertas y Perfil).
-      'sold' => ListingStatus.sold,
-      _ => ListingStatus.active,
-    },
-    soldAt: switch (item['soldAt']) {
-      final String at => DateTime.parse(at).toUtc(),
-      _ => null,
-    },
-    description: item['description'] as String? ?? '',
-    condition: item['condition'] == 'new'
-        ? ProductCondition.brandNew
-        : ProductCondition.used,
-    usedDetail: switch (item['conditionDetail']) {
-      'likeNew' => UsedDetail.likeNew,
-      'good' => UsedDetail.good,
-      'fair' => UsedDetail.fair,
-      _ => null,
-    },
-  );
+  OwnListing _own(Map<String, dynamic> item) =>
+      ownListingFromJson(item, _apiBaseUrl);
 
   @override
   Future<PriceRange?> priceRange(String category) => _guard(() async {
@@ -195,3 +172,31 @@ class HttpListingsRepository implements ListingsRepository {
     }
   }
 }
+
+/// `ProductResponse` propio → publicacion con su estado y lo editable (lo usa
+/// tambien "Llevan tiempo sin venderse", HU-36).
+OwnListing ownListingFromJson(Map<String, dynamic> item, Uri apiBaseUrl) =>
+    OwnListing(
+      product: productFromJson(item, apiBaseUrl),
+      status: switch (item['status']) {
+        'soldOut' => ListingStatus.soldOut,
+        'hidden' => ListingStatus.hidden,
+        // HU-08: sin esto, una vendida contaria como activa (ofertas y Perfil).
+        'sold' => ListingStatus.sold,
+        _ => ListingStatus.active,
+      },
+      soldAt: switch (item['soldAt']) {
+        final String at => DateTime.parse(at).toUtc(),
+        _ => null,
+      },
+      description: item['description'] as String? ?? '',
+      condition: item['condition'] == 'new'
+          ? ProductCondition.brandNew
+          : ProductCondition.used,
+      usedDetail: switch (item['conditionDetail']) {
+        'likeNew' => UsedDetail.likeNew,
+        'good' => UsedDetail.good,
+        'fair' => UsedDetail.fair,
+        _ => null,
+      },
+    );

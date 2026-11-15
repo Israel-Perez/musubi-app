@@ -34,6 +34,24 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T55 — Apoyo a vendedores (15-Nov-2026, SCRUM-59, SCRUM-60 y SCRUM-61; HU-36, HU-37 y HU-38)
+
+**Qué se hizo**
+- `lib/features/seller_support/` (M-12): `SellerSupportRepository` / `HttpSellerSupportRepository` (`/products/mine/slow` y `/products/{id}/demand`), `slowListingsProvider` y `productDemandProvider`.
+- `Mis-productos` → "Activos": el panel "Llevan tiempo sin venderse" de la maqueta (`SlowListingsPanel`) arriba de "Tu inventario", con "Publicada hace 34 días", vistas, mensajes y "3 estudiantes la buscan · Ofrécesela". Cierra la `NOTE (HU-11)`.
+- Al tocar la tarjeta, la hoja "Ideas para vender más rápido" (precio, descripción y fotos; "Editar publicación"). Al tocar "Ofrécesela", "Quienes la buscan": las solicitudes con "Yo tengo este producto" (abre la hoja de oferta de HU-16 ahí mismo) y cuántas alertas, sin decir de quién (RN-37).
+- `Vender-listo`: "2 estudiantes buscan algo similar · Ver solicitudes" (`PublishedDemandCard`). Cierra la `NOTE (HU-18)`.
+- Aviso `slow_listing` con `trendingDown` sobre fondo de advertencia; destino `my_products` → `Mis productos`. Fila compartida `0.5.0-alpha.33`.
+- Capturas: `mis-productos`, `ideas-vender` y `quienes-la-buscan`; `vender-listo` ya trae la tarjeta.
+
+**Decisiones (con su porqué)** (usuaria, 15-Nov-2026)
+- Una tarjeta por producto (hasta 3 y "Ver los N"); las ideas en una hoja al tocar la tarjeta (la maqueta no tiene pantalla para ellas); el aviso una sola vez.
+- "Yo tengo este producto" se abre sobre `Mis productos` en lugar de ir al tablero: no se apila una rama del shell sobre una pantalla completa y la persona no pierde su lugar.
+
+**Errores a evitar**
+- En las pruebas la fuente es Ahem (cada letra es un cuadro): una fila de textos cortos sin `Expanded` se desborda aunque en el teléfono quepa. Usa `Wrap` para chips o datos sueltos ("96 vistas · 0 mensajes").
+- La spec ligera decía que HU-36/38 no tenían pantalla: antes de diseñar, busca los textos en la maqueta (`Mis-productos`, `Notificaciones` y `Vender-listo` sí los traen).
+
 ## T54 — Guardar una búsqueda sin resultados (14-Nov-2026, SCRUM-51, HU-12)
 
 **Qué se hizo**

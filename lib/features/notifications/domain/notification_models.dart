@@ -30,6 +30,9 @@ enum NotificationTarget {
   /// Una publicacion: lo que coincide con mi solicitud (HU-29).
   product,
 
+  /// "Mis productos", con "Llevan tiempo sin venderse" (HU-36).
+  myProducts,
+
   /// Nada que abrir (`none`) o un destino que esta version no conoce.
   unknown;
 
@@ -39,6 +42,7 @@ enum NotificationTarget {
     'wanted' => wanted,
     'wanted_board' => wantedBoard,
     'product' => product,
+    'my_products' => myProducts,
     _ => unknown,
   };
 }
