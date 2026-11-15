@@ -24,6 +24,8 @@ dependencies:
   go_router: ^18.1.0
   # Camara y galeria para las fotos de HU-06 (flutter.dev, BSD-3; excepcion 00-01 del 27-Oct-2026).
   image_picker: ^1.2.4
+  mobile_scanner: ^7.5.0
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

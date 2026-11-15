@@ -689,6 +689,64 @@ abstract final class MusubiIcons {
     ),
   ]);
 
+  /// `map-pin` de Lucide reciente (los puntos de `Apartar`, HU-52).
+  static const mapPinRound = MusubiIconData([
+    IconPath(
+      'M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 '
+      '20.193 4 14.993 4 10a8 8 0 0 1 16 0',
+    ),
+    IconCircle(12, 10, 3),
+  ]);
+
+  /// `qr-code` corto ("Recibirás un QR y un código para recogerlo", HU-52).
+  static const qrCodeLite = MusubiIconData([
+    IconRect(3, 3, 5, 5, radius: 1),
+    IconRect(16, 3, 5, 5, radius: 1),
+    IconRect(3, 16, 5, 5, radius: 1),
+    IconPath('M21 16h-3a2 2 0 0 0-2 2v3'),
+    IconPath('M12 7v3a2 2 0 0 1-2 2H7'),
+  ]);
+
+  /// `scan` ("Escanear QR" de `Verificar-comprador`, HU-52).
+  static const scan = MusubiIconData([
+    IconPath('M3 7V5a2 2 0 0 1 2-2h2'),
+    IconPath('M17 3h2a2 2 0 0 1 2 2v2'),
+    IconPath('M21 17v2a2 2 0 0 1-2 2h-2'),
+    IconPath('M7 21H5a2 2 0 0 1-2-2v-2'),
+  ]);
+
+  /// `scan-line` ("Verificar comprador" de `Mis-apartados`, HU-52).
+  static const scanLine = MusubiIconData([
+    IconPath('M3 7V5a2 2 0 0 1 2-2h2'),
+    IconPath('M17 3h2a2 2 0 0 1 2 2v2'),
+    IconPath('M21 17v2a2 2 0 0 1-2 2h-2'),
+    IconPath('M7 21H5a2 2 0 0 1-2-2v-2'),
+    IconPath('M7 12h10'),
+  ]);
+
+  /// `keyboard` ("Escribir código" de `Verificar-comprador`, HU-52).
+  static const keyboard = MusubiIconData([
+    IconRect(2, 4, 20, 16, radius: 2),
+    IconPath('M6 8h.01'),
+    IconPath('M10 8h.01'),
+    IconPath('M14 8h.01'),
+    IconPath('M18 8h.01'),
+    IconPath('M8 12h.01'),
+    IconPath('M12 12h.01'),
+    IconPath('M16 12h.01'),
+    IconPath('M7 16h10'),
+  ]);
+
+  /// `flashlight` ("Linterna" de `Verificar-comprador`, HU-52).
+  static const flashlight = MusubiIconData([
+    IconPath(
+      'M18 6c0 2-2 2-2 4v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V10c0-2-2-2-2-4V2 '
+      'h12z',
+    ),
+    IconPath('M6 6h12'),
+    IconPath('M12 12v.01'),
+  ]);
+
   /// Arco que gira en un boton que esta cargando (`loadingButton`).
   static const spinner = MusubiIconData([
     IconPath('M21 12a9 9 0 1 1-6.22-8.56'),

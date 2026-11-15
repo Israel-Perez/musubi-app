@@ -34,6 +34,27 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T57 — Apartar un producto y verificar con QR o código (15-Nov-2026, SCRUM-74, HU-52)
+
+**Qué se hizo**
+- `Apartar` (hoja desde "Apartar" y "Apártalo 24 h sin pagar" de `Producto`): tres horas de `PickupSlots` y los puntos del campus; al apartar abre `Apartado-listo` (boleto rojo con el QR de `qr_flutter`, "O DICTA TU CÓDIGO", punto, hora y "Vence en 24 h"; "Cancelar apartado" con confirmación).
+- `Mis-apartados` ("Yo aparté" con "Mostrar mi QR"; "Me apartaron" con "Verificar comprador") y la tarjeta oscura "Mis apartados" de `Perfil`.
+- `Verificar-comprador` (oscuro): "Escanear QR" con `mobile_scanner` o "Escribir código" (dice cuántos intentos quedan); `Apartado-verificado` con la carrera y la calificación de quien compra y "Confirmar entrega" (crea el pedido completado en la API).
+- Aviso con destino `reservation`. Android: `CAMERA`, la cámara no requerida y ML Kit sin empaquetar.
+- API `0.5.0-alpha.36` (musubi-api, misma rama). La app no sube su versión: se publica en el siguiente lote de Play.
+
+**Decisiones**
+- Usuaria: uno activo a la vez, QR y cámara completos (excepción de 00-01 en el `plan.md` de HU-52, constitución §6) y pedido completado al entregar.
+- La cámara va detrás de `qrCameraProvider` (pruebas y capturas sin cámara); `codeFromQr` rechaza el QR de otro apartado sin gastar un intento.
+- Las horas se completan desde el final de la ventana de 24 h: la maqueta ofrece "Mañana 10:00 a. m." a las 9:41, que la API rechazaría.
+
+**Errores a evitar**
+- `Center` dentro de un `Wrap` ocupa todo el ancho: usar `widthFactor: 1`.
+- Un segmento con `AnimatedContainer` sin `alignment` no llena el alto del `Row`.
+- `context.pushReplacement` devuelve `void` en esta versión de go_router: no va dentro de `unawaited`.
+
+**Verificación:** format 0 · analyze 0 · `flutter test` 749 · critic PASS · capturas contra la maqueta (`apartar`, `apartado-listo`, `mis-apartados`, `verificar-comprador`, `apartado-verificado`). Falta la prueba en el celular (T5).
+
 ## T56 — Pagar por transferencia o en efectivo (15-Nov-2026, SCRUM-72, HU-55)
 
 **Qué se hizo**

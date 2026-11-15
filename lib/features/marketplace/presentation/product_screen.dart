@@ -24,6 +24,7 @@ import 'package:musubi_app/features/marketplace/presentation/favorites_actions.d
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/orders/presentation/reserve_sheet.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
@@ -51,7 +52,8 @@ ProductSummary _summaryOf(ProductDetail detail) => ProductSummary(
 /// `Producto` y `Producto-visitante` (HU-11): fotos, precio, estado, piezas,
 /// descripcion, quien vende y "Mensaje" / "Comprar" hacia el chat (HU-20).
 ///
-/// NOTE (HU-52): "Apartalo 24 h" y "Apartar".
+/// HU-52: "Apartalo 24 h sin pagar" y "Apartar" abren `Apartar`
+/// (`showReserveSheet`) y luego `Apartado-listo`.
 /// NOTE (HU-51): "Compara antes de comprar".
 /// HU-35: "Productos parecidos" al final (ML de la API) y "Ver parecidos" de
 /// una agotada baja hasta ellos.
@@ -118,6 +120,17 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
   void _toggle(ProductDetail detail) =>
       unawaited(toggleFavorite(context, ref, _summaryOf(detail)));
 
+  /// "Apartar" (HU-52): elige cuando y donde y abre `Apartado-listo`.
+  Future<void> _reserve(ProductDetail detail) async {
+    final reservation = await showReserveSheet(
+      context,
+      product: _summaryOf(detail),
+    );
+    if (reservation == null || !mounted) return;
+    ref.invalidate(productDetailProvider(widget.productId));
+    unawaited(context.push(AppRoutes.reservation(reservation.id)));
+  }
+
   /// "Mensaje" y "Comprar": el chat con quien vende (HU-20).
   void _chat(
     ProductDetail detail, {
@@ -176,7 +189,7 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
           onSave: () =>
               signedIn ? _toggle(value) : _gate(AccountGateMotive.save),
           onReserve: () =>
-              signedIn ? _soon('Apartar') : _gate(AccountGateMotive.buy),
+              signedIn ? _reserve(value) : _gate(AccountGateMotive.buy),
           onNotify: () =>
               signedIn ? _soon('El aviso') : _gate(AccountGateMotive.save),
           onSimilar: _showSimilar,

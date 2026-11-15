@@ -46,7 +46,9 @@ import 'package:musubi_app/features/marketplace/presentation/saved_search_provid
 import 'package:musubi_app/features/notifications/domain/notification_models.dart';
 import 'package:musubi_app/features/notifications/presentation/notification_providers.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/domain/reservation_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
+import 'package:musubi_app/features/orders/presentation/verify_buyer_screen.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/interests_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
@@ -62,6 +64,7 @@ import 'package:musubi_app/features/seller_support/domain/seller_support.dart';
 import 'package:musubi_app/features/seller_support/presentation/seller_support_providers.dart';
 import 'package:musubi_app/features/status/domain/api_status.dart';
 import 'package:musubi_app/features/status/presentation/status_providers.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../test/helpers/fake_agreements.dart';
 import '../test/helpers/fake_auth_repository.dart';
@@ -76,6 +79,7 @@ import '../test/helpers/fake_payouts.dart';
 import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_recommendations.dart';
 import '../test/helpers/fake_reputation.dart';
+import '../test/helpers/fake_reservations.dart';
 import '../test/helpers/fake_saved_searches.dart';
 import '../test/helpers/fake_seller_support.dart';
 import '../test/helpers/fake_session_api.dart';
@@ -629,6 +633,63 @@ final List<ReceivedOffer> _receivedOffers = [
   ),
 ];
 
+/// HU-52: la calculadora que Ana aparto a Valeria (`Apartado-listo`, "Vence
+/// en 24 h"), el Arduino que ya recogio y las escuadras que Luis le aparto.
+final _reservations = FakeReservationRepository(
+  reservations: [
+    sampleReservation(expiresAt: _now.add(const Duration(hours: 24))),
+    sampleReservation(
+      id: '6716a0000000000000000a03',
+      number: 'AP-4790',
+      status: ReservationStatus.collected,
+      title: 'Kit Arduino UNO con sensores',
+      priceCents: 42000,
+      photoUrl: 'asset:assets/products/arduino.webp',
+      sellerName: 'Jorge Salinas',
+      updatedAt: DateTime.utc(2026, 10, 12, 18),
+    ),
+    sampleSellerReservation(),
+  ],
+);
+
+/// La camara de `Verificar-comprador` como la dibuja la maqueta: el QR de
+/// Luis girado -7° y la linea roja arriba.
+Widget _fakeCamera({
+  required ValueChanged<String> onCode,
+  required bool torch,
+}) => Stack(
+  fit: StackFit.expand,
+  children: [
+    Center(
+      child: Transform.rotate(
+        angle: -7 * 3.14159265 / 180,
+        child: Container(
+          width: 176,
+          height: 176,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEFEFE),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x73000000),
+                offset: Offset(0, 20),
+                blurRadius: 40,
+              ),
+            ],
+          ),
+          child: QrImageView(
+            data: 'musubi:apartado:$squaresReservationId:905316',
+            size: 150,
+            padding: const EdgeInsets.all(150 / 23),
+          ),
+        ),
+      ),
+    ),
+    const Positioned(left: 18, right: 18, top: 18, child: ScanLine()),
+  ],
+);
+
 /// Fecha de la venta de ejemplo (HU-08).
 final DateTime _soldAt = DateTime.utc(2026, 9, 28, 18);
 
@@ -871,6 +932,18 @@ class _Shot {
                   ratingCount: 18,
                   sales: 15,
                 )
+                // HU-52: Luis en `Apartado-verificado` ("Actuaría · UTTT",
+                // 4.8).
+                ..publicProfiles['buyer-$squaresReservationId'] = PublicProfile(
+                  id: 'buyer-$squaresReservationId',
+                  fullName: 'Luis Martínez',
+                  campusShortName: 'UTTT',
+                  memberSince: DateTime(2025, 3, 10),
+                  careerShortName: 'Actuaría',
+                  term: 5,
+                  ratingAvg: 4.8,
+                  ratingCount: 9,
+                )
                 // `Perfil-vendedor` sin calificaciones (RN-26).
                 ..publicProfiles['demo-diego-h'] = PublicProfile(
                   id: 'demo-diego-h',
@@ -962,6 +1035,9 @@ class _Shot {
                 ],
               ),
             ),
+            // HU-52: los apartados y la camara fija.
+            reservationRepositoryProvider.overrideWithValue(_reservations),
+            qrCameraProvider.overrideWithValue(_fakeCamera),
             // HU-55: la cuenta de Ana ("BBVA ···· 4829" en `Ajustes`).
             payoutRepositoryProvider.overrideWithValue(
               FakePayoutRepository(account: sampleAccount),
@@ -1540,6 +1616,51 @@ final Map<String, (bool, _Scene)> _scenes = {
     (s) async {
       await s.go(AppRoutes.order('o2'));
       await s.tap(find.byKey(const Key('order-cancel')));
+    },
+  ),
+  // HU-52: apartar, el QR, "Mis apartados" y quien vende verifica.
+  'apartar': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.product('casio-991es'));
+      await s.tap(find.text('Apartar'));
+    },
+  ),
+  'apartado-listo': (
+    true,
+    (s) => s.go(AppRoutes.reservation(casioReservationId)),
+  ),
+  'apartado-cancelar': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.reservation(casioReservationId));
+      await s.tap(find.byKey(const Key('reservation-cancel')));
+    },
+  ),
+  'mis-apartados': (true, (s) => s.go(AppRoutes.myReservations)),
+  'mis-apartados-vendedor': (
+    true,
+    (s) => s.go(AppRoutes.myReservationsTab('seller')),
+  ),
+  'verificar-comprador': (
+    true,
+    (s) => s.go(AppRoutes.verifyBuyer(squaresReservationId)),
+  ),
+  'verificar-codigo': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.verifyBuyer(squaresReservationId));
+      await s.tap(find.byKey(const Key('verify-mode-code')));
+    },
+  ),
+  'apartado-verificado': (
+    true,
+    (s) async {
+      final i = _reservations.reservations.indexWhere(
+        (r) => r.id == squaresReservationId,
+      );
+      _reservations.reservations[i] = sampleSellerReservation(verifiedAt: _now);
+      await s.go(AppRoutes.buyerVerified(squaresReservationId));
     },
   ),
   // HU-31: `Notificaciones` (Hoy y Ayer, dos sin leer).

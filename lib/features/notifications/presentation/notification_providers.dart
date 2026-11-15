@@ -90,6 +90,10 @@ String? routeFor(NotificationTarget target, String id) => switch (target) {
   NotificationTarget.product when id.isNotEmpty => AppRoutes.product(id),
   // HU-36: "Tu bata lleva 34 días sin venderse" abre "Mis productos".
   NotificationTarget.myProducts => AppRoutes.myProducts,
+  // HU-52: "Luis apartó tu calculadora", "Se canceló…" o "Venció…".
+  NotificationTarget.reservation when id.isNotEmpty => AppRoutes.reservation(
+    id,
+  ),
   _ => null,
 };
 

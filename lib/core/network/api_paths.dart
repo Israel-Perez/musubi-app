@@ -271,6 +271,27 @@ abstract final class ApiPaths {
   /// pagos" (spec `musubi-api:HU-55`): nunca trae la CLABE completa.
   static const payoutAccount = '/api/v1/payouts/account';
 
+  /// `POST /api/v1/reservations` — "Apartados (HU-52)" (spec
+  /// `musubi-api:HU-52`): apartar 24 h.
+  static const reservations = '/api/v1/reservations';
+
+  /// `GET /api/v1/reservations/mine?tab=` — "Apartados (HU-52)".
+  static const myReservations = '$reservations/mine';
+
+  /// `GET /api/v1/reservations/{id}` — "Apartados (HU-52)".
+  static String reservation(String id) => '$reservations/$id';
+
+  /// `POST /api/v1/reservations/{id}/cancel` — "Apartados (HU-52)".
+  static String reservationCancel(String id) => '$reservations/$id/cancel';
+
+  /// `POST /api/v1/reservations/{id}/verify` — "Apartados (HU-52)": el codigo
+  /// del QR o escrito (solo quien vende).
+  static String reservationVerify(String id) => '$reservations/$id/verify';
+
+  /// `POST /api/v1/reservations/{id}/complete` — "Apartados (HU-52)":
+  /// "Confirmar entrega".
+  static String reservationComplete(String id) => '$reservations/$id/complete';
+
   /// `POST /api/v1/agreements` y `GET /api/v1/agreements?conversationId=` —
   /// filas "M-10" (specs `musubi-api:HU-32`, `HU-33` y `HU-34`).
   static const agreements = '/api/v1/agreements';
