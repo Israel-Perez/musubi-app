@@ -14,6 +14,7 @@ import 'package:musubi_app/features/listings/presentation/listings_providers.dar
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_match.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
@@ -115,6 +116,11 @@ void main() {
     'Necesidad-1…3: señala lo que falta, publica y muestra lo que coincide',
     (tester) async {
       final h = NeedHarness(tester);
+      // HU-18: la API da las exactas primero y despues las parecidas.
+      h.wanted.allMatches = [
+        WantedMatch(product: _matches.items[0], exact: true),
+        WantedMatch(product: _matches.items[1], exact: false),
+      ];
       await h.open(AppRoutes.need);
 
       expect(find.text('Publicar lo que necesito'), findsOneWidget);
@@ -182,14 +188,15 @@ void main() {
         'neededBy': '2026-11-13',
       });
 
-      // Necesidad-publicada: lo que cabe en el presupuesto primero.
+      // Necesidad-publicada: las exactas primero y despues las parecidas.
       expect(find.text('¡Tu solicitud está publicada!'), findsOneWidget);
       expect(find.text('Activa'), findsOneWidget);
       // La cantidad elegida se ve en el boleto publicado.
       expect(find.text('vie 13 nov · 2 piezas'), findsOneWidget);
       expect(find.text('Ya coinciden con lo que buscas'), findsOneWidget);
+      expect(h.wanted.matchCalls, ['w101']);
       expect(find.text('Dentro de tu presupuesto'), findsOneWidget);
-      expect(find.text('Arriba de tu presupuesto'), findsOneWidget);
+      expect(find.text('Modelo parecido'), findsOneWidget);
       expect(
         tester.getTopLeft(find.text('Casio fx-991ES Plus · Usado')).dy,
         lessThan(tester.getTopLeft(find.text('Casio fx-991LA X · Nuevo')).dy),

@@ -327,6 +327,45 @@ void main() {
     });
   });
 
+  group('coincidencias (HU-18)', () {
+    test('lee las exactas y las parecidas de mi solicitud', () async {
+      Map<String, dynamic> product(String id, int price) => {
+        'id': id,
+        'title': 'Calculadora Casio fx-991ES Plus',
+        'description': 'Con tapa.',
+        'category': 'calculadoras',
+        'priceCents': price,
+        'condition': 'used',
+        'conditionDetail': 'likeNew',
+        'stock': 1,
+        'status': 'active',
+        'photos': <String>[],
+        'seller': {'id': 'u1', 'name': 'Valeria C.'},
+        'publishedAt': '2026-11-09T18:00:00Z',
+      };
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'items': [
+            {'product': product('p1', 45000), 'kind': 'exact'},
+            {'product': product('p2', 80000), 'kind': 'similar'},
+          ],
+          'exact': 1,
+        }),
+      );
+
+      final matches = await repository.matches('r1');
+
+      expect(adapter.requests.single.path, ApiPaths.wantedMatches('r1'));
+      expect(
+        [
+          for (final m in matches)
+            (m.product.id, m.product.priceCents, m.exact),
+        ],
+        [('p1', 45000, true), ('p2', 80000, false)],
+      );
+    });
+  });
+
   group('ofertas recibidas (HU-17)', () {
     test('lista con quien ofrece, su reputacion y la foto', () async {
       serve(

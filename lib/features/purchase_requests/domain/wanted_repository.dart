@@ -1,5 +1,6 @@
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_match.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 
 /// Solicitudes de compra (HU-13 a HU-17). Lanza `ApiFailure` (nunca
@@ -37,6 +38,10 @@ abstract interface class WantedRepository {
 
   /// "Enviar oferta" (HU-16): la crea o la reemplaza (RN-14).
   Future<WantedOffer> sendOffer(String requestId, NewOffer offer);
+
+  /// "Ya coinciden con lo que buscas" (HU-18): las exactas primero y despues
+  /// las parecidas.
+  Future<List<WantedMatch>> matches(String requestId);
 
   /// "Compara las ofertas" (HU-17): las de mi solicitud.
   Future<List<ReceivedOffer>> receivedOffers(String requestId);

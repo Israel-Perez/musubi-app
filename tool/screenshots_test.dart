@@ -50,6 +50,7 @@ import 'package:musubi_app/features/profile/presentation/interests_providers.dar
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_match.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
@@ -210,6 +211,60 @@ ProductSummary _rec(
   sellerName: seller,
   publishedAt: _now.subtract(Duration(hours: hoursAgo)),
 );
+
+/// HU-18: "Ya coinciden con lo que buscas" de `Necesidad-publicada` (las tres
+/// de la maqueta: dos exactas y una parecida, con presupuesto de $600).
+WantedMatch _needMatch(
+  String id,
+  String title,
+  String condition,
+  int pesos,
+  String photo,
+  String seller, {
+  required bool exact,
+}) => WantedMatch(
+  product: ProductSummary(
+    id: id,
+    title: title,
+    priceCents: pesos * 100,
+    stock: 1,
+    condition: condition,
+    photoUrl: 'asset:assets/products/$photo.webp',
+    sellerName: seller,
+    publishedAt: _now.subtract(const Duration(hours: 5)),
+  ),
+  exact: exact,
+);
+
+final List<WantedMatch> _needMatches = [
+  _needMatch(
+    'casio-991es',
+    'Casio fx-991ES Plus',
+    'Usado',
+    450,
+    'casio',
+    'Valeria C.',
+    exact: true,
+  ),
+  _needMatch(
+    'casio-lax',
+    'Casio fx-991LA X',
+    'Nuevo',
+    520,
+    'casio-lax',
+    'Luis M.',
+    exact: true,
+  ),
+  _needMatch(
+    'casio-570',
+    'Casio fx-570ES Plus',
+    'Usado',
+    380,
+    'casio',
+    'Paola N.',
+    exact: false,
+  ),
+];
 
 final _recommendations = FakeRecommendationRepository(
   forYouItems: [
@@ -836,7 +891,7 @@ class _Shot {
                   for (var i = 3; i <= 6; i++)
                     sampleWanted(id: 'w$i', status: WantedStatus.closed),
                 ],
-              ),
+              )..allMatches = _needMatches,
             ),
           ],
           child: const MusubiApp(),

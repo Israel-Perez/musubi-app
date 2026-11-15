@@ -13,12 +13,13 @@ import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_match.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/need_widgets.dart';
 import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 /// `Necesidad-publicada` (HU-13): la solicitud activa y lo que ya coincide en
-/// el campus (busqueda HU-09), lo que cabe en el presupuesto primero.
+/// el campus (HU-18): las exactas primero y despues las parecidas.
 /// NOTE (HU-17): el aviso "Diego tiene lo que buscas" llega con las ofertas.
 class NeedDoneScreen extends ConsumerWidget {
   const new({required this.request, super.key});
@@ -30,18 +31,9 @@ class NeedDoneScreen extends ConsumerWidget {
     final c = context.musubi;
     final wanted = request;
     final bottom = math.max(30, MediaQuery.viewPaddingOf(context).bottom + 6);
-    final matches = <ProductSummary>[];
-    if (wanted != null) {
-      final budget = wanted.budgetCents;
-      matches
-        ..addAll(ref.watch(needMatchesProvider(wanted.title)).value ?? const [])
-        // Lo que cabe en el presupuesto primero, del mas barato al mas caro.
-        ..sort((a, b) {
-          final inA = a.priceCents <= budget ? 0 : 1;
-          final inB = b.priceCents <= budget ? 0 : 1;
-          return inA != inB ? inA - inB : a.priceCents - b.priceCents;
-        });
-    }
+    final matches = wanted == null
+        ? const <WantedMatch>[]
+        : ref.watch(wantedMatchesProvider(wanted.id)).value ?? const [];
     final shown = matches.take(3).toList();
 
     return Scaffold(
@@ -186,10 +178,10 @@ class NeedDoneScreen extends ConsumerWidget {
                     child: Column(
                       spacing: 10,
                       children: [
-                        for (final product in shown)
+                        for (final match in shown)
                           _MatchRow(
-                            product: product,
-                            inBudget: product.priceCents <= wanted.budgetCents,
+                            product: match.product,
+                            fit: MatchFit.of(match, wanted.budgetCents),
                           ),
                       ],
                     ),
@@ -233,18 +225,41 @@ class NeedDoneScreen extends ConsumerWidget {
   }
 }
 
+/// Lo que dice cada coincidencia (maqueta `Necesidad-publicada`).
+enum MatchFit {
+  /// Exacta y cabe en el presupuesto.
+  inBudget('Dentro de tu presupuesto'),
+
+  /// Exacta, hasta 20 % arriba del presupuesto.
+  overBudget('Arriba de tu presupuesto'),
+
+  /// Parecida (RF-24).
+  similar('Modelo parecido');
+
+  new(this.label);
+
+  final String label;
+
+  static MatchFit of(WantedMatch match, int budgetCents) => !match.exact
+      ? similar
+      : match.product.priceCents <= budgetCents
+      ? inBudget
+      : overBudget;
+}
+
 /// Una publicacion que coincide: foto de 64, nombre · estado, quien vende,
 /// "Dentro de tu presupuesto" o "Modelo parecido", precio y flecha.
 class _MatchRow extends StatelessWidget {
-  const new({required this.product, required this.inBudget});
+  const new({required this.product, required this.fit});
 
   final ProductSummary product;
-  final bool inBudget;
+  final MatchFit fit;
 
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
     final title = [product.title, ?product.condition].join(' · ');
+    final inBudget = fit == MatchFit.inBudget;
     return Pressable(
       onTap: () => unawaited(context.push(AppRoutes.product(product.id))),
       semanticLabel: '$title, ${formatPrice(product.priceCents)}',
@@ -306,9 +321,7 @@ class _MatchRow extends StatelessWidget {
                       ),
                       Flexible(
                         child: Text(
-                          inBudget
-                              ? 'Dentro de tu presupuesto'
-                              : 'Arriba de tu presupuesto',
+                          fit.label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: MusubiType.style(
