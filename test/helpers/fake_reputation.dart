@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_repository.dart';
@@ -49,6 +51,9 @@ class FakeReputationRepository implements ReputationRepository {
   /// Falla la siguiente calificacion.
   ApiFailure? rateFailure;
 
+  /// Detiene la calificacion hasta que la prueba la libere.
+  Completer<void>? rateGate;
+
   /// Opiniones por persona (HU-27); "Ver más" pide la pagina de su cursor.
   final Map<String, List<Opinion>> opinionsByUser = {};
 
@@ -60,6 +65,8 @@ class FakeReputationRepository implements ReputationRepository {
 
   @override
   Future<void> rate(String orderId, NewRating rating) async {
+    final gate = rateGate;
+    if (gate != null) await gate.future;
     final failure = rateFailure;
     if (failure != null) {
       rateFailure = null;

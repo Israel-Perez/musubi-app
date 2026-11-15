@@ -215,3 +215,7 @@ Las notas de la versión salen de `whatsnew/whatsnew-es-419` (máximo 500 caract
 5. Google revisa la versión (de minutos a horas) y la publica en esa pista.
 
 **Pistas:** `alpha` es el id de la prueba cerrada predeterminada de Play Console. Si creaste otra con un nombre propio, su id es ese nombre.
+
+### Probar la reseña de la app (HU-67)
+
+La In-App Review **no aparece** con `flutter run` ni en un APK instalado a mano: Google solo la muestra en una versión instalada desde una pista de Play (interna o cerrada) y con la cuenta en la lista de testers. Si la cuota de Google la omite, la app sigue sin avisar; el aviso se puede volver a intentar después de 90 días.

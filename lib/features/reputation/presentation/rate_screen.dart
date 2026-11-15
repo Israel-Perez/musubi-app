@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/platform/app_review.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
@@ -16,6 +17,7 @@ import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
+import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
@@ -45,6 +47,7 @@ class _RateScreenState extends ConsumerState<RateScreen> {
   final Set<RatingTag> _tags = {};
   final _comment = TextEditingController();
   bool _sending = false;
+  bool _ratingFailed = false;
 
   @override
   void dispose() {
@@ -52,8 +55,31 @@ class _RateScreenState extends ConsumerState<RateScreen> {
     super.dispose();
   }
 
-  void _close() =>
-      context.canPop() ? context.pop() : context.go(AppRoutes.home);
+  void _close() => _finish(askReview: true);
+
+  /// Lee el reloj y el aviso antes de navegar: después del `pop`/`go` la
+  /// pantalla ya no puede leer providers.
+  void _askReview({required bool orderCompleted}) {
+    if (!orderCompleted) return;
+    final review = ref.read(reviewPrompterProvider);
+    final now = ref.read(clockProvider)();
+    unawaited(review.maybeAsk(now: now, orderCompleted: true));
+  }
+
+  void _finish({required bool askReview}) {
+    if (askReview) {
+      final order = ref.read(orderProvider(widget.orderId)).value;
+      _askReview(
+        orderCompleted:
+            order?.status == OrderStatus.completed && !_ratingFailed,
+      );
+    }
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.home);
+    }
+  }
 
   Future<void> _send(Order order) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -78,6 +104,7 @@ class _RateScreenState extends ConsumerState<RateScreen> {
           );
       if (!mounted) return;
       ref.invalidate(orderProvider(order.id));
+      _askReview(orderCompleted: order.status == OrderStatus.completed);
       // Como la maqueta: regresa a Inicio con el aviso.
       context.go(AppRoutes.home);
       showMusubiSnack(
@@ -87,6 +114,7 @@ class _RateScreenState extends ConsumerState<RateScreen> {
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() => _sending = false);
+      _ratingFailed = true;
       showMusubiSnack(
         messenger,
         failure.message,
@@ -97,7 +125,7 @@ class _RateScreenState extends ConsumerState<RateScreen> {
       if (failure.code == 'ratings.already_rated' ||
           failure.code == 'ratings.expired') {
         ref.invalidate(orderProvider(order.id));
-        _close();
+        _finish(askReview: false);
       }
     }
   }
@@ -169,7 +197,7 @@ class _Body extends StatelessWidget {
       bottom: false,
       child: Column(
         children: [
-          _Header(onClose: onClose),
+          _Header(onClose: sending ? null : onClose),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -232,7 +260,7 @@ class _Body extends StatelessWidget {
 class _Header extends StatelessWidget {
   const new({required this.onClose});
 
-  final VoidCallback onClose;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {

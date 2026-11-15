@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,7 @@ import 'package:musubi_app/app/musubi_app.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/platform/app_review.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
@@ -16,6 +19,7 @@ import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 
+import '../../helpers/fake_app_review.dart';
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
 import '../../helpers/fake_orders.dart';
@@ -53,6 +57,8 @@ class _Harness {
   final WidgetTester tester;
   final FakeOrderRepository orders;
   final reputation = FakeReputationRepository();
+  final review = FakeAppReview();
+  final reviewStore = InMemoryReviewAskStore();
   late ProviderContainer container;
 
   Future<void> open(
@@ -79,6 +85,8 @@ class _Harness {
           chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
           orderRepositoryProvider.overrideWithValue(orders),
           reputationRepositoryProvider.overrideWithValue(reputation),
+          appReviewProvider.overrideWithValue(review),
+          reviewAskStoreProvider.overrideWithValue(reviewStore),
         ],
         child: const MusubiApp(),
       ),
@@ -171,6 +179,133 @@ void main() {
     expect(h.reputation.rated, isEmpty);
   });
 
+  testWidgets('enviar la calificación pide la reseña una vez', (tester) async {
+    final h = _Harness(tester, orders: [_completed()]);
+    await h.open(AppRoutes.rate('o1'));
+
+    await h.tap(find.byKey(const Key('rate-send')));
+
+    expect(h.review.calls, 1);
+    expect(h.reviewStore.at, _now);
+  });
+
+  testWidgets('"Ahora no" también pide la reseña', (tester) async {
+    final h = _Harness(tester, orders: [_completed()]);
+    await h.open(AppRoutes.order('o1'));
+    await h.tap(find.byKey(const Key('order-rate')));
+
+    await h.tap(find.byKey(const Key('rate-later')));
+
+    expect(h.review.calls, 1);
+    expect(h.reviewStore.at, _now);
+  });
+
+  testWidgets('cerrar con X también pide la reseña', (tester) async {
+    final h = _Harness(tester, orders: [_completed()]);
+    await h.open(AppRoutes.rate('o1'));
+
+    await h.tap(find.byKey(const Key('rate-close')));
+
+    expect(h.review.calls, 1);
+  });
+
+  testWidgets('no pide otra vez dentro de 90 días', (tester) async {
+    final h = _Harness(tester, orders: [_completed()]);
+    h.reviewStore.at = _now.subtract(const Duration(days: 89));
+    await h.open(AppRoutes.rate('o1'));
+
+    await h.tap(find.byKey(const Key('rate-send')));
+
+    expect(h.review.calls, 0);
+    expect(h.reviewStore.at, _now.subtract(const Duration(days: 89)));
+  });
+
+  testWidgets('si la reseña falla, la calificación y la navegación siguen', (
+    tester,
+  ) async {
+    final h = _Harness(tester, orders: [_completed()]);
+    h.review.fail = true;
+    await h.open(AppRoutes.rate('o1'));
+
+    await h.tap(find.byKey(const Key('rate-send')));
+
+    expect(h.path, AppRoutes.home);
+    expect(
+      find.text('¡Gracias! Tu calificación ya está en el perfil de Valeria.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    expect(h.review.calls, 1);
+    expect(h.reviewStore.at, isNull);
+  });
+
+  testWidgets('un pedido no completado no pide la reseña', (tester) async {
+    final h = _Harness(tester, orders: [sampleOrder(paysCash: true)]);
+    await h.open(AppRoutes.rate('o1'));
+
+    await h.tap(find.byKey(const Key('rate-later')));
+
+    expect(h.review.calls, 0);
+  });
+
+  testWidgets('quien vende también recibe la reseña', (tester) async {
+    final h = _Harness(tester, orders: [_completed(isBuyer: false)]);
+    await h.open(AppRoutes.rate('o1'));
+
+    await h.tap(find.byKey(const Key('rate-later')));
+
+    expect(h.review.calls, 1);
+  });
+
+  testWidgets('un pedido cancelado no pide la reseña', (tester) async {
+    final h = _Harness(
+      tester,
+      orders: [sampleOrder(status: OrderStatus.cancelled, paysCash: true)],
+    );
+    await h.open(AppRoutes.rate('o1'));
+
+    await h.tap(find.byKey(const Key('rate-later')));
+
+    expect(h.review.calls, 0);
+  });
+
+  testWidgets('ya calificado: al cerrar por el error no pide la reseña', (
+    tester,
+  ) async {
+    final h = _Harness(tester, orders: [_completed()]);
+    h.reputation.rateFailure = const ApiFailure(
+      code: 'ratings.already_rated',
+      message: 'Ya calificaste este pedido.',
+    );
+    await h.open(AppRoutes.rate('o1'));
+
+    await h.tap(find.byKey(const Key('rate-send')));
+
+    expect(h.review.calls, 0);
+  });
+
+  testWidgets('mientras envía, X y "Ahora no" no cierran ni piden la reseña', (
+    tester,
+  ) async {
+    final h = _Harness(tester, orders: [_completed()]);
+    h.reputation.rateGate = Completer<void>();
+    await h.open(AppRoutes.rate('o1'));
+
+    await tester.tap(find.byKey(const Key('rate-send')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('rate-later')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('rate-close')));
+    await tester.pump();
+
+    expect(h.path, AppRoutes.rate('o1'));
+    expect(h.review.calls, 0);
+
+    h.reputation.rateGate!.complete();
+    await tester.pumpAndSettle();
+    expect(h.review.calls, 1);
+  });
+
   testWidgets('ya calificado: lo dice y no ofrece calificar', (tester) async {
     final h = _Harness(tester, orders: [_completed(rated: true)]);
     await h.open(AppRoutes.order('o1'));
@@ -222,6 +357,11 @@ void main() {
     expect(h.path, AppRoutes.rate('o1'));
     expect(find.text('Algo salió mal. Intenta de nuevo.'), findsOneWidget);
     expect(h.reputation.rated, isEmpty);
+    expect(h.review.calls, 0);
+
+    // R3: si la calificación falló, cerrar con la X tampoco pide la reseña.
+    await h.tap(find.byKey(const Key('rate-close')));
+    expect(h.review.calls, 0);
   });
 
   testWidgets('accesibilidad y 360x640 sin overflow', (tester) async {

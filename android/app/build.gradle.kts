@@ -68,6 +68,11 @@ flutter {
     source = "../.."
 }
 
+dependencies {
+    // HU-67: In-App Review de Google Play (Play Core; sin permisos).
+    implementation("com.google.android.play:review:2.0.2")
+}
+
 // HU-31: Firebase (push) solo si existe google-services.json. Sin el archivo la app compila igual y los avisos push
 // quedan apagados (las pruebas y el CI de PR no lo necesitan).
 if (file("google-services.json").exists()) {

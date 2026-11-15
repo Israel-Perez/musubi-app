@@ -5,6 +5,7 @@ import 'package:musubi_app/app/musubi_app.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/platform/app_review.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
@@ -18,6 +19,7 @@ import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 
 import '../../helpers/fake_agreements.dart';
+import '../../helpers/fake_app_review.dart';
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
 import '../../helpers/fake_orders.dart';
@@ -52,6 +54,8 @@ class _Harness {
   final WidgetTester tester;
   final FakeChatRepository chat;
   final FakeOrderRepository orders;
+  final review = FakeAppReview();
+  final reviewStore = InMemoryReviewAskStore();
   late ProviderContainer container;
 
   Future<void> open(String location, {int stock = 1}) async {
@@ -74,6 +78,8 @@ class _Harness {
           chatRepositoryProvider.overrideWithValue(chat),
           chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
           orderRepositoryProvider.overrideWithValue(orders),
+          appReviewProvider.overrideWithValue(review),
+          reviewAskStoreProvider.overrideWithValue(reviewStore),
           // Sin IA (RNF-15): "Resumir acuerdo" abre el resumen a mano.
           agreementRepositoryProvider.overrideWithValue(
             FakeAgreementRepository()..requestFailure = aiUnavailable,
@@ -602,6 +608,7 @@ void main() {
       expect(find.text('¿Cómo te fue con Ana?'), findsOneWidget);
       await h.tap(find.byKey(const Key('rate-later')));
 
+      expect(h.review.calls, 1);
       expect(find.bySemanticsLabel('Estado del pedido: Completado'), findsOne);
       expect(
         find.text('Pedido completado. ¡Gracias por usar Musubi!'),
