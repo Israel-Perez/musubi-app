@@ -25,6 +25,7 @@ import 'package:musubi_app/features/marketplace/presentation/favorites_screen.da
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/recent_products_screen.dart';
+import 'package:musubi_app/features/marketplace/presentation/saved_searches_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
 import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:musubi_app/features/orders/presentation/my_orders_screen.dart';
@@ -70,6 +71,9 @@ abstract final class AppRoutes {
 
   /// "Mis intereses" desde `Ajustes` (HU-66).
   static const settingsInterests = '/ajustes/intereses';
+
+  /// "Mis alertas" (HU-12): las busquedas guardadas.
+  static const settingsAlerts = '/ajustes/alertas';
 
   /// "Vender un producto" (HU-06): `Vender-1…4` y `Vender-listo`.
   static const sell = '/vender';
@@ -169,6 +173,7 @@ abstract final class AppRoutes {
     accountPrivacy,
     interests,
     settingsInterests,
+    settingsAlerts,
     sell,
     sellDetails,
     sellPrice,
@@ -441,6 +446,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settingsInterests,
         builder: (context, state) => const InterestsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsAlerts,
+        builder: (context, state) => const SavedSearchesScreen(),
       ),
       GoRoute(
         path: AppRoutes.interests,

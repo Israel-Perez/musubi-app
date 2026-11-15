@@ -13,6 +13,7 @@ import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/auth/presentation/sign_out_button.dart';
+import 'package:musubi_app/features/marketplace/presentation/saved_search_providers.dart';
 import 'package:musubi_app/features/profile/presentation/change_password_sheet.dart';
 import 'package:musubi_app/features/profile/presentation/dark_mode_row.dart';
 import 'package:musubi_app/features/profile/presentation/email_sheet.dart';
@@ -144,6 +145,21 @@ class SettingsScreen extends ConsumerWidget {
                       },
                       onTap: () =>
                           unawaited(context.push(AppRoutes.settingsInterests)),
+                    ),
+                    // HU-12: las busquedas guardadas con "Avísame cuando
+                    // aparezca".
+                    SettingsRow(
+                      key: const Key('settings-alerts'),
+                      icon: MusubiIcons.bell,
+                      title: 'Mis alertas',
+                      value: switch (ref.watch(mySavedSearchesProvider)) {
+                        AsyncData(value: []) => 'Ninguna',
+                        AsyncData(value: [_]) => '1 activa',
+                        AsyncData(:final value) => '${value.length} activas',
+                        _ => null,
+                      },
+                      onTap: () =>
+                          unawaited(context.push(AppRoutes.settingsAlerts)),
                     ),
                   ],
                 ),

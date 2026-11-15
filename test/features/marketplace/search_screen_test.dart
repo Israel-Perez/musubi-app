@@ -15,11 +15,14 @@ import 'package:musubi_app/features/marketplace/domain/search_sort.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/marketplace/presentation/saved_search_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
+import 'package:musubi_app/features/purchase_requests/presentation/wanted_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart' show jwtFor;
 import '../../helpers/fake_favorites_repository.dart';
+import '../../helpers/fake_saved_searches.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/in_memory_token_store.dart';
 
@@ -51,6 +54,9 @@ void main() {
           favoritesRepositoryProvider.overrideWithValue(
             favorites ?? FakeFavoritesRepository(),
           ),
+          savedSearchRepositoryProvider.overrideWithValue(
+            FakeSavedSearchRepository(),
+          ),
         ],
         child: const MaterialApp(home: SearchScreen()),
       ),
@@ -64,6 +70,7 @@ void main() {
     FakeCatalogRepository fake, {
     SessionTokens? session,
     FakeFavoritesRepository? favorites,
+    FakeSavedSearchRepository? saved,
   }) async {
     final router = GoRouter(
       initialLocation: AppRoutes.search,
@@ -77,6 +84,10 @@ void main() {
           path: '/producto/:id',
           builder: (_, state) => Text('Detalle ${state.pathParameters['id']}'),
         ),
+        GoRoute(
+          path: AppRoutes.need,
+          builder: (_, _) => const Text('Necesito'),
+        ),
       ],
     );
     await tester.pumpWidget(
@@ -89,6 +100,9 @@ void main() {
           sessionApiProvider.overrideWithValue(FakeSessionApi()),
           initialSessionTokensProvider.overrideWithValue(session),
           tokenStoreProvider.overrideWithValue(InMemoryTokenStore(session)),
+          savedSearchRepositoryProvider.overrideWithValue(
+            saved ?? FakeSavedSearchRepository(),
+          ),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -343,11 +357,135 @@ void main() {
 
     await submit(tester, 'zzz');
 
-    expect(find.text('Sin resultados para «zzz»'), findsOneWidget);
+    // Busqueda-vacia (HU-12).
+    expect(find.text('No encontramos lo que buscas'), findsOneWidget);
     expect(
-      find.text('Prueba con otras palabras o publica lo que necesitas.'),
+      find.text('Nadie en la UTTT ha publicado «zzz». Pídelo y te avisamos.'),
       findsOneWidget,
     );
+    expect(find.text('Publicar lo que necesito'), findsOneWidget);
+    expect(find.text('Avísame cuando aparezca'), findsOneWidget);
+    // Una sola palabra: sin "Prueba con".
+    expect(find.text('Prueba con'), findsNothing);
+  });
+
+  group('Avísame cuando aparezca (HU-12)', () {
+    final empty = [const HomeFeed()];
+
+    testWidgets('guarda la busqueda y el boton queda en verde', (tester) async {
+      final saved = FakeSavedSearchRepository();
+      await openRouted(
+        tester,
+        FakeCatalogRepository(empty, [
+          const ProductPage(),
+          const ProductPage(),
+        ]),
+        session: memberSession(),
+        saved: saved,
+      );
+      await submit(tester, 'TI-84');
+
+      await tester.tap(find.byKey(const Key('search-alert')));
+      await tester.pumpAndSettle();
+
+      expect(saved.saves.single.$1, 'TI-84');
+      expect(find.text('Te avisaremos cuando aparezca'), findsOneWidget);
+      expect(
+        find.text('Listo. Te avisamos cuando alguien lo publique.'),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 4));
+
+      await tester.tap(find.byKey(const Key('search-alert')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Ya tienes activa esta alerta'), findsOneWidget);
+      expect(saved.saves, hasLength(1));
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('si ya la tenia, lo avisa', (tester) async {
+      final saved = FakeSavedSearchRepository();
+      await saved.save(query: 'TI-84');
+      await openRouted(
+        tester,
+        FakeCatalogRepository(empty, [
+          const ProductPage(),
+          const ProductPage(),
+        ]),
+        session: memberSession(),
+        saved: saved,
+      );
+      await submit(tester, 'TI-84');
+
+      await tester.tap(find.byKey(const Key('search-alert')));
+      await tester.pump();
+
+      expect(find.text('Ya tienes activa esta alerta'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('sin sesion pide crear la cuenta y no guarda', (tester) async {
+      final saved = FakeSavedSearchRepository();
+      await openRouted(
+        tester,
+        FakeCatalogRepository(empty, [
+          const ProductPage(),
+          const ProductPage(),
+        ]),
+        saved: saved,
+      );
+      await submit(tester, 'TI-84');
+
+      await tester.tap(find.byKey(const Key('search-alert')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Guarda lo que te gusta'), findsOneWidget);
+      expect(saved.saves, isEmpty);
+    });
+
+    testWidgets('"Publicar lo que necesito" lleva el nombre ya escrito', (
+      tester,
+    ) async {
+      await openRouted(
+        tester,
+        FakeCatalogRepository(empty, [
+          const ProductPage(),
+          const ProductPage(),
+        ]),
+        session: memberSession(),
+      );
+      await submit(tester, 'calculadora TI-84');
+
+      await tester.tap(find.byKey(const Key('search-need')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Necesito'), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('Necesito')),
+      );
+      expect(container.read(needDraftProvider).title, 'Calculadora TI-84');
+    });
+
+    testWidgets('"Prueba con" busca cada palabra', (tester) async {
+      final fake = FakeCatalogRepository(empty, [
+        const ProductPage(),
+        const ProductPage(),
+        const ProductPage(),
+      ]);
+      await open(tester, fake);
+      await submit(tester, 'calculadora graficadora');
+
+      expect(find.text('Prueba con'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const Key('search-try-graficadora')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('search-try-graficadora')));
+      await tester.pumpAndSettle();
+
+      expect(fake.queries.last, 'graficadora');
+    });
   });
 
   testWidgets('un error muestra el mensaje y Reintentar vuelve a buscar', (

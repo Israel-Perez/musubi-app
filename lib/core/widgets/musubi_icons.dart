@@ -325,6 +325,14 @@ abstract final class MusubiIcons {
     IconPath('m21 21-4.3-4.3'),
   ]);
 
+  /// `search-x` (`Busqueda-vacia`, HU-12).
+  static const searchX = MusubiIconData([
+    IconPath('m13.5 8.5-5 5'),
+    IconPath('m8.5 8.5 5 5'),
+    IconCircle(11, 11, 8),
+    IconPath('m21 21-4.3-4.3'),
+  ]);
+
   /// `settings`.
   static const settings = MusubiIconData([
     IconPath(

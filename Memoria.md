@@ -34,6 +34,22 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T54 — Guardar una búsqueda sin resultados (14-Nov-2026, SCRUM-51, HU-12)
+
+**Qué se hizo**
+- `Busqueda-vacia` igual a la maqueta (`SearchNothingFound`): ilustración con "SE BUSCA", "No encontramos lo que buscas", "Nadie en la UTTT ha publicado «…». Pídelo y te avisamos.", "Publicar lo que necesito" (abre `Necesidad-1` con el nombre ya escrito), "Avísame cuando aparezca" (→ "Te avisaremos cuando aparezca" en verde) y "Prueba con" (cada palabra de la búsqueda, si son dos o más). Sin sesión, la hoja "Crea tu cuenta".
+- `Ajustes` → Preferencias → "Mis alertas" (`/ajustes/alertas`, `SavedSearchesScreen`): lo buscado, sus filtros, "Vence el …" y "Quitar".
+- `SavedSearchRepository` / `HttpSavedSearchRepository` (`/saved-searches`), `mySavedSearchesProvider`; aviso `saved_search_match` con campana. Fila compartida `0.5.0-alpha.32`.
+- Capturas: `busqueda-vacia`, `busqueda-vacia-alerta` y `mis-alertas`.
+
+**Decisiones (con su porqué)** (usuaria, 14-Nov-2026)
+- 30 días; "Mis alertas" en Ajustes (la maqueta no tiene pantalla); la alerta pide todas las palabras y los filtros.
+- "Prueba con" no tiene datos en la maqueta (son fijos): se usan las palabras de la búsqueda.
+
+**Errores a evitar**
+- Una fila nueva en `Ajustes` empujó "Privacidad" fuera de la pantalla de 800×600 de `delete_account_flow_test`: las pruebas de pantallas completas usan el tamaño de un teléfono (1170×2532 a 3x).
+- `Center` dentro de un `SizedBox` de alto fijo ocupa todo el ancho: en un `Wrap`, usa `Align(widthFactor: 1)`.
+
 ## T53 — Coincidencias para quien busca (14-Nov-2026, SCRUM-40 y SCRUM-47, HU-18 y HU-29)
 
 **Qué se hizo**

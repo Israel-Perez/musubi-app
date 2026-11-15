@@ -24,13 +24,13 @@ import 'package:musubi_app/features/marketplace/presentation/campus_chip.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_actions.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_filter_sheet.dart';
+import 'package:musubi_app/features/marketplace/presentation/search_nothing_found.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_providers.dart';
 
 /// `Busqueda` y `Busqueda-vacia` (HU-09): busca por palabra clave en el
 /// catalogo del campus y abre el detalle de cada resultado (HU-11).
 ///
 /// NOTE (HU-10): el boton y la hoja de filtros de la busqueda.
-/// NOTE (HU-12): guardar la busqueda y avisar en el estado vacio.
 class SearchScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -221,6 +221,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             _HistoryRow(onPick: _searchFor),
             Expanded(
               child: switch (results) {
+                // HU-12: con palabras, `Busqueda-vacia` (pedirlo o "Avísame").
+                AsyncData(:final value)
+                    when value.empty && value.query.trim().isNotEmpty =>
+                  SearchNothingFound(
+                    query: value.query,
+                    filter: value.filter,
+                    onTry: _searchFor,
+                  ),
                 AsyncData(:final value) when value.empty => _EmptyResults(
                   query: value.query,
                   filters: !value.filter.isEmpty,
