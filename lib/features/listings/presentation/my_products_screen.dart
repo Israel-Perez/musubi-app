@@ -24,6 +24,7 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
+import 'package:musubi_app/features/seller_support/domain/seller_support.dart';
 import 'package:musubi_app/features/seller_support/presentation/seller_support_providers.dart';
 import 'package:musubi_app/features/seller_support/presentation/slow_listings_panel.dart';
 
@@ -88,9 +89,16 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
       ..invalidate(homeFeedProvider);
   }
 
-  /// "Editar publicación" desde "Ideas para vender más rápido" (HU-37).
-  void _edit(OwnListing listing) {
-    ref.read(sellEditDraftProvider.notifier).load(listing);
+  /// "Editar publicación" desde "Ideas para vender más rápido" (HU-37); con
+  /// "Usar en mi publicación", con el nombre y la descripción de la IA ya
+  /// escritos (quien vende revisa y guarda: RN-38).
+  void _edit(OwnListing listing, [ListingIdeas? ideas]) {
+    final draft = ref.read(sellEditDraftProvider.notifier)..load(listing);
+    if (ideas != null) {
+      draft
+        ..setTitle(ideas.title)
+        ..setDescription(ideas.description);
+    }
     unawaited(context.push(AppRoutes.editListing));
   }
 

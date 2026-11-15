@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 
 /// Una idea para vender (HU-37, RN-38: solo orienta; nunca cambia nada).
@@ -105,6 +106,20 @@ class ProductDemand {
   final List<DemandRequest> requests;
 }
 
+/// "Nombre y descripción con IA" (HU-37): solo una propuesta; quien vende
+/// decide si la usa al editar (RN-38).
+@immutable
+class ListingIdeas {
+  const new({required this.title, required this.description});
+
+  final String title;
+  final String description;
+}
+
+/// `code` de la API cuando la IA no esta (RNF-15: quedan las ideas
+/// predefinidas).
+const ideasUnavailableCode = 'seller_support.ideas_unavailable';
+
 /// Contrato de M-12 (filas "M-12" de `musubi-api/docs/endpoints.md`).
 abstract interface class SellerSupportRepository {
   /// `GET /products/mine/slow`.
@@ -112,6 +127,10 @@ abstract interface class SellerSupportRepository {
 
   /// `GET /products/{id}/demand`.
   Future<ProductDemand> demand(String productId);
+
+  /// `POST /products/{id}/ideas`. Lanza `ApiFailure` (`ideasUnavailableCode`
+  /// sin IA).
+  Future<ListingIdeas> ideas(String productId);
 }
 
 /// Modo demo y vitrina sin cuenta: nada lleva tiempo sin venderse.
@@ -123,4 +142,13 @@ class EmptySellerSupportRepository implements SellerSupportRepository {
 
   @override
   Future<ProductDemand> demand(String productId) async => const ProductDemand();
+
+  /// Sin cuenta no hay IA: quedan las ideas predefinidas.
+  @override
+  Future<ListingIdeas> ideas(String productId) async => throw const ApiFailure(
+    code: ideasUnavailableCode,
+    message:
+        'La IA no está disponible ahora. Usa estas ideas o inténtalo más '
+        'tarde.',
+  );
 }

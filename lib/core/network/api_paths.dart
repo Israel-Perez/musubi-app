@@ -143,6 +143,11 @@ abstract final class ApiPaths {
   /// persona).
   static String productDemand(String id) => '${product(id)}/demand';
 
+  /// `POST /api/v1/products/{id}/ideas` — fila "M-12" (spec
+  /// `musubi-api:HU-37`): un nombre y una descripcion que propone la IA; no
+  /// guarda nada. Sin IA, `seller_support.ideas_unavailable`.
+  static String productIdeas(String id) => '${product(id)}/ideas';
+
   /// `GET /api/v1/recommendations` — fila "M-11" (spec `musubi-api:HU-35`):
   /// "Recomendado para ti", con sesion.
   static const recommendations = '/api/v1/recommendations';
