@@ -38,9 +38,11 @@ import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dar
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/saved_search.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/marketplace/presentation/saved_search_providers.dart';
 import 'package:musubi_app/features/notifications/domain/notification_models.dart';
 import 'package:musubi_app/features/notifications/presentation/notification_providers.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
@@ -71,6 +73,7 @@ import '../test/helpers/fake_orders.dart';
 import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_recommendations.dart';
 import '../test/helpers/fake_reputation.dart';
+import '../test/helpers/fake_saved_searches.dart';
 import '../test/helpers/fake_session_api.dart';
 import '../test/helpers/fake_status_repository.dart';
 import '../test/helpers/fake_theme_preference_repository.dart';
@@ -813,6 +816,26 @@ class _Shot {
             interestsRepositoryProvider.overrideWithValue(
               FakeInterestsRepository(saved: ['libros', 'tecnologia']),
             ),
+            // HU-12: "Mis alertas" con dos busquedas guardadas.
+            savedSearchRepositoryProvider.overrideWithValue(
+              FakeSavedSearchRepository(
+                stored: [
+                  SavedSearch(
+                    id: 's1',
+                    query: 'Calculadora graficadora TI-84',
+                    categories: const ['calculadoras'],
+                    maxCents: 200000,
+                    condition: 'used',
+                    expiresAt: DateTime.utc(2026, 12, 14, 18),
+                  ),
+                  SavedSearch(
+                    id: 's2',
+                    query: 'Estetoscopio Littmann',
+                    expiresAt: DateTime.utc(2026, 12, 2, 18),
+                  ),
+                ],
+              ),
+            ),
             statusRepositoryProvider.overrideWithValue(
               FakeStatusRepository([const ApiOnline(version: 'v1')]),
             ),
@@ -1264,6 +1287,19 @@ final Map<String, (bool, _Scene)> _scenes = {
     },
   ),
   'mis-intereses': (true, (s) => s.go(AppRoutes.settingsInterests)),
+  // HU-12: las busquedas guardadas y "Avísame cuando aparezca" ya activo.
+  'mis-alertas': (true, (s) => s.go(AppRoutes.settingsAlerts)),
+  'busqueda-vacia-alerta': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.search);
+      await s.type('search-input', 'graficadora TI-84');
+      await s.tester.testTextInput.receiveAction(TextInputAction.search);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await s.settle();
+      await s.tap(find.byKey(const Key('search-alert')));
+    },
+  ),
   'datos-personales': (
     true,
     (s) async {

@@ -321,6 +321,8 @@ class _Row extends StatelessWidget {
       'wanted_match' => (MusubiIcons.megaphone, c.brandSoft, c.brand),
       // HU-29: se publico algo que coincide con mi solicitud.
       'product_match' => (MusubiIcons.search, c.brandSoft, c.brand),
+      // HU-12: "¡Ya apareció lo que buscabas!" ("Avísame cuando aparezca").
+      'saved_search_match' => (MusubiIcons.bell, c.brandSoft, c.brand),
       // HU-30: la solicitud a la que ofreciste ya no esta activa.
       'offer_closed' => (MusubiIcons.circleX, c.surface, c.textSecondary),
       _ => (MusubiIcons.bell, c.surface, c.textPrimary),

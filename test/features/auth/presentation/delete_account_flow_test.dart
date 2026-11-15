@@ -21,6 +21,11 @@ void main() {
   late ProviderContainer container;
 
   Future<void> open(WidgetTester tester) async {
+    // Tamano de un telefono, como las demas pruebas de la app.
+    tester.view
+      ..physicalSize = const Size(1170, 2532)
+      ..devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
     account = FakeAccountRepository();
     store = InMemoryTokenStore(testTokens());
     await tester.pumpWidget(
