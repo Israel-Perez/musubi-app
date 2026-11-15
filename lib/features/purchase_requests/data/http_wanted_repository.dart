@@ -4,6 +4,7 @@ import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/marketplace/data/product_json.dart';
 import 'package:musubi_app/features/purchase_requests/domain/offer_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_board.dart';
+import 'package:musubi_app/features/purchase_requests/domain/wanted_match.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_models.dart';
 import 'package:musubi_app/features/purchase_requests/domain/wanted_repository.dart';
 
@@ -117,6 +118,25 @@ class HttpWantedRepository implements WantedRepository {
         );
         return offerFromJson(response.data ?? const {}, _apiBaseUrl);
       });
+
+  @override
+  Future<List<WantedMatch>> matches(String requestId) => _guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.wantedMatches(requestId),
+    );
+    return [
+      for (final item
+          in (response.data?['items'] as List<dynamic>? ?? const [])
+              .cast<Map<String, dynamic>>())
+        WantedMatch(
+          product: productFromJson(
+            item['product'] as Map<String, dynamic>,
+            _apiBaseUrl,
+          ),
+          exact: item['kind'] == 'exact',
+        ),
+    ];
+  });
 
   @override
   Future<List<ReceivedOffer>> receivedOffers(String requestId) =>

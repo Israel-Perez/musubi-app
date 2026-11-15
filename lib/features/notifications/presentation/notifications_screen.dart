@@ -319,6 +319,8 @@ class _Row extends StatelessWidget {
       'request_expired' => (MusubiIcons.clock, c.warningSoft, c.warningText),
       // HU-19: el megafono de "Se busca", como la maqueta.
       'wanted_match' => (MusubiIcons.megaphone, c.brandSoft, c.brand),
+      // HU-29: se publico algo que coincide con mi solicitud.
+      'product_match' => (MusubiIcons.search, c.brandSoft, c.brand),
       // HU-30: la solicitud a la que ofreciste ya no esta activa.
       'offer_closed' => (MusubiIcons.circleX, c.surface, c.textSecondary),
       _ => (MusubiIcons.bell, c.surface, c.textPrimary),

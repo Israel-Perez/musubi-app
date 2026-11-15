@@ -1,17 +1,9 @@
-# HU-29 — Aviso de producto buscado disponible (tareas)
+# HU-29 — Aviso de producto buscado disponible (tareas, app)
 
-## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+## T1 — Destino y ruta
+- **Prueba:** `notification_data_test.dart`.
+- **Estado:** ✅ Hecho (14-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-29)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
-
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
-
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
+## T2 — Prueba en el celular
+- **Qué:** con la API `0.5.0-alpha.31` desplegada, que otra cuenta publique lo que busco y tocar el push.
 - **Estado:** ⏳ Por hacer.

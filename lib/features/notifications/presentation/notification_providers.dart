@@ -86,6 +86,8 @@ String? routeFor(NotificationTarget target, String id) => switch (target) {
   NotificationTarget.wantedBoard when id.isNotEmpty => AppRoutes.wantedOffer(
     id,
   ),
+  // HU-29: "Alguien publicó lo que buscas" abre la publicacion.
+  NotificationTarget.product when id.isNotEmpty => AppRoutes.product(id),
   _ => null,
 };
 

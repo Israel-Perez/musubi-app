@@ -1,49 +1,33 @@
 # HU-29 — Aviso de producto buscado disponible (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-29 / SCRUM-47 / Sprint 3 (26 oct – 6 nov 2026) / M-09 / [musubi-api:HU-29](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m09-notifications/HU-29-aviso-producto-buscado)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-29 / SCRUM-47 / Sprint 5 (14 nov – 1 dic 2026) / M-09 / [musubi-api:HU-29](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m09-notifications/HU-29-aviso-producto-buscado)
 
 ## Contexto
 Jira (SCRUM-47): Como **comprador**, quiero **recibir una notificación cuando aparezca un producto que busqué o uno similar**, para **no revisar la aplicación constantemente**.
 
-- Maqueta: `Notificaciones`.
-- Trazabilidad: RF-38 · CU-14 · RN-28 a RN-31.
-- Origen: Propuesta inicial §11.
+- Maqueta: `Notificaciones` → "Coincidencias".
+- El aviso lo genera la API (`product_match`); la app ya muestra los avisos y el push (HU-31).
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-12`, `HU-31`.
+**Depende de:** [musubi-api:HU-29](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m09-notifications/HU-29-aviso-producto-buscado), `HU-31`.
 
 ## Requisitos
-1. Se envía una notificación push cuando se publica un producto que coincide o es similar a una solicitud activa o a una búsqueda guardada.
-2. Al tocar la notificación se abre el producto.
-3. Se respetan el umbral de relevancia, la no repetición y el límite diario (RN-28 a RN-30).
-
-RNF que aplican: se confirman al detallar.
+1. **R1:** el aviso sale en "Coincidencias" con su ícono (lupa).
+2. **R2:** al tocarlo (en la lista o desde el push) se abre la publicación (`target: product`).
 
 ## Diseño
-- Feature `lib/features/notifications/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-29. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-29)` (skill `deferred-scope-fakes`).
-- Avisos push con FCM (HU-31) y su permiso pedido en contexto (L-16f).
+- `NotificationTarget.product` y `routeFor` → `AppRoutes.product`.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-29, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Fila `GET /api/v1/notifications` (HU-31) de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md).
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- `tool/screenshots_test.dart`: escenas de las pantallas, comparadas con la maqueta en claro y oscuro.
+- `test/features/notifications/notification_data_test.dart`: `product` se lee y abre la publicación.
 
 ## Criterios
-- [ ] Se envía una notificación push cuando se publica un producto que coincide o es similar a una solicitud activa o a una búsqueda guardada.
-- [ ] Al tocar la notificación se abre el producto.
-- [ ] Se respetan el umbral de relevancia, la no repetición y el límite diario (RN-28 a RN-30).
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
-
-## Límites
-- Decisión pendiente (Jira): En Sprint 3 aplica a solicitudes activas; las búsquedas guardadas se agregan en Sprint 4 (HU-12).
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- [x] Al tocar el aviso se abre el producto → `notification_data_test.dart`.
+- [x] `flutter analyze` 0 · `flutter test` al 100 %.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
+- **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Fecha:** 29-Oct-2026 (borrador ligero) · 14-Nov-2026 (detallado e implementado)
