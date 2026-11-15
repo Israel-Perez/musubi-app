@@ -14,6 +14,8 @@ import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/auth/presentation/sign_out_button.dart';
 import 'package:musubi_app/features/marketplace/presentation/saved_search_providers.dart';
+import 'package:musubi_app/features/orders/domain/payment_models.dart';
+import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/profile/presentation/change_password_sheet.dart';
 import 'package:musubi_app/features/profile/presentation/dark_mode_row.dart';
 import 'package:musubi_app/features/profile/presentation/email_sheet.dart';
@@ -28,9 +30,9 @@ import 'package:musubi_app/features/reputation/presentation/report_sheet.dart';
 /// `Ajustes` (HU-04): la tarjeta de la cuenta abre "Datos personales";
 /// "Correo institucional", "Cambiar contraseña", "Privacidad · Quién te ve",
 /// "Modo noche" (HU-54), "Reportar un problema" (HU-28), legal, "Cerrar
-/// sesión" y la version. Lo que aun no existe no se muestra: NOTE (HU-55)
-/// pagos, NOTE (HU-54) los interruptores de "Notificaciones" por tipo y
-/// NOTE (HU-39) "Centro de ayuda".
+/// sesión" y la version; HU-55: "Cuenta para recibir pagos". Lo que aun no
+/// existe no se muestra: NOTE (HU-54) los interruptores de "Notificaciones"
+/// por tipo y NOTE (HU-39) "Centro de ayuda".
 class SettingsScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -126,6 +128,20 @@ class SettingsScreen extends ConsumerWidget {
                       value: 'Verificado',
                       valueColor: c.successText,
                       onTap: () => unawaited(showEmailSheet(context)),
+                    ),
+                    // HU-55: "BBVA ···· 4821" (Cuenta-pagos).
+                    SettingsRow(
+                      key: const Key('settings-payouts'),
+                      icon: MusubiIcons.landmark,
+                      title: 'Cuenta para recibir pagos',
+                      value: switch (ref.watch(payoutStatusProvider)) {
+                        AsyncData(value: PayoutStatus(:final account?)) =>
+                          account.short,
+                        AsyncData() => 'Agregar',
+                        _ => null,
+                      },
+                      onTap: () =>
+                          unawaited(context.push(AppRoutes.settingsPayouts)),
                     ),
                   ],
                 ),

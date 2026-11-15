@@ -1,6 +1,7 @@
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/domain/order_repository.dart';
+import 'package:musubi_app/features/orders/domain/payment_models.dart';
 
 /// Los puntos de la UTTT de las pruebas: Biblioteca, Cafeteria y el edificio
 /// de Tecnologias de la Informacion como el recomendado.
@@ -19,6 +20,14 @@ Order sampleOrder({
   String id = 'o1',
   bool isBuyer = true,
   bool paysCash = false,
+  bool paysTransfer = false,
+  bool transferAvailable = false,
+  DateTime? transferReportedAt,
+  DateTime? transferNotReceivedAt,
+  DateTime? transferValidatedAt,
+  String? transferReference,
+  String? deliveryCode,
+  int? codeAttemptsLeft,
   OrderStatus status = OrderStatus.pending,
   int quantity = 1,
   bool buyerConfirmed = false,
@@ -46,6 +55,14 @@ Order sampleOrder({
   detail: 'Planta baja',
   deliveryAt: DateTime.utc(2026, 11, 7, 19),
   paysCash: paysCash,
+  paysTransfer: paysTransfer,
+  transferAvailable: transferAvailable,
+  transferReportedAt: transferReportedAt,
+  transferNotReceivedAt: transferNotReceivedAt,
+  transferValidatedAt: transferValidatedAt,
+  transferReference: transferReference,
+  deliveryCode: deliveryCode,
+  codeAttemptsLeft: codeAttemptsLeft,
   buyerConfirmed: buyerConfirmed,
   sellerConfirmed: sellerConfirmed,
   cancellation: cancellation,
@@ -218,11 +235,125 @@ class FakeOrderRepository implements OrderRepository {
     return _replace(id, (o) => o.copyWith(paysCash: true));
   }
 
+  /// La cuenta de Valeria (HU-55): la CLABE completa para quien compra.
+  TransferDetails transferDetails = const TransferDetails(
+    amountCents: 45000,
+    bankName: 'BBVA México',
+    holderName: 'Valeria Cruz Hernández',
+    clabe: '012 180 0154 2378 9134',
+    clabeLast4: '9134',
+    concept: 'MS-1001',
+  );
+
+  /// El codigo de entrega que genera "aceptar" en efectivo.
+  String code = '7319';
+
+  final List<String> transfersChosen = [];
+  final List<(String, String)> references = [];
+  final List<String> notReceived = [];
+  final List<(String, String)> codes = [];
+
+  @override
+  Future<Order> payTransfer(String id) async {
+    transfersChosen.add(id);
+    if (payFailure != null) throw payFailure!;
+    return _replace(id, (o) => o.copyWith(paysTransfer: true, paysCash: false));
+  }
+
+  @override
+  Future<TransferDetails> transfer(String id) async {
+    final order = await get(id);
+    final d = transferDetails;
+    return TransferDetails(
+      amountCents: d.amountCents,
+      bankName: d.bankName,
+      holderName: d.holderName,
+      clabe: order.isBuyer ? d.clabe : '•••• ${d.clabeLast4}',
+      clabeLast4: d.clabeLast4,
+      concept: order.number,
+      reference: order.transferReference,
+      reportedAt: order.transferReportedAt,
+      notReceivedAt: order.transferNotReceivedAt,
+      validatedAt: order.transferValidatedAt,
+    );
+  }
+
+  @override
+  Future<Order> reportTransfer(String id, String reference) async {
+    references.add((id, reference));
+    _fail();
+    return _replace(
+      id,
+      (o) => Order(
+        id: o.id,
+        number: o.number,
+        status: o.status,
+        isBuyer: o.isBuyer,
+        conversationId: o.conversationId,
+        item: o.item,
+        buyerName: o.buyerName,
+        sellerName: o.sellerName,
+        pointName: o.pointName,
+        deliveryAt: o.deliveryAt,
+        detail: o.detail,
+        paysTransfer: true,
+        transferAvailable: o.transferAvailable,
+        transferReference: reference,
+        transferReportedAt: DateTime.utc(2026, 11, 15, 21, 14),
+      ),
+    );
+  }
+
+  @override
+  Future<Order> transferNotReceived(String id) async {
+    notReceived.add(id);
+    _fail();
+    return _replace(
+      id,
+      (o) => o.copyWith(transferNotReceivedAt: DateTime.utc(2026, 11, 15, 22)),
+    );
+  }
+
+  @override
+  Future<Order> deliveryCode(String id, String code) async {
+    codes.add((id, code));
+    _fail();
+    if (code != this.code) {
+      final left =
+          (stored.firstWhere((o) => o.id == id).codeAttemptsLeft ?? 5) - 1;
+      _replace(id, (o) => o.copyWith(codeAttemptsLeft: left));
+      throw const ApiFailure(
+        code: 'orders.invalid_code',
+        message: 'El código no coincide. Pídeselo de nuevo a quien compra.',
+        status: 422,
+      );
+    }
+    return _replace(
+      id,
+      (o) => o.copyWith(
+        status: OrderStatus.completed,
+        buyerConfirmed: true,
+        sellerConfirmed: true,
+        rateUntil: completedRateUntil,
+      ),
+    );
+  }
+
   @override
   Future<Order> accept(String id) async {
     accepted.add(id);
     _fail();
-    return _replace(id, (o) => o.copyWith(status: OrderStatus.confirmed));
+    return _replace(
+      id,
+      (o) => o.copyWith(
+        status: OrderStatus.confirmed,
+        transferValidatedAt: o.paysTransfer
+            ? DateTime.utc(2026, 11, 15, 21, 30)
+            : null,
+        deliveryCode: o.paysCash && o.isBuyer ? code : null,
+        codeAttemptsLeft: o.paysCash && !o.isBuyer ? 5 : null,
+      ),
+    );
   }
 
   @override

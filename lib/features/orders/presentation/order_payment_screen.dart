@@ -22,18 +22,19 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
+import 'package:musubi_app/features/orders/presentation/payment_widgets.dart';
 
 /// "Tu pedido" (`Pedido-pago`, HU-23): el estado (Pendiente, Confirmado,
 /// Completado o Cancelado), lo que se compra con su entrega y "¿Cómo quieres
-/// pagar?". La transferencia sale deshabilitada ("… aún no registra su
-/// cuenta") hasta HU-55; "Confirmar pago en efectivo" lo registra (RN-18).
-/// HU-24 ("Tu venta" para quien vende): "Aceptar pedido" cuando ya se eligio
-/// el pago, "Confirmar entrega" de cada parte (`Pedido-entrega`) y "Rechazar"
-/// o "Cancelar pedido" con un motivo de la lista (`Pedido-efectivo`).
-/// NOTE (HU-55): `Pago-transferencia` y el codigo de entrega
-/// (`Pedido-efectivo`). Completado y dentro del plazo: "Calificar a Diego"
-/// (HU-27, HU-45); al confirmar la entrega que lo completa, abre `Calificar`
-/// como la maqueta.
+/// pagar?". HU-55 (D-01): "Transferencia" (si quien vende registro su cuenta)
+/// lleva a `Pago-transferencia`; con la referencia enviada, `Pago-validando`
+/// para quien compra y `Pago-vendedor` ("Sí, me llegó el pago" / "Todavía no
+/// me llega") para quien vende. En efectivo, al aceptarse quien compra ve su
+/// codigo de entrega (`Pedido-efectivo`) y quien vende lo escribe para
+/// completar el pedido. HU-24 ("Tu venta"): "Aceptar pedido", "Confirmar
+/// entrega" de cada parte (`Pedido-entrega`) y "Rechazar" o "Cancelar pedido"
+/// con un motivo de la lista. Completado y dentro del plazo: "Calificar a
+/// Diego" (HU-27, HU-45); al completarse, abre `Calificar` como la maqueta.
 class OrderPaymentScreen extends ConsumerStatefulWidget {
   const new({required this.orderId, super.key});
 
@@ -45,6 +46,95 @@ class OrderPaymentScreen extends ConsumerStatefulWidget {
 
 class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
   bool _paying = false;
+
+  /// "¿Cómo quieres pagar?": `true` transferencia, `false` efectivo y `null`
+  /// lo que diga el pedido (transferencia si quien vende tiene cuenta).
+  bool? _transfer;
+
+  /// El codigo de entrega que escribe quien vende (HU-55).
+  final _code = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _code.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _code.dispose();
+    super.dispose();
+  }
+
+  bool _transferSelected(Order order) =>
+      order.transferAvailable &&
+      (_transfer ?? (order.paysTransfer || !order.paysCash));
+
+  /// "Ver datos para transferir" (HU-55): registra la transferencia (si aun
+  /// no) y abre `Pago-transferencia`.
+  Future<void> _payTransfer(Order order) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    if (!order.paysTransfer) {
+      setState(() => _paying = true);
+      try {
+        await ref.read(orderRepositoryProvider).payTransfer(order.id);
+        if (!mounted) return;
+        ref
+          ..invalidate(orderProvider(order.id))
+          ..invalidate(openOrderProvider(order.conversationId));
+      } on ApiFailure catch (failure) {
+        if (!mounted) return;
+        showMusubiSnack(
+          messenger,
+          failure.message,
+          icon: MusubiIcons.circleAlert,
+          tone: SnackTone.warn,
+        );
+        return;
+      } finally {
+        if (mounted) setState(() => _paying = false);
+      }
+    }
+    unawaited(router.push(AppRoutes.transfer(order.id)));
+  }
+
+  /// "Todavía no me llega" (HU-55, quien vende).
+  Future<void> _notReceived(Order order) async {
+    await _act(
+      order,
+      _Action.notReceived,
+      () => ref.read(orderRepositoryProvider).transferNotReceived(order.id),
+      'Le avisamos a ${_first(order.buyerName)} que todavía no te llega.',
+    );
+  }
+
+  /// El codigo de entrega (HU-55, efectivo): con el correcto se completa y,
+  /// como al confirmar la entrega, abre `Calificar`.
+  Future<void> _enterCode(Order order) async {
+    final code = _code.text;
+    if (code.length != 4 || _busy != null) return;
+    final changed = await _act(
+      order,
+      _Action.code,
+      () => ref.read(orderRepositoryProvider).deliveryCode(order.id, code),
+      'Listo: el pedido quedó completado.',
+    );
+    if (!mounted) return;
+    if (changed == null) {
+      // Un codigo equivocado gasta un intento: se recarga para mostrarlos.
+      _code.clear();
+      ref.invalidate(orderProvider(order.id));
+      return;
+    }
+    if (changed.canRate(ref.read(clockProvider)())) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      unawaited(context.push(AppRoutes.rate(changed.id)));
+    }
+  }
+
+  void _chat(Order order) =>
+      unawaited(context.push(AppRoutes.conversation(order.conversationId)));
 
   /// La accion de HU-24 en curso (gira su boton y no acepta otro toque).
   _Action? _busy;
@@ -192,10 +282,11 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
       child: Text(
         order.isBuyer
             ? 'Tu pedido queda Pendiente hasta que '
-                  '${_first(order.sellerName)} lo acepte. Se ven en '
-                  '${order.pointName} el día acordado y pagas al recibir. '
-                  'Cuando los dos confirmen la entrega, se completa. Musubi '
-                  'no cobra comisión ni procesa el dinero.'
+                  '${_first(order.sellerName)} lo acepte. Puedes pagar por '
+                  'transferencia a su cuenta registrada o en efectivo al '
+                  'recibir; en efectivo, al entregarte el producto le das tu '
+                  'código y se completa. Musubi no cobra comisión ni procesa '
+                  'el dinero.'
             : 'Acepta el pedido cuando ${_first(order.buyerName)} elija cómo '
                   'pagar: la pieza queda apartada. Se ven en '
                   '${order.pointName} el día acordado y, cuando los dos '
@@ -224,6 +315,13 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
           onBack: () => context.pop(),
           onHelp: () => unawaited(_help(value)),
           onPayCash: () => unawaited(_payCash(value)),
+          transferSelected: _transferSelected(value),
+          onSelect: (transfer) => setState(() => _transfer = transfer),
+          onPayTransfer: () => unawaited(_payTransfer(value)),
+          onNotReceived: () => unawaited(_notReceived(value)),
+          code: _code,
+          onEnterCode: () => unawaited(_enterCode(value)),
+          onChat: () => _chat(value),
           onAccept: () => unawaited(_accept(value)),
           onHandover: () => unawaited(_handover(value)),
           onCancel: () => unawaited(_cancel(value)),
@@ -246,8 +344,8 @@ class _OrderPaymentScreenState extends ConsumerState<OrderPaymentScreen> {
 
 String _first(String name) => name.trim().split(RegExp(r'\s+')).first;
 
-/// Las acciones de HU-24.
-enum _Action { accept, handover, cancel }
+/// Las acciones de HU-24 y HU-55.
+enum _Action { accept, handover, cancel, notReceived, code }
 
 class _Body extends StatelessWidget {
   const new({
@@ -257,6 +355,13 @@ class _Body extends StatelessWidget {
     required this.onBack,
     required this.onHelp,
     required this.onPayCash,
+    required this.transferSelected,
+    required this.onSelect,
+    required this.onPayTransfer,
+    required this.onNotReceived,
+    required this.code,
+    required this.onEnterCode,
+    required this.onChat,
     required this.onAccept,
     required this.onHandover,
     required this.onCancel,
@@ -270,6 +375,17 @@ class _Body extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onHelp;
   final VoidCallback onPayCash;
+
+  /// HU-55: la forma de pago marcada mientras se elige.
+  final bool transferSelected;
+  final ValueChanged<bool> onSelect;
+  final VoidCallback onPayTransfer;
+  final VoidCallback onNotReceived;
+
+  /// El codigo de entrega que escribe quien vende.
+  final TextEditingController code;
+  final VoidCallback onEnterCode;
+  final VoidCallback onChat;
   final VoidCallback onAccept;
   final VoidCallback onHandover;
   final VoidCallback onCancel;
@@ -277,6 +393,31 @@ class _Body extends StatelessWidget {
 
   /// Para saber si aun se puede calificar (HU-27).
   final DateTime now;
+
+  bool get _pending => order.status == OrderStatus.pending;
+
+  bool get _confirmed => order.status == OrderStatus.confirmed;
+
+  /// Quien compra todavia elige como pagar (no ha avisado "Ya transferi").
+  bool get _choosing => order.isBuyer && _pending && !order.transferReported;
+
+  /// `Pago-validando`: quien compra ya aviso la transferencia.
+  bool get _validating => order.isBuyer && _pending && order.transferReported;
+
+  /// `Pago-vendedor`: le avisaron una transferencia a quien vende.
+  bool get _sellerValidates =>
+      !order.isBuyer &&
+      _pending &&
+      order.paysTransfer &&
+      order.transferReported;
+
+  /// Quien vende escribe el codigo de entrega (efectivo, con intentos).
+  bool get _sellerEntersCode =>
+      !order.isBuyer &&
+      _confirmed &&
+      order.paysCash &&
+      !order.iConfirmed &&
+      (order.codeAttemptsLeft ?? 0) > 0;
 
   /// El aviso gris debajo del pedido: como se paga, que falta y como termino.
   (MusubiIconData, String) _notice() {
@@ -320,15 +461,37 @@ class _Body extends StatelessWidget {
                       'entregaste.',
           );
         }
+        if (order.paysTransfer) {
+          return (
+            MusubiIcons.circleCheck,
+            'Pago validado. Se ven en ${order.pointName} el '
+                '${shortDate(order.deliveryAt.toLocal())}.',
+          );
+        }
+        if ((order.codeAttemptsLeft ?? 1) == 0 && !order.isBuyer) {
+          return (
+            MusubiIcons.circleAlert,
+            'Se acabaron los intentos del código. Confirmen la entrega los '
+                'dos con el botón.',
+          );
+        }
         return (
           MusubiIcons.banknote,
           order.isBuyer
               ? 'Pedido aceptado. Pagas en efectivo al recibir.'
-              : '$buyer pagará en efectivo al recibir.',
+              : '$buyer pagará en efectivo al recibir. Pídele su código al '
+                    'entregar.',
         );
       case OrderStatus.pending:
         if (order.isBuyer) {
           return (MusubiIcons.banknote, 'Pagas en efectivo al recibir.');
+        }
+        if (order.paysTransfer) {
+          return (
+            MusubiIcons.clock,
+            '$buyer pagará por transferencia a tu cuenta. Te avisamos '
+                'cuando te mande la referencia.',
+          );
         }
         return order.paysCash
             ? (
@@ -346,7 +509,68 @@ class _Body extends StatelessWidget {
 
   /// El boton principal segun el estado y quien mira.
   Widget _primary() {
-    final choosing = order.isBuyer && order.status == OrderStatus.pending;
+    final seller = _first(order.sellerName);
+    if (_choosing && transferSelected) {
+      return MusubiButton(
+        key: const Key('order-pay-transfer-go'),
+        label: 'Ver datos para transferir',
+        loadingLabel: 'Un momento…',
+        loading: paying,
+        onPressed: paying ? null : onPayTransfer,
+      );
+    }
+    if (_validating) {
+      return MusubiButton(
+        key: const Key('order-chat'),
+        label: 'Mensaje a $seller',
+        kind: MusubiButtonKind.secondary,
+        icon: MusubiIcons.messageCircle,
+        onPressed: onChat,
+      );
+    }
+    if (_sellerValidates) {
+      return MusubiButton(
+        key: const Key('order-transfer-received'),
+        label: 'Sí, me llegó el pago',
+        loadingLabel: 'Confirmando…',
+        loading: busy == _Action.accept,
+        icon: MusubiIcons.check,
+        iconSize: 20,
+        iconStrokeWidth: 2.4,
+        onPressed: busy == null ? onAccept : null,
+      );
+    }
+    if (_sellerEntersCode) {
+      final ready = code.text.length == 4;
+      return MusubiButton(
+        key: const Key('order-code-confirm'),
+        label: 'Confirmar entrega',
+        loadingLabel: 'Revisando…',
+        loading: busy == _Action.code,
+        icon: MusubiIcons.circleCheck,
+        iconSize: 20,
+        iconStrokeWidth: 2.2,
+        dimmed: !ready,
+        onPressed: ready && busy == null ? onEnterCode : null,
+      );
+    }
+    // `Pedido-efectivo`: quien compra da su codigo; si quien vende ya marco
+    // la entrega (sin intentos), confirma con el boton.
+    if (order.isBuyer &&
+        _confirmed &&
+        order.paysCash &&
+        order.deliveryCode != null &&
+        !order.iConfirmed &&
+        !order.sellerConfirmed) {
+      return MusubiButton(
+        key: const Key('order-chat'),
+        label: 'Mensaje a $seller',
+        kind: MusubiButtonKind.secondary,
+        icon: MusubiIcons.messageCircle,
+        onPressed: onChat,
+      );
+    }
+    final choosing = _choosing;
     if (choosing && !order.paysCash) {
       return MusubiButton(
         key: const Key('order-pay-cash-confirm'),
@@ -357,6 +581,7 @@ class _Body extends StatelessWidget {
       );
     }
     if (!order.isBuyer && order.status == OrderStatus.pending) {
+      // Por transferencia se acepta al confirmar el pago (`Pago-vendedor`).
       return MusubiButton(
         key: const Key('order-accept'),
         label: 'Aceptar pedido',
@@ -400,13 +625,53 @@ class _Body extends StatelessWidget {
     );
   }
 
+  /// "Así funciona" por transferencia (maqueta `Pedido-pago`).
+  static List<String> _transferSteps(String seller) {
+    final last =
+        '$seller confirma que le llegó y tu pedido queda '
+        'confirmado';
+    return [
+      'Te mostramos la cuenta de $seller',
+      'Transfieres y capturas la referencia',
+      last,
+    ];
+  }
+
+  /// "Así funciona" en efectivo (HU-55: con el codigo de entrega).
+  static List<String> _cashSteps(String point, String day, String total) {
+    const last = 'Le das tu código de entrega y se completa tu pedido';
+    return [
+      'Se ven en $point el $day',
+      'Revisas que todo esté bien y le pagas $total',
+      last,
+    ];
+  }
+
+  /// "Total $500" junto al boton: no en `Pago-validando`, `Pago-vendedor` ni
+  /// `Pedido-efectivo` (ahi el monto ya esta en la pantalla).
+  bool get _showTotal => !_validating && !_sellerValidates && !_confirmed;
+
+  /// La franja verde ya dice como se paga: el aviso gris solo sale si dice
+  /// algo mas (quien confirmo la entrega o que se acabaron los intentos).
+  bool get _noticeRedundant =>
+      _confirmed &&
+      order.paymentChosen &&
+      !order.buyerConfirmed &&
+      !order.sellerConfirmed &&
+      (order.isBuyer || (order.codeAttemptsLeft ?? 1) > 0);
+
+  /// "Cancelar pedido": no mientras se valida una transferencia (salvo que no
+  /// haya llegado).
+  bool get _showCancel =>
+      !(_validating || _sellerValidates) || order.transferNotReceivedAt != null;
+
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
     final seller = _first(order.sellerName);
     final buyer = order.isBuyer;
     final at = order.deliveryAt.toLocal();
-    final choosing = buyer && order.status == OrderStatus.pending;
+    final choosing = _choosing;
     final total = formatPrice(order.item.totalCents);
     final bottom = math.max<double>(
       30,
@@ -465,76 +730,120 @@ class _Body extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _Stepper(status: order.status),
-                const SizedBox(height: 12),
-                _ItemCard(order: order, at: at),
-                if (choosing) ...[
-                  const SizedBox(height: 18),
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      '¿Cómo quieres pagar?',
-                      style: MusubiType.style(
-                        16,
-                        line: 21,
-                        weight: FontWeight.w800,
-                        color: c.textPrimary,
+                if (_validating)
+                  ValidatingView(order: order, now: now)
+                else if (_sellerValidates)
+                  SellerTransferView(order: order, now: now)
+                else ...[
+                  _Stepper(status: order.status),
+                  const SizedBox(height: 12),
+                  if (_confirmed && order.paymentChosen) ...[
+                    PaymentBanner(order: order),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_confirmed &&
+                      order.isBuyer &&
+                      order.deliveryCode != null) ...[
+                    DeliveryCodeCard(
+                      code: order.deliveryCode!,
+                      sellerName: order.sellerName,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  _ItemCard(order: order, at: at),
+                  if (_sellerEntersCode) ...[
+                    const SizedBox(height: 12),
+                    DeliveryCodeEntry(
+                      order: order,
+                      controller: code,
+                      onCompleted: (_) => onEnterCode(),
+                    ),
+                  ],
+                  if (choosing) ...[
+                    const SizedBox(height: 18),
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        '¿Cómo quieres pagar?',
+                        style: MusubiType.style(
+                          16,
+                          line: 21,
+                          weight: FontWeight.w800,
+                          color: c.textPrimary,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'El pago va directo a $seller. Elige una opción.',
-                    style: MusubiType.style(
-                      13,
-                      line: 18,
-                      color: c.textSecondary,
+                    const SizedBox(height: 2),
+                    Text(
+                      'El pago va directo a $seller. Elige una opción.',
+                      style: MusubiType.style(
+                        13,
+                        line: 18,
+                        color: c.textSecondary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  _PayOption(
-                    key: const Key('order-pay-transfer'),
-                    icon: MusubiIcons.arrowRightLeft,
-                    iconColor: c.brand,
-                    iconBackground: c.brandSoft,
-                    title: 'Transferencia',
-                    subtitle: 'Pagas ahora desde la app de tu banco',
-                    chip: '$seller aún no registra su cuenta',
-                    chipBackground: c.mutedChip,
-                    selected: false,
-                    enabled: order.transferAvailable,
-                  ),
-                  const SizedBox(height: 8),
-                  _PayOption(
-                    key: const Key('order-pay-cash'),
-                    icon: MusubiIcons.banknote,
-                    iconColor: c.successText,
-                    iconBackground: c.successSoft,
-                    title: 'Efectivo al entregar',
-                    subtitle: 'Pagas en persona al recibir en el campus',
-                    chip: 'Siempre disponible',
-                    chipBackground: c.surface,
-                    selected: true,
-                    enabled: true,
-                  ),
-                  const SizedBox(height: 12),
-                  _HowItWorks(
-                    steps: [
-                      'Se ven en ${order.pointName} el ${shortDate(at)}',
-                      'Revisas que todo esté bien y le pagas $total',
-                      'Los dos confirman la entrega y se completa tu pedido',
-                    ],
-                  ),
-                ] else ...[
-                  const SizedBox(height: 18),
-                  _Notice(icon: _notice().$1, text: _notice().$2),
-                  if (order.status == OrderStatus.confirmed &&
-                      order.isBuyer &&
-                      !order.iConfirmed) ...[
                     const SizedBox(height: 10),
-                    const _Hint(
-                      'Revisa el producto antes de confirmar la entrega.',
+                    _PayOption(
+                      key: const Key('order-pay-transfer'),
+                      icon: MusubiIcons.arrowRightLeft,
+                      iconColor: c.brand,
+                      iconBackground: c.brandSoft,
+                      title: 'Transferencia',
+                      subtitle: 'Pagas ahora desde la app de tu banco',
+                      chip: order.transferAvailable
+                          ? '$seller tiene su cuenta registrada'
+                          : '$seller aún no registra su cuenta',
+                      chipBackground: order.transferAvailable
+                          ? c.successSoft
+                          : c.mutedChip,
+                      chipColor: order.transferAvailable ? c.successText : null,
+                      chipIcon: order.transferAvailable
+                          ? MusubiIcons.check
+                          : null,
+                      selected: transferSelected,
+                      enabled: order.transferAvailable,
+                      onTap: () => onSelect(true),
                     ),
+                    const SizedBox(height: 8),
+                    _PayOption(
+                      key: const Key('order-pay-cash'),
+                      icon: MusubiIcons.banknote,
+                      iconColor: c.successText,
+                      iconBackground: c.successSoft,
+                      title: 'Efectivo al entregar',
+                      subtitle: 'Pagas en persona al recibir en el campus',
+                      chip: 'Siempre disponible',
+                      chipBackground: c.surface,
+                      selected: !transferSelected,
+                      enabled: true,
+                      onTap: () => onSelect(false),
+                    ),
+                    const SizedBox(height: 12),
+                    _HowItWorks(
+                      key: ValueKey(transferSelected),
+                      steps: transferSelected
+                          ? _transferSteps(seller)
+                          : _cashSteps(order.pointName, shortDate(at), total),
+                    ),
+                  ] else ...[
+                    if (!_noticeRedundant) ...[
+                      const SizedBox(height: 18),
+                      _Notice(icon: _notice().$1, text: _notice().$2),
+                    ],
+                    if (_confirmed &&
+                        order.isBuyer &&
+                        order.paysCash &&
+                        order.deliveryCode != null) ...[
+                      const SizedBox(height: 16),
+                      HandoverChecklist(title: order.item.title),
+                    ] else if (_confirmed &&
+                        order.isBuyer &&
+                        !order.iConfirmed) ...[
+                      const SizedBox(height: 10),
+                      const _Hint(
+                        'Revisa el producto antes de confirmar la entrega.',
+                      ),
+                    ],
                   ],
                 ],
               ],
@@ -555,33 +864,43 @@ class _Body extends StatelessWidget {
                 Row(
                   spacing: 16,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Total',
-                          style: MusubiType.style(
-                            12,
-                            weight: FontWeight.w700,
-                            color: c.textSecondary,
+                    if (_showTotal)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Total',
+                            style: MusubiType.style(
+                              12,
+                              weight: FontWeight.w700,
+                              color: c.textSecondary,
+                            ),
                           ),
-                        ),
-                        Text(
-                          formatPrice(order.item.totalCents),
-                          style: MusubiType.style(
-                            22,
-                            weight: FontWeight.w800,
-                            em: -0.02,
-                            color: c.textPrimary,
+                          Text(
+                            formatPrice(order.item.totalCents),
+                            style: MusubiType.style(
+                              22,
+                              weight: FontWeight.w800,
+                              em: -0.02,
+                              color: c.textPrimary,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                     Expanded(child: _primary()),
                   ],
                 ),
-                if (order.status.open)
+                if (_sellerValidates)
+                  MusubiButton(
+                    key: const Key('order-transfer-not-received'),
+                    label: 'Todavía no me llega',
+                    loadingLabel: 'Avisando…',
+                    loading: busy == _Action.notReceived,
+                    kind: MusubiButtonKind.secondary,
+                    onPressed: busy == null ? onNotReceived : null,
+                  ),
+                if (order.status.open && _showCancel)
                   MusubiButton(
                     key: const Key('order-cancel'),
                     label: !buyer && order.status == OrderStatus.pending
@@ -1023,9 +1342,15 @@ class _PayOption extends StatelessWidget {
     required this.chipBackground,
     required this.selected,
     required this.enabled,
+    this.chipColor,
+    this.chipIcon,
+    this.onTap,
     super.key,
   });
 
+  final Color? chipColor;
+  final MusubiIconData? chipIcon;
+  final VoidCallback? onTap;
   final MusubiIconData icon;
   final Color iconColor;
   final Color iconBackground;
@@ -1039,7 +1364,8 @@ class _PayOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.musubi;
-    return Semantics(
+    final tap = onTap;
+    final option = Semantics(
       inMutuallyExclusiveGroup: true,
       checked: selected,
       enabled: enabled,
@@ -1107,13 +1433,28 @@ class _PayOption extends StatelessWidget {
                           MusubiSizes.radiusChip,
                         ),
                       ),
-                      child: Text(
-                        chip,
-                        style: MusubiType.style(
-                          11,
-                          weight: FontWeight.w800,
-                          color: c.textTertiary,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 4,
+                        children: [
+                          if (chipIcon case final icon?)
+                            MusubiIcon(
+                              icon,
+                              size: 12,
+                              strokeWidth: 2.6,
+                              color: chipColor,
+                            ),
+                          Flexible(
+                            child: Text(
+                              chip,
+                              style: MusubiType.style(
+                                11,
+                                weight: FontWeight.w800,
+                                color: chipColor ?? c.textTertiary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1147,12 +1488,15 @@ class _PayOption extends StatelessWidget {
         ),
       ),
     );
+    return tap == null || !enabled
+        ? option
+        : Pressable(onTap: tap, builder: (context, _) => option);
   }
 }
 
 /// "Así funciona": tres pasos con su numero en negro (sube 6 px al entrar).
 class _HowItWorks extends StatelessWidget {
-  const new({required this.steps});
+  const new({required this.steps, super.key});
 
   final List<String> steps;
 

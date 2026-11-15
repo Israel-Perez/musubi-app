@@ -250,6 +250,27 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-24`).
   static String orderHandover(String id) => '$orders/$id/handover';
 
+  /// `GET` y `POST /api/v1/orders/{id}/transfer` — filas "M-08" (spec
+  /// `musubi-api:HU-55`): la cuenta para transferir y "Enviar referencia".
+  static String orderTransfer(String id) => '$orders/$id/transfer';
+
+  /// `POST /api/v1/orders/{id}/transfer/not-received` — fila "M-08" (spec
+  /// `musubi-api:HU-55`): "Todavía no me llega".
+  static String orderTransferNotReceived(String id) =>
+      '$orders/$id/transfer/not-received';
+
+  /// `POST /api/v1/orders/{id}/delivery-code` — fila "M-08" (spec
+  /// `musubi-api:HU-55`): el codigo de entrega del pago en efectivo.
+  static String orderDeliveryCode(String id) => '$orders/$id/delivery-code';
+
+  /// `GET /api/v1/payouts/banks` — "Cuenta para recibir pagos" (spec
+  /// `musubi-api:HU-55`).
+  static const payoutBanks = '/api/v1/payouts/banks';
+
+  /// `GET`, `PUT` y `DELETE /api/v1/payouts/account` — "Cuenta para recibir
+  /// pagos" (spec `musubi-api:HU-55`): nunca trae la CLABE completa.
+  static const payoutAccount = '/api/v1/payouts/account';
+
   /// `POST /api/v1/agreements` y `GET /api/v1/agreements?conversationId=` —
   /// filas "M-10" (specs `musubi-api:HU-32`, `HU-33` y `HU-34`).
   static const agreements = '/api/v1/agreements';

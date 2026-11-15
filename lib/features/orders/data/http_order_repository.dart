@@ -4,6 +4,7 @@ import 'package:musubi_app/core/network/api_paths.dart';
 import 'package:musubi_app/features/marketplace/data/product_json.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/domain/order_repository.dart';
+import 'package:musubi_app/features/orders/domain/payment_models.dart';
 
 /// [OrderRepository] sobre las filas "M-08" de `musubi-api/docs/endpoints.md`
 /// (specs `musubi-api:HU-23`, `musubi-api:HU-24` y `musubi-api:HU-25`).
@@ -130,6 +131,47 @@ class HttpOrderRepository implements OrderRepository {
   });
 
   @override
+  Future<Order> payTransfer(String id) => _guard(() async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      ApiPaths.orderPayment(id),
+      data: const {'method': 'transfer'},
+    );
+    return orderFromJson(response.data ?? const {}, _apiBaseUrl);
+  });
+
+  @override
+  Future<TransferDetails> transfer(String id) => _guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.orderTransfer(id),
+    );
+    final json = response.data ?? const <String, dynamic>{};
+    return TransferDetails(
+      amountCents: (json['amountCents'] as num? ?? 0).toInt(),
+      bankName: json['bankName'] as String? ?? '',
+      holderName: json['holderName'] as String? ?? '',
+      clabe: json['clabe'] as String? ?? '',
+      clabeLast4: json['clabeLast4'] as String? ?? '',
+      concept: json['concept'] as String? ?? '',
+      reference: json['reference'] as String?,
+      reportedAt: _date(json['reportedAt']),
+      notReceivedAt: _date(json['notReceivedAt']),
+      validatedAt: _date(json['validatedAt']),
+    );
+  });
+
+  @override
+  Future<Order> reportTransfer(String id, String reference) =>
+      _post(ApiPaths.orderTransfer(id), {'reference': reference});
+
+  @override
+  Future<Order> transferNotReceived(String id) =>
+      _post(ApiPaths.orderTransferNotReceived(id));
+
+  @override
+  Future<Order> deliveryCode(String id, String code) =>
+      _post(ApiPaths.orderDeliveryCode(id), {'code': code});
+
+  @override
   Future<Order> accept(String id) => _post(ApiPaths.orderAccept(id));
 
   @override
@@ -153,6 +195,70 @@ class HttpOrderRepository implements OrderRepository {
       throw ApiFailure.fromDio(error);
     }
   }
+}
+
+DateTime? _date(Object? value) => switch (value) {
+  final String at => DateTime.parse(at).toUtc(),
+  _ => null,
+};
+
+/// [PayoutRepository] sobre "Cuenta para recibir pagos" de
+/// `musubi-api/docs/endpoints.md` (spec `musubi-api:HU-55`).
+class HttpPayoutRepository implements PayoutRepository {
+  new(this._dio);
+
+  final Dio _dio;
+
+  @override
+  Future<List<PayoutBank>> banks() => HttpOrderRepository._guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(ApiPaths.payoutBanks);
+    return [
+      for (final item
+          in (response.data?['items'] as List<dynamic>? ?? const [])
+              .cast<Map<String, dynamic>>())
+        PayoutBank(
+          code: item['code'] as String? ?? '',
+          name: item['name'] as String? ?? '',
+        ),
+    ];
+  });
+
+  @override
+  Future<PayoutStatus> mine() => HttpOrderRepository._guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.payoutAccount,
+    );
+    final json = response.data ?? const <String, dynamic>{};
+    final account = json['account'] as Map<String, dynamic>?;
+    return PayoutStatus(
+      available: json['available'] as bool? ?? false,
+      account: account == null ? null : _account(account),
+    );
+  });
+
+  @override
+  Future<PayoutAccount> save({
+    required String holderName,
+    required String clabe,
+  }) => HttpOrderRepository._guard(() async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      ApiPaths.payoutAccount,
+      data: {'holderName': holderName, 'clabe': clabe},
+    );
+    return _account(response.data ?? const {});
+  });
+
+  @override
+  Future<void> remove() => HttpOrderRepository._guard(
+    () => _dio.delete<void>(ApiPaths.payoutAccount),
+  );
+
+  static PayoutAccount _account(Map<String, dynamic> json) => PayoutAccount(
+    holderName: json['holderName'] as String? ?? '',
+    bankCode: json['bankCode'] as String? ?? '',
+    bankName: json['bankName'] as String? ?? '',
+    clabeLast4: json['clabeLast4'] as String? ?? '',
+  );
 }
 
 /// Un `OrderResponse` de la API (fixture `order.json`). La foto llega como
@@ -186,6 +292,13 @@ Order orderFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
     detail: delivery['detail'] as String?,
     deliveryAt: DateTime.parse(delivery['at'] as String).toUtc(),
     paysCash: payment?['method'] == 'cash',
+    paysTransfer: payment?['method'] == 'transfer',
+    transferReference: payment?['reference'] as String?,
+    transferReportedAt: _date(payment?['reportedAt']),
+    transferNotReceivedAt: _date(payment?['notReceivedAt']),
+    transferValidatedAt: _date(payment?['validatedAt']),
+    deliveryCode: payment?['deliveryCode'] as String?,
+    codeAttemptsLeft: (payment?['codeAttemptsLeft'] as num?)?.toInt(),
     transferAvailable: json['transferAvailable'] as bool? ?? false,
     buyerConfirmed: handover?['buyerConfirmedAt'] != null,
     sellerConfirmed: handover?['sellerConfirmedAt'] != null,

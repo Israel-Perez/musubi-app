@@ -159,6 +159,13 @@ class Order {
     required this.deliveryAt,
     this.detail,
     this.paysCash = false,
+    this.paysTransfer = false,
+    this.transferReference,
+    this.transferReportedAt,
+    this.transferNotReceivedAt,
+    this.transferValidatedAt,
+    this.deliveryCode,
+    this.codeAttemptsLeft,
     this.transferAvailable = false,
     this.buyerConfirmed = false,
     this.sellerConfirmed = false,
@@ -193,8 +200,37 @@ class Order {
   /// Ya eligio "Efectivo al entregar" (RN-18).
   final bool paysCash;
 
-  /// Quien vende registro su cuenta (HU-55; hoy siempre `false`).
+  /// Eligio "Transferencia" (HU-55).
+  final bool paysTransfer;
+
+  /// La referencia que capturo quien compra, o `null` (HU-55).
+  final String? transferReference;
+
+  /// Cuando quien compra aviso "Ya transferi" (UTC), o `null`.
+  final DateTime? transferReportedAt;
+
+  /// Cuando quien vende dijo "Todavia no me llega" (UTC), o `null`.
+  final DateTime? transferNotReceivedAt;
+
+  /// Cuando quien vende confirmo que le llego (UTC), o `null`.
+  final DateTime? transferValidatedAt;
+
+  /// Efectivo: el codigo de entrega (solo lo trae quien compra, y ya
+  /// confirmado), o `null`.
+  final String? deliveryCode;
+
+  /// Efectivo: intentos que le quedan a quien vende para escribirlo, o `null`.
+  final int? codeAttemptsLeft;
+
+  /// Quien vende registro su cuenta para recibir pagos (HU-55, "Diego tiene su
+  /// cuenta registrada").
   final bool transferAvailable;
+
+  /// Ya eligio como pagar (RN-18).
+  bool get paymentChosen => paysCash || paysTransfer;
+
+  /// Quien compra ya aviso "Ya transferi".
+  bool get transferReported => transferReportedAt != null;
 
   /// Quien compra ya marco "Confirmar entrega" (HU-24, RN-19).
   final bool buyerConfirmed;
@@ -233,6 +269,14 @@ class Order {
     OrderStatus? status,
     bool? isBuyer,
     bool? paysCash,
+    bool? paysTransfer,
+    String? transferReference,
+    DateTime? transferReportedAt,
+    DateTime? transferNotReceivedAt,
+    DateTime? transferValidatedAt,
+    String? deliveryCode,
+    int? codeAttemptsLeft,
+    bool? transferAvailable,
     bool? buyerConfirmed,
     bool? sellerConfirmed,
     OrderCancellation? cancellation,
@@ -251,7 +295,14 @@ class Order {
     deliveryAt: deliveryAt,
     detail: detail,
     paysCash: paysCash ?? this.paysCash,
-    transferAvailable: transferAvailable,
+    paysTransfer: paysTransfer ?? this.paysTransfer,
+    transferReference: transferReference ?? this.transferReference,
+    transferReportedAt: transferReportedAt ?? this.transferReportedAt,
+    transferNotReceivedAt: transferNotReceivedAt ?? this.transferNotReceivedAt,
+    transferValidatedAt: transferValidatedAt ?? this.transferValidatedAt,
+    deliveryCode: deliveryCode ?? this.deliveryCode,
+    codeAttemptsLeft: codeAttemptsLeft ?? this.codeAttemptsLeft,
+    transferAvailable: transferAvailable ?? this.transferAvailable,
     buyerConfirmed: buyerConfirmed ?? this.buyerConfirmed,
     sellerConfirmed: sellerConfirmed ?? this.sellerConfirmed,
     cancellation: cancellation ?? this.cancellation,

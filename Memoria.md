@@ -34,6 +34,22 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T56 — Pagar por transferencia o en efectivo (15-Nov-2026, SCRUM-72, HU-55)
+
+**Qué se hizo**
+- `Pedido-pago`: "Transferencia" se puede elegir (y sale elegida) cuando quien vende tiene cuenta, con el chip verde "Valeria tiene su cuenta registrada". "Así funciona" cambia con la opción y "Ver datos para transferir" abre `Pago-transferencia` (monto, CLABE y concepto con "Copiar"; la referencia).
+- `Pago-validando` (quien compra) y `Pago-vendedor` ("Sí, me llegó el pago" / "Todavía no me llega").
+- `Pedido-entrega`: la franja "Pago validado · $450". `Pedido-efectivo`: el código de 4 dígitos para quien compra; quien vende lo escribe y se completa el pedido.
+- `Cuenta-pagos` desde `Ajustes` ("BBVA ···· 4829"); avisos `transfer_*`; íconos `landmark`, `copy` y `shield`. Fila compartida `0.5.0-alpha.35`.
+
+**Decisiones (con su porqué)** (usuaria, 15-Nov-2026)
+- Sin cancelar solo a las 24 h (el dinero ya está con quien vende), solo la CLABE (la tarjeta negra muestra la CLABE) y el comprobante después (`NOTE (HU-55)`: las fotos se sirven públicas).
+- Un pedido en efectivo aceptado antes de HU-55 no tiene código: quien compra sigue con "Confirmar entrega".
+
+**Errores a evitar**
+- Una pantalla que se abre por `go` (enlace o prueba) no tiene a dónde hacer `pop`: `canPop()` y, si no, `go` a su pantalla de origen.
+- `no_adjacent_strings_in_list` y `unnecessary_parenthesis` chocan: el texto largo va en una variable antes de la lista.
+
 ## T55 — Apoyo a vendedores (15-Nov-2026, SCRUM-59, SCRUM-60 y SCRUM-61; HU-36, HU-37 y HU-38)
 
 **Qué se hizo**
