@@ -30,6 +30,8 @@ import 'package:musubi_app/features/marketplace/presentation/search_screen.dart'
 import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:musubi_app/features/orders/presentation/my_orders_screen.dart';
 import 'package:musubi_app/features/orders/presentation/order_payment_screen.dart';
+import 'package:musubi_app/features/orders/presentation/payout_account_screen.dart';
+import 'package:musubi_app/features/orders/presentation/transfer_screen.dart';
 import 'package:musubi_app/features/profile/presentation/interests_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
@@ -74,6 +76,9 @@ abstract final class AppRoutes {
 
   /// "Mis alertas" (HU-12): las busquedas guardadas.
   static const settingsAlerts = '/ajustes/alertas';
+
+  /// "Cuenta para recibir pagos" (`Cuenta-pagos`, HU-55).
+  static const settingsPayouts = '/ajustes/cuenta-pagos';
 
   /// "Vender un producto" (HU-06): `Vender-1…4` y `Vender-listo`.
   static const sell = '/vender';
@@ -155,6 +160,9 @@ abstract final class AppRoutes {
   /// `Calificar` un pedido completado (HU-27, HU-45); siempre con sesion.
   static String rate(String id) => '${order(id)}/calificar';
 
+  /// "Paga por transferencia" (`Pago-transferencia`, HU-55); con sesion.
+  static String transfer(String id) => '${order(id)}/transferencia';
+
   /// Perfil publico de otra persona (HU-05); siempre con sesion.
   static const seller = '/vendedor';
 
@@ -174,6 +182,7 @@ abstract final class AppRoutes {
     interests,
     settingsInterests,
     settingsAlerts,
+    settingsPayouts,
     sell,
     sellDetails,
     sellPrice,
@@ -379,6 +388,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             OrderPaymentScreen(orderId: state.pathParameters['id']!),
       ),
       GoRoute(
+        path: '${AppRoutes.orders}/:id/transferencia',
+        builder: (context, state) =>
+            TransferScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '${AppRoutes.orders}/:id/calificar',
         builder: (context, state) =>
             RateScreen(orderId: state.pathParameters['id']!),
@@ -450,6 +464,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settingsAlerts,
         builder: (context, state) => const SavedSearchesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsPayouts,
+        builder: (context, state) => const PayoutAccountScreen(),
       ),
       GoRoute(
         path: AppRoutes.interests,

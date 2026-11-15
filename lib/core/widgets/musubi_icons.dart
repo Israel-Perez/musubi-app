@@ -663,6 +663,32 @@ abstract final class MusubiIcons {
     IconPath('m2 2 20 20'),
   ]);
 
+  /// `landmark` ("Cuenta para recibir pagos" de `Ajustes` y `Pago-validando`,
+  /// HU-55).
+  static const landmark = MusubiIconData([
+    IconPath('M3 22h18'),
+    IconPath('M6 18v-7'),
+    IconPath('M10 18v-7'),
+    IconPath('M14 18v-7'),
+    IconPath('M18 18v-7'),
+    IconPath('M12 2 20 7H4z'),
+  ]);
+
+  /// `copy` ("Copiar" de `Pago-transferencia`, HU-55).
+  static const copy = MusubiIconData([
+    IconRect(8, 8, 14, 14, radius: 2),
+    IconPath('M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'),
+  ]);
+
+  /// `shield` ("Si Diego dice que no le llegó…" de `Pago-validando`, HU-55).
+  static const shield = MusubiIconData([
+    IconPath(
+      'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 '
+      '0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 '
+      '19 5a1 1 0 0 1 1 1z',
+    ),
+  ]);
+
   /// Arco que gira en un boton que esta cargando (`loadingButton`).
   static const spinner = MusubiIconData([
     IconPath('M21 12a9 9 0 1 1-6.22-8.56'),

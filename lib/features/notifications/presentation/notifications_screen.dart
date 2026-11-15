@@ -329,6 +329,18 @@ class _Row extends StatelessWidget {
         c.warningSoft,
         c.warningText,
       ),
+      // HU-55: "Ana dice que ya te transfirió" y el recordatorio de las 24 h.
+      'transfer_reported' || 'transfer_reminder' => (
+        MusubiIcons.landmark,
+        c.warningSoft,
+        c.warningText,
+      ),
+      // HU-55: quien vende todavia no ve la transferencia.
+      'transfer_not_received' => (
+        MusubiIcons.triangleAlert,
+        c.warningSoft,
+        c.warningText,
+      ),
       // HU-30: la solicitud a la que ofreciste ya no esta activa.
       'offer_closed' => (MusubiIcons.circleX, c.surface, c.textSecondary),
       _ => (MusubiIcons.bell, c.surface, c.textPrimary),

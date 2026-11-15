@@ -72,6 +72,7 @@ import '../test/helpers/fake_interests_repository.dart';
 import '../test/helpers/fake_listings_repository.dart';
 import '../test/helpers/fake_notifications.dart';
 import '../test/helpers/fake_orders.dart';
+import '../test/helpers/fake_payouts.dart';
 import '../test/helpers/fake_profile_repository.dart';
 import '../test/helpers/fake_recommendations.dart';
 import '../test/helpers/fake_reputation.dart';
@@ -334,6 +335,41 @@ final Order _accepted = _orderOf(
   status: OrderStatus.confirmed,
   paysCash: true,
 );
+
+/// HU-55: la transferencia (`Pedido-pago` con la cuenta de Valeria,
+/// `Pago-validando`, `Pago-vendedor` y `Pedido-entrega` con el pago
+/// validado) y el efectivo con codigo (`Pedido-efectivo` y quien vende).
+final DateTime _reportedAt = DateTime(2026, 10, 7, 21, 14).toUtc();
+final Order _payTransfer = _orderOf('o10').copyWith(transferAvailable: true);
+final Order _validating = _orderOf('o11').copyWith(
+  transferAvailable: true,
+  paysTransfer: true,
+  transferReference: '4829173',
+  transferReportedAt: _reportedAt,
+);
+final Order _sellerTransfer = _orderOf('o12', isBuyer: false).copyWith(
+  paysTransfer: true,
+  transferReference: '4829173',
+  transferReportedAt: _reportedAt,
+);
+final Order _paidTransfer = _orderOf('o13', status: OrderStatus.confirmed)
+    .copyWith(
+      paysTransfer: true,
+      transferReference: '4829173',
+      transferReportedAt: _reportedAt,
+      transferValidatedAt: _reportedAt,
+    );
+final Order _cashCode = _orderOf(
+  'o14',
+  status: OrderStatus.confirmed,
+  paysCash: true,
+).copyWith(deliveryCode: '7319');
+final Order _cashSeller = _orderOf(
+  'o15',
+  status: OrderStatus.confirmed,
+  isBuyer: false,
+  paysCash: true,
+).copyWith(codeAttemptsLeft: 5);
 
 /// HU-25: las otras compras de la seccion "Mis pedidos" de `Perfil`.
 final Order _algebra = _orderOf(
@@ -917,8 +953,18 @@ class _Shot {
                   _arduino,
                   _algebra,
                   _accepted,
+                  _payTransfer,
+                  _validating,
+                  _sellerTransfer,
+                  _paidTransfer,
+                  _cashCode,
+                  _cashSeller,
                 ],
               ),
+            ),
+            // HU-55: la cuenta de Ana ("BBVA ···· 4829" en `Ajustes`).
+            payoutRepositoryProvider.overrideWithValue(
+              FakePayoutRepository(account: sampleAccount),
             ),
             chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
             // HU-31: los avisos de `Notificaciones` (sin Firebase aqui).
@@ -1480,6 +1526,15 @@ final Map<String, (bool, _Scene)> _scenes = {
   'tu-venta': (true, (s) => s.go(AppRoutes.order('o2'))),
   'pedido-entrega': (true, (s) => s.go(AppRoutes.order('o3'))),
   'mis-pedidos': (true, (s) => s.go(AppRoutes.myOrders)),
+  // HU-55: transferencia y efectivo con codigo.
+  'pedido-pago-transferencia': (true, (s) => s.go(AppRoutes.order('o10'))),
+  'pago-transferencia': (true, (s) => s.go(AppRoutes.transfer('o10'))),
+  'pago-validando': (true, (s) => s.go(AppRoutes.order('o11'))),
+  'pago-vendedor': (true, (s) => s.go(AppRoutes.order('o12'))),
+  'pedido-entrega-transferencia': (true, (s) => s.go(AppRoutes.order('o13'))),
+  'pedido-efectivo': (true, (s) => s.go(AppRoutes.order('o14'))),
+  'tu-venta-codigo': (true, (s) => s.go(AppRoutes.order('o15'))),
+  'cuenta-pagos': (true, (s) => s.go(AppRoutes.settingsPayouts)),
   'pedido-cancelar': (
     true,
     (s) async {

@@ -1,4 +1,5 @@
 import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/domain/payment_models.dart';
 
 /// Pedidos (HU-23 y HU-24). Lanza `ApiFailure` con el mensaje en espanol de
 /// la API.
@@ -29,6 +30,23 @@ abstract interface class OrderRepository {
 
   /// "Confirmar pago en efectivo" (RN-18).
   Future<Order> payCash(String id);
+
+  /// "Transferencia" (HU-55): solo si quien vende registro su cuenta.
+  Future<Order> payTransfer(String id);
+
+  /// La cuenta para transferir (`Pago-transferencia`): completa para quien
+  /// compra y enmascarada para quien vende.
+  Future<TransferDetails> transfer(String id);
+
+  /// "Enviar referencia a Diego" (HU-55).
+  Future<Order> reportTransfer(String id, String reference);
+
+  /// "Todavía no me llega" (HU-55, quien vende).
+  Future<Order> transferNotReceived(String id);
+
+  /// El codigo de entrega que dicta quien compra (HU-55, efectivo): completa
+  /// el pedido.
+  Future<Order> deliveryCode(String id, String code);
 
   /// "Aceptar pedido" (HU-24): solo quien vende, con el pago elegido.
   Future<Order> accept(String id);

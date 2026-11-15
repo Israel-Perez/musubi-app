@@ -373,7 +373,7 @@ void main() {
       expect(find.text('Siempre disponible'), findsOneWidget);
       expect(find.text('ASÍ FUNCIONA'), findsOneWidget);
       expect(
-        find.text('Los dos confirman la entrega y se completa tu pedido'),
+        find.text('Le das tu código de entrega y se completa tu pedido'),
         findsOneWidget,
       );
       final transfer = tester.widget<Opacity>(
@@ -471,7 +471,10 @@ void main() {
       expect(h.orders.accepted, ['o1']);
       expect(find.text('Pedido aceptado. Le avisamos a Ana.'), findsOneWidget);
       expect(find.bySemanticsLabel('Estado del pedido: Confirmado'), findsOne);
-      expect(find.text('Marcar como entregado'), findsOneWidget);
+      // HU-55: en efectivo, quien vende escribe el codigo de quien compra.
+      expect(find.text('Código de entrega'), findsOneWidget);
+      expect(find.text('Te quedan 5 intentos.'), findsOneWidget);
+      expect(_button(tester, 'order-code-confirm').enabled, isFalse);
       expect(find.text('Cancelar pedido'), findsOneWidget);
     });
 

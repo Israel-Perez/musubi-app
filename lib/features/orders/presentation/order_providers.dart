@@ -5,6 +5,7 @@ import 'package:musubi_app/core/network/api_client.dart';
 import 'package:musubi_app/features/orders/data/http_order_repository.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/domain/order_repository.dart';
+import 'package:musubi_app/features/orders/domain/payment_models.dart';
 
 /// Pedidos (HU-23). En pruebas, un fake.
 final orderRepositoryProvider = Provider<OrderRepository>(
@@ -13,6 +14,34 @@ final orderRepositoryProvider = Provider<OrderRepository>(
     ref.watch(appConfigProvider).apiBaseUrl,
   ),
 );
+
+/// La cuenta para recibir pagos (HU-55). En pruebas, un fake.
+final payoutRepositoryProvider = Provider<PayoutRepository>(
+  (ref) => HttpPayoutRepository(ref.watch(dioProvider)),
+);
+
+/// Mi cuenta para recibir pagos (`Ajustes` y `Cuenta-pagos`). Para recargar:
+/// `ref.invalidate(payoutStatusProvider)`.
+final FutureProvider<PayoutStatus> payoutStatusProvider =
+    FutureProvider.autoDispose<PayoutStatus>(
+      (ref) => ref.watch(payoutRepositoryProvider).mine(),
+      retry: (_, _) => null,
+    );
+
+/// Los bancos de la CLABE (se llenan al escribirla).
+final FutureProvider<List<PayoutBank>> payoutBanksProvider =
+    FutureProvider.autoDispose<List<PayoutBank>>(
+      (ref) => ref.watch(payoutRepositoryProvider).banks(),
+      retry: (_, _) => null,
+    );
+
+/// La cuenta para transferir de un pedido (`Pago-transferencia`,
+/// `Pago-validando` y `Pago-vendedor`).
+final FutureProviderFamily<TransferDetails, String> transferProvider =
+    FutureProvider.autoDispose.family<TransferDetails, String>(
+      (ref, id) => ref.watch(orderRepositoryProvider).transfer(id),
+      retry: (_, _) => null,
+    );
 
 /// Los puntos de entrega del campus ("Entrega" del resumen).
 final FutureProvider<List<MeetingPoint>> meetingPointsProvider =
