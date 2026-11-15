@@ -42,10 +42,12 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - Al tocar la tarjeta, la hoja "Ideas para vender más rápido" (precio, descripción y fotos; "Editar publicación"). Al tocar "Ofrécesela", "Quienes la buscan": las solicitudes con "Yo tengo este producto" (abre la hoja de oferta de HU-16 ahí mismo) y cuántas alertas, sin decir de quién (RN-37).
 - `Vender-listo`: "2 estudiantes buscan algo similar · Ver solicitudes" (`PublishedDemandCard`). Cierra la `NOTE (HU-18)`.
 - Aviso `slow_listing` con `trendingDown` sobre fondo de advertencia; destino `my_products` → `Mis productos`. Fila compartida `0.5.0-alpha.33`.
-- Capturas: `mis-productos`, `ideas-vender` y `quienes-la-buscan`; `vender-listo` ya trae la tarjeta.
+- Capturas: `mis-productos`, `ideas-vender`, `ideas-ia` y `quienes-la-buscan`; `vender-listo` ya trae la tarjeta.
+- Ideas con IA (criterio de SCRUM-60 del 13-Nov-2026, agregado a la misma PR a petición de la usuaria): en la hoja, "Nombre y descripción con IA" → "Proponer con IA" (`POST /products/{id}/ideas`, 30 s) → "Usar en mi publicación" abre la edición con el nombre y la descripción ya escritos (`EditListing`). Sin IA, el mensaje de la API, las ideas predefinidas y "Intentar de nuevo".
 
 **Decisiones (con su porqué)** (usuaria, 15-Nov-2026)
 - Una tarjeta por producto (hasta 3 y "Ver los N"); las ideas en una hoja al tocar la tarjeta (la maqueta no tiene pantalla para ellas); el aviso una sola vez.
+- La IA solo a petición y nada se guarda solo: "Usar" llena el borrador de edición y quien vende guarda (RN-38, RNF-06). El bloque va debajo de las ideas predefinidas para que lo primero siga siendo lo de la maqueta.
 - "Yo tengo este producto" se abre sobre `Mis productos` en lugar de ir al tablero: no se apila una rama del shell sobre una pantalla completa y la persona no pierde su lugar.
 
 **Errores a evitar**

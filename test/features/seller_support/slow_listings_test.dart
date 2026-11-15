@@ -237,6 +237,78 @@ void main() {
       expect(h.container.read(sellEditDraftProvider).editingId, 'bata');
       expect(find.byKey(const Key('slow-tips')), findsNothing);
     });
+
+    testWidgets('"Proponer con IA" solo a peticion; "Usar" abre la edicion '
+        'con el texto y no guarda nada', (tester) async {
+      final h = _Harness(tester);
+      await h.open();
+      await h.tapKey('slow-bata');
+
+      // RNF-06: nada sale hasta que quien vende lo pide.
+      expect(find.text('Nombre y descripción con IA'), findsOneWidget);
+      expect(find.textContaining('sin tu nombre ni tus datos'), findsOneWidget);
+      expect(h.support.ideasCalls, isEmpty);
+
+      await h.tapKey('slow-ai-ask');
+
+      expect(h.support.ideasCalls, ['bata']);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('slow-ai-title')),
+          matching: find.text('Bata de laboratorio blanca, talla M'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('slow-ai-description')),
+          matching: find.textContaining('La usé dos semestres en química'),
+        ),
+        findsOneWidget,
+      );
+
+      await h.tapKey('slow-ai-use');
+
+      final draft = h.container.read(sellEditDraftProvider);
+      expect(draft.editingId, 'bata');
+      expect(draft.title, 'Bata de laboratorio blanca, talla M');
+      expect(draft.description, startsWith('Bata de manga larga en buen'));
+      // RN-38: la publicacion no cambio; quien vende guarda en la edicion.
+      expect(h.listings.own.single.description, 'Bata de manga larga.');
+      expect(find.byKey(const Key('slow-tips')), findsNothing);
+    });
+
+    testWidgets('sin IA lo dice, deja las ideas y permite intentar de nuevo', (
+      tester,
+    ) async {
+      final h = _Harness(tester);
+      await h.open();
+      h.support.ideasFailure = const ApiFailure(
+        code: ideasUnavailableCode,
+        message:
+            'La IA no está disponible ahora. Usa estas ideas o inténtalo más '
+            'tarde.',
+        status: 503,
+      );
+      await h.tapKey('slow-bata');
+
+      await h.tapKey('slow-ai-ask');
+
+      expect(
+        find.text(
+          'La IA no está disponible ahora. Usa estas ideas o inténtalo más '
+          'tarde.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Revisa el precio'), findsOneWidget);
+      expect(find.text('Intentar de nuevo'), findsOneWidget);
+
+      await h.tapKey('slow-ai-ask');
+
+      expect(find.byKey(const Key('slow-ai-error')), findsNothing);
+      expect(find.byKey(const Key('slow-ai-use')), findsOneWidget);
+    });
   });
 
   group('Quienes la buscan (HU-38)', () {
@@ -491,6 +563,53 @@ void main() {
             'listings.product_not_found',
           ),
         ),
+      );
+    });
+
+    test('"Proponer con IA" es un POST con espera larga', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'title': 'Bata de laboratorio blanca, talla M',
+          'description': 'Bata de manga larga en buen estado.',
+        }),
+      );
+
+      final ideas = await repository.ideas('bata');
+
+      final request = adapter.requests.single;
+      expect(
+        (request.method, request.path),
+        ('POST', ApiPaths.productIdeas('bata')),
+      );
+      expect(request.receiveTimeout, ideasReceiveTimeout);
+      expect(
+        (ideas.title, ideas.description),
+        (
+          'Bata de laboratorio blanca, talla M',
+          'Bata de manga larga en buen estado.',
+        ),
+      );
+    });
+
+    test('sin IA llega el code para dejar las ideas predefinidas', () async {
+      serve(
+        (_) => FakeHttpAdapter.json({
+          'code': ideasUnavailableCode,
+          'title':
+              'La IA no está disponible ahora. Usa estas ideas o inténtalo '
+              'más tarde.',
+        }, status: 503),
+      );
+
+      await expectLater(
+        repository.ideas('bata'),
+        throwsA(
+          isA<ApiFailure>().having((f) => f.code, 'code', ideasUnavailableCode),
+        ),
+      );
+      await expectLater(
+        const EmptySellerSupportRepository().ideas('bata'),
+        throwsA(isA<ApiFailure>()),
       );
     });
   });

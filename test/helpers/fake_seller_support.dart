@@ -77,6 +77,19 @@ class FakeSellerSupportRepository implements SellerSupportRepository {
   int slowCalls = 0;
   final List<String> demandCalls = [];
 
+  /// Lo que propone la IA de prueba.
+  ListingIdeas ideasAnswer = const ListingIdeas(
+    title: 'Bata de laboratorio blanca, talla M',
+    description:
+        'Bata de manga larga en buen estado. La usé dos semestres en química '
+        'y está limpia.',
+  );
+
+  /// Falla la siguiente propuesta (`seller_support.ideas_unavailable`).
+  ApiFailure? ideasFailure;
+
+  final List<String> ideasCalls = [];
+
   @override
   Future<SlowListings> slow() async {
     slowCalls++;
@@ -88,5 +101,15 @@ class FakeSellerSupportRepository implements SellerSupportRepository {
   Future<ProductDemand> demand(String productId) async {
     demandCalls.add(productId);
     return demands[productId] ?? anyDemand ?? const ProductDemand();
+  }
+
+  @override
+  Future<ListingIdeas> ideas(String productId) async {
+    ideasCalls.add(productId);
+    if (ideasFailure case final failure?) {
+      ideasFailure = null;
+      throw failure;
+    }
+    return ideasAnswer;
   }
 }
