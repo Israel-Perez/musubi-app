@@ -1,17 +1,14 @@
-# HU-40 — Suspender y reactivar cuentas (tareas)
+# HU-40 — Suspender y reactivar cuentas (tareas, app)
 
 ## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+- **Qué:** con HU-39 (`../HU-39-moderar-contenido/plan.md`).
+- **Estado:** ✅ Hecho (16-Nov-2026).
 
-## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-40)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+## T2 — Pantallas
+- **Qué:** `AdminAccountScreen`, `SuspendAccountSheet` y la pestaña "Suspendidas".
+- **Pruebas:** `test/features/admin/admin_flow_test.dart` y `test/features/admin/http_admin_repository_test.dart`.
+- **Estado:** ✅ Hecho.
 
-## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
-
-## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+## T3 — Documentación
+- **Qué:** `docs/trazabilidad.md` y `Memoria.md` (T52).
+- **Estado:** ✅ Hecho.

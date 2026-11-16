@@ -343,4 +343,26 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-57`).
   static String block(String userId) =>
       '$blocks/${Uri.encodeComponent(userId)}';
+
+  /// `GET /api/v1/admin/reports?status=open|closed` — fila "M-14"
+  /// (spec `musubi-api:HU-39`).
+  static const adminReports = '/api/v1/admin/reports';
+
+  /// `POST /api/v1/admin/reports/{id}/resolution` — fila "M-14"
+  /// (spec `musubi-api:HU-39`).
+  static String adminReportResolution(String id) =>
+      '$adminReports/${Uri.encodeComponent(id)}/resolution';
+
+  /// `GET /api/v1/admin/accounts/suspended` — fila "M-14"
+  /// (spec `musubi-api:HU-40`).
+  static const adminSuspendedAccounts = '/api/v1/admin/accounts/suspended';
+
+  /// `GET /api/v1/admin/accounts/{id}` — fila "M-14"
+  /// (spec `musubi-api:HU-40`).
+  static String adminAccount(String id) =>
+      '/api/v1/admin/accounts/${Uri.encodeComponent(id)}';
+
+  /// `POST` y `DELETE /api/v1/admin/accounts/{id}/suspension` — filas "M-14"
+  /// (spec `musubi-api:HU-40`).
+  static String adminSuspension(String id) => '${adminAccount(id)}/suspension';
 }

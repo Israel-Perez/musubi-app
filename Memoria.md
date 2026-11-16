@@ -1,5 +1,28 @@
 # Memoria del proyecto — musubi-app
 
+## T52 — Moderar reportes y suspender cuentas (16-Nov-2026, SCRUM-62 y SCRUM-63, HU-39 y HU-40, Kazumi)
+
+**Qué se hizo**
+- `Ajustes` → "Administración" → "Reportes y cuentas", solo con el rol `admin`. `AdminScreen` tiene tres pestañas:
+  - "Abiertos" y "Revisados": cada reporte abre una hoja con lo reportado, quién reportó, el detalle y la persona responsable con sus procedentes. Si sigue abierto, trae una nota interna y "Retirar publicación" / "Es procedente" / "Marcar como atendido" o "Descartar".
+  - "Suspendidas".
+- "Cuenta" (`AdminAccountScreen`) muestra los procedentes, "Se sugiere suspenderla" con 3 (RN-27), el historial (RNF-04), "Suspender cuenta" con motivo obligatorio y "Reactivar cuenta" con confirmación.
+- `SessionTokens.isAdmin` / `rolesOf` leen el `role` del access token. Filas "M-14" en `ApiPaths` (API `0.5.0-alpha.38`, fila compartida en `docs/versionado.md`).
+- Pruebas: +13 (778 en total). `flutter analyze` 0, formato sin cambios, critic PASS y `check_shared_sections` OK.
+
+**Decisiones (para revisar)**
+- El rol sale del JWT y no de lo guardado: la app solo guarda los tokens, y el rol se actualiza en cada renovación. Mostrar de más no abre nada, porque la API responde 403.
+- La maqueta no tiene estas pantallas: se armaron con las pestañas de `Notificaciones`, las tarjetas de `Ajustes` y las hojas de `reportSheet`.
+- Retirar una publicación pide confirmación. Descartar no la pide.
+
+**Errores a evitar**
+- `MusubiIcons` no tiene `undo`; para reactivar se usa `refreshCw`.
+- `FutureProviderFamily` viene de `package:flutter_riverpod/misc.dart`.
+
+**Pendiente**
+- Probar en el celular con una cuenta en `Admin:Emails` después de desplegar la API `0.5.0-alpha.38`.
+- La versión de la app no sube: se publica en el siguiente lote.
+
 ## HU-49 — Inicio popular y lista de recientes (12-Nov-2026, SCRUM-69)
 
 - Se detallaron `spec.md`, `plan.md` y `task.md` para app en paralelo con `musubi-api:HU-49`; Sprint 4 según comentario Jira.

@@ -1,47 +1,46 @@
 # HU-40 — Suspender y reactivar cuentas (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-40 / SCRUM-63 / Sprint 5 (23 nov – 4 dic 2026) / M-14 / [musubi-api:HU-40](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m14-admin/HU-40-suspender-cuentas)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-40 / SCRUM-63 / Sprint 5 / M-14 / [musubi-api:HU-40](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m14-admin/HU-40-suspender-cuentas)
 
 ## Contexto
 Jira (SCRUM-63): Como **administrador**, quiero **suspender cuentas que incumplan las reglas**, para **proteger a la comunidad**.
 
-- Maqueta: sin pantalla propia. Se diseña con la guía de estilo de la maqueta; el lineamiento 4 permite agregar, nunca quitar.
-- Trazabilidad: RF-55 · CU-25 · RN-27 · RNF-04.
-- Origen: Propuesta inicial §11.
-
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-02`.
+- Maqueta: sin pantalla propia (lineamiento 4). Trazabilidad: RF-55 · CU-25 · RN-27 · RNF-04.
+- Va con HU-39: el diseño y las decisiones están en [`../HU-39-moderar-contenido/plan.md`](../HU-39-moderar-contenido/plan.md).
+- **Depende de:** `HU-39` (la bandeja y la hoja del reporte), `HU-02` (la cuenta suspendida ya veía "Tu cuenta está suspendida" al iniciar sesión).
 
 ## Requisitos
-1. El administrador puede suspender y reactivar cuentas.
-2. Una cuenta con [POR DEFINIR] reportes procedentes puede ser suspendida (RN-27).
-3. Las suspensiones quedan registradas (RNF-04).
-
-RNF que aplican: RNF-04.
+1. La pantalla "Cuenta" (desde la persona responsable de un reporte o desde "Suspendidas") muestra:
+   - el nombre, el estado y si es administradora;
+   - los reportes procedentes y la fecha de alta;
+   - el historial de moderación, con quién, cuándo y el motivo.
+2. Con 3 reportes procedentes o más se ve "Se sugiere suspenderla" (RN-27); la decisión es del administrador.
+3. "Suspender cuenta" abre una hoja con el motivo, obligatorio y de hasta 500 caracteres. Sin motivo no se envía.
+4. "Reactivar cuenta" pide confirmación y avisa que sus publicaciones siguen pausadas.
+5. Una cuenta de administración no muestra "Suspender".
+6. "Suspendidas" lista las cuentas suspendidas del campus.
 
 ## Diseño
-- Feature `lib/features/admin/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-40. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-40)` (skill `deferred-scope-fakes`).
+`AdminAccountScreen` y `SuspendAccountSheet` en `lib/features/admin/presentation/admin_account_screen.dart`; la pestaña "Suspendidas" en `AdminScreen`; `adminAccountProvider` y `suspendedAccountsProvider`.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-40, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Filas "M-14" de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (`GET /admin/accounts/suspended`, `GET /admin/accounts/{id}`, `POST`/`DELETE /admin/accounts/{id}/suspension`), enlazadas desde `ApiPaths.adminSuspendedAccounts`, `adminAccount` y `adminSuspension`. Formas de `admin-account.json` y `admin-account-page.json`.
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- Widget tests de las pantallas nuevas (sin escena de maqueta).
+- `test/features/admin/http_admin_repository_test.dart`: suspender (motivo sin espacios), reactivar (`DELETE`), el historial y las suspendidas.
+- `test/features/admin/admin_flow_test.dart`: la sugerencia de RN-27, el motivo obligatorio, suspender, "Suspendidas" y "Reactivar" con confirmación.
 
 ## Criterios
-- [ ] El administrador puede suspender y reactivar cuentas.
-- [ ] Una cuenta con [POR DEFINIR] reportes procedentes puede ser suspendida (RN-27).
-- [ ] Las suspensiones quedan registradas (RNF-04).
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] El administrador puede suspender y reactivar cuentas: `admin_flow_test` ("el motivo es obligatorio", "Reactivar confirma").
+- [x] Con 3 reportes procedentes se sugiere suspender (RN-27): `admin_flow_test` (`admin-suggestion`).
+- [x] Las suspensiones quedan registradas (RNF-04): el historial de "Cuenta"; la bitácora vive en la API.
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 778/778 (13 nuevas: 8 de flujo y 5 del repositorio) · critic PASS (16-Nov-2026).
 
 ## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- La suspensión no tiene fecha de fin y a la persona suspendida no se le avisa: lo ve al iniciar sesión.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
-- **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Estado:** 🚧 Borrador con evidencia
+- **Revisores:** Pendiente de designar (1 revisor distinto del autor)
+- **Fecha:** 16-Nov-2026
+- **Detalle:** RN-27 como sugerencia con 3 procedentes (decisión para revisar). Necesita la API `0.5.0-alpha.38`.

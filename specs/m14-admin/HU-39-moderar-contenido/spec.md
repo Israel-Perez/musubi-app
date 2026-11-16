@@ -1,47 +1,55 @@
 # HU-39 — Revisar reportes y moderar contenido (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** HU-39 / SCRUM-62 / Sprint 5 (23 nov – 4 dic 2026) / M-14 / [musubi-api:HU-39](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m14-admin/HU-39-moderar-contenido)
+**HU / Jira / Sprint / Módulo / Contraparte:** HU-39 / SCRUM-62 / Sprint 5 / M-14 / [musubi-api:HU-39](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m14-admin/HU-39-moderar-contenido)
 
 ## Contexto
 Jira (SCRUM-62): Como **administrador**, quiero **revisar los reportes**, para **retirar contenido falso o inapropiado**.
 
-- Maqueta: sin pantalla propia. Se diseña con la guía de estilo de la maqueta; el lineamiento 4 permite agregar, nunca quitar.
-- Trazabilidad: RF-54 · CU-24 · RNF-03, RNF-04.
-- Origen: Propuesta inicial §11.
-
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-28`, `02-07`.
+- Maqueta: sin pantalla propia. Se arma con piezas de la maqueta (lineamiento 4: se agrega, no se quita): las pestañas de `Notificaciones`, las tarjetas y grupos de `Ajustes` y las hojas `UI.sheet` de `reportSheet`.
+- Trazabilidad: RF-54 · CU-24 · RNF-03, RNF-04. Va con HU-40 en el mismo PR.
+- **Depende de:** `HU-28` (los reportes), `02-03` (sesión), `02-04` (piezas de la maqueta).
 
 ## Requisitos
-1. El administrador ve los reportes con su motivo y el elemento reportado.
-2. Puede retirar el contenido reportado o descartar el reporte.
-3. Solo el administrador puede moderar contenido (RNF-03) y sus acciones quedan registradas (RNF-04).
-
-RNF que aplican: RNF-03, RNF-04.
+1. "Administración" aparece en `Ajustes` solo si la sesión tiene el rol `admin` (el `role` del access token; la API vuelve a revisarlo en cada acción).
+2. "Abiertos" y "Revisados" listan los reportes del campus con el motivo, lo reportado, el detalle y la fecha.
+3. Al tocar un reporte, la hoja muestra lo reportado, quién reportó, el detalle, la persona responsable con sus reportes procedentes (y "considera suspender" con 3 o más) y, si sigue abierto, una nota interna opcional y dos acciones:
+   - "Retirar publicación" (pide confirmación), "Es procedente" o "Marcar como atendido", según lo reportado;
+   - "Descartar".
+4. Al moderar se cierra la hoja, sale un aviso y las bandejas se vuelven a pedir. Un error de la API (por ejemplo, otro administrador ya lo revisó) se muestra en la hoja.
+5. Desde la persona responsable se abre su cuenta (HU-40).
 
 ## Diseño
-- Feature `lib/features/admin/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-39. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-39)` (skill `deferred-scope-fakes`).
+- `lib/features/admin/`:
+  - `domain/`: `admin_models.dart` y `AdminRepository`.
+  - `data/`: `HttpAdminRepository`.
+  - `presentation/`: `admin_providers.dart` (con `isAdminProvider`), `AdminScreen`, `admin_report_sheet.dart`, `AdminAccountScreen` (HU-40) y `admin_widgets.dart`.
+- `SessionTokens.isAdmin` / `rolesOf` leen el `role` del JWT, igual que `userId` lee el `sub`: no se guarda nada nuevo y se actualiza con cada renovación.
+- Rutas `AppRoutes.settingsAdmin` (`/ajustes/administracion`) y `AppRoutes.adminAccount(id)`, con sesión.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-39, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Filas "M-14" de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (`GET /admin/reports`, `POST /admin/reports/{id}/resolution`), enlazadas desde `ApiPaths.adminReports` y `adminReportResolution`. Formas de `admin-report-page.json`.
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- Widget tests de las pantallas nuevas (sin escena de maqueta).
+- `test/features/admin/http_admin_repository_test.dart`: lectura de la bandeja (forma del fixture), la acción con la nota sin espacios (y sin nota si va vacía), errores con su código y el rol leído del token.
+- `test/features/admin/admin_flow_test.dart`:
+  - Sin el rol no hay "Administración"; con el rol abre la bandeja.
+  - "Retirar publicación" confirma, cierra y pasa a "Revisados"; "Descartar".
+  - Un reporte ya revisado; vacío y "Reintentar".
 
 ## Criterios
-- [ ] El administrador ve los reportes con su motivo y el elemento reportado.
-- [ ] Puede retirar el contenido reportado o descartar el reporte.
-- [ ] Solo el administrador puede moderar contenido (RNF-03) y sus acciones quedan registradas (RNF-04).
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] El administrador ve los reportes con su motivo y el elemento reportado: `admin_flow_test` ("con el rol abre la bandeja").
+- [x] Puede retirar el contenido reportado o descartar el reporte: `admin_flow_test` ("Retirar publicación" y "Descartar").
+- [x] Solo el administrador ve la moderación (RNF-03): "sin el rol no hay Administración"; la API responde 403 a cualquier otra cuenta (`musubi-api:HU-39`).
+- [x] Las acciones quedan registradas (RNF-04): en la API (`moderationLog`); la app muestra la revisión y el historial de la cuenta.
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 778/778 (13 nuevas: 8 de flujo y 5 del repositorio) · critic PASS (16-Nov-2026).
 
 ## Límites
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- La bandeja muestra los 50 reportes más recientes (límite de la API).
+- La app muestra "Administración" cuando el token ya trae el rol: después de que se lo den, la persona tiene que volver a iniciar sesión o esperar la siguiente renovación (15 minutos).
+- No hay capturas de maqueta para estas pantallas.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
-- **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Estado:** 🚧 Borrador con evidencia
+- **Revisores:** Pendiente de designar (1 revisor distinto del autor)
+- **Fecha:** 16-Nov-2026
+- **Detalle:** la spec ligera del 29-Oct-2026 se detalló con HU-40. Necesita la API `0.5.0-alpha.38`.
