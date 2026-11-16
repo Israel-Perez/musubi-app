@@ -28,10 +28,14 @@ import 'package:musubi_app/features/marketplace/presentation/recent_products_scr
 import 'package:musubi_app/features/marketplace/presentation/saved_searches_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
 import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
+import 'package:musubi_app/features/orders/domain/reservation_models.dart';
 import 'package:musubi_app/features/orders/presentation/my_orders_screen.dart';
+import 'package:musubi_app/features/orders/presentation/my_reservations_screen.dart';
 import 'package:musubi_app/features/orders/presentation/order_payment_screen.dart';
 import 'package:musubi_app/features/orders/presentation/payout_account_screen.dart';
+import 'package:musubi_app/features/orders/presentation/reservation_screen.dart';
 import 'package:musubi_app/features/orders/presentation/transfer_screen.dart';
+import 'package:musubi_app/features/orders/presentation/verify_buyer_screen.dart';
 import 'package:musubi_app/features/profile/presentation/interests_screen.dart';
 import 'package:musubi_app/features/profile/presentation/privacy_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_screen.dart';
@@ -92,6 +96,12 @@ abstract final class AppRoutes {
 
   /// "Ver todos" de "Mis pedidos" (HU-25); siempre con sesion.
   static const myOrders = '/mis-pedidos';
+
+  /// `Mis-apartados` (HU-52); siempre con sesion. `?tab=seller` abre "Me
+  /// apartaron".
+  static const myReservations = '/mis-apartados';
+
+  static String myReservationsTab(String tab) => '$myReservations?tab=$tab';
 
   /// "Publicar lo que necesito" (HU-13).
   static const need = '/necesito';
@@ -163,6 +173,18 @@ abstract final class AppRoutes {
   /// "Paga por transferencia" (`Pago-transferencia`, HU-55); con sesion.
   static String transfer(String id) => '${order(id)}/transferencia';
 
+  /// Un apartado (`Apartado-listo`, HU-52); siempre con sesion.
+  static const reservations = '/apartado';
+
+  static String reservation(String id) =>
+      '$reservations/${Uri.encodeComponent(id)}';
+
+  /// `Verificar-comprador` (quien vende, HU-52).
+  static String verifyBuyer(String id) => '${reservation(id)}/verificar';
+
+  /// `Apartado-verificado` (quien vende, HU-52).
+  static String buyerVerified(String id) => '${reservation(id)}/verificado';
+
   /// Perfil publico de otra persona (HU-05); siempre con sesion.
   static const seller = '/vendedor';
 
@@ -190,6 +212,7 @@ abstract final class AppRoutes {
     sellDone,
     myProducts,
     myOrders,
+    myReservations,
     need,
     myWanted,
     editNeed,
@@ -232,6 +255,7 @@ String? sessionRedirect({
       path == AppRoutes.chat ||
       path.startsWith('${AppRoutes.chat}/') ||
       path.startsWith('${AppRoutes.orders}/') ||
+      path.startsWith('${AppRoutes.reservations}/') ||
       path.startsWith('${AppRoutes.seller}/');
   if (!signedIn && needsSession) {
     return Uri(
@@ -393,6 +417,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             TransferScreen(orderId: state.pathParameters['id']!),
       ),
       GoRoute(
+        path: '${AppRoutes.reservations}/:id',
+        builder: (context, state) => ReservationScreen(
+          reservationId: state.pathParameters['id']!,
+          fromList: state.extra == true,
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.reservations}/:id/verificar',
+        builder: (context, state) =>
+            VerifyBuyerScreen(reservationId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '${AppRoutes.reservations}/:id/verificado',
+        builder: (context, state) =>
+            BuyerVerifiedScreen(reservationId: state.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '${AppRoutes.orders}/:id/calificar',
         builder: (context, state) =>
             RateScreen(orderId: state.pathParameters['id']!),
@@ -436,6 +477,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.myOrders,
         builder: (context, state) => const MyOrdersScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.myReservations,
+        builder: (context, state) => MyReservationsScreen(
+          initialTab: state.uri.queryParameters['tab'] == 'seller'
+              ? ReservationTab.seller
+              : ReservationTab.buyer,
+        ),
       ),
       GoRoute(
         path: AppRoutes.editListing,

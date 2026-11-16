@@ -19,6 +19,8 @@ void main() {
       'android.permission.INTERNET',
       // HU-31: avisos push, pedido en contexto (askForPushInContext).
       'android.permission.POST_NOTIFICATIONS',
+      // HU-52: escanear el QR del apartado, pedido al abrir la camara.
+      'android.permission.CAMERA',
     };
     final declared = RegExp('uses-permission[^>]*android:name="([^"]+)"')
         .allMatches(manifest)
@@ -26,6 +28,14 @@ void main() {
         .toSet();
 
     expect(declared.difference(approved), isEmpty, reason: '$declared');
+    // HU-52: la camara no es requisito para instalar (se escribe el codigo).
+    expect(
+      manifest,
+      contains(
+        '<uses-feature android:name="android.hardware.camera" '
+        'android:required="false" />',
+      ),
+    );
   });
 
   test('release: sin trafico en claro (RNF-02)', () {

@@ -33,6 +33,9 @@ enum NotificationTarget {
   /// "Mis productos", con "Llevan tiempo sin venderse" (HU-36).
   myProducts,
 
+  /// Un apartado (HU-52): `Apartado-listo` o "Me apartaron".
+  reservation,
+
   /// Nada que abrir (`none`) o un destino que esta version no conoce.
   unknown;
 
@@ -43,6 +46,7 @@ enum NotificationTarget {
     'wanted_board' => wantedBoard,
     'product' => product,
     'my_products' => myProducts,
+    'reservation' => reservation,
     _ => unknown,
   };
 }

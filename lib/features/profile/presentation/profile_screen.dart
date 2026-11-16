@@ -21,6 +21,7 @@ import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/orders/presentation/my_orders_widgets.dart';
+import 'package:musubi_app/features/orders/presentation/my_reservations_screen.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
@@ -36,8 +37,8 @@ SessionProfile? sessionProfile(WidgetRef ref) =>
 /// Pestana Perfil (maqueta `Perfil`, HU-04): foto o iniciales, nombre,
 /// "UTTT · carrera · periodo", "Verificada", estadisticas y mosaicos ("Mis
 /// solicitudes", HU-13; "Favoritos", HU-53) y "Mis pedidos" (HU-25). El
-/// engrane abre `Ajustes`. Lo que aun no existe no se muestra:
-/// NOTE (HU-52) "Mis apartados".
+/// engrane abre `Ajustes`. "Mis apartados" (HU-52) va debajo de las
+/// estadisticas.
 class ProfileScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -96,6 +97,7 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
               ),
+              const MyReservationsTile(),
               const _Tiles(),
               const _PrivacyRow(),
               const RecentOrdersSection(),

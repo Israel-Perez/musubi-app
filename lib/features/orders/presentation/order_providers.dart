@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
 import 'package:musubi_app/features/orders/data/http_order_repository.dart';
+import 'package:musubi_app/features/orders/data/http_reservation_repository.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/domain/order_repository.dart';
 import 'package:musubi_app/features/orders/domain/payment_models.dart';
+import 'package:musubi_app/features/orders/domain/reservation_models.dart';
 
 /// Pedidos (HU-23). En pruebas, un fake.
 final orderRepositoryProvider = Provider<OrderRepository>(
@@ -95,5 +97,32 @@ final FutureProvider<SalesPage> salesProvider =
 final FutureProviderFamily<MyOrdersPage, MyOrdersTab> myOrdersProvider =
     FutureProvider.autoDispose.family<MyOrdersPage, MyOrdersTab>(
       (ref, tab) => ref.watch(orderRepositoryProvider).mine(tab: tab),
+      retry: (_, _) => null,
+    );
+
+/// Los apartados (HU-52). En pruebas, un fake.
+final reservationRepositoryProvider = Provider<ReservationRepository>(
+  (ref) => HttpReservationRepository(
+    ref.watch(dioProvider),
+    ref.watch(appConfigProvider).apiBaseUrl,
+  ),
+);
+
+/// Un apartado (`Apartado-listo`, `Verificar-comprador` y
+/// `Apartado-verificado`). Para recargar:
+/// `ref.invalidate(reservationProvider(id))`.
+final FutureProviderFamily<Reservation, String> reservationProvider =
+    FutureProvider.autoDispose.family<Reservation, String>(
+      (ref, id) => ref.watch(reservationRepositoryProvider).get(id),
+      retry: (_, _) => null,
+    );
+
+/// Una pestana de `Mis-apartados` (y la tarjeta "Mis apartados" de `Perfil`,
+/// con la de "Yo aparté"). Para recargar:
+/// `ref.invalidate(myReservationsProvider)`.
+final FutureProviderFamily<ReservationPage, ReservationTab>
+myReservationsProvider = FutureProvider.autoDispose
+    .family<ReservationPage, ReservationTab>(
+      (ref, tab) => ref.watch(reservationRepositoryProvider).mine(tab),
       retry: (_, _) => null,
     );
