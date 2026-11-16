@@ -27,6 +27,9 @@ enum AccountGateMotive {
     'Guarda lo que te gusta',
     'Crea tu cuenta y encuéntralo rápido después.',
   ),
+
+  /// HU-51: "Avísame" de una agotada (Producto-visitante, motivo "aviso").
+  alert('Te avisamos si vuelve', 'Crea tu cuenta para recibir el aviso.'),
   offer('¿Lo tienes? Véndelo', 'Crea tu cuenta y ofrécelo a quien lo busca.'),
   request(
     'Pide lo que necesitas',
@@ -52,6 +55,7 @@ enum AccountGateMotive {
     buy => const BuyArt(),
     chat => const ChatArt(),
     save => const SaveArt(),
+    alert => const AlertArt(),
     offer => const OfferArt(),
     request => const RequestArt(),
     publish => const PublishArt(),

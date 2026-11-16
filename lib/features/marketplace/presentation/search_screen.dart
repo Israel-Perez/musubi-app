@@ -32,7 +32,11 @@ import 'package:musubi_app/features/marketplace/presentation/search_providers.da
 ///
 /// NOTE (HU-10): el boton y la hoja de filtros de la busqueda.
 class SearchScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({super.key, this.initialFilter});
+
+  /// HU-51: "Ver todas las calculadoras" del comparador abre la busqueda con
+  /// la categoria ya elegida.
+  final SearchFilter? initialFilter;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -52,8 +56,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // HU-10: al entrar se listan todas las publicaciones.
-      unawaited(ref.read(searchControllerProvider.notifier).search(''));
-      _focus.requestFocus();
+      final filter = widget.initialFilter;
+      unawaited(
+        ref.read(searchControllerProvider.notifier).search('', filter: filter),
+      );
+      // Con un filtro se viene a ver resultados, no a escribir.
+      if (filter == null) _focus.requestFocus();
     });
   }
 

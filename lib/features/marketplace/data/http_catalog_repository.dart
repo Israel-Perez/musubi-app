@@ -262,6 +262,7 @@ class HttpCatalogRepository implements CatalogRepository {
         title: json['title'] as String,
         description: json['description'] as String? ?? '',
         categoryName: category['name'] as String,
+        categorySlug: category['slug'] as String?,
         priceCents: (json['priceCents'] as num).toInt(),
         condition: json['condition'] as String,
         conditionDetail: json['conditionDetail'] as String?,

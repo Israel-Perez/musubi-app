@@ -384,6 +384,75 @@ class SaveArt extends StatelessWidget {
   }
 }
 
+/// "Avísame" (HU-51): la publicacion agotada, en grises, y la campana.
+class AlertArt extends StatelessWidget {
+  const new({super.key});
+
+  static const _grayscale = ColorFilter.matrix([
+    0.2126, 0.7152, 0.0722, 0, 0, //
+    0.2126, 0.7152, 0.0722, 0, 0, //
+    0.2126, 0.7152, 0.0722, 0, 0, //
+    0, 0, 0, 1, 0, //
+  ]);
+
+  @override
+  Widget build(BuildContext context) => GateArtPanel(
+    builder: (w) => [
+      Positioned(
+        left: w / 2 - 74,
+        top: 18,
+        child: PopIn(
+          delay: _ms(100),
+          duration: _ms(450),
+          child: _rotated(
+            -4,
+            _Card(
+              width: 148,
+              padding: const EdgeInsets.all(7),
+              radius: 20,
+              shadow: _shadow(14, 30, 0.18),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
+                    opacity: 0.6,
+                    child: ColorFiltered(
+                      colorFilter: _grayscale,
+                      child: _photo('casio', 134, 118, 14),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.musubi.inverse,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      'Agotado',
+                      style: _text(11.5, FontWeight.w800, _white, line: 15),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        left: w / 2 + 46,
+        top: 12,
+        child: PopIn(
+          delay: _ms(350),
+          child: const _Badge(size: 50, icon: MusubiIcons.bell),
+        ),
+      ),
+    ],
+  );
+}
+
 /// "Yo tengo": el boleto "Se busca" y la mano.
 class OfferArt extends StatelessWidget {
   const new({super.key});

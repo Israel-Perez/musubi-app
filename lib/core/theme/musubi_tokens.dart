@@ -43,6 +43,9 @@ class MusubiColors extends ThemeExtension<MusubiColors> {
 
   /// Rojo muy claro: boleto "Se busca" mientras carga.
   Color get brandFaint => _pick(0xFFFDF3F3, 0xFF2A1719);
+
+  /// Fondo de la "Mejor opción" del comparador (`Producto`, HU-51).
+  Color get brandWash => _pick(0xFFFFF8F8, 0xFF221516);
   Color get onBrand => const Color(0xFFFFFFFF);
 
   // Fondos y lineas.
@@ -119,6 +122,10 @@ class MusubiColors extends ThemeExtension<MusubiColors> {
   Color get warning => const Color(0xFFE8A317);
   Color get warningText => _pick(0xFF8F5B00, 0xFFF2B544);
   Color get warningSoft => _pick(0xFFFDF4E1, 0xFF3A2C0E);
+
+  /// Azul de la insignia "Más ventas" del comparador (HU-51).
+  Color get infoSoft => _pick(0xFFE7EEF9, 0xFF1E3247);
+  Color get infoText => _pick(0xFF1F4E79, 0xFF9CC3EA);
 
   /// Rojo oxido: errores. Distinto del rojo de marca para no confundirse con
   /// un boton.

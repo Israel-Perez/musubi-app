@@ -518,6 +518,7 @@ class DemoCatalogRepository implements CatalogRepository {
             orElse: () => demoCategories.first,
           )
           .name,
+      categorySlug: summary.category,
       priceCents: summary.priceCents,
       condition: summary.condition == 'Nuevo' ? 'new' : 'used',
       conditionDetail: summary.condition == 'Nuevo' ? null : 'likeNew',

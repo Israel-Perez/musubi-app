@@ -17,14 +17,17 @@ import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/data/http_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
+import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
+import '../../helpers/fake_comparison.dart';
 import '../../helpers/fake_favorites_repository.dart';
 import '../../helpers/fake_http_adapter.dart';
 import '../../helpers/fake_profile_repository.dart';
@@ -52,6 +55,7 @@ ProductDetail _detail({
   publishedAt: _now.subtract(const Duration(days: 2)),
   sellerId: sellerId,
   sellerName: sellerId == null ? null : 'Valeria C.',
+  categorySlug: 'calculadoras',
 );
 
 Future<FakeCatalogRepository> _open(
@@ -60,6 +64,7 @@ Future<FakeCatalogRepository> _open(
   SessionTokens? session,
   FakeFavoritesRepository? favorites,
   FakeRecommendationRepository? recommendations,
+  FakeComparisonRepository? comparison,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 3;
@@ -87,6 +92,9 @@ Future<FakeCatalogRepository> _open(
         chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
         recommendationRepositoryProvider.overrideWithValue(
           recommendations ?? FakeRecommendationRepository(),
+        ),
+        comparisonRepositoryProvider.overrideWithValue(
+          comparison ?? FakeComparisonRepository(),
         ),
       ],
       child: const MusubiApp(),
@@ -445,6 +453,273 @@ void main() {
         find.text('Aún no encontramos productos parecidos.'),
         findsOneWidget,
       );
+    });
+  });
+
+  // HU-51: "Compara antes de comprar" y "Avísame" (maqueta `Producto`).
+  group('Comparar y Avísame (HU-51)', () {
+    FakeComparisonRepository withOptions({Set<String>? watching}) =>
+        FakeComparisonRepository(
+          options: {'p1': casioOptions()},
+          watching: watching,
+        );
+
+    String location(WidgetTester tester) =>
+        ProviderScope.containerOf(tester.element(find.byType(MusubiApp)))
+            .read(routerProvider)
+            .routerDelegate
+            .currentConfiguration
+            .last
+            .matchedLocation;
+
+    testWidgets('con sesion: la barra de precios, la mejor opción y el orden', (
+      tester,
+    ) async {
+      final comparison = withOptions();
+      await _open(
+        tester,
+        detail: _detail(),
+        session: chatTokens(_now),
+        comparison: comparison,
+      );
+
+      await tester.scrollUntilVisible(
+        find.text('Compara antes de comprar'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(comparison.calls, ['compare:p1']);
+      expect(
+        find.text('5 opciones en UTTT · 2 del mismo modelo'),
+        findsOneWidget,
+      );
+      expect(find.text('Este modelo en UTTT'), findsOneWidget);
+      expect(find.text('Precio justo'), findsOneWidget);
+      expect(find.text(r'$400 más bajo'), findsOneWidget);
+      expect(find.text(r'$480 más alto'), findsOneWidget);
+      expect(
+        find.textContaining(r'promedio $443', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.text('Combina reputación, ventas y precio.'), findsOneWidget);
+
+      // "Para ti": la de Diego es la mejor opción y va primero.
+      final best = find.ancestor(
+        of: find.byKey(const Key('compare-best')),
+        matching: find.byType(Stack),
+      );
+      expect(
+        find.descendant(of: best.first, matching: find.text('Diego H.')),
+        findsOneWidget,
+      );
+      expect(find.text('Mejor reputación'), findsOneWidget);
+      expect(find.text('Más ventas'), findsOneWidget);
+      expect(find.text('Precio más bajo'), findsOneWidget);
+      expect(find.text('Mismo modelo'), findsNWidgets(2));
+      expect(find.text(r'$50 menos'), findsOneWidget);
+      expect(find.text(r'$30 más'), findsOneWidget);
+
+      // "Precio": del más barato al más caro y sin "Mejor opción".
+      await tester.ensureVisible(find.byKey(const Key('compare-order-price')));
+      await tester.tap(find.byKey(const Key('compare-order-price')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Del más barato al más caro.'), findsOneWidget);
+      expect(find.byKey(const Key('compare-best')), findsNothing);
+      final ys = [
+        for (final id in ['c4', 'c2', 'c1', 'c3', 'c5'])
+          tester.getTopLeft(find.byKey(Key('compare-$id'))).dy,
+      ];
+      expect(ys, orderedEquals([...ys]..sort()));
+    });
+
+    testWidgets('tocar una opción abre su detalle', (tester) async {
+      final catalog = await _open(
+        tester,
+        detail: _detail(),
+        session: chatTokens(_now),
+        comparison: withOptions(),
+      );
+      catalog.details['c3'] = _detail();
+
+      final card = find.byKey(const Key('compare-c3'));
+      await tester.scrollUntilVisible(
+        card,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(card);
+      await tester.pumpAndSettle();
+
+      expect(location(tester), AppRoutes.product('c3'));
+    });
+
+    testWidgets('"Ver todas las calculadoras" abre la búsqueda filtrada', (
+      tester,
+    ) async {
+      await _open(
+        tester,
+        detail: _detail(),
+        session: chatTokens(_now),
+        comparison: withOptions(),
+      );
+
+      final all = find.text('Ver todas las calculadoras');
+      await tester.scrollUntilVisible(
+        all,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(all);
+      await tester.pumpAndSettle();
+
+      final search = tester.widget<SearchScreen>(find.byType(SearchScreen));
+      expect(search.initialFilter?.categories, ['calculadoras']);
+    });
+
+    testWidgets('sin opciones o sin sesion no hay comparador', (tester) async {
+      final empty = FakeComparisonRepository();
+      await _open(
+        tester,
+        detail: _detail(),
+        session: chatTokens(_now),
+        comparison: empty,
+      );
+      expect(find.text('Compara antes de comprar'), findsNothing);
+      expect(empty.calls, ['compare:p1']);
+    });
+
+    testWidgets('visitante: ni compara ni pide el aviso (RNF-05)', (
+      tester,
+    ) async {
+      final comparison = withOptions();
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0, sellerId: null),
+        comparison: comparison,
+      );
+
+      expect(find.text('Compara antes de comprar'), findsNothing);
+      await tester.tap(find.text('Avísame'));
+      await tester.pumpAndSettle();
+
+      expect(comparison.calls, isEmpty);
+      expect(find.text('Te avisamos si vuelve'), findsOneWidget);
+      expect(
+        find.text('Crea tu cuenta para recibir el aviso.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('agotado: "Avísame" pasa a "Te avisaremos" y se puede quitar', (
+      tester,
+    ) async {
+      final comparison = withOptions();
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0),
+        session: chatTokens(_now),
+        comparison: comparison,
+      );
+
+      await tester.tap(find.text('Avísame'));
+      await tester.pump();
+      expect(
+        find.text(
+          'Te avisaremos cuando vuelva «Calculadora científica Casio '
+          'fx-991ES Plus»',
+        ),
+        findsOneWidget,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Te avisaremos'), findsOneWidget);
+      expect(find.text('Avísame'), findsNothing);
+      expect(comparison.watching, {'p1'});
+
+      await tester.tap(find.text('Te avisaremos'));
+      // El aviso anterior sale primero (hideCurrentSnackBar).
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text('Quitaste el aviso'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('Avísame'), findsOneWidget);
+      expect(comparison.watching, isEmpty);
+      expect(comparison.calls.where((c) => !c.startsWith('compare')), [
+        'status:p1',
+        'watch:p1',
+        'status:p1',
+        'unwatch:p1',
+        'status:p1',
+      ]);
+    });
+
+    testWidgets('si ya lo pedí, abre en "Te avisaremos"', (tester) async {
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0),
+        session: chatTokens(_now),
+        comparison: withOptions(watching: {'p1'}),
+      );
+
+      expect(find.text('Te avisaremos'), findsOneWidget);
+    });
+
+    testWidgets('si la API falla, regresa a "Avísame" y dice por qué', (
+      tester,
+    ) async {
+      final comparison = withOptions();
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0),
+        session: chatTokens(_now),
+        comparison: comparison,
+      );
+      comparison.failure = const ApiFailure(
+        code: 'listings.product_available',
+        message: 'Esta publicación ya está disponible.',
+      );
+
+      await tester.tap(find.text('Avísame'));
+      await tester.pump();
+
+      expect(find.text('Esta publicación ya está disponible.'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('Avísame'), findsOneWidget);
+      expect(comparison.watching, isEmpty);
+    });
+
+    testWidgets('agotado: "Ver parecidos" baja primero al comparador', (
+      tester,
+    ) async {
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0),
+        session: chatTokens(_now),
+        comparison: withOptions(),
+      );
+      final before = tester
+          .getTopLeft(find.text('Compara antes de comprar'))
+          .dy;
+
+      await tester.tap(find.text('Ver parecidos'));
+      await tester.pumpAndSettle();
+
+      final after = tester.getTopLeft(find.text('Compara antes de comprar')).dy;
+      expect(after, lessThan(before - 200));
+      expect(after, lessThan(120));
+    });
+
+    testWidgets('mi publicación agotada no pide el aviso', (tester) async {
+      final comparison = withOptions();
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0, sellerId: myId),
+        session: chatTokens(_now),
+        comparison: comparison,
+      );
+
+      expect(find.text('Ver mis productos'), findsOneWidget);
+      expect(comparison.calls.where((c) => c.startsWith('status')), isEmpty);
     });
   });
 }

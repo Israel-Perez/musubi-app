@@ -395,6 +395,14 @@ abstract final class MusubiIcons {
     ),
   ]);
 
+  /// `star` de contorno (pestana "Reputación" del comparador, HU-51).
+  static const starOutline = MusubiIconData([
+    IconPath(
+      'M12 2.5l2.94 5.96 6.56.95-4.75 4.63 1.12 6.54L12 17.5l-5.87 3.08 '
+      '1.12-6.54L2.5 9.41l6.56-.95z',
+    ),
+  ]);
+
   /// `triangle-alert`.
   static const triangleAlert = MusubiIconData([
     IconPath(
@@ -636,6 +644,12 @@ abstract final class MusubiIcons {
   static const trendingDown = MusubiIconData([
     IconPath('M22 17 13.5 8.5 8.5 13.5 2 7'),
     IconPath('M16 17h6v-6'),
+  ]);
+
+  /// `trending-up` (pestana "Ventas" del comparador, HU-51).
+  static const trendingUp = MusubiIconData([
+    IconPath('M22 7 13.5 15.5 8.5 10.5 2 17'),
+    IconPath('M16 7h6v6'),
   ]);
 
   /// `users`.

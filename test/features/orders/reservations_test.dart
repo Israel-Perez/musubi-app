@@ -12,6 +12,7 @@ import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/notifications/domain/notification_models.dart';
 import 'package:musubi_app/features/notifications/presentation/notification_providers.dart';
@@ -24,6 +25,7 @@ import 'package:musubi_app/features/recommendations/presentation/recommendation_
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
+import '../../helpers/fake_comparison.dart';
 import '../../helpers/fake_http_adapter.dart';
 import '../../helpers/fake_orders.dart';
 import '../../helpers/fake_profile_repository.dart';
@@ -97,6 +99,9 @@ class _Harness {
           chatRealtimeProvider.overrideWithValue(FakeChatRealtime()),
           recommendationRepositoryProvider.overrideWithValue(
             FakeRecommendationRepository(),
+          ),
+          comparisonRepositoryProvider.overrideWithValue(
+            FakeComparisonRepository(),
           ),
           orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
           reservationRepositoryProvider.overrideWithValue(reservations),
