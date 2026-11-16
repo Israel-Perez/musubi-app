@@ -91,6 +91,27 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 **Errores a evitar**
 - En las pruebas la fuente es Ahem (cada letra es un cuadro): una fila de textos cortos sin `Expanded` se desborda aunque en el teléfono quepa. Usa `Wrap` para chips o datos sueltos ("96 vistas · 0 mensajes").
 - La spec ligera decía que HU-36/38 no tenían pantalla: antes de diseñar, busca los textos en la maqueta (`Mis-productos`, `Notificaciones` y `Vender-listo` sí los traen).
+## T55 — Reseña tras el primer pedido (14 y 15-Nov-2026, SCRUM-107, HU-67)
+
+**Qué se hizo**
+- `specs/m08-orders/HU-67-resena-primer-pedido/` con `spec.md`, `plan.md` y `task.md`; fila HU-67 en `docs/trazabilidad.md` (total 59, "Por asignar: 4").
+- Decisiones de la usuaria: canal nativo `musubi/review` + Play Core `review:2.0.2` (sin paquete Dart ni cambio de `pubspec.yaml`), comprador y vendedor, y la X cuenta como "Ahora no".
+- 90 días por dispositivo en `flutter_secure_storage`; solo se guarda la fecha si Play aceptó el flujo. Sin cambio de API: `GET /orders/{id}` ya da el estado y `Calificar` ya existe (HU-27/45).
+- Medido: Flutter 3.47.7 / Dart 3.13.5; Play Core `review` 2.0.2 (última en Maven al 18-Oct-2024); `in_app_review` 2.0.12 descartado por su buildscript AGP 8.7.3/Kotlin 2.1.0 contra AGP 9.1.0/Kotlin 2.4.0.
+- Implementación: `lib/core/platform/app_review.dart` (servicio, store de 90 días y `ReviewPrompter`), canal `musubi/review` en `MainActivity.kt` + Play Core 2.0.2, y enganche en `RateScreen` (enviar, "Ahora no" y X; no en `ratings.already_rated`/`expired`).
+- Evidencia del 15-Nov-2026: `flutter test` 711/711 (16 nuevas, rebasado sobre `origin/main` con HU-12), analyze 0, format 0, critic PASS (19 archivos), APK debug `√ Built`; `aapt2`: `com.musubi.app`, `targetSdkVersion:'36'` y sin permisos nuevos.
+- `security-reviewer` PASS (0 bloqueantes; W1 "falla el envío y luego X" corregido con `_ratingFailed`, W2 X deshabilitada mientras envía, W3 `try/catch` dentro del listener nativo; W4: el test de permisos no ve el manifiesto fusionado, se cubre con `aapt2` en release).
+- `traceability-clerk` OK (segunda pasada, sin drift bloqueante); después se agregó la prueba de W2, con el conteo final medido de 711/711 (16 nuevas).
+- 16-Nov-2026: rebasado sobre `origin/main` con HU-55 y HU-52 (conflictos solo de documentos: se conservaron las dos filas de la constitución §6, los dos registros de 00-01 y T57 junto a T55). `flutter test` 765/765, analyze 0, format 0, critic PASS; el total de `docs/trazabilidad.md` se corrigió a S5: 10 · Por asignar: 2.
+
+**Pendientes**
+- T5–T6: prueba manual en pista interna y PR. Sin esa prueba no se marca "Aprobado".
+- `NOTE (HU-67)`: "primer pedido" se mide por el primer aviso en el dispositivo; el conteo exacto necesitaría `GET /orders/mine?tab=completed` o un campo de la API.
+
+**Errores a evitar**
+- No es una pantalla de la maqueta: la hoja la pinta Google Play y no se puede automatizar; en local no aparece.
+- No marcar la fecha de 90 días cuando Play no está disponible o falla: se debe poder reintentar.
+- No abrir la reseña en un pedido pendiente, confirmado o cancelado; se comprueba `OrderStatus.completed`.
 
 ## T54 — Guardar una búsqueda sin resultados (14-Nov-2026, SCRUM-51, HU-12)
 

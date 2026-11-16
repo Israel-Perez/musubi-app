@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import com.google.android.play.core.review.ReviewManagerFactory
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -33,6 +34,38 @@ class MainActivity : FlutterActivity() {
                     result.notImplemented()
                 }
             }
+        // HU-67: la reseña de la app en Google Play (In-App Review).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "musubi/review")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "requestReview") {
+                    requestReview(result)
+                } else {
+                    result.notImplemented()
+                }
+            }
+    }
+
+    private fun requestReview(result: MethodChannel.Result) {
+        try {
+            val manager = ReviewManagerFactory.create(this)
+            manager.requestReviewFlow().addOnCompleteListener { request ->
+                if (!request.isSuccessful) {
+                    result.success(false)
+                    return@addOnCompleteListener
+                }
+                try {
+                    manager.launchReviewFlow(this, request.result)
+                        .addOnCompleteListener { flow ->
+                            result.success(flow.isSuccessful)
+                        }
+                } catch (_: Exception) {
+                    result.success(false)
+                }
+            }
+        } catch (_: Exception) {
+            // Sin Play Store (emulador o sideload): la app sigue sin avisar.
+            result.success(false)
+        }
     }
 
     private fun openInbox(): Boolean {

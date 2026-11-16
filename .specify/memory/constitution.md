@@ -72,6 +72,7 @@
 | Almacenamiento seguro | `flutter_secure_storage` (Android Keystore) para los tokens de sesión (02-01) |
 | Fotos | `image_picker` (flutter.dev, BSD-3): cámara del sistema y selector de fotos de Android, sin permisos nuevos; reduce a 1600 px antes de subir (HU-06, excepción de 00-01 del 27-Oct-2026) |
 | QR | `qr_flutter` 4.1.0 (dibuja el QR del apartado) y `mobile_scanner` 7.5.0 (lee el QR con la cámara; ML Kit sin empaquetar, permiso `CAMERA` pedido al abrir el lector), ambos BSD-3 (HU-52, excepción de 00-01 del 15-Nov-2026) |
+| Reseñas en Play | Google Play Core (`com.google.android.play:review` 2.0.2, licencia *Play Core SDK Terms of Service*): In-App Review del sistema, sin permisos ni datos de la persona (HU-67, excepción de 00-01 del 14-Nov-2026) |
 | Tiempo real | Cliente SignalR (chat y avisos dentro de la app) — `NOTE (HU-20)` |
 | Notificaciones y monitoreo | Firebase Cloud Messaging — `NOTE (HU-31)` · Firebase Crashlytics — `NOTE (HU-31)` (llega con Firebase) |
 | Configuración | `--dart-define-from-file=config/<ambiente>.json` (valores públicos: URL base y banderas) |

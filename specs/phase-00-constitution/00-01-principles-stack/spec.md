@@ -31,6 +31,8 @@ Stack: ver la constitución §6 (tabla canónica; no se duplica aquí).
 3. Actualizar la constitución §6, el bloque de aprobación y `Memoria.md`.
 4. Ningún paquete que requiera llaves privadas en el cliente: esa integración va en `musubi-api`.
 
+**Excepción aprobada (14-Nov-2026, SCRUM-107):** `com.google.android.play:review:2.0.2` (Google Play Core; licencia *Play Core SDK Terms of Service*) para la In-App Review de HU-67. Es una dependencia de Android, no un paquete pub: no cambia `pubspec.yaml`; su evaluación, alternativa descartada (`in_app_review` 2.0.12) y remoción viven en el `plan.md` de HU-67.
+
 ## Contratos
 N/A — spec constitucional. Referencia normativa en `AGENTS.md` §1 y en la constitución §6.
 
@@ -49,4 +51,4 @@ No fija versiones exactas (viven en `pubspec.yaml`/`pubspec.lock` y en Memoria.m
 - **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
 - **Fecha:** 20-Oct-2026
-- **Detalle:** Adaptada de la referencia WebAPIDevSecOpsScallingSDD (00-01) al front Flutter de MUSUBI. Paquetes aprobados por el usuario: Riverpod, go_router, dio y very_good_analysis. 20-Oct-2026 (SCRUM-66): la constitución §1 (compartida) fija la evaluación el 02-Dic-2026 y hace mandar los lineamientos de la materia; §6 agrega el diseño de la maqueta y los datos locales (02-01). 27-Oct-2026 (SCRUM-23): `image_picker` 1.2.4 aprobado por el usuario como excepción (ver el `plan.md` de HU-06). 15-Nov-2026 (SCRUM-74): `qr_flutter` 4.1.0 y `mobile_scanner` 7.5.0 aprobados por la usuaria ("QR y cámara completos") como excepción (ver el `plan.md` de HU-52).
+- **Detalle:** Adaptada de la referencia WebAPIDevSecOpsScallingSDD (00-01) al front Flutter de MUSUBI. Paquetes aprobados por el usuario: Riverpod, go_router, dio y very_good_analysis. 20-Oct-2026 (SCRUM-66): la constitución §1 (compartida) fija la evaluación el 02-Dic-2026 y hace mandar los lineamientos de la materia; §6 agrega el diseño de la maqueta y los datos locales (02-01). 27-Oct-2026 (SCRUM-23): `image_picker` 1.2.4 aprobado por el usuario como excepción (ver el `plan.md` de HU-06). 14-Nov-2026 (SCRUM-107): Play Core `review` 2.0.2 aprobado como dependencia de plataforma para la In-App Review de HU-67 (ver el `plan.md` de HU-67). 15-Nov-2026 (SCRUM-74): `qr_flutter` 4.1.0 y `mobile_scanner` 7.5.0 aprobados por la usuaria ("QR y cámara completos") como excepción (ver el `plan.md` de HU-52).
