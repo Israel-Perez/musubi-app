@@ -41,7 +41,7 @@ N/A — no hay endpoint, DTO ni evento nuevos. Se usan las filas de HU-23 (`GET 
 ## Criterios
 - [x] `dart format --output=none --set-exit-if-changed .` sin cambios (282 archivos, 15-Nov-2026).
 - [x] `flutter analyze --fatal-infos --fatal-warnings` 0.
-- [x] `flutter test` 711/711 (16 nuevas; rebasado sobre `origin/main` con HU-12) al 15-Nov-2026.
+- [x] `flutter test` 765/765 (16 nuevas; rebasado sobre `origin/main` con HU-55 y HU-52) al 16-Nov-2026.
 - [x] `pwsh scripts/critic-guardrails.ps1` PASS (18 archivos, 0 avisos); Semgrep lo corre el CI (no está instalado en local).
 - [x] `flutter build apk --debug --dart-define-from-file=config/dev.example.json` → `√ Built`; `aapt2 dump badging` con `com.musubi.app`, `targetSdkVersion:'36'` y sin permisos nuevos; `test/security/android_config_test.dart` en verde.
 - [x] 89 días no pide / 90 sí, con reloj fijo.

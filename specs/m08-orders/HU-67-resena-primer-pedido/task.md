@@ -31,7 +31,7 @@
 ## T5 — Gates y prueba manual
 - [x] `dart format --output=none --set-exit-if-changed .` sin cambios (282 archivos).
 - [x] `flutter analyze --fatal-infos --fatal-warnings` 0.
-- [x] `flutter test` 711/711 (16 nuevas; rebasado sobre `origin/main` con HU-12).
+- [x] `flutter test` 765/765 (16 nuevas; rebasado el 16-Nov-2026 sobre `origin/main` con HU-55 y HU-52).
 - [x] `pwsh scripts/critic-guardrails.ps1` PASS (18 archivos, 0 avisos); Semgrep queda para el CI (no está instalado en local).
 - [x] `security-reviewer` PASS (0 bloqueantes; W1/W2 corregidos, W3 endurecido, W4 documentado).
 - [ ] Prueba manual en pista interna/cerrada: el sheet aparece una vez; en local no aparece.

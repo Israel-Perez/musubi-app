@@ -102,6 +102,7 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - Evidencia del 15-Nov-2026: `flutter test` 711/711 (16 nuevas, rebasado sobre `origin/main` con HU-12), analyze 0, format 0, critic PASS (19 archivos), APK debug `√ Built`; `aapt2`: `com.musubi.app`, `targetSdkVersion:'36'` y sin permisos nuevos.
 - `security-reviewer` PASS (0 bloqueantes; W1 "falla el envío y luego X" corregido con `_ratingFailed`, W2 X deshabilitada mientras envía, W3 `try/catch` dentro del listener nativo; W4: el test de permisos no ve el manifiesto fusionado, se cubre con `aapt2` en release).
 - `traceability-clerk` OK (segunda pasada, sin drift bloqueante); después se agregó la prueba de W2, con el conteo final medido de 711/711 (16 nuevas).
+- 16-Nov-2026: rebasado sobre `origin/main` con HU-55 y HU-52 (conflictos solo de documentos: se conservaron las dos filas de la constitución §6, los dos registros de 00-01 y T57 junto a T55). `flutter test` 765/765, analyze 0, format 0, critic PASS; el total de `docs/trazabilidad.md` se corrigió a S5: 10 · Por asignar: 2.
 
 **Pendientes**
 - T5–T6: prueba manual en pista interna y PR. Sin esa prueba no se marca "Aprobado".
