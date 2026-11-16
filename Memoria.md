@@ -34,6 +34,26 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T60 — Gestionar categorías (16-Nov-2026, SCRUM-64, HU-41, Kazumi)
+
+**Qué se hizo**
+- `Ajustes` → "Administración" → "Categorías" (`AdminCategoriesScreen`, solo con el rol `admin`): la lista con "Activa" o "Desactivada", "Agregar categoría" y, al tocar una, "Editar categoría" con el nombre y "Desactivar" (con confirmación) o "Activar".
+- `AdminRepository.categories`, `createCategory` y `updateCategory` sobre las filas "M-14" de la API `0.5.0-alpha.39` (fila compartida en `docs/versionado.md`).
+- `refreshCategories` también invalida `categoriesProvider` y `sellCategoriesProvider`: `Vender-3`, "Filtrar" e "Intereses" ven el cambio.
+- Pruebas: +9 (809 en total). `flutter analyze` 0, formato sin cambios, critic PASS y `check_shared_sections` OK.
+
+**Decisiones (para revisar)**
+- Una fila más en "Administración" y no una pestaña de `AdminScreen`.
+- Sin maqueta: tarjetas de "Administración" y la hoja `MusubiPanel`.
+- No se borran ni se reordenan (decisión de la API).
+
+**Errores a evitar**
+- En las pruebas, un record con un `Map` adentro no se compara por valor: `expect((a, {'x': 1}), ('a', {'x': 1}))` falla. Compara el mapa en su propio `expect`.
+
+**Pendiente**
+- PR apilado sobre #78 (HU-39/40): al fusionarlo, rebasar con `git rebase --onto origin/main feature/SCRUM-62-moderacion`.
+- Probar en el celular con la API `0.5.0-alpha.39` desplegada.
+
 ## T59 — Moderar reportes y suspender cuentas (16-Nov-2026, SCRUM-62 y SCRUM-63, HU-39 y HU-40, Kazumi)
 
 **Qué se hizo**

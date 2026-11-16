@@ -5,8 +5,10 @@ import 'package:musubi_app/features/admin/domain/admin_models.dart';
 import 'package:musubi_app/features/admin/domain/admin_repository.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 
-/// Cliente HTTP de las filas "M-14" de musubi-api (HU-39 y HU-40). Fixtures
-/// `admin-report-page.json`, `admin-account.json` y `admin-account-page.json`.
+/// Cliente HTTP de las filas "M-14" de musubi-api (HU-39, HU-40 y HU-41).
+/// Fixtures `admin-report-page.json`, `admin-account.json`,
+/// `admin-account-page.json`, `admin-category.json` y
+/// `admin-category-page.json`.
 class HttpAdminRepository implements AdminRepository {
   new(this._dio);
 
@@ -78,6 +80,43 @@ class HttpAdminRepository implements AdminRepository {
     );
     return _account(_body(response.data));
   });
+
+  @override
+  Future<List<AdminCategory>> categories() => _guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.adminCategories,
+    );
+    return [for (final item in _items(response.data)) _category(item)];
+  });
+
+  @override
+  Future<AdminCategory> createCategory(String name) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiPaths.adminCategories,
+      data: {'name': name.trim()},
+    );
+    return _category(_body(response.data));
+  });
+
+  @override
+  Future<AdminCategory> updateCategory(
+    String slug, {
+    String? name,
+    bool? active,
+  }) => _guard(() async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      ApiPaths.adminCategory(slug),
+      data: {'name': ?name?.trim(), 'active': ?active},
+    );
+    return _category(_body(response.data));
+  });
+
+  static AdminCategory _category(Map<String, dynamic> json) => AdminCategory(
+    slug: json['slug'] as String,
+    name: json['name'] as String,
+    active: json['active'] as bool,
+    order: (json['order'] as num).toInt(),
+  );
 
   static AdminReport _report(Map<String, dynamic> json) {
     final target = json['target'] as Map<String, dynamic>;

@@ -1,7 +1,8 @@
 import 'package:musubi_app/features/admin/domain/admin_models.dart';
 
-/// Moderacion del campus (HU-39 y HU-40). Solo para el rol `admin`: la API
-/// responde 403 `auth.forbidden` a cualquier otra cuenta.
+/// Moderacion del campus y sus categorias (HU-39, HU-40 y HU-41). Solo para
+/// el rol `admin`: la API responde 403 `auth.forbidden` a cualquier otra
+/// cuenta.
 abstract interface class AdminRepository {
   /// Los reportes abiertos ([open]) o los revisados, del mas nuevo al mas
   /// viejo.
@@ -25,4 +26,18 @@ abstract interface class AdminRepository {
 
   /// "Reactivar cuenta".
   Future<AdminAccount> reactivate(String userId);
+
+  /// Las categorias del campus, tambien las desactivadas (HU-41).
+  Future<List<AdminCategory>> categories();
+
+  /// "Agregar categoría": activa y al final.
+  Future<AdminCategory> createCategory(String name);
+
+  /// Renombrar, desactivar o volver a activar; lo que viene en `null` no
+  /// cambia.
+  Future<AdminCategory> updateCategory(
+    String slug, {
+    String? name,
+    bool? active,
+  });
 }

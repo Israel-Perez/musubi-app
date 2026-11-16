@@ -5,6 +5,8 @@ import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/admin/data/http_admin_repository.dart';
 import 'package:musubi_app/features/admin/domain/admin_models.dart';
 import 'package:musubi_app/features/admin/domain/admin_repository.dart';
+import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
+import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
 final adminRepositoryProvider = Provider<AdminRepository>(
   (ref) => HttpAdminRepository(ref.watch(dioProvider)),
@@ -47,4 +49,20 @@ void refreshModeration(WidgetRef ref, {String? userId}) {
     ..invalidate(adminReportsProvider)
     ..invalidate(suspendedAccountsProvider);
   if (userId != null) ref.invalidate(adminAccountProvider(userId));
+}
+
+/// Las categorias del campus, tambien las desactivadas (HU-41).
+final FutureProvider<List<AdminCategory>> adminCategoriesProvider =
+    FutureProvider.autoDispose<List<AdminCategory>>(
+      (ref) => ref.watch(adminRepositoryProvider).categories(),
+      retry: (_, _) => null,
+    );
+
+/// Despues de cambiar una categoria: "Categorías", `Vender-3`, "Filtrar" e
+/// "Intereses" la vuelven a pedir.
+void refreshCategories(WidgetRef ref) {
+  ref
+    ..invalidate(adminCategoriesProvider)
+    ..invalidate(categoriesProvider)
+    ..invalidate(sellCategoriesProvider);
 }

@@ -10,8 +10,8 @@ import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import '../../helpers/fake_admin.dart';
 import '../../helpers/fake_http_adapter.dart';
 
-/// Las formas de `musubi-api/ContractTest/Fixtures/admin-*.json` (HU-39 y
-/// HU-40).
+/// Las formas de `musubi-api/ContractTest/Fixtures/admin-*.json` (HU-39,
+/// HU-40 y HU-41).
 const Map<String, Object?> reportJson = {
   'id': '6716a0000000000000000031',
   'reason': 'not_as_described',
@@ -177,5 +177,56 @@ void main() {
       isFalse,
     );
     expect(SessionTokens.rolesOf('no-es-un-jwt'), isEmpty);
+  });
+
+  test('las categorías: la lista con las desactivadas, agregar y cambiar '
+      '(HU-41)', () async {
+    final adapter = FakeHttpAdapter(
+      (request) async => switch (request.method) {
+        'GET' => FakeHttpAdapter.json({
+          'items': [
+            {
+              'slug': 'calculadoras',
+              'name': 'Calculadoras',
+              'active': true,
+              'order': 1,
+            },
+            {
+              'slug': 'ropa-y-batas',
+              'name': 'Ropa y batas',
+              'active': false,
+              'order': 7,
+            },
+          ],
+        }),
+        _ => FakeHttpAdapter.json({
+          'slug': 'ropa-y-batas',
+          'name': 'Ropa y batas',
+          'active': true,
+          'order': 7,
+        }, status: request.method == 'POST' ? 201 : 200),
+      },
+    );
+    final repository = repositoryWith(adapter);
+
+    final list = await repository.categories();
+    final created = await repository.createCategory('  Ropa y batas ');
+    await repository.updateCategory('ropa-y-batas', name: ' Batas ');
+    await repository.updateCategory('ropa-y-batas', active: false);
+
+    expect(list.map((c) => (c.slug, c.active)), [
+      ('calculadoras', true),
+      ('ropa-y-batas', false),
+    ]);
+    expect(created.order, 7);
+    final requests = adapter.requests;
+    expect(requests[0].path, ApiPaths.adminCategories);
+    expect(requests[1].method, 'POST');
+    expect(requests[1].data, {'name': 'Ropa y batas'});
+    // En un cambio solo va lo que cambia.
+    expect(requests[2].path, ApiPaths.adminCategory('ropa-y-batas'));
+    expect(requests[2].method, 'PATCH');
+    expect(requests[2].data, {'name': 'Batas'});
+    expect(requests[3].data, {'active': false});
   });
 }
