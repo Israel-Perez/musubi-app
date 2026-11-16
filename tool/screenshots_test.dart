@@ -38,7 +38,9 @@ import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dar
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/favorite_models.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/domain/saved_search.dart';
+import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
@@ -70,6 +72,7 @@ import '../test/helpers/fake_agreements.dart';
 import '../test/helpers/fake_auth_repository.dart';
 import '../test/helpers/fake_catalog_repository.dart';
 import '../test/helpers/fake_chat.dart';
+import '../test/helpers/fake_comparison.dart';
 import '../test/helpers/fake_favorites_repository.dart';
 import '../test/helpers/fake_interests_repository.dart';
 import '../test/helpers/fake_listings_repository.dart';
@@ -868,10 +871,46 @@ final List<FavoriteItem> _favoriteItems = [
   ),
 ];
 
+/// HU-51: "Compara antes de comprar" de la Casio de Valeria (las cinco de la
+/// maqueta) y "Te avisaremos" en la agotada.
+final _comparison = FakeComparisonRepository(
+  options: {'casio-991es': casioOptions(), _soldOutCasio: casioOptions()},
+  watching: {_soldOutCasio},
+);
+
+const _soldOutCasio = 'casio-agotada';
+
+/// La vitrina de muestra mas una Casio agotada (HU-51: "Avísame").
+class _ShotCatalog extends DemoCatalogRepository {
+  new() : super(() => _now);
+
+  @override
+  Future<ProductDetail> product(String id) async {
+    if (id != _soldOutCasio) return await super.product(id);
+    final casio = await super.product('casio-991es');
+    return ProductDetail(
+      id: _soldOutCasio,
+      title: casio.title,
+      description: casio.description,
+      categoryName: casio.categoryName,
+      categorySlug: casio.categorySlug,
+      priceCents: casio.priceCents,
+      condition: casio.condition,
+      conditionDetail: casio.conditionDetail,
+      stock: 0,
+      status: 'soldOut',
+      photoUrls: casio.photoUrls,
+      publishedAt: casio.publishedAt,
+      sellerId: casio.sellerId,
+      sellerName: casio.sellerName,
+    );
+  }
+}
+
 /// La app con la vitrina de muestra, lista para tomar capturas.
 class _Shot {
   new(this.tester, {required this.member, CatalogRepository? catalog})
-    : catalog = catalog ?? DemoCatalogRepository(() => _now);
+    : catalog = catalog ?? _ShotCatalog();
 
   final WidgetTester tester;
   final bool member;
@@ -1037,6 +1076,7 @@ class _Shot {
             ),
             // HU-52: los apartados y la camara fija.
             reservationRepositoryProvider.overrideWithValue(_reservations),
+            comparisonRepositoryProvider.overrideWithValue(_comparison),
             qrCameraProvider.overrideWithValue(_fakeCamera),
             // HU-55: la cuenta de Ana ("BBVA ···· 4829" en `Ajustes`).
             payoutRepositoryProvider.overrideWithValue(
@@ -1158,6 +1198,13 @@ class _Shot {
     );
     await tester.pump();
     await _images();
+  }
+
+  /// Desplaza hasta que [finder] quede arriba (como `scrollIntoView` en la
+  /// maqueta).
+  Future<void> scrollTo(Finder finder) async {
+    final state = tester.state<ScrollableState>(find.byType(Scrollable).first);
+    await scroll(state.position.pixels + tester.getTopLeft(finder.first).dy);
   }
 
   /// Caja de cada texto visible (en pt, como `getBoundingClientRect`).
@@ -1340,6 +1387,41 @@ final Map<String, (bool, _Scene)> _scenes = {
   'mensajes': (true, (s) => s.go(AppRoutes.messages)),
   'producto': (true, (s) => s.go(AppRoutes.product('casio-991es'))),
   'producto-visitante': (false, (s) => s.go(AppRoutes.product('casio-991es'))),
+  // HU-51: "Compara antes de comprar" (Para ti y Precio), "Te avisaremos" en
+  // una agotada y la hoja "Te avisamos si vuelve" sin cuenta.
+  'producto-compara': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.product('casio-991es'));
+      await s.scrollTo(find.text('Compara antes de comprar'));
+    },
+  ),
+  'producto-compara-opciones': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.product('casio-991es'));
+      await s.scrollTo(find.text('Ordenar por'));
+    },
+  ),
+  'producto-compara-precio': (
+    true,
+    (s) async {
+      await s.go(AppRoutes.product('casio-991es'));
+      await s.scrollTo(find.text('Ordenar por'));
+      await s.tap(find.byKey(const Key('compare-order-price')));
+    },
+  ),
+  'producto-te-avisaremos': (
+    true,
+    (s) => s.go(AppRoutes.product(_soldOutCasio)),
+  ),
+  'producto-avisame-visitante': (
+    false,
+    (s) async {
+      await s.go(AppRoutes.product(_soldOutCasio));
+      await s.tap(find.text('Avísame'));
+    },
+  ),
   'perfil-vendedor': (
     true,
     (s) => s.go(AppRoutes.sellerProfile('demo-valeria-c')),

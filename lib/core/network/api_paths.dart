@@ -134,6 +134,14 @@ abstract final class ApiPaths {
   /// sesion.
   static String productSimilar(String id) => '${product(id)}/similar';
 
+  /// `GET /api/v1/products/{id}/compare` — fila "M-03" (spec
+  /// `musubi-api:HU-51`): "Compara antes de comprar"; con sesion.
+  static String productCompare(String id) => '${product(id)}/compare';
+
+  /// `GET`, `PUT` y `DELETE /api/v1/products/{id}/stock-alert` — filas "M-03"
+  /// (spec `musubi-api:HU-51`): "Avísame" de una agotada; con sesion.
+  static String productStockAlert(String id) => '${product(id)}/stock-alert';
+
   /// `GET /api/v1/products/mine/slow` — fila "M-12" (specs `musubi-api:HU-36`,
   /// `HU-37` y `HU-38`): "Llevan tiempo sin venderse", con sesion.
   static const slowProducts = '/api/v1/products/mine/slow';

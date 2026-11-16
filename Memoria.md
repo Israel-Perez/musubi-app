@@ -34,6 +34,29 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
 
+## T58 — Comparar opciones y "Avísame" (16-Nov-2026, SCRUM-70, HU-51)
+
+**Qué se hizo**
+- "Compara antes de comprar" en `Producto` (con sesión, después de quien vende): la barra "Este modelo en UTTT" con su veredicto, "Ordenar por" (Para ti, Reputación, Ventas y Precio) y hasta 5 opciones con lugar, insignias, "Mismo modelo", diferencia de precio y quien vende. "Ver todas las calculadoras" abre la búsqueda con la categoría.
+- "Avísame" ↔ "Te avisaremos" en una agotada ajena; sin cuenta, la hoja "Te avisamos si vuelve" (`AccountGateMotive.alert`, `AlertArt`). "Ver parecidos" baja al comparador. El aviso `back_in_stock` en "Coincidencias".
+- API `0.5.0-alpha.37` (fila compartida en `docs/versionado.md`); la app no sube su versión (se publica en el siguiente lote).
+
+**Decisiones**
+- De la usuaria (16-Nov-2026): la regla de la maqueta para "similar", las dos secciones en `Producto` y el aviso se usa una vez.
+- El orden se calcula en la app con `compareVals` de la maqueta; los valores esperados de las pruebas salen de correr esa función en Node con la Casio de Valeria.
+- El promedio va en pesos cerrados ("$443") y el aviso breve sube 97 para no tapar la barra.
+
+**Evidencia (16-Nov-2026):** format 0 · analyze 0 · `flutter test` 787 · critic PASS. Capturas lado a lado con la maqueta (Edge sin ventana con `#sesion.Producto` y un script que desplaza a `#titulo-compara`): el comparador y la pestaña "Precio" coinciden.
+
+**Pendientes**
+- T5: prueba en el celular con la API desplegada.
+
+**Errores a evitar**
+- `IntrinsicHeight` sobre un `Wrap` truena ("RenderWrap does not support intrinsics"): la foto de la opción va con `Positioned` junto a la columna de texto.
+- `List<double>` no se reduce con un cierre `(num, num) => num`: en tiempo de ejecución falla el tipo.
+- El aviso breve sale sobre la barra fija de `Producto`; sin `bottomOffset` tapa el botón y el segundo toque no llega.
+- En la maqueta, `APP` y `go` no son globales: para una escena hay que navegar con clics.
+
 ## T57 — Apartar un producto y verificar con QR o código (15-Nov-2026, SCRUM-74, HU-52)
 
 **Qué se hizo**

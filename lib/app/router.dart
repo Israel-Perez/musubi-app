@@ -21,6 +21,7 @@ import 'package:musubi_app/features/listings/presentation/sell_done_screen.dart'
 import 'package:musubi_app/features/listings/presentation/sell_photos_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_price_screen.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/product_screen.dart';
@@ -524,7 +525,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.search,
-        builder: (context, state) => const SearchScreen(),
+        builder: (context, state) => SearchScreen(
+          initialFilter: state.extra is SearchFilter
+              ? state.extra! as SearchFilter
+              : null,
+        ),
       ),
       GoRoute(
         path: AppRoutes.recentProducts,

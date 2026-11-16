@@ -20,6 +20,9 @@ import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
+import 'package:musubi_app/features/marketplace/presentation/compare_section.dart';
+import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_actions.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
@@ -54,10 +57,11 @@ ProductSummary _summaryOf(ProductDetail detail) => ProductSummary(
 ///
 /// HU-52: "Apartalo 24 h sin pagar" y "Apartar" abren `Apartar`
 /// (`showReserveSheet`) y luego `Apartado-listo`.
-/// NOTE (HU-51): "Compara antes de comprar".
-/// HU-35: "Productos parecidos" al final (ML de la API) y "Ver parecidos" de
-/// una agotada baja hasta ellos.
-/// NOTE (HU-53): "Guardar" y "Avisame".
+/// HU-51: "Compara antes de comprar" (con sesion) despues de quien vende y
+/// "Avísame" / "Te avisaremos" en una agotada.
+/// HU-35: "Productos parecidos" al final (ML de la API). "Ver parecidos" de
+/// una agotada baja al comparador (o a los parecidos si no hay opciones).
+/// HU-53: "Guardar".
 /// NOTE (HU-23): "Comprar" abre el chat (como la maqueta) hasta los pedidos.
 class ProductScreen extends ConsumerStatefulWidget {
   const new({required this.productId, super.key, this.preview});
@@ -74,11 +78,20 @@ class ProductScreen extends ConsumerStatefulWidget {
 class _ProductScreenState extends ConsumerState<ProductScreen> {
   final _pages = PageController();
   final GlobalKey _similarKey = GlobalKey();
+  final GlobalKey _compareKey = GlobalKey();
   int _page = 0;
 
-  /// "Ver parecidos" (HU-35): baja a la seccion; si no hay, lo dice.
+  /// "Te avisaremos" despues de un toque, mientras se recarga el estado.
+  bool? _watching;
+  bool _alertBusy = false;
+
+  /// "Ver parecidos": baja al comparador (HU-51) o a "Productos parecidos"
+  /// (HU-35); si no hay ninguno, lo dice.
   void _showSimilar() {
-    final target = _similarKey.currentContext;
+    final compared =
+        ref.read(comparisonProvider(widget.productId)).value?.isNotEmpty ??
+        false;
+    final target = (compared ? _compareKey : _similarKey).currentContext;
     if (target == null) {
       showMusubiSnack(
         ScaffoldMessenger.of(context),
@@ -131,6 +144,51 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
     unawaited(context.push(AppRoutes.reservation(reservation.id)));
   }
 
+  /// "Avísame" / "Te avisaremos" (HU-51): pide o quita el aviso de una
+  /// agotada. Si la API falla, regresa como estaba y lo dice.
+  Future<void> _toggleAlert(
+    ProductDetail detail, {
+    required bool watching,
+  }) async {
+    if (_alertBusy) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final repository = ref.read(comparisonRepositoryProvider);
+    setState(() {
+      _alertBusy = true;
+      _watching = !watching;
+    });
+    try {
+      if (watching) {
+        await repository.unwatch(detail.id);
+      } else {
+        await repository.watch(detail.id);
+      }
+      if (!mounted) return;
+      showMusubiSnack(
+        messenger,
+        watching
+            ? 'Quitaste el aviso'
+            : 'Te avisaremos cuando vuelva «${detail.title}»',
+        icon: watching ? MusubiIcons.bellOff : MusubiIcons.bell,
+        tone: watching ? SnackTone.info : SnackTone.success,
+        bottomOffset: _actionBarHeight,
+      );
+      ref.invalidate(stockAlertProvider(detail.id));
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _watching = watching);
+      showMusubiSnack(
+        messenger,
+        failure.message,
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+        bottomOffset: _actionBarHeight,
+      );
+    } finally {
+      if (mounted) setState(() => _alertBusy = false);
+    }
+  }
+
   /// "Mensaje" y "Comprar": el chat con quien vende (HU-20).
   void _chat(
     ProductDetail detail, {
@@ -170,6 +228,15 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
     final detail = ref.watch(productDetailProvider(widget.productId));
     final saved =
         ref.watch(favoritesProvider).value?.contains(widget.productId) ?? false;
+    // HU-51: el estado de "Avísame" solo hace falta en una agotada ajena.
+    final loaded = detail.value;
+    final asksAlert =
+        signedIn && loaded != null && loaded.soldOut && loaded.sellerId != myId;
+    // Se escucha siempre (se mantiene vivo); el toque manda mientras recarga.
+    final remote = asksAlert
+        ? ref.watch(stockAlertProvider(widget.productId)).value
+        : null;
+    final watching = asksAlert && (_watching ?? remote ?? false);
 
     return Scaffold(
       backgroundColor: c.background,
@@ -190,10 +257,19 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
               signedIn ? _toggle(value) : _gate(AccountGateMotive.save),
           onReserve: () =>
               signedIn ? _reserve(value) : _gate(AccountGateMotive.buy),
-          onNotify: () =>
-              signedIn ? _soon('El aviso') : _gate(AccountGateMotive.save),
+          watching: watching,
+          onNotify: () => signedIn
+              ? unawaited(_toggleAlert(value, watching: watching))
+              : _gate(AccountGateMotive.alert),
           onSimilar: _showSimilar,
           similarKey: _similarKey,
+          compareKey: _compareKey,
+          onSeeAll: () => unawaited(
+            context.push(
+              AppRoutes.search,
+              extra: SearchFilter(categories: [?value.categorySlug]),
+            ),
+          ),
           onOpenSimilar: (product) => unawaited(
             context.push(AppRoutes.product(product.id), extra: product),
           ),
@@ -313,8 +389,11 @@ class _Loaded extends ConsumerWidget {
     required this.onBuy,
     required this.onMine,
     required this.similarKey,
+    required this.compareKey,
     required this.onOpenSimilar,
     required this.onSaveSimilar,
+    required this.onSeeAll,
+    required this.watching,
   });
 
   final ProductDetail detail;
@@ -339,8 +418,17 @@ class _Loaded extends ConsumerWidget {
 
   /// La seccion "Productos parecidos" (HU-35), para que "Ver parecidos" baje.
   final GlobalKey similarKey;
+
+  /// "Compara antes de comprar" (HU-51), la primera parada de "Ver parecidos".
+  final GlobalKey compareKey;
   final ValueChanged<ProductSummary> onOpenSimilar;
   final ValueChanged<ProductSummary> onSaveSimilar;
+
+  /// "Ver todas las calculadoras" del comparador.
+  final VoidCallback onSeeAll;
+
+  /// "Te avisaremos": ya pedi el aviso de esta agotada (HU-51).
+  final bool watching;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -517,12 +605,29 @@ class _Loaded extends ConsumerWidget {
                 // Sube lo mismo que el bloque de arriba (sin hueco).
                 Transform.translate(
                   offset: const Offset(0, -22),
-                  child: _SimilarSection(
-                    sectionKey: similarKey,
-                    productId: detail.id,
-                    now: now,
-                    onOpen: onOpenSimilar,
-                    onSave: onSaveSimilar,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // HU-51: compara a quienes venden; sin sesion no se ven
+                      // (RNF-05).
+                      if (signedIn)
+                        CompareSection(
+                          key: compareKey,
+                          productId: detail.id,
+                          currentPriceCents: detail.priceCents,
+                          categoryName: detail.categoryName,
+                          campus: campus,
+                          onOpen: onOpenSimilar,
+                          onSeeAll: onSeeAll,
+                        ),
+                      _SimilarSection(
+                        sectionKey: similarKey,
+                        productId: detail.id,
+                        now: now,
+                        onOpen: onOpenSimilar,
+                        onSave: onSaveSimilar,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -532,6 +637,7 @@ class _Loaded extends ConsumerWidget {
         _ActionBar(
           soldOut: soldOut,
           mine: mine,
+          watching: watching,
           onMessage: onMessage,
           onReserve: onReserve,
           onBuy: onBuy,
@@ -1176,12 +1282,18 @@ class _SellerCard extends StatelessWidget {
   }
 }
 
-/// Barra fija: "Mensaje", "Apartar" y "Comprar"; agotado: "Avisame" y "Ver
-/// parecidos"; la mia: "Ver mis productos".
+/// Alto de la barra de abajo (12 + 54 + 30 y el borde), para que el aviso breve
+/// de "Avísame" no tape el boton.
+const _actionBarHeight = 97.0;
+
+/// Barra fija: "Mensaje", "Apartar" y "Comprar"; agotado: "Avísame" (o "Te
+/// avisaremos" en verde, HU-51) y "Ver parecidos"; la mia: "Ver mis
+/// productos".
 class _ActionBar extends StatelessWidget {
   const new({
     required this.soldOut,
     required this.mine,
+    required this.watching,
     required this.onMessage,
     required this.onReserve,
     required this.onBuy,
@@ -1192,6 +1304,7 @@ class _ActionBar extends StatelessWidget {
 
   final bool soldOut;
   final bool mine;
+  final bool watching;
   final VoidCallback onMessage;
   final VoidCallback onReserve;
   final VoidCallback onBuy;
@@ -1209,14 +1322,18 @@ class _ActionBar extends StatelessWidget {
       MusubiIconData icon,
       VoidCallback onTap, {
       Color? border,
+      Color? fill,
+      Color? ink,
+      bool? selected,
     }) => Expanded(
       child: Pressable(
         onTap: onTap,
         semanticLabel: label,
+        selected: selected,
         builder: (context, pressed) => Container(
           height: 54,
           decoration: BoxDecoration(
-            color: pressed ? c.surface : c.background,
+            color: pressed ? c.surface : fill ?? c.background,
             border: Border.all(color: border ?? c.border, width: 1.5),
             borderRadius: BorderRadius.circular(MusubiSizes.radiusButton),
           ),
@@ -1228,7 +1345,7 @@ class _ActionBar extends StatelessWidget {
                 icon,
                 size: 20,
                 strokeWidth: 1.9,
-                color: c.textPrimary,
+                color: ink ?? c.textPrimary,
               ),
               Flexible(
                 child: Text(
@@ -1238,7 +1355,7 @@ class _ActionBar extends StatelessWidget {
                   style: MusubiType.style(
                     15.5,
                     weight: FontWeight.w700,
-                    color: c.textPrimary,
+                    color: ink ?? c.textPrimary,
                   ),
                 ),
               ),
@@ -1307,7 +1424,23 @@ class _ActionBar extends StatelessWidget {
             if (mine)
               outlined('Ver mis productos', MusubiIcons.tag, onMine)
             else if (soldOut) ...[
-              outlined('Avísame', MusubiIcons.bell, onNotify),
+              if (watching)
+                outlined(
+                  'Te avisaremos',
+                  MusubiIcons.bell,
+                  onNotify,
+                  border: c.successBand,
+                  fill: c.successSoft,
+                  ink: c.successText,
+                  selected: true,
+                )
+              else
+                outlined(
+                  'Avísame',
+                  MusubiIcons.bell,
+                  onNotify,
+                  selected: false,
+                ),
               filled('Ver parecidos', MusubiIcons.arrowDown, onSimilar),
             ] else ...[
               Pressable(

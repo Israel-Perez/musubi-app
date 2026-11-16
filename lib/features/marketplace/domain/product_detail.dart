@@ -18,6 +18,7 @@ class ProductDetail {
     this.conditionDetail,
     this.sellerId,
     this.sellerName,
+    this.categorySlug,
   });
 
   final String id;
@@ -41,6 +42,10 @@ class ProductDetail {
   /// `null` sin sesion: la API no muestra al vendedor a visitantes (RNF-05).
   final String? sellerId;
   final String? sellerName;
+
+  /// "calculadoras" (HU-51: "Ver todas las calculadoras" abre la busqueda
+  /// con esa categoria).
+  final String? categorySlug;
 
   bool get soldOut => status == 'soldOut' || stock <= 0;
 
