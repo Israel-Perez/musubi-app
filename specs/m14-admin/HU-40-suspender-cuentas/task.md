@@ -10,5 +10,5 @@
 - **Estado:** ✅ Hecho.
 
 ## T3 — Documentación
-- **Qué:** `docs/trazabilidad.md` y `Memoria.md` (T52).
+- **Qué:** `docs/trazabilidad.md` y `Memoria.md` (T59).
 - **Estado:** ✅ Hecho.

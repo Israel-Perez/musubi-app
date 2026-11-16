@@ -34,7 +34,7 @@ Filas "M-14" de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez
 - [x] El administrador puede suspender y reactivar cuentas: `admin_flow_test` ("el motivo es obligatorio", "Reactivar confirma").
 - [x] Con 3 reportes procedentes se sugiere suspender (RN-27): `admin_flow_test` (`admin-suggestion`).
 - [x] Las suspensiones quedan registradas (RNF-04): el historial de "Cuenta"; la bitácora vive en la API.
-- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 778/778 (13 nuevas: 8 de flujo y 5 del repositorio) · critic PASS (16-Nov-2026).
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 800/800 (13 nuevas: 8 de flujo y 5 del repositorio, con HU-51 incluida) · critic PASS (16-Nov-2026).
 
 ## Límites
 - La suspensión no tiene fecha de fin y a la persona suspendida no se le avisa: lo ve al iniciar sesión.

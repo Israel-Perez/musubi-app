@@ -15,7 +15,7 @@
 - **Estado:** ✅ Hecho.
 
 ## T4 — Documentación
-- **Qué:** `docs/trazabilidad.md`, `docs/versionado.md` (fila compartida `0.5.0-alpha.38`), `AGENTS.md` y `Memoria.md` (T52).
+- **Qué:** `docs/trazabilidad.md`, `docs/versionado.md` (fila compartida `0.5.0-alpha.38`), `AGENTS.md` y `Memoria.md` (T59).
 - **Estado:** ✅ Hecho.
 
 ## T5 — Celular

@@ -41,7 +41,7 @@ Filas "M-14" de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez
 - [x] Puede retirar el contenido reportado o descartar el reporte: `admin_flow_test` ("Retirar publicación" y "Descartar").
 - [x] Solo el administrador ve la moderación (RNF-03): "sin el rol no hay Administración"; la API responde 403 a cualquier otra cuenta (`musubi-api:HU-39`).
 - [x] Las acciones quedan registradas (RNF-04): en la API (`moderationLog`); la app muestra la revisión y el historial de la cuenta.
-- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 778/778 (13 nuevas: 8 de flujo y 5 del repositorio) · critic PASS (16-Nov-2026).
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 800/800 (13 nuevas: 8 de flujo y 5 del repositorio, con HU-51 incluida) · critic PASS (16-Nov-2026).
 
 ## Límites
 - La bandeja muestra los 50 reportes más recientes (límite de la API).
