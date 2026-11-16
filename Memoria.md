@@ -1,5 +1,9 @@
 # Memoria del proyecto — musubi-app
 
+## HU-44 (SCRUM-56): coordinar la entrega, conciliada (16-Nov-2026)
+
+- Se cumple con HU-23 (edificio de la lista con el de la carrera primero, día y hora), HU-24 (Tu pedido / Tu venta) y HU-52 (apartar); la spec cita sus pruebas. Sin código nuevo. La lista la administrará HU-41.
+
 ## HU-49 — Inicio popular y lista de recientes (12-Nov-2026, SCRUM-69)
 
 - Se detallaron `spec.md`, `plan.md` y `task.md` para app en paralelo con `musubi-api:HU-49`; Sprint 4 según comentario Jira.
