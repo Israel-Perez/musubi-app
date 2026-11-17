@@ -1,17 +1,17 @@
 # HU-41 — Gestionar categorías (tareas)
 
 ## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+- **Qué:** enlazar las filas `GET`/`POST /admin/categories` y `PATCH /admin/categories/{slug}` y completar `plan.md`.
+- **Estado:** ✅ Hecho (16-Nov-2026).
 
 ## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-41)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+- **Qué:** `AdminCategory` y `HttpAdminRepository.categories`, `createCategory` y `updateCategory`, con su prueba.
+- **Estado:** ✅ Hecho.
 
 ## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+- **Qué:** "Categorías" en `Ajustes` → "Administración", `AdminCategoriesScreen` y `CategorySheet`, con widget tests (9).
+- **Estado:** ✅ Hecho. Sin maqueta: se armó con las piezas de "Administración".
 
 ## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+- **Qué:** `docs/trazabilidad.md`, `docs/versionado.md` (fila compartida `0.5.0-alpha.39`), `AGENTS.md` y `Memoria.md`.
+- **Estado:** ✅ Hecho. Falta la prueba en el celular con la API `0.5.0-alpha.39` desplegada.

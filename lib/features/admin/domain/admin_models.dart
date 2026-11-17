@@ -236,3 +236,25 @@ class SuspendedAccount {
 
   String get initials => initialsOf(fullName);
 }
+
+/// Una categoria del campus en "Categorías" (HU-41), tambien desactivada.
+class AdminCategory {
+  const new({
+    required this.slug,
+    required this.name,
+    required this.active,
+    required this.order,
+  });
+
+  /// Identificador estable: no cambia al renombrarla.
+  final String slug;
+  final String name;
+
+  /// Sale al publicar y en los filtros.
+  final bool active;
+  final int order;
+}
+
+/// Largo del nombre de una categoria (como en musubi-api).
+const adminCategoryNameMin = 2;
+const adminCategoryNameMax = 40;

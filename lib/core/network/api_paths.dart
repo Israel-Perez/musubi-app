@@ -365,4 +365,13 @@ abstract final class ApiPaths {
   /// `POST` y `DELETE /api/v1/admin/accounts/{id}/suspension` — filas "M-14"
   /// (spec `musubi-api:HU-40`).
   static String adminSuspension(String id) => '${adminAccount(id)}/suspension';
+
+  /// `GET` y `POST /api/v1/admin/categories` — filas "M-14"
+  /// (spec `musubi-api:HU-41`).
+  static const adminCategories = '/api/v1/admin/categories';
+
+  /// `PATCH /api/v1/admin/categories/{slug}` — fila "M-14"
+  /// (spec `musubi-api:HU-41`).
+  static String adminCategory(String slug) =>
+      '$adminCategories/${Uri.encodeComponent(slug)}';
 }

@@ -200,8 +200,8 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                // HU-39 y HU-40: solo con el rol `admin` (la API lo vuelve
-                // a revisar en cada accion).
+                // HU-39, HU-40 y HU-41: solo con el rol `admin` (la API lo
+                // vuelve a revisar en cada accion).
                 if (ref.watch(isAdminProvider)) ...[
                   const _SectionLabel('Administración'),
                   _Group(
@@ -212,6 +212,13 @@ class SettingsScreen extends ConsumerWidget {
                         title: 'Reportes y cuentas',
                         onTap: () =>
                             unawaited(context.push(AppRoutes.settingsAdmin)),
+                      ),
+                      SettingsRow(
+                        key: const Key('settings-admin-categories'),
+                        icon: MusubiIcons.tag,
+                        title: 'Categorías',
+                        onTap: () =>
+                            unawaited(context.push(AppRoutes.adminCategories)),
                       ),
                     ],
                   ),
