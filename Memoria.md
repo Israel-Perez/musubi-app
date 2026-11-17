@@ -1,5 +1,10 @@
 # Memoria del proyecto — musubi-app
 
+## Lote 0.11.0+13 a Google Play (16-Nov-2026, SCRUM-87)
+
+- Con la API `0.5.0-alpha.40` (`infra-up` del 16-Nov-2026): HU-52, HU-51, HU-55, HU-35, HU-49, HU-66, HU-18/29, HU-12, HU-36/37/38, HU-64, HU-67 y Administración (HU-39/40/41). Notas en `docs/play/whatsnew/whatsnew-es-419`.
+- **Antes de enviarla a revisión:** "Seguridad de los datos" en Play Console suma la información de pago (CLABE, HU-55), el historial de búsqueda (HU-12) y el fin Personalización (HU-35). Detalle en `docs/play/README.md`.
+
 ## T61 — Insignias de confianza (16-Nov-2026, SCRUM-104, HU-64)
 
 - "Responde en ~N" y "Vendedor confiable" (calculadas en la API `0.5.0-alpha.40`) en la tarjeta de quien vende de `Producto` y en los chips de `Perfil-vendedor` (como la maqueta); "Vendedor confiable" se arma con sus piezas (`TrustedBadge`).

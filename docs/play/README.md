@@ -117,7 +117,9 @@ Qué datos se recopilan:
 | Mensajes → Otros mensajes en la app | Sí (chat entre estudiantes, desde `0.5.0`). **Compartido** desde `0.7.0`: con Google (Gemini) solo cuando alguien pide "Resumir acuerdo" | Funcionalidad de la app | Sí (solo quien escribe; la IA solo si alguien la pide) |
 | Actividad en la app → Interacciones con la app | Sí (a quién bloqueaste, desde `0.6.0`; favoritos, desde `0.7.0`; desde `0.11.0`, qué publicaciones abriste, guardaste, a quién le escribiste y qué compraste, 90 días, para las recomendaciones) | Funcionalidad de la app; seguridad; **personalización** (desde `0.11.0`) | Sí (las recomendaciones se apagan en Privacidad) |
 | IDs de dispositivo u otros IDs | Sí desde `0.8.0`: el ID de instalación de Firebase (FID) para los avisos push (HU-31). Se borra al cerrar sesión o a los 60 días sin usarse | Funcionalidad de la app (avisos) | Sí (solo si acepta los avisos) |
-| Ubicación, contactos, correos o SMS, información financiera, salud, archivos, calendario, audio | No | — | — |
+| Información financiera → Información de pago del usuario | Sí desde `0.11.0` (HU-55): la CLABE de quien quiere recibir pagos por transferencia; se guarda cifrada y quien compra la ve solo para transferir | Funcionalidad de la app | Sí (solo quien la registra en Ajustes → Cuenta para recibir pagos) |
+| Actividad en la app → Historial de búsqueda en la app | Sí desde `0.11.0` (HU-12): las búsquedas que se guardan con "Avísame cuando aparezca" (30 días) | Funcionalidad de la app | Sí |
+| Ubicación, contactos, correos o SMS, salud, archivos, calendario, audio | No | — | — |
 | Información y rendimiento de la app (fallos) | No (sin Crashlytics en esta versión) | — | — |
 
 Notas:
@@ -127,7 +129,11 @@ Notas:
 - **`0.7.0` (lote de HU-14, HU-53, HU-23 y HU-32/33/34) comparte mensajes con Google (Gemini) y recopila pedidos, acuerdos y favoritos:** actualiza en Play Console la pregunta "¿Se comparten datos?" y las filas de arriba antes de enviar esa versión.
 - **`0.8.0` (HU-07, HU-08, HU-31 y HU-54) agrega avisos push:** recopila el ID de instalación de Firebase (fila de arriba). FCM entrega los avisos por cuenta de Musubi, así que no cuenta como compartir. El modo noche se guarda en la cuenta, pero es una preferencia de la app y no un dato que declarar. Antes de enviarla, actualiza el formulario en Play Console. El secreto `GOOGLE_SERVICES_JSON_B64` ya existe en el repositorio (11-Nov-2026); si falta, `release-play` se detiene.
 - **`0.10.0` (HU-27, HU-45, HU-26, HU-19 y HU-30) agrega las calificaciones:** son "Otro contenido generado por el usuario", un tipo que ya está declarado con los mismos fines; no hay que cambiar el formulario. Tampoco se comparte nada nuevo.
-- **El siguiente lote (HU-35) agrega las recomendaciones:** en "Interacciones con la app" se marca también el fin **Personalización**. No se comparte nada: el modelo de ML corre en la API de Musubi.
+- **`0.11.0` (lote del 16-Nov-2026) — actualiza el formulario en Play Console antes de enviarla:**
+  - **Recomendaciones (HU-35):** en "Interacciones con la app" se marca también el fin **Personalización**. No se comparte nada: el modelo de ML corre en la API de Musubi.
+  - **Información financiera → Información de pago del usuario (HU-55):** la CLABE para recibir pagos. Opcional, cifrada en tránsito y en la base, solo para la funcionalidad. Musubi no procesa pagos: "Funciones financieras" sigue en No.
+  - **Historial de búsqueda en la app (HU-12):** las búsquedas guardadas. Opcional, solo para la funcionalidad.
+  - **Cámara (HU-52):** el permiso `CAMERA` solo lee el QR de un apartado en el teléfono (ML Kit); la imagen no se guarda ni se envía, así que no se declara como dato. Los intereses (HU-66), los avisos de "Avísame" (HU-51) y las insignias (HU-64) caben en tipos ya declarados.
 - **Cuando llegue** Crashlytics, **hay que actualizar este formulario** antes de subir esa versión.
 
 ### Acceso a la app: texto para Play (en inglés)
