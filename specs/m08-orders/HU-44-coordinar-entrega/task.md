@@ -1,17 +1,13 @@
-# HU-44 — Coordinar la entrega en un punto del campus (tareas)
+# HU-44 — Coordinar la entrega en un punto del campus (tareas, app)
 
 ## T1 — Detallar la spec
-- **Qué:** Resolver las decisiones pendientes, enlazar las filas del back y completar `plan.md`.
-- **Estado:** ⏳ Por hacer.
+- **Estado:** ✅ Hecho (16-Nov-2026): se cumple con HU-23, HU-24 y HU-52.
 
 ## T2 — Dominio y datos
-- **Qué:** Modelos, repositorio HTTP (o fake con `NOTE (musubi-api:HU-44)`) y sus pruebas.
-- **Estado:** ⏳ Por hacer.
+- **Estado:** ✅ Sin cambios (HU-23 y HU-52).
 
 ## T3 — Pantallas
-- **Qué:** Estado, pantallas y rutas iguales a la maqueta, con widget tests por estado.
-- **Estado:** ⏳ Por hacer.
+- **Estado:** ✅ Sin cambios: la hoja de entrega, `Tu pedido` / `Tu venta` y `Apartar`.
 
 ## T4 — Evidencia y documentación
-- **Qué:** Capturas contra la maqueta, `docs/trazabilidad.md`, `Memoria.md` y prueba en el celular.
-- **Estado:** ⏳ Por hacer.
+- **Estado:** ✅ Hecho (16-Nov-2026): `spec.md`, `plan.md`, `docs/trazabilidad.md` y `Memoria.md`.
