@@ -97,6 +97,12 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Pagos (HU-55, D-01): `lib/features/orders/`. `OrderPaymentScreen` elige el bloque por estado (`Pedido-pago` con la transferencia elegida si quien vende tiene cuenta, `Pago-validando`, `Pago-vendedor`, `Pedido-entrega` con la franja de pago validado y `Pedido-efectivo` con el código); `TransferScreen` (`AppRoutes.transfer`) es `Pago-transferencia` y `PayoutAccountScreen` (`AppRoutes.settingsPayouts`, desde `Ajustes`) es `Cuenta-pagos`. Las piezas viven en `payment_widgets.dart`. NOTE (HU-55): el comprobante.
 - Comparar y "Avísame" (HU-51): `lib/features/marketplace/`. `CompareSection` (con sesión, después de quien vende en `Producto`) pide `comparisonProvider` y ordena en `Comparison.ranked` con las reglas de `compareVals` de la maqueta ("Para ti", Reputación, Ventas y Precio; insignias y barra de precios). "Avísame" ↔ "Te avisaremos" usa `stockAlertProvider` y `ComparisonRepository.watch/unwatch`; sin cuenta abre `AccountGateMotive.alert`. "Ver todas" abre `SearchScreen(initialFilter:)` por `extra`.
 - Apartados (HU-52): `lib/features/orders/`. "Apartar" de `Producto` abre `showReserveSheet` (horas de `PickupSlots` y puntos del campus) y luego `ReservationScreen` (`Apartado-listo`, QR con `qr_flutter`). `MyReservationsScreen` (`AppRoutes.myReservations`, y `MyReservationsTile` en `Perfil`); quien vende verifica en `VerifyBuyerScreen` (cámara de `qrCameraProvider` con `mobile_scanner`, o el código) y entrega en `BuyerVerifiedScreen`. `codeFromQr` solo acepta el QR del apartado abierto.
+- Moderación (HU-39/40): `lib/features/admin/`.
+  - "Administración" sale en `Ajustes` solo si `isAdminProvider`; `SessionTokens.isAdmin` lee el `role` del JWT, como `userId` lee el `sub`.
+  - `AdminScreen` (`AppRoutes.settingsAdmin`) tiene las pestañas "Abiertos", "Revisados" y "Suspendidas".
+  - `showAdminReportSheet` descarta o marca procedente; con una publicación, "Retirar publicación" pide confirmación.
+  - `AdminAccountScreen` (`AppRoutes.adminAccount`) suspende con motivo o reactiva.
+  - La API vuelve a revisar el rol en cada acción.
 - Pendientes con dueño: Crashlytics → 02-01; datos locales → HU-53; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)

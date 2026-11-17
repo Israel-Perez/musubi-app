@@ -1,10 +1,9 @@
-# plan.md — HU-40 Suspender y reactivar cuentas (borrador)
+# plan.md — HU-40 Suspender y reactivar cuentas (app)
 
-Se completa **al iniciar la HU**, con la skill `spec-first-writing`, siguiendo la estructura de los planes ya cerrados (por ejemplo, HU-06):
+Se implementa con HU-39, en el mismo feature y PR. Componentes, decisiones, guardarraíles y secuencia: [`../HU-39-moderar-contenido/plan.md`](../HU-39-moderar-contenido/plan.md).
 
-1. **Componentes:** archivos y carpetas que se crean o cambian.
-2. **Decisiones:** cada una con su porqué; incluye las decisiones pendientes de Jira listadas en `spec.md` → Límites.
-3. **Excepciones al stack** (regla de 00-01), si hacen falta.
-4. **Guardarraíles:** seguridad, límites y validaciones.
-5. **Validación:** pruebas, capturas y prueba en el celular.
-6. **Secuencia de implementación.**
+Decisiones propias de HU-40:
+
+- **El motivo es obligatorio en la app y en la API.** Queda en el historial (RNF-04). Sin él, la app no manda la petición.
+- **"Reactivar" pide confirmación** y avisa que las publicaciones siguen pausadas, porque la API no las reactiva sola (decisión de `musubi-api:HU-40`).
+- **"Suspendidas" es la tercera pestaña de "Administración"** y no una pantalla aparte. Así, la única manera de llegar a una cuenta que ya no tiene reportes abiertos es desde ahí.

@@ -120,6 +120,10 @@ class SessionTokens {
   /// es la que decide. `null` si el token no tiene la forma de un JWT.
   String? get userId => subjectOf(accessToken);
 
+  /// Tiene el rol `admin` (HU-39): abre "Administración" en `Ajustes`. Solo
+  /// decide que se muestra; la API vuelve a revisar el rol en cada accion.
+  bool get isAdmin => rolesOf(accessToken).contains('admin');
+
   String encode() => jsonEncode({
     'accessToken': accessToken,
     'accessExpiresAt': accessExpiresAt.toUtc().toIso8601String(),
@@ -142,14 +146,26 @@ class SessionTokens {
   /// El `sub` de un JWT sin verificar su firma, o `null`.
   @visibleForTesting
   static String? subjectOf(String jwt) {
+    final sub = _payloadOf(jwt)?['sub'];
+    return sub is String && sub.isNotEmpty ? sub : null;
+  }
+
+  /// Los roles (`role`, uno o una lista) de un JWT sin verificar su firma.
+  @visibleForTesting
+  static List<String> rolesOf(String jwt) => switch (_payloadOf(jwt)?['role']) {
+    final String role => [role],
+    final List<Object?> roles => [...roles.whereType<String>()],
+    _ => const [],
+  };
+
+  static Map<Object?, Object?>? _payloadOf(String jwt) {
     final parts = jwt.split('.');
     if (parts.length != 3) return null;
     try {
       final payload = jsonDecode(
         utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
       );
-      final sub = payload is Map ? payload['sub'] : null;
-      return sub is String && sub.isNotEmpty ? sub : null;
+      return payload is Map ? payload : null;
     } on FormatException {
       return null;
     }

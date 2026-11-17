@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/app/app_version.dart';
 import 'package:musubi_app/app/musubi_app.dart';
@@ -36,10 +37,14 @@ import '../../helpers/in_memory_token_store.dart';
 
 /// App completa con el router real y la sesion abierta (HU-04).
 class ProfileHarness {
-  new(this.tester, {MyProfile? initial, SessionTokens? tokens})
-    : profile = FakeProfileRepository(initial: initial),
-      _tokens = tokens ?? testTokens(),
-      store = InMemoryTokenStore(tokens ?? testTokens());
+  new(
+    this.tester, {
+    MyProfile? initial,
+    SessionTokens? tokens,
+    this.overrides = const [],
+  }) : profile = FakeProfileRepository(initial: initial),
+       _tokens = tokens ?? testTokens(),
+       store = InMemoryTokenStore(tokens ?? testTokens());
 
   final WidgetTester tester;
   final FakeProfileRepository profile;
@@ -51,6 +56,9 @@ class ProfileHarness {
   final orders = FakeOrderRepository();
   final SessionTokens _tokens;
   final InMemoryTokenStore store;
+
+  /// Repositorios de otras pruebas (HU-39: la administracion).
+  final List<Override> overrides;
   late ProviderContainer container;
 
   Future<void> open(String location) async {
@@ -77,6 +85,7 @@ class ProfileHarness {
           ),
           tokenStoreProvider.overrideWithValue(store),
           initialSessionTokensProvider.overrideWithValue(_tokens),
+          ...overrides,
         ],
         child: const MusubiApp(),
       ),
