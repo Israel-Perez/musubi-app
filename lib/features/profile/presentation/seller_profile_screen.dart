@@ -25,6 +25,7 @@ import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
+import 'package:musubi_app/features/profile/presentation/trusted_badge.dart';
 import 'package:musubi_app/features/reputation/domain/reputation_models.dart';
 import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
 
@@ -58,7 +59,7 @@ class SellerProfileOrigin {
 ///
 /// Promedio, calificaciones, "Opiniones" y "A tiempo" salen de HU-27/HU-45.
 /// "Seguir" y "Compartir" avisan que llegan pronto (la API no tiene
-/// seguidores ni enlaces publicos); "Responde en" queda fuera como en HU-11.
+/// seguidores ni enlaces publicos). HU-64: "Responde en ~N" y "Vendedor`n/// confiable", calculados en la API.
 ///
 /// Con el propio id (SCRUM-114) es "asi te ven los demas": sin "Seguir" ni
 /// "Mensaje", con sus publicaciones y sus opiniones.
@@ -657,26 +658,53 @@ class _Header extends ConsumerWidget {
               ],
             ),
           ),
+          // Como la maqueta: "Responde en ~1 h" y "En Musubi desde"; HU-64
+          // suma "Vendedor confiable". Sin datos, no se inventan.
           Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: Container(
-              key: const Key('seller-since'),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: c.surface,
-                borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
-              ),
-              child: Text(
-                'En Musubi desde ${monthYear(profile.memberSince)}',
-                style: MusubiType.style(
-                  12.5,
-                  weight: FontWeight.w700,
-                  color: c.textPrimary,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (profile.responseLabel case final response?)
+                  _Chip(key: const Key('seller-response'), text: response),
+                _Chip(
+                  key: const Key('seller-since'),
+                  text: 'En Musubi desde ${monthYear(profile.memberSince)}',
                 ),
-              ),
+                if (profile.trusted) const TrustedBadge(chip: true),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pastilla gris de la cabecera ("Responde en ~1 h", "En Musubi desde").
+class _Chip extends StatelessWidget {
+  const new({required this.text, super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
+      ),
+      child: Text(
+        text,
+        style: MusubiType.style(
+          12.5,
+          weight: FontWeight.w700,
+          color: c.textPrimary,
+        ),
       ),
     );
   }

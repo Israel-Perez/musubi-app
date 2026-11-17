@@ -167,6 +167,8 @@ class HttpProfileRepository implements ProfileRepository {
         ratingCount: (stats['ratingCount'] as num?)?.toInt() ?? 0,
         sales: (stats['sales'] as num?)?.toInt(),
         onTime: (stats['onTime'] as num?)?.toInt(),
+        responseMinutes: (stats['responseMinutes'] as num?)?.toInt(),
+        trusted: stats['trusted'] == true,
       );
     } on ApiFailure {
       rethrow;

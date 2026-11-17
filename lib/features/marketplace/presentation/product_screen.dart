@@ -31,6 +31,7 @@ import 'package:musubi_app/features/orders/presentation/reserve_sheet.dart';
 import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
+import 'package:musubi_app/features/profile/presentation/trusted_badge.dart';
 import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
 
 /// Detalle de una publicacion (HU-11). Publico, como la vitrina (HU-48).
@@ -1261,6 +1262,31 @@ class _SellerCard extends StatelessWidget {
                         weight: FontWeight.w600,
                         color: c.textSecondary,
                       ),
+                    ),
+                  // HU-64: "Responde en ~1 h" (como la maqueta) y "Vendedor
+                  // confiable"; sin datos no se muestran.
+                  if (profile?.responseLabel != null ||
+                      profile?.trusted == true)
+                    Row(
+                      key: const Key('seller-trust'),
+                      spacing: 6,
+                      children: [
+                        if (profile?.responseLabel case final response?)
+                          Flexible(
+                            child: Text(
+                              response,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: MusubiType.style(
+                                12.5,
+                                weight: FontWeight.w600,
+                                color: c.textSecondary,
+                              ),
+                            ),
+                          ),
+                        if (profile?.trusted == true)
+                          const Flexible(child: TrustedBadge()),
+                      ],
                     ),
                 ],
               ),

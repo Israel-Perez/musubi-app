@@ -21,6 +21,7 @@ import 'package:musubi_app/features/marketplace/presentation/comparison_provider
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/search_screen.dart';
+import 'package:musubi_app/features/profile/domain/profile_models.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
 import 'package:musubi_app/features/profile/presentation/seller_profile_screen.dart';
 import 'package:musubi_app/features/recommendations/presentation/recommendation_providers.dart';
@@ -65,6 +66,7 @@ Future<FakeCatalogRepository> _open(
   FakeFavoritesRepository? favorites,
   FakeRecommendationRepository? recommendations,
   FakeComparisonRepository? comparison,
+  PublicProfile? seller,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 3;
@@ -73,7 +75,7 @@ Future<FakeCatalogRepository> _open(
   if (detail != null) catalog.details['p1'] = detail;
   final profiles = FakeProfileRepository();
   profiles.publicProfiles['6716a0000000000000000001'] =
-      FakeProfileRepository.publicSample;
+      seller ?? FakeProfileRepository.publicSample;
   profiles.publicProfiles[myId] = FakeProfileRepository.publicSample;
   await tester.pumpWidget(
     ProviderScope(
@@ -133,8 +135,30 @@ void main() {
       find.textContaining('15 ventas · Arquitectura', findRichText: true),
       findsOneWidget,
     );
+    // HU-64: sin datos de respuesta ni confianza, no se inventan.
+    expect(find.byKey(const Key('seller-trust')), findsNothing);
     expect(find.text('Comprar'), findsOneWidget);
     expect(find.text('Apartar'), findsOneWidget);
+  });
+
+  // HU-64: las insignias de confianza en la tarjeta de quien vende.
+  testWidgets('quien vende: "Responde en ~1 h" y "Vendedor confiable"', (
+    tester,
+  ) async {
+    await _open(
+      tester,
+      detail: _detail(),
+      session: chatTokens(_now),
+      seller: FakeProfileRepository.publicWithBadges,
+    );
+
+    final trust = find.byKey(const Key('seller-trust'));
+    await tester.ensureVisible(trust);
+    expect(
+      find.descendant(of: trust, matching: find.text('Responde en ~1 h')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('trusted-badge')), findsOneWidget);
   });
 
   testWidgets('la tarjeta de quien vende abre su perfil (HU-05)', (

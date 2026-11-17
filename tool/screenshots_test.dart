@@ -970,6 +970,10 @@ class _Shot {
                   ratingAvg: 4.6,
                   ratingCount: 18,
                   sales: 15,
+                  // HU-64: "Responde en ~1 h" de la maqueta y, con 4.6 y 15
+                  // ventas, "Vendedor confiable".
+                  responseMinutes: 52,
+                  trusted: true,
                 )
                 // HU-52: Luis en `Apartado-verificado` ("Actuaría · UTTT",
                 // 4.8).
