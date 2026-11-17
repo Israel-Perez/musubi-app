@@ -1,11 +1,15 @@
 # Memoria del proyecto — musubi-app
 
-## T59 — Insignias de confianza (16-Nov-2026, SCRUM-104, HU-64)
+## T61 — Insignias de confianza (16-Nov-2026, SCRUM-104, HU-64)
 
-- "Responde en ~N" y "Vendedor confiable" (calculadas en la API `0.5.0-alpha.38`) en la tarjeta de quien vende de `Producto` y en los chips de `Perfil-vendedor` (como la maqueta); "Vendedor confiable" se arma con sus piezas (`TrustedBadge`).
+- "Responde en ~N" y "Vendedor confiable" (calculadas en la API `0.5.0-alpha.40`) en la tarjeta de quien vende de `Producto` y en los chips de `Perfil-vendedor` (como la maqueta); "Vendedor confiable" se arma con sus piezas (`TrustedBadge`).
 - Decisiones de la usuaria (16-Nov-2026): 4.5 ★ con 5 ventas; la mediana con al menos 3 respuestas en 30 días; no en las tarjetas.
 - Evidencia: format 0 · analyze 0 · `flutter test` 791 · critic PASS · capturas lado a lado de `Perfil-vendedor`. Pendiente: T5 en el celular.
 - Errores a evitar: el perfil de muestra (`publicSample`) sigue sin insignias para no mover las pruebas viejas (en Ahem los chips ocupan más); usa `publicWithBadges`.
+
+## HU-44 (SCRUM-56): coordinar la entrega, conciliada (16-Nov-2026)
+
+- Se cumple con HU-23 (edificio de la lista con el de la carrera primero, día y hora), HU-24 (Tu pedido / Tu venta) y HU-52 (apartar); la spec cita sus pruebas. Sin código nuevo. La lista la administrará HU-41.
 
 ## HU-49 — Inicio popular y lista de recientes (12-Nov-2026, SCRUM-69)
 
@@ -40,6 +44,49 @@ Bitácora viva: estado, decisiones con su porqué y errores a evitar. Reglas de 
 - **HU-07 (Kazumi):** API y app en `main` (#50).
 - **HU-08 (app):** PR #51, rebasado sobre `main` el 11-Nov-2026 sin los commits de HU-07 (la HU-07 fusionada era idéntica).
 - **HU-53 (favoritos, Eliuht):** PR #44 (app) y musubi-api #62 (API `0.5.0-alpha.14`, esquema 13). Al traer main, la API pasó de `alpha.13` a `alpha.14` porque HU-14 ya la usaba. La app se publica después de desplegar esa API.
+
+## T60 — Gestionar categorías (16-Nov-2026, SCRUM-64, HU-41, Kazumi)
+
+**Qué se hizo**
+- `Ajustes` → "Administración" → "Categorías" (`AdminCategoriesScreen`, solo con el rol `admin`): la lista con "Activa" o "Desactivada", "Agregar categoría" y, al tocar una, "Editar categoría" con el nombre y "Desactivar" (con confirmación) o "Activar".
+- `AdminRepository.categories`, `createCategory` y `updateCategory` sobre las filas "M-14" de la API `0.5.0-alpha.39` (fila compartida en `docs/versionado.md`).
+- `refreshCategories` también invalida `categoriesProvider` y `sellCategoriesProvider`: `Vender-3`, "Filtrar" e "Intereses" ven el cambio.
+- Pruebas: +9 (809 en total). `flutter analyze` 0, formato sin cambios, critic PASS y `check_shared_sections` OK.
+
+**Decisiones (para revisar)**
+- Una fila más en "Administración" y no una pestaña de `AdminScreen`.
+- Sin maqueta: tarjetas de "Administración" y la hoja `MusubiPanel`.
+- No se borran ni se reordenan (decisión de la API).
+
+**Errores a evitar**
+- En las pruebas, un record con un `Map` adentro no se compara por valor: `expect((a, {'x': 1}), ('a', {'x': 1}))` falla. Compara el mapa en su propio `expect`.
+
+**Pendiente**
+- PR apilado sobre #78 (HU-39/40): al fusionarlo, rebasar con `git rebase --onto origin/main feature/SCRUM-62-moderacion`.
+- Probar en el celular con la API `0.5.0-alpha.39` desplegada.
+
+## T59 — Moderar reportes y suspender cuentas (16-Nov-2026, SCRUM-62 y SCRUM-63, HU-39 y HU-40, Kazumi)
+
+**Qué se hizo**
+- `Ajustes` → "Administración" → "Reportes y cuentas", solo con el rol `admin`. `AdminScreen` tiene tres pestañas:
+  - "Abiertos" y "Revisados": cada reporte abre una hoja con lo reportado, quién reportó, el detalle y la persona responsable con sus procedentes. Si sigue abierto, trae una nota interna y "Retirar publicación" / "Es procedente" / "Marcar como atendido" o "Descartar".
+  - "Suspendidas".
+- "Cuenta" (`AdminAccountScreen`) muestra los procedentes, "Se sugiere suspenderla" con 3 (RN-27), el historial (RNF-04), "Suspender cuenta" con motivo obligatorio y "Reactivar cuenta" con confirmación.
+- `SessionTokens.isAdmin` / `rolesOf` leen el `role` del access token. Filas "M-14" en `ApiPaths` (API `0.5.0-alpha.38`, fila compartida en `docs/versionado.md`; al traer `main` se renumeró de `alpha.37`, que tomó HU-51).
+- Pruebas: +13 (800 en total, ya con HU-51). `flutter analyze` 0, formato sin cambios, critic PASS y `check_shared_sections` OK.
+
+**Decisiones (para revisar)**
+- El rol sale del JWT y no de lo guardado: la app solo guarda los tokens, y el rol se actualiza en cada renovación. Mostrar de más no abre nada, porque la API responde 403.
+- La maqueta no tiene estas pantallas: se armaron con las pestañas de `Notificaciones`, las tarjetas de `Ajustes` y las hojas de `reportSheet`.
+- Retirar una publicación pide confirmación. Descartar no la pide.
+
+**Errores a evitar**
+- `MusubiIcons` no tiene `undo`; para reactivar se usa `refreshCw`.
+- `FutureProviderFamily` viene de `package:flutter_riverpod/misc.dart`.
+
+**Pendiente**
+- Probar en el celular con una cuenta en `Admin:Emails` después de desplegar la API `0.5.0-alpha.38`.
+- La versión de la app no sube: se publica en el siguiente lote.
 
 ## T58 — Comparar opciones y "Avísame" (16-Nov-2026, SCRUM-70, HU-51)
 

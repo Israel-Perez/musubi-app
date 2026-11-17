@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/return_path.dart';
 import 'package:musubi_app/app/shell/app_shell.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/features/admin/presentation/admin_account_screen.dart';
+import 'package:musubi_app/features/admin/presentation/admin_categories_screen.dart';
+import 'package:musubi_app/features/admin/presentation/admin_screen.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
 import 'package:musubi_app/features/auth/presentation/forgot_password_screen.dart';
 import 'package:musubi_app/features/auth/presentation/legal_screens.dart';
@@ -84,6 +87,17 @@ abstract final class AppRoutes {
 
   /// "Cuenta para recibir pagos" (`Cuenta-pagos`, HU-55).
   static const settingsPayouts = '/ajustes/cuenta-pagos';
+
+  /// "Administración" (HU-39 y HU-40): reportes y cuentas suspendidas. Solo la
+  /// ve el rol `admin`; la API responde 403 a cualquier otra cuenta.
+  static const settingsAdmin = '/ajustes/administracion';
+
+  /// Una cuenta en "Administración" (HU-40).
+  static String adminAccount(String id) =>
+      '$settingsAdmin/cuenta/${Uri.encodeComponent(id)}';
+
+  /// "Categorías" en "Administración" (HU-41).
+  static const adminCategories = '$settingsAdmin/categorias';
 
   /// "Vender un producto" (HU-06): `Vender-1…4` y `Vender-listo`.
   static const sell = '/vender';
@@ -206,6 +220,7 @@ abstract final class AppRoutes {
     settingsInterests,
     settingsAlerts,
     settingsPayouts,
+    settingsAdmin,
     sell,
     sellDetails,
     sellPrice,
@@ -257,7 +272,8 @@ String? sessionRedirect({
       path.startsWith('${AppRoutes.chat}/') ||
       path.startsWith('${AppRoutes.orders}/') ||
       path.startsWith('${AppRoutes.reservations}/') ||
-      path.startsWith('${AppRoutes.seller}/');
+      path.startsWith('${AppRoutes.seller}/') ||
+      path.startsWith('${AppRoutes.settingsAdmin}/');
   if (!signedIn && needsSession) {
     return Uri(
       path: AppRoutes.signIn,
@@ -518,6 +534,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settingsPayouts,
         builder: (context, state) => const PayoutAccountScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsAdmin,
+        builder: (context, state) => const AdminScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminCategories,
+        builder: (context, state) => const AdminCategoriesScreen(),
+      ),
+      GoRoute(
+        path: '${AppRoutes.settingsAdmin}/cuenta/:id',
+        builder: (context, state) =>
+            AdminAccountScreen(userId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: AppRoutes.interests,

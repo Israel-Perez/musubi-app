@@ -36,7 +36,7 @@ Fila `GET /api/v1/profiles/{id}` de [`musubi-api/docs/endpoints.md`](https://git
 - [x] "Estudiante UTTT verificado" → la insignia de verificación de siempre (sin cambios).
 - [x] Se calculan en la API, nunca en el teléfono → la app solo lee `stats`.
 - [x] Sin datos no se muestran → `sin datos no se inventan las insignias`.
-- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 791 · critic PASS · capturas lado a lado con la maqueta.
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 813 (con HU-39/40 y HU-41) · critic PASS · capturas lado a lado con la maqueta.
 
 ## Límites
 - En pantallas angostas "Vendedor confiable" baja a una segunda línea de chips en `Perfil-vendedor`.
@@ -44,4 +44,4 @@ Fila `GET /api/v1/profiles/{id}` de [`musubi-api/docs/endpoints.md`](https://git
 ## Aprobación y Control de Cambios
 - **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 16-Nov-2026 (detallada e implementada, con las decisiones de la usuaria; API `0.5.0-alpha.38`)
+- **Fecha:** 16-Nov-2026 (detallada e implementada, con las decisiones de la usuaria; API `0.5.0-alpha.40`)

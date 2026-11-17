@@ -98,6 +98,13 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Comparar y "Avísame" (HU-51): `lib/features/marketplace/`. `CompareSection` (con sesión, después de quien vende en `Producto`) pide `comparisonProvider` y ordena en `Comparison.ranked` con las reglas de `compareVals` de la maqueta ("Para ti", Reputación, Ventas y Precio; insignias y barra de precios). "Avísame" ↔ "Te avisaremos" usa `stockAlertProvider` y `ComparisonRepository.watch/unwatch`; sin cuenta abre `AccountGateMotive.alert`. "Ver todas" abre `SearchScreen(initialFilter:)` por `extra`.
 - Insignias de confianza (HU-64): `PublicProfile.responseLabel` ("Responde en ~1 h", redondeo `approxDuration` de la maqueta) y `PublicProfile.trusted` (`TrustedBadge`) salen de la API; van en la tarjeta de quien vende de `Producto` y en los chips de `Perfil-vendedor`. Sin datos no se muestran.
 - Apartados (HU-52): `lib/features/orders/`. "Apartar" de `Producto` abre `showReserveSheet` (horas de `PickupSlots` y puntos del campus) y luego `ReservationScreen` (`Apartado-listo`, QR con `qr_flutter`). `MyReservationsScreen` (`AppRoutes.myReservations`, y `MyReservationsTile` en `Perfil`); quien vende verifica en `VerifyBuyerScreen` (cámara de `qrCameraProvider` con `mobile_scanner`, o el código) y entrega en `BuyerVerifiedScreen`. `codeFromQr` solo acepta el QR del apartado abierto.
+- Moderación y categorías (HU-39/40/41): `lib/features/admin/`.
+  - "Administración" sale en `Ajustes` solo si `isAdminProvider`; `SessionTokens.isAdmin` lee el `role` del JWT, como `userId` lee el `sub`.
+  - `AdminScreen` (`AppRoutes.settingsAdmin`) tiene las pestañas "Abiertos", "Revisados" y "Suspendidas".
+  - `showAdminReportSheet` descarta o marca procedente; con una publicación, "Retirar publicación" pide confirmación.
+  - `AdminAccountScreen` (`AppRoutes.adminAccount`) suspende con motivo o reactiva.
+  - "Categorías" (HU-41): `AdminCategoriesScreen` (`AppRoutes.adminCategories`) agrega, renombra, desactiva y activa; `refreshCategories` también invalida `categoriesProvider` y `sellCategoriesProvider`.
+  - La API vuelve a revisar el rol en cada acción.
 - Pendientes con dueño: Crashlytics → 02-01; datos locales → HU-53; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)

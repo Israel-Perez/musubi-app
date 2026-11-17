@@ -9,38 +9,39 @@ Jira (SCRUM-64): Como **administrador**, quiero **gestionar las categorías**, p
 - Trazabilidad: RF-56 · CU-26.
 - Origen: Propuesta inicial §11.
 
-**Depende de:** `02-01`, `02-03`, `02-04` (piezas de la maqueta), `HU-06`.
+**Depende de:** `HU-39` ("Administración" en `Ajustes`, `isAdminProvider`, `AdminRepository`), `HU-06` (`Vender-3`), `HU-10` ("Filtrar"), `HU-66` ("Mis intereses").
 
 ## Requisitos
-1. El administrador puede crear, editar y desactivar categorías.
-2. Las categorías activas son las que aparecen al publicar productos y solicitudes, y en los filtros.
-
-RNF que aplican: se confirman al detallar.
+1. "Categorías" sale en `Ajustes` → "Administración" solo con el rol `admin`.
+2. La pantalla lista todas las categorías del campus con su estado ("Activa" o "Desactivada").
+3. "Agregar categoría" pide el nombre (2 a 40 caracteres). Sin un nombre válido no se manda.
+4. Al tocar una categoría se abre "Editar categoría": cambiar el nombre, "Desactivar categoría" (con confirmación) o "Activar categoría".
+5. Después de un cambio, `Vender-3`, "Filtrar" e "Intereses" vuelven a pedir las categorías: solo salen las activas.
+6. Los errores de la API (`admin.category_exists`, `admin.last_category` y los demás) se muestran en la hoja.
 
 ## Diseño
-- Feature `lib/features/admin/` con `domain/`, `data/` y `presentation/` (skill `vertical-slice`).
-- Pantallas con las piezas de `lib/core/widgets/` y los tokens de 02-04, iguales a la maqueta.
-- Consume las filas del back de HU-41. Mientras no existan: repositorio fake con `NOTE (musubi-api:HU-41)` (skill `deferred-scope-fakes`).
+- `AdminCategoriesScreen` y `CategorySheet` en `lib/features/admin/presentation/admin_categories_screen.dart`, con las piezas de "Administración" (`AdminCard`, `StatusPill`) y `MusubiPanel`.
+- Ruta `AppRoutes.adminCategories` (`/ajustes/administracion/categorias`); la guarda de sesión ya cubre `/ajustes/administracion/*`.
+- `AdminRepository.categories`, `createCategory` y `updateCategory`; `adminCategoriesProvider` y `refreshCategories`, que también invalida `categoriesProvider` y `sellCategoriesProvider`.
 
 ## Contratos
-Filas de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) para HU-41, enlazadas desde `lib/core/network/api_paths.dart` (skill `api-contract`). Se listan al detallar.
+Filas "M-14" de [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (`GET` y `POST /admin/categories`, `PATCH /admin/categories/{slug}`), enlazadas desde `ApiPaths.adminCategories` y `adminCategory`. Formas de `admin-category.json` y `admin-category-page.json`.
 
 ## Tests
-- `test/features//`: repositorio HTTP con `FakeHttpAdapter` (mapeo y errores en español).
-- Widget tests por estado (carga, vacío, error y éxito) y por cada criterio de aceptación.
-- Widget tests de las pantallas nuevas (sin escena de maqueta).
+- `test/features/admin/http_admin_repository_test.dart`: la lista con las desactivadas, agregar (nombre sin espacios) y cambiar (solo lo que cambia).
+- `test/features/admin/admin_categories_test.dart`: sin el rol no se ve; la lista; agregar; nombre corto; renombrar; desactivar con confirmación y activar sin ella; el error de la API en la hoja; sin conexión y "Reintentar".
 
 ## Criterios
-- [ ] El administrador puede crear, editar y desactivar categorías.
-- [ ] Las categorías activas son las que aparecen al publicar productos y solicitudes, y en los filtros.
-- [ ] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` al 100 % · critic PASS.
+- [x] El administrador puede crear, editar y desactivar categorías: `admin_categories_test` ("Agregar categoría", "renombrar", "desactivar pide confirmación").
+- [x] Las categorías activas son las que aparecen al publicar productos y solicitudes, y en los filtros: `refreshCategories` vuelve a pedir `GET /categories`, que en la API solo da las activas (`musubi-api:HU-41`, `CategoryAdminFlowTests`).
+- [x] `dart format` sin cambios · `flutter analyze` 0 · `flutter test` 809/809 · critic PASS (16-Nov-2026).
 
 ## Límites
-- Decisión pendiente (Jira): Desde Sprint 2 se requiere un catálogo inicial de categorías cargado en la base de datos.
-- Spec ligera: el diseño, los contratos y las pruebas exactas se fijan al iniciar la HU (`plan.md`).
+- No se borran ni se reordenan categorías (decisión de `musubi-api:HU-41`).
+- El rol sale del token: después de dar el rol hay que volver a iniciar sesión o esperar la renovación (HU-39).
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador (spec ligera)
-- **Revisores:** Pendiente de designar (1 integrante distinto del autor)
-- **Fecha:** 29-Oct-2026
-- **Detalle:** generada desde Jira, la maqueta y el modelo de datos para tener todo el backlog especificado (SCRUM-86, pedido del docente). Al iniciar la HU se completan `plan.md` y `task.md` y se resuelven las decisiones pendientes.
+- **Estado:** 🚧 Borrador con evidencia
+- **Revisores:** Pendiente de designar (1 revisor distinto del autor)
+- **Fecha:** 16-Nov-2026
+- **Detalle:** la spec ligera del 29-Oct-2026 se detalló al implementar. Necesita la API `0.5.0-alpha.39`.

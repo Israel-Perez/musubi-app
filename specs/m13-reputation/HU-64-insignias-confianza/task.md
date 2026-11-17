@@ -12,8 +12,8 @@
 - **Estado:** ✅ Hecho.
 
 ## T4 — Evidencia y documentación
-- **Estado:** ✅ Hecho: format 0 · analyze 0 · `flutter test` 791 · critic PASS · capturas.
+- **Estado:** ✅ Hecho: format 0 · analyze 0 · `flutter test` 813 (con HU-39/40 y HU-41) · critic PASS · capturas.
 
 ## T5 — Prueba en el celular
-- **Qué:** con la API `0.5.0-alpha.38`: contestar 3 veces en el chat como quien vende y ver "Responde en ~N" en su perfil.
+- **Qué:** con la API `0.5.0-alpha.40`: contestar 3 veces en el chat como quien vende y ver "Responde en ~N" en su perfil.
 - **Estado:** ⏳ Por hacer.
