@@ -226,6 +226,8 @@ class PublicProfile {
     this.ratingAvg,
     this.sales,
     this.onTime,
+    this.responseMinutes,
+    this.trusted = false,
   });
 
   final String id;
@@ -256,6 +258,32 @@ class PublicProfile {
   /// sin calificaciones.
   final int? onTime;
 
+  /// HU-64: mediana en minutos de sus respuestas en el chat (ultimos 30
+  /// dias), o `null` si aun no hay suficientes.
+  final int? responseMinutes;
+
+  /// HU-64: "Vendedor confiable" (4.5 estrellas con 5 ventas; lo decide la
+  /// API).
+  final bool trusted;
+
+  /// "Responde en ~1 h", o `null` sin datos (HU-64: no se inventa).
+  String? get responseLabel => switch (responseMinutes) {
+    null => null,
+    final minutes => 'Responde en ${approxDuration(minutes)}',
+  };
+
   /// "Valeria" en "Cuando alguien califique a Valeria…".
   String get firstName => fullName.split(' ').first;
 }
+
+/// Como la maqueta ("~15 min", "~30 min", "~45 min", "~1 h"): cuartos de
+/// hora hasta 45 minutos, luego horas redondeadas y, desde un dia, dias.
+String approxDuration(int minutes) => switch (minutes) {
+  <= 15 => '~15 min',
+  <= 30 => '~30 min',
+  <= 45 => '~45 min',
+  < 90 => '~1 h',
+  < 1440 => '~${(minutes / 60).round()} h',
+  < 2880 => '~1 día',
+  _ => '~${(minutes / 1440).round()} días',
+};

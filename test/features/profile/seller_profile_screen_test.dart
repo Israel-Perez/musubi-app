@@ -155,6 +155,51 @@ void main() {
     expect(find.text('Mensaje'), findsOneWidget);
   });
 
+  // HU-64: las insignias de confianza (las calcula la API).
+  testWidgets('"Responde en ~1 h" y "Vendedor confiable" junto a "desde"', (
+    tester,
+  ) async {
+    final h = _Harness(
+      tester,
+      profiles: _withProfile(FakeProfileRepository.publicWithBadges),
+    );
+
+    await h.open(valeria.id);
+
+    expect(find.text('Responde en ~1 h'), findsOneWidget);
+    expect(find.byKey(const Key('trusted-badge')), findsOneWidget);
+    expect(find.text('Vendedor confiable'), findsOneWidget);
+  });
+
+  testWidgets('sin datos no se inventan las insignias', (tester) async {
+    final h = _Harness(tester, profiles: _withProfile(_withoutRatings()));
+
+    await h.open(valeria.id);
+
+    expect(find.byKey(const Key('seller-response')), findsNothing);
+    expect(find.byKey(const Key('trusted-badge')), findsNothing);
+    expect(find.text('En Musubi desde feb 2025'), findsOneWidget);
+  });
+
+  test('"Responde en" redondea como la maqueta', () {
+    expect(
+      [
+        for (final m in [3, 16, 40, 52, 100, 300, 1500, 5000])
+          approxDuration(m),
+      ],
+      [
+        '~15 min',
+        '~30 min',
+        '~45 min',
+        '~1 h',
+        '~2 h',
+        '~5 h',
+        '~1 día',
+        '~3 días',
+      ],
+    );
+  });
+
   testWidgets('ventas ocultas y publicaciones cargando se ven con "—"', (
     tester,
   ) async {

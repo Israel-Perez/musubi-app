@@ -39,6 +39,8 @@ Map<String, Object?> publicProfileJson({
   double? ratingAvg,
   int ratingCount = 0,
   int? sales = 0,
+  int? responseMinutes,
+  bool trusted = false,
 }) => {
   'id': '6716a0000000000000000001',
   'fullName': 'Valeria Cruz',
@@ -50,7 +52,13 @@ Map<String, Object?> publicProfileJson({
   'memberSince': '2024-10-01T12:00:00Z',
   'career': career,
   'term': term,
-  'stats': {'ratingAvg': ratingAvg, 'ratingCount': ratingCount, 'sales': sales},
+  'stats': {
+    'ratingAvg': ratingAvg,
+    'ratingCount': ratingCount,
+    'sales': sales,
+    'responseMinutes': responseMinutes,
+    'trusted': trusted,
+  },
 };
 
 // HU-04: el repositorio habla las filas "M-02" de musubi-api
@@ -188,6 +196,8 @@ void main() {
             ratingAvg: 4.6,
             ratingCount: 18,
             sales: 15,
+            responseMinutes: 52,
+            trusted: true,
           ),
         ),
       );
@@ -208,6 +218,9 @@ void main() {
       expect(profile.ratingAvg, 4.6);
       expect(profile.ratingCount, 18);
       expect(profile.sales, 15);
+      // HU-64: las insignias que calcula la API.
+      expect(profile.responseLabel, 'Responde en ~1 h');
+      expect(profile.trusted, isTrue);
     });
 
     test('sin calificaciones ni ventas visibles, y carrera oculta', () async {
@@ -220,6 +233,7 @@ void main() {
       expect(profile.sales, isNull);
       expect(profile.careerShortName, isNull);
       expect(profile.term, isNull);
+      expect((profile.responseLabel, profile.trusted), (null, false));
     });
 
     test('404 profiles.not_found se traduce a ApiFailure', () async {

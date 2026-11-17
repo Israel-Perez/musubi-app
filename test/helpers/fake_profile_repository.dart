@@ -62,6 +62,22 @@ class FakeProfileRepository implements ProfileRepository {
     sales: 15,
   );
 
+  /// La misma Valeria con las insignias de HU-64: "Responde en ~1 h" (la
+  /// maqueta) y, con 4.6 y 15 ventas, "Vendedor confiable".
+  static final publicWithBadges = PublicProfile(
+    id: publicSample.id,
+    fullName: publicSample.fullName,
+    campusShortName: publicSample.campusShortName,
+    memberSince: publicSample.memberSince,
+    careerShortName: publicSample.careerShortName,
+    term: publicSample.term,
+    ratingAvg: publicSample.ratingAvg,
+    ratingCount: publicSample.ratingCount,
+    sales: publicSample.sales,
+    responseMinutes: 52,
+    trusted: true,
+  );
+
   MyProfile profile;
 
   /// Falla la carga de [me] (estado de error con "Reintentar").

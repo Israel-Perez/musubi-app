@@ -1,5 +1,12 @@
 # Memoria del proyecto — musubi-app
 
+## T61 — Insignias de confianza (16-Nov-2026, SCRUM-104, HU-64)
+
+- "Responde en ~N" y "Vendedor confiable" (calculadas en la API `0.5.0-alpha.40`) en la tarjeta de quien vende de `Producto` y en los chips de `Perfil-vendedor` (como la maqueta); "Vendedor confiable" se arma con sus piezas (`TrustedBadge`).
+- Decisiones de la usuaria (16-Nov-2026): 4.5 ★ con 5 ventas; la mediana con al menos 3 respuestas en 30 días; no en las tarjetas.
+- Evidencia: format 0 · analyze 0 · `flutter test` 791 · critic PASS · capturas lado a lado de `Perfil-vendedor`. Pendiente: T5 en el celular.
+- Errores a evitar: el perfil de muestra (`publicSample`) sigue sin insignias para no mover las pruebas viejas (en Ahem los chips ocupan más); usa `publicWithBadges`.
+
 ## HU-44 (SCRUM-56): coordinar la entrega, conciliada (16-Nov-2026)
 
 - Se cumple con HU-23 (edificio de la lista con el de la carrera primero, día y hora), HU-24 (Tu pedido / Tu venta) y HU-52 (apartar); la spec cita sus pruebas. Sin código nuevo. La lista la administrará HU-41.
