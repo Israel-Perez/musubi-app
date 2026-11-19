@@ -35,7 +35,7 @@ Esta spec las junta y agrega la protección de `main`.
 - **Guía:** [`docs/play/README.md`](../../../docs/play/README.md) (cuenta de servicio, secretos y pasos para publicar).
 
 ## Contratos
-- **Checks obligatorios:** `analyze`, `test`, `critic` y `semgrep`.
+- **Checks obligatorios:** `analyze`, `test`, `critic`, `semgrep` y `gitleaks` (desde el 19-Nov-2026, SCRUM-123).
 - **Entorno `google-play`:** `PLAY_UPLOAD_KEYSTORE_B64`, `PLAY_UPLOAD_KEYSTORE_PASSWORD`, `PLAY_UPLOAD_KEY_ALIAS`, `PLAY_UPLOAD_KEY_PASSWORD` y `PLAY_SERVICE_ACCOUNT_JSON`.
 - **Etiquetas:** `app-vX.Y.Z+N` (`docs/versionado.md`).
 

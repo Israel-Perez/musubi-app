@@ -63,7 +63,9 @@ class SessionController extends Notifier<SessionState> {
   /// tokens. Sin red se cierra igual en el dispositivo.
   Future<void> logOut() async {
     if (state case SignedIn(:final tokens)) {
-      await ref.read(sessionApiProvider).revoke(tokens.refreshToken);
+      await ref
+          .read(sessionApiProvider)
+          .revoke(tokens.refreshToken, accessToken: tokens.accessToken);
     }
     await signOut();
   }
