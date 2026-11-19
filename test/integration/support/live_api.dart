@@ -26,6 +26,11 @@ const liveApiUrl = String.fromEnvironment('MUSUBI_API_URL');
 /// Log de la API (modo `Email:Provider=Log`): de ahi salen los codigos.
 const liveApiLog = String.fromEnvironment('MUSUBI_API_LOG');
 
+/// En el telefono (`integration_test/`) no se puede leer el log de la PC: el
+/// script `run_device_tests.ps1` sirve los codigos en esta URL
+/// (`tool/device_code_server.dart`, por `adb reverse`).
+const liveCodeUrl = String.fromEnvironment('MUSUBI_CODE_URL');
+
 /// Carpeta donde se anota cada `VERBO /ruta` llamada, un archivo por proceso
 /// (lo revisa `tool/check_integration_coverage.dart`). Cada archivo de prueba
 /// corre en su propio proceso y escribir todos en uno solo pierde lineas.
@@ -178,6 +183,7 @@ Future<LiveSession> liveAdmin() async {
 /// El ultimo codigo de 6 digitos que la API "envio" a [email] (lo escribe en
 /// su log en Development).
 Future<String> liveCodeFor(String email, {String? after}) async {
+  if (liveCodeUrl.isNotEmpty) return await _codeFromServer(email, after: after);
   final marker = 'para ${email.toLowerCase()}';
   for (var i = 0; i < 40; i++) {
     final log = File(liveApiLog);
@@ -194,6 +200,27 @@ Future<String> liveCodeFor(String email, {String? after}) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
   }
   throw StateError('La API no escribio el codigo de $email en $liveApiLog');
+}
+
+Future<String> _codeFromServer(String email, {String? after}) async {
+  final client = HttpClient();
+  try {
+    for (var i = 0; i < 40; i++) {
+      final request = await client.getUrl(
+        Uri.parse(liveCodeUrl).replace(
+          path: '/code',
+          queryParameters: {'email': email.toLowerCase()},
+        ),
+      );
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+      if (response.statusCode == 200 && body != after) return body.trim();
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    }
+  } finally {
+    client.close(force: true);
+  }
+  throw StateError('El servidor de codigos no tuvo el de $email');
 }
 
 /// Una foto PNG valida (400 x 300, un color) en un archivo temporal.

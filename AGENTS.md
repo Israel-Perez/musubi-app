@@ -15,6 +15,7 @@
   - `flutter build apk --debug --dart-define-from-file=config/dev.example.json`
   - `pwsh scripts/critic-guardrails.ps1`
   - `pwsh scripts/run_integration_tests.ps1` (02-10: levanta `../musubi-api`, corre `test/integration` contra ella y el guard de cobertura)
+  - `pwsh scripts/run_device_tests.ps1` (02-10: la suite de `integration_test/` en un teléfono físico por USB contra `../musubi-api`; guía en `integration_test/README.md`)
 - **CI (`ci-pr.yml`):** `analyze`, `test` (cobertura como artefacto), `integration` (contra musubi-api real: la rama del mismo nombre o `main`), `critic`, `semgrep`; `build-apk` solo en push a `main`.
 - **Flujo SDD por HU:** spec (`specs/mNN-<modulo>/HU-NN-<slug>/`, misma carpeta que en el back; skill `spec-first-writing`) → `slice-scaffolder` (Fase A) → implementación y pruebas (skill `vertical-slice`) → `security-reviewer` → `traceability-clerk` → PR que enlaza el PR del back.
 - **Ramas y PR:** `feature/SCRUM-NN-slug` / `fix/SCRUM-NN-slug`; un PR = una HU o un fix; título con la clave Jira; checklist de `.github/pull_request_template.md` obligatorio.
@@ -125,7 +126,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Unit (config, repositorios con `FakeHttpAdapter`, providers con `ProviderContainer.test`) + widget tests por estado de cada pantalla.
 - `test/integration/` (02-10): flujos de cada grupo de pantallas con los proveedores reales contra musubi-api en Development (`LiveSession`, `liveUser()`, cuentas reales con el código del log). Se saltan sin `MUSUBI_API_URL`; los corre `scripts/run_integration_tests.ps1` y el job `integration`. Guía: `test/integration/README.md`.
 - `test/security/`: configuración de Android y seguridad de la sesión; los flujos de seguridad contra la API están en `test/integration/security_flow_test.dart`.
-- `integration_test/` corre en un emulador o dispositivo (no en el CI de PR).
+- `integration_test/` (02-10): la suite en un teléfono físico (`app_test.dart` + `flows/`, `DeviceApp`), con las pantallas reales contra musubi-api por `adb reverse`; la corre `scripts/run_device_tests.ps1`. Los mismos flujos corren en la VM en `test/integration/device_flows_test.dart` (CI), así un cambio de pantalla que la rompa falla en el PR.
 - Matriz completa: skill `testing-strategy`.
 
 ## 8. Observabilidad
@@ -156,12 +157,12 @@ La fuente canónica es `specs/phase-00-constitution/00-04-lessons-learned/spec.m
 |---|---|
 | `lib/` | `main.dart`, `app/`, `core/`, `features/` |
 | `test/` | Unit + widget (`core/`, `features/`, `helpers/`), `security/` y `integration/` (contra la API, 02-10) |
-| `integration_test/` | Pruebas en un dispositivo (esqueleto) |
+| `integration_test/` | Suite en un teléfono físico (`app_test.dart`, `flows/`; 02-10) |
 | `android/` | Proyecto Android (`com.musubi.app`, targetSdk 36) |
 | `config/` | `*.example.json` por ambiente + README |
 | `docs/` | `trazabilidad.md` (47 HU), `modulos.md` (14 módulos), `versionado.md`, `maqueta/` (HTML + índice) |
 | `specs/` | SDD: plantilla, fases 00 y 01, `mNN-*/HU-NN-*` |
-| `scripts/` | `critic-guardrails.ps1`, `check_shared_sections.ps1`, `run_integration_tests.ps1` |
+| `scripts/` | `critic-guardrails.ps1`, `check_shared_sections.ps1`, `run_integration_tests.ps1`, `run_device_tests.ps1`, `MusubiLocalApi.ps1` |
 | `.claude/` | `agents/` (3), `skills/` (9), `hooks/` |
 | `.github/` | CI, Dependabot, plantilla de PR |
 | `.semgrep/` | Reglas SAST propias |

@@ -21,6 +21,17 @@
   - `dotnet run` deja vivo el proceso hijo al detenerlo: el script corre el DLL directo.
   - Aceptar un pedido exige que quien compra haya elegido el pago (`orders.payment_missing`).
   - La hora de un apartado se elige con `PickupSlots` y el reloj del campus (UTC-6), no con el de la máquina: el CI corre en UTC y "mañana a la 1" puede pasar de las 24 h (`reservations.invalid_pickup_time`).
+- **Suite en el teléfono (Auditoría v2, sección 3):**
+  - `integration_test/app_test.dart` tiene 8 pruebas con las pantallas reales (`DeviceApp`).
+  - `scripts/run_device_tests.ps1` levanta la API, el servidor de códigos (`tool/device_code_server.dart`) y `adb reverse`.
+  - Los mismos flujos corren en la VM en `test/integration/device_flows_test.dart` (`LiveTestWidgetsFlutterBinding` fullyLive y `HttpOverrides.global = null`), así que el CI los cuida.
+  - El `app_smoke_test.dart` viejo buscaba un texto que ya no existía y nunca corrió: se quitó.
+  - Pendiente: correrla en un teléfono físico; en esta PC no hay ninguno conectado.
+  - Errores a evitar:
+    - `home-enter` es "Entrar" del visitante (lleva a iniciar sesión);
+    - una lista larga solo dibuja lo visible: `DeviceApp.reveal` desplaza la pantalla;
+    - `pumpAndSettle` no espera a la red real: `waitFor` hace polling.
+    - La hoja de "Apartar" usa la hora del dispositivo; en el CI (UTC) propone horas fuera del campus. `run_integration_tests.ps1` corre con `TZ=America/Mexico_City`.
 - **Para las HU que vengan:** una llamada nueva a la API sin su flujo en `test/integration/` rompe el job `integration`; un archivo nuevo de `lib/` que toque tokens rompe `session_security_test.dart` (skill `testing-strategy`, pasos 9 y 10).
 
 ## Lote 0.11.0+13 a Google Play (16-Nov-2026, SCRUM-87)
