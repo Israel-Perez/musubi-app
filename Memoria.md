@@ -1,5 +1,48 @@
 # Memoria del proyecto — musubi-app
 
+## SCRUM-123: gitleaks en el CI (19-Nov-2026)
+
+- El job `gitleaks` (8.30.1, binario oficial verificado por checksum) revisa el historial completo de Git en cada PR; en local, 0 hallazgos en 143 commits. Complementa al critic, que solo revisa el diff. El DAST con OWASP ZAP vive en musubi-api (`dast.yml`).
+
+## SCRUM-122: documentación al día para la auditoría v2 (19-Nov-2026)
+
+- El README es la portada del proyecto: qué hace, arquitectura, seguridad, pruebas con conteos, CI/CD y cómo correrlo. Se quitaron los "🚧 Pendiente" que ya estaban resueltos (observabilidad, dominio, Play) y lo que prometía controles que no existen (ZAP y SonarCloud).
+- **Regla:** la auditoría se responde leyendo los repos. Al cerrar algo que un documento marcaba como pendiente, actualiza el README y `AGENTS.md` en el mismo PR. Si cambian mucho los conteos de pruebas, actualiza también la tabla del README.
+
+## Trabajo en curso — SCRUM-120 (02-10): pruebas contra la API real y seguridad de la sesión
+
+- **Qué:** la revisión contra "Prompts para evaluar v1" (16-Nov-2026) mostró que la app no tenía pruebas de integración (solo el arranque) y casi ninguna de seguridad. Ahora hay:
+  - `test/integration/`: 45 pruebas, un archivo por grupo de pantallas, con los proveedores reales contra musubi-api en Development;
+  - `tool/check_integration_coverage.dart`: 121 filas del catálogo llamadas y 1 excepción;
+  - el job `integration` del CI;
+  - `test/security/session_security_test.dart` (9).
+- **Cambio en `lib/`:** el logout manda también el access token (`HttpSessionApi.revoke(..., accessToken:)`), para que la API lo revoque de inmediato (`musubi-api:02-10`). Antes un token copiado seguía sirviendo hasta 15 minutos.
+- **Decisiones técnicas:**
+  - Las pruebas corren en la VM de `flutter test` (sin emulador), con `ProviderContainer` y los proveedores de la app. Así entran al CI y prueban Dio, `AuthInterceptor`, la sesión y el hub de SignalR de verdad.
+  - Las cuentas son reales: el código sale del log de la API (`Email:Provider=Log`).
+  - Sin `MUSUBI_API_URL` se saltan: `flutter test` no depende de la API.
+  - El CI usa la rama de musubi-api del mismo nombre si existe, para probar cambios coordinados antes de fusionar.
+  - Excepción: `POST /notifications/devices/remove`. Al cerrar sesión la app da de baja el teléfono en FCM y ya no tiene sesión para llamar a la API.
+- **Verificación (17-Nov-2026):** `flutter analyze` sin observaciones; `test/security` 14; integración 45 en verde contra la API de la rama `feature/SCRUM-120-cierre-evaluacion`; guard OK; `check_shared_sections` OK (fila `0.5.0-alpha.41`).
+- **Errores a evitar:**
+  - En Windows, varios procesos que agregan líneas al mismo archivo se pisan: la cobertura va en un archivo por proceso.
+  - El log de la API en Windows no viene en UTF-8: se lee con `allowMalformed`.
+  - `dotnet run` deja vivo el proceso hijo al detenerlo: el script corre el DLL directo.
+  - Aceptar un pedido exige que quien compra haya elegido el pago (`orders.payment_missing`).
+  - La hora de un apartado se elige con `PickupSlots` y el reloj del campus (UTC-6), no con el de la máquina: el CI corre en UTC y "mañana a la 1" puede pasar de las 24 h (`reservations.invalid_pickup_time`).
+- **Suite en el teléfono (Auditoría v2, sección 3):**
+  - `integration_test/app_test.dart` tiene 8 pruebas con las pantallas reales (`DeviceApp`).
+  - `scripts/run_device_tests.ps1` levanta la API, el servidor de códigos (`tool/device_code_server.dart`) y `adb reverse`.
+  - Los mismos flujos corren en la VM en `test/integration/device_flows_test.dart` (`LiveTestWidgetsFlutterBinding` fullyLive y `HttpOverrides.global = null`), así que el CI los cuida.
+  - El `app_smoke_test.dart` viejo buscaba un texto que ya no existía y nunca corrió: se quitó.
+  - Pendiente: correrla en un teléfono físico; en esta PC no hay ninguno conectado.
+  - Errores a evitar:
+    - `home-enter` es "Entrar" del visitante (lleva a iniciar sesión);
+    - una lista larga solo dibuja lo visible: `DeviceApp.reveal` desplaza la pantalla;
+    - `pumpAndSettle` no espera a la red real: `waitFor` hace polling.
+    - La hoja de "Apartar" usa la hora del dispositivo; en el CI (UTC) propone horas fuera del campus. `run_integration_tests.ps1` corre con `TZ=America/Mexico_City`.
+- **Para las HU que vengan:** una llamada nueva a la API sin su flujo en `test/integration/` rompe el job `integration`; un archivo nuevo de `lib/` que toque tokens rompe `session_security_test.dart` (skill `testing-strategy`, pasos 9 y 10).
+
 ## Lote 0.11.0+13 a Google Play (16-Nov-2026, SCRUM-87)
 
 - Con la API `0.5.0-alpha.40` (`infra-up` del 16-Nov-2026): HU-52, HU-51, HU-55, HU-35, HU-49, HU-66, HU-18/29, HU-12, HU-36/37/38, HU-64, HU-67 y Administración (HU-39/40/41). Notas en `docs/play/whatsnew/whatsnew-es-419`.

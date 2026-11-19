@@ -14,7 +14,9 @@
   - `flutter test`
   - `flutter build apk --debug --dart-define-from-file=config/dev.example.json`
   - `pwsh scripts/critic-guardrails.ps1`
-- **CI (`ci-pr.yml`):** `analyze`, `test` (cobertura como artefacto), `critic`, `semgrep`; `build-apk` solo en push a `main`.
+  - `pwsh scripts/run_integration_tests.ps1` (02-10: levanta `../musubi-api`, corre `test/integration` contra ella y el guard de cobertura)
+  - `pwsh scripts/run_device_tests.ps1` (02-10: la suite de `integration_test/` en un teléfono físico por USB contra `../musubi-api`; guía en `integration_test/README.md`)
+- **CI (`ci-pr.yml`):** `analyze`, `test` (cobertura como artefacto), `integration` (contra musubi-api real: la rama del mismo nombre o `main`), `critic`, `gitleaks` (secretos en el historial, 02-10), `semgrep`; `build-apk` solo en push a `main`.
 - **Flujo SDD por HU:** spec (`specs/mNN-<modulo>/HU-NN-<slug>/`, misma carpeta que en el back; skill `spec-first-writing`) → `slice-scaffolder` (Fase A) → implementación y pruebas (skill `vertical-slice`) → `security-reviewer` → `traceability-clerk` → PR que enlaza el PR del back.
 - **Ramas y PR:** `feature/SCRUM-NN-slug` / `fix/SCRUM-NN-slug`; un PR = una HU o un fix; título con la clave Jira; checklist de `.github/pull_request_template.md` obligatorio.
 - **Naming:** código en inglés; textos de la UI, documentos y specs en español.
@@ -49,6 +51,7 @@
 
 - `dart format` sin cambios y `flutter analyze --fatal-infos --fatal-warnings` sin observaciones.
 - `flutter test` 100 % en verde.
+- `pwsh scripts/run_integration_tests.ps1` → `integration: OK` (02-10). Una llamada nueva a la API necesita su flujo en `test/integration/`; si no, `tool/check_integration_coverage.dart` falla.
 - `pwsh scripts/critic-guardrails.ps1` → `PASS` exit 0 (también con `powershell -File` en 5.1).
 - `flutter build apk --debug --dart-define-from-file=config/dev.example.json` → `√ Built`; si tocas Android, revisa el APK con `aapt2 dump badging` (paquete `com.musubi.app`, `targetSdkVersion:'36'`).
 - YAML del CI: `python -c "import yaml; yaml.safe_load(open('.github/workflows/ci-pr.yml'))"` y `actionlint .github/workflows/ci-pr.yml`.
@@ -111,8 +114,9 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 
 - MASVS-STORAGE: nada sensible en el APK; tokens en `flutter_secure_storage` (02-01); `allowBackup=false` y permisos aprobados verificados por `test/security/android_config_test.dart`.
 - MASVS-NETWORK: el token solo viaja al esquema, host y puerto de la API (`AuthInterceptor`, con self-test).
+- MASVS-AUTH (02-10): el logout manda también el access token para que la API lo revoque de inmediato (lista de revocación en Redis); `test/security/session_security_test.dart` cuida dónde viven los tokens (lista permitida de archivos), que nada los registre y que un error no los muestre.
 - MASVS-NETWORK: HTTPS fuera de dev (`AppConfig.parse`); release sin tráfico en claro; debug/profile solo hacia `10.0.2.2` (emulador) y `localhost` (USB con `adb reverse`).
-- MASVS-CODE: análisis estricto, Dependabot con `cooldown`, paquetes evaluados (00-01).
+- MASVS-CODE: análisis estricto, Dependabot con `cooldown`, paquetes evaluados (00-01); gitleaks revisa el historial completo en el CI. Las excepciones van en `.gitleaksignore` con su motivo.
 - MASVS-PRIVACY: datos mínimos, aviso de privacidad (HU-47), eliminación de cuenta (HU-46), la IA solo a petición (RNF-06).
 - Firebase (HU-31): política en la skill `critic-guardrails` (archivos ignorados, regenerados en CI desde secretos).
 - Checks del agente `security-reviewer`: `.claude/agents/security-reviewer.md`.
@@ -120,16 +124,27 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 ## 7. Testing
 
 - Unit (config, repositorios con `FakeHttpAdapter`, providers con `ProviderContainer.test`) + widget tests por estado de cada pantalla.
-- `integration_test/` corre en un emulador o dispositivo (no en el CI de PR).
+- `test/integration/` (02-10): flujos de cada grupo de pantallas con los proveedores reales contra musubi-api en Development (`LiveSession`, `liveUser()`, cuentas reales con el código del log). Se saltan sin `MUSUBI_API_URL`; los corre `scripts/run_integration_tests.ps1` y el job `integration`. Guía: `test/integration/README.md`.
+- `test/security/`: configuración de Android y seguridad de la sesión; los flujos de seguridad contra la API están en `test/integration/security_flow_test.dart`.
+- `integration_test/` (02-10): la suite en un teléfono físico (`app_test.dart` + `flows/`, `DeviceApp`), con las pantallas reales contra musubi-api por `adb reverse`; la corre `scripts/run_device_tests.ps1`. Los mismos flujos corren en la VM en `test/integration/device_flows_test.dart` (CI), así un cambio de pantalla que la rompa falla en el PR.
 - Matriz completa: skill `testing-strategy`.
 
 ## 8. Observabilidad
 
-> 🚧 Pendiente (`02-01`): Firebase Crashlytics y registro de errores sin PII.
+> Pendiente (`02-01`): Firebase Crashlytics y registro de errores sin PII. La observabilidad del servicio (logs, alarmas y dashboard de CloudWatch) está en `musubi-api`.
 
 ## 9. Publicación
 
-> 🚧 Pendiente (`02-02`): firma de subida (`android/key.properties`, ignorado), ficha de Google Play, prueba cerrada desde el 09-Nov-2026 y versión `1.0.0` publicada antes de la evaluación del 02-Dic-2026 (despliegue desde GitHub; versión según `docs/versionado.md`).
+- Google Play en **prueba cerrada** desde el 09-Nov-2026. La versión vigente está en `docs/versionado.md` (hoy `0.11.0+13`); la ficha y "Seguridad de los datos", en `docs/play/README.md`.
+- El workflow `release-play` (manual) hace esto:
+  1. valida que la versión no exista;
+  2. corre las pruebas;
+  3. compila y firma el AAB con la llave de subida (secreto de GitHub, se borra al terminar);
+  4. lo sube a la pista elegida;
+  5. etiqueta `app-vX.Y.Z+N`.
+- En local, la firma lee `android/key.properties` (ignorado).
+- Los lotes juntan varias HU antes de publicar.
+- Pendiente: la versión `1.0.0` en producción antes de la evaluación del 02-Dic-2026.
 
 ## 10. Reglas basadas en lecciones aprendidas
 
@@ -150,13 +165,13 @@ La fuente canónica es `specs/phase-00-constitution/00-04-lessons-learned/spec.m
 | Carpeta | Contenido |
 |---|---|
 | `lib/` | `main.dart`, `app/`, `core/`, `features/` |
-| `test/` | Unit + widget (`core/`, `features/`, `helpers/`) |
-| `integration_test/` | Pruebas en un dispositivo (esqueleto) |
+| `test/` | Unit + widget (`core/`, `features/`, `helpers/`), `security/` y `integration/` (contra la API, 02-10) |
+| `integration_test/` | Suite en un teléfono físico (`app_test.dart`, `flows/`; 02-10) |
 | `android/` | Proyecto Android (`com.musubi.app`, targetSdk 36) |
 | `config/` | `*.example.json` por ambiente + README |
 | `docs/` | `trazabilidad.md` (47 HU), `modulos.md` (14 módulos), `versionado.md`, `maqueta/` (HTML + índice) |
 | `specs/` | SDD: plantilla, fases 00 y 01, `mNN-*/HU-NN-*` |
-| `scripts/` | `critic-guardrails.ps1`, `check_shared_sections.ps1` |
+| `scripts/` | `critic-guardrails.ps1`, `check_shared_sections.ps1`, `run_integration_tests.ps1`, `run_device_tests.ps1`, `MusubiLocalApi.ps1` |
 | `.claude/` | `agents/` (3), `skills/` (9), `hooks/` |
 | `.github/` | CI, Dependabot, plantilla de PR |
 | `.semgrep/` | Reglas SAST propias |
