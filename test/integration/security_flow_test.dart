@@ -94,7 +94,7 @@ void main() {
           .create(
             productId: reserved.id,
             meetingPoint: points.first.slug,
-            pickupAt: tomorrowAtOne(),
+            pickupAt: pickupSlot(),
           );
 
       // Ajeno es como inexistente: 404, sin decir que existe (OWASP API1).

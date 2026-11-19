@@ -4,6 +4,7 @@ import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/domain/reservation_models.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 
 import 'live_api.dart';
@@ -43,6 +44,31 @@ Future<Conversation> openChat(LiveSession buyer, String productId) =>
 DateTime tomorrowAtOne() {
   final now = DateTime.now().toUtc().subtract(const Duration(hours: 6));
   return DateTime.utc(now.year, now.month, now.day + 1, 19);
+}
+
+/// Diferencia del campus con UTC (Mexico, sin horario de verano).
+const _campusOffset = Duration(hours: 6);
+
+/// Una hora de "Apartar" elegida como la hoja (`PickupSlots`: dentro de las
+/// 24 h y del horario del campus), con el reloj del campus aunque la maquina
+/// que corre la prueba este en otra zona (el CI corre en UTC).
+DateTime pickupSlot() {
+  final campus = DateTime.now().toUtc().subtract(_campusOffset);
+  final wall = DateTime(
+    campus.year,
+    campus.month,
+    campus.day,
+    campus.hour,
+    campus.minute,
+  );
+  final slot = PickupSlots.around(wall).first.at;
+  return DateTime.utc(
+    slot.year,
+    slot.month,
+    slot.day,
+    slot.hour,
+    slot.minute,
+  ).add(_campusOffset);
 }
 
 /// "Hacer pedido" desde el chat (HU-23).

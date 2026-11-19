@@ -171,7 +171,7 @@ void main() {
       final reservation = await buyer.create(
         productId: product.id,
         meetingPoint: points.first.slug,
-        pickupAt: tomorrowAtOne(),
+        pickupAt: pickupSlot(),
       );
       final bought = await buyer.mine(ReservationTab.buyer);
       final sold = await seller.mine(ReservationTab.seller);
@@ -201,7 +201,7 @@ void main() {
       final reservation = await reservations.create(
         productId: product.id,
         meetingPoint: points.first.slug,
-        pickupAt: tomorrowAtOne(),
+        pickupAt: pickupSlot(),
       );
 
       final cancelled = await reservations.cancel(reservation.id);

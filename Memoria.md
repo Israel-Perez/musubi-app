@@ -20,6 +20,7 @@
   - El log de la API en Windows no viene en UTF-8: se lee con `allowMalformed`.
   - `dotnet run` deja vivo el proceso hijo al detenerlo: el script corre el DLL directo.
   - Aceptar un pedido exige que quien compra haya elegido el pago (`orders.payment_missing`).
+  - La hora de un apartado se elige con `PickupSlots` y el reloj del campus (UTC-6), no con el de la máquina: el CI corre en UTC y "mañana a la 1" puede pasar de las 24 h (`reservations.invalid_pickup_time`).
 - **Para las HU que vengan:** una llamada nueva a la API sin su flujo en `test/integration/` rompe el job `integration`; un archivo nuevo de `lib/` que toque tokens rompe `session_security_test.dart` (skill `testing-strategy`, pasos 9 y 10).
 
 ## Lote 0.11.0+13 a Google Play (16-Nov-2026, SCRUM-87)
