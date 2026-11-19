@@ -30,6 +30,11 @@ Al escribir la sección `Tests` de una spec, al crear pruebas y al auditar.
 6. **Accesibilidad (RNF-20):** `expect(tester, meetsGuideline(textContrastGuideline))` en las pantallas nuevas desde `02-01`.
 7. **Tamaños (RNF-27):** `tester.view.physicalSize` con un teléfono pequeño y una tablet en las pantallas principales (`02-01`).
 8. **RNF-25:** las HU de M-01, M-06 y M-08 llevan pruebas de data, estado y UI obligatoriamente.
+9. **Integración contra la API real (02-10, SCRUM-120).** Aplica a todas las HU, también las que vengan.
+   - Si la HU agrega o cambia una llamada a la API, su flujo va en `test/integration/<flujo>_flow_test.dart` con `liveUser()` y los proveedores reales.
+   - Verifica con `pwsh scripts/run_integration_tests.ps1`. El guard `tool/check_integration_coverage.dart` falla si una fila del catálogo que consume `musubi-app` nunca se llamó.
+   - Cada prueba crea sus cuentas; solo `admin_flow_test.dart` usa `liveAdmin()`.
+10. **Seguridad de la app:** un archivo nuevo de `lib/` que lea o guarde tokens rompe `test/security/session_security_test.dart`, a propósito. Agregarlo a `_tokenFiles` es una decisión de revisión (MASVS-STORAGE).
 
 ## Checklist
 Las 3 capas probadas · sin red · fakes en `test/helpers/` · conteos reales en spec y PR.
