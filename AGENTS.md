@@ -131,11 +131,20 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 
 ## 8. Observabilidad
 
-> 🚧 Pendiente (`02-01`): Firebase Crashlytics y registro de errores sin PII.
+> Pendiente (`02-01`): Firebase Crashlytics y registro de errores sin PII. La observabilidad del servicio (logs, alarmas y dashboard de CloudWatch) está en `musubi-api`.
 
 ## 9. Publicación
 
-> 🚧 Pendiente (`02-02`): firma de subida (`android/key.properties`, ignorado), ficha de Google Play, prueba cerrada desde el 09-Nov-2026 y versión `1.0.0` publicada antes de la evaluación del 02-Dic-2026 (despliegue desde GitHub; versión según `docs/versionado.md`).
+- Google Play en **prueba cerrada** desde el 09-Nov-2026. La versión vigente está en `docs/versionado.md` (hoy `0.11.0+13`); la ficha y "Seguridad de los datos", en `docs/play/README.md`.
+- El workflow `release-play` (manual) hace esto:
+  1. valida que la versión no exista;
+  2. corre las pruebas;
+  3. compila y firma el AAB con la llave de subida (secreto de GitHub, se borra al terminar);
+  4. lo sube a la pista elegida;
+  5. etiqueta `app-vX.Y.Z+N`.
+- En local, la firma lee `android/key.properties` (ignorado).
+- Los lotes juntan varias HU antes de publicar.
+- Pendiente: la versión `1.0.0` en producción antes de la evaluación del 02-Dic-2026.
 
 ## 10. Reglas basadas en lecciones aprendidas
 

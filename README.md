@@ -1,60 +1,115 @@
 # musubi-app
 
-App Android de **MUSUBI**, la plataforma de compra-venta entre estudiantes de la UTTT. Hecha con **Flutter** (Riverpod, go_router, dio), consume la API `musubi-api`.
+App Android de **MUSUBI**, la plataforma de compra-venta entre estudiantes de la UTTT. Está hecha con **Flutter** (Riverpod, go_router, dio), consume la API [`musubi-api`](https://github.com/Israel-Perez/musubi-api) y se publica en **Google Play** (prueba cerrada).
 
-Se desarrolla con **Spec Driven Development (SDD)** y DevSecOps: cada cambio nace de una spec en `specs/` (plantilla `specs/_template.md`) y se verifica con comandos y pruebas. Las reglas no negociables están en `.specify/memory/constitution.md`.
+Se desarrolla con **Spec Driven Development (SDD)** y DevSecOps. Cada cambio nace de una spec en `specs/` (plantilla `specs/_template.md`) y se verifica con pruebas y guardarraíles en el CI. Las reglas no negociables están en `.specify/memory/constitution.md`.
 
-- Repo hermano (API .NET 10): <https://github.com/Israel-Perez/musubi-api>
-- Contrato HTTP: [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) (canónico; aquí se enlaza, no se copia)
-- Backlog: Jira, proyecto `SCRUM` · Documentación funcional: Confluence
-- **Maqueta** (la app debe ser igual, lineamiento 4): [`docs/maqueta/`](docs/maqueta/README.md) · Versiones: [`docs/versionado.md`](docs/versionado.md)
-- Lineamientos de la materia (evaluación el 02-Dic-2026): [`musubi-api/docs/bitacora/lineamientos-materia.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/bitacora/lineamientos-materia.md)
+| Qué | Dónde |
+|---|---|
+| API en producción | <https://api.musubiapp.com.mx> |
+| Contrato HTTP (canónico; aquí se enlaza, no se copia) | [`musubi-api/docs/endpoints.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/endpoints.md) |
+| Maqueta (la app es igual, 60 pantallas) | [`docs/maqueta/`](docs/maqueta/README.md) |
+| Historias de usuario ↔ specs ↔ pruebas | [`docs/trazabilidad.md`](docs/trazabilidad.md) |
+| Versiones y Google Play | [`docs/versionado.md`](docs/versionado.md), [`docs/play/`](docs/play/README.md) |
+| Backlog | Jira (proyecto `SCRUM`) y Confluence |
 
-## Estado (21-Oct-2026)
+## Qué hace
 
-Plantilla inicial lista. Fases 00 (constitución) y 01 (fundación) implementadas en "🚧 Borrador con evidencia", en espera de designar revisores:
+Cada módulo vive en `lib/features/<modulo>/` con sus capas `domain/`, `data/` y `presentation/`:
 
-- `dart format` sin cambios · `flutter analyze --fatal-infos --fatal-warnings` sin observaciones · `flutter test` 144/144.
-- HU-01/03/47: "Crea tu cuenta" con detección del campus, verificación con código de 6 dígitos, bienvenida y aviso de privacidad/términos (`assets/legal/`, fuente única para la app y la landing).
-- HU-48 (fase 1): la app abre en la vitrina del campus sin cuenta; comprar, chatear, guardar, publicar, Mensajes y Perfil piden la cuenta con la hoja de la maqueta y regresan a donde estabas.
-- Marca (02-03): logotipo de anillos, ícono de la app, splash nativo y splash animado.
-- HU-02 + HU-56: "Hola de nuevo" (iniciar sesión), renovación de la sesión con el refresh token, "Cerrar sesión" con confirmación y recuperar la contraseña con un código de 6 dígitos.
-- Base 02-01: tema de la maqueta (Plus Jakarta Sans, claro/oscuro, contraste AA), barra de 5 pestañas con guardia de sesión, tokens en almacenamiento seguro con renovación automática, errores por `code` y pruebas de seguridad de Android.
-- Maqueta HTML versionada en `docs/maqueta/` con su índice de pantallas ↔ HU (SCRUM-66).
-- APK de debug compilado: paquete `com.musubi.app`, `targetSdkVersion 36`.
-- `critic-guardrails` PASS · Semgrep 0 hallazgos · actionlint sin hallazgos.
-- Pantalla inicial "Musubi" que consulta `GET /api/v1/ping` y muestra el estado sin romperse si la API no responde.
+| Módulo | Pantallas |
+|---|---|
+| `auth` | Crear cuenta con correo institucional y código, iniciar sesión, recuperar contraseña, eliminar la cuenta |
+| `marketplace` | Inicio (recomendados, populares, recientes), buscar y filtrar, producto, favoritos, búsquedas guardadas, comparar y "Avísame" |
+| `listings` | Vender con fotos en 4 pasos, Mis productos (editar, pausar, piezas, vendido) |
+| `purchase_requests` | "Se busca": publicar una necesidad, ofertas, coincidencias |
+| `chat` | Mensajes en tiempo real (SignalR sobre WebSocket) |
+| `genai` | Acuerdo de entrega con IA (Gemini) |
+| `orders` | Pedido, pago en efectivo o por transferencia, entrega, apartar 24 h con QR, cuenta para recibir pagos |
+| `reputation` | Calificar, reportar y bloquear |
+| `notifications` | Avisos y push (Firebase Cloud Messaging) |
+| `recommendations` | "Recomendado para ti" y "Ver parecidos" (ML en la API) |
+| `seller_support` | "Llevan tiempo sin venderse", quiénes la buscan, ideas con IA |
+| `profile` | Perfil, privacidad, intereses, tema, insignias de confianza |
+| `admin` | Moderación de reportes y cuentas, categorías (solo el rol `admin`) |
+| `status` | Estado de la API (`GET /api/v1/ping`) |
 
-## Requisitos
+**Lo que hace la app con los datos:**
 
-- Flutter **3.47.7** (stable; el CI usa la misma versión) — Dart 3.13.5
-- JDK 17
-- Android SDK: platform `android-36`, build-tools 36.1.0, NDK 28.2.13676358
-- PowerShell 7 (`pwsh`) para el critic (también funciona en Windows PowerShell 5.1)
+- **Sesión:** se guarda en el almacén seguro (Keystore) y sigue viva al cerrar y volver a abrir la app. El logout revoca la sesión en la API (`POST /auth/logout`).
+- **Moderación:** las fotos y los textos inapropiados se rechazan en la API (AWS Rekognition y Comprehend) y la app muestra el motivo.
+- **Permisos (en contexto):**
+  - `CAMERA`: leer el QR de un apartado (ML Kit);
+  - `POST_NOTIFICATIONS`: avisos push;
+  - `INTERNET`.
+- Las fotos usan el selector del sistema, sin permiso de almacenamiento.
 
-> **Windows:** el `sdkmanager.bat` de las cmdline-tools recientes está obsoleto y parte los argumentos en `;`. Instala los paquetes con el CLI nuevo:
-> `android sdk install "platforms;android-36" "build-tools;36.1.0" "ndk;28.2.13676358"` (en `%LOCALAPPDATA%\Android\Sdk\cmdline-tools\latest\bin`).
+## Seguridad (OWASP MASVS)
+
+- **Almacenamiento:**
+  - los tokens van solo en el almacén seguro, y una prueba exige que solo los archivos de sesión los toquen;
+  - `allowBackup=false`;
+  - nada sensible en el APK: las llaves privadas viven solo en la API.
+- **Red:**
+  - HTTPS fuera de dev (se valida al arrancar);
+  - release sin tráfico en claro;
+  - el token solo viaja al esquema, host y puerto de la API.
+- **Sesión:** refresh automático y una sola renovación ante varios 401. Si la API da la sesión por terminada (logout, suspensión), la app la cierra.
+- **Código:** análisis estricto (very_good_analysis), Semgrep, critic y Dependabot.
+
+## Pruebas
+
+| Suite | Pruebas | Cómo se corre |
+|---|---|---|
+| Unitarias y de widget (`test/`) | 824 | `flutter test` |
+| Seguridad (`test/security/` + `test/integration/security_flow_test.dart`) | 14 + 4 | Las primeras con `flutter test`; las 4 de flujos, con el script de integración |
+| Integración contra la API real (`test/integration/`) | 53 | `pwsh scripts/run_integration_tests.ps1` (levanta `../musubi-api`) |
+| **En un teléfono físico** (`integration_test/`) | 8 | `pwsh scripts/run_device_tests.ps1` (teléfono por USB; guía en [`integration_test/README.md`](integration_test/README.md)) |
+
+- **Integración:** la suite llama a cada uno de los 121 endpoints que la app consume. Lo exige `tool/check_integration_coverage.dart` en el CI, así que una llamada nueva sin prueba no entra.
+- **Teléfono físico:** la suite corrió el 19-Nov-2026 en un Galaxy A54, 8/8. Recorre crear cuenta, sesión persistente, cerrar sesión, eliminar cuenta, buscar y chatear, apartar, publicar con foto y moderación.
+
+## CI y CD
+
+| Job (`ci-pr.yml`, en cada PR y push a `main`) | Qué hace |
+|---|---|
+| `analyze` | `dart format` sin cambios y `flutter analyze --fatal-infos --fatal-warnings` |
+| `test` | `flutter test --coverage` (artefacto lcov) |
+| `integration` | Levanta musubi-api (la rama del mismo nombre, o `main`) y corre `test/integration` con el guard de cobertura |
+| `critic` | Sin secretos, sin `http://` en `lib/`, sin `TODO`, sin `catch` que trague errores |
+| `semgrep` | SAST (`--config=auto` + reglas propias) |
+| `build-apk` | APK de debug (solo en push a `main`) |
+
+**Publicación (`release-play`, manual):**
+
+1. Valida que la versión no exista.
+2. Corre las pruebas.
+3. Compila el AAB de producción y lo firma con la llave de subida (secreto de GitHub).
+4. Lo sube a la pista elegida de Google Play.
+5. Etiqueta `app-vX.Y.Z+N` y borra la llave.
+
+Las actions están fijadas por SHA y Flutter está fijado (`FLUTTER_VERSION`).
 
 ## Puesta en marcha
+
+Requisitos: Flutter **3.47.7** (stable), JDK 17 y Android SDK (`android-36`, build-tools 36.1.0, NDK 28.2.13676358).
 
 ```powershell
 flutter pub get
 Copy-Item config/dev.example.json config/dev.json        # ignorado por Git
 flutter run --dart-define-from-file=config/dev.json      # emulador → musubi-api en http://10.0.2.2:5080
-adb reverse tcp:5080 tcp:5080; flutter run --dart-define-from-file=config/usb.json   # celular por USB → http://localhost:5080
+adb reverse tcp:5080 tcp:5080; flutter run --dart-define-from-file=config/usb.json   # teléfono por USB
 ```
 
-Para ver "Servidor conectado", levanta la API (`dotnet run --project Musubi.Api` en `musubi-api`). Sin la API, la app muestra "Sin conexión con el servidor" y el botón "Reintentar".
+**Configuración:** en `config/<ambiente>.json` van solo valores públicos (URL base y banderas); ver [`config/README.md`](config/README.md). Todo lo que va en el APK es público.
 
-**Configuración:** solo valores públicos (URL base y banderas) en `config/<ambiente>.json` — ver [`config/README.md`](config/README.md). **Todo lo que va en el APK es público:** nunca llaves privadas; esas viven en `musubi-api`.
-
-## Comandos de calidad (los mismos del CI)
+**Comandos de calidad (los mismos del CI):**
 
 ```powershell
 dart format --output=none --set-exit-if-changed .
 flutter analyze --fatal-infos --fatal-warnings
-flutter test                                   # flutter test --coverage para lcov
-flutter build apk --debug --dart-define-from-file=config/dev.example.json
+flutter test
+pwsh scripts/run_integration_tests.ps1
 pwsh scripts/critic-guardrails.ps1
 semgrep scan --config=auto --config=.semgrep/semgrep.yaml --error
 ```
@@ -62,60 +117,38 @@ semgrep scan --config=auto --config=.semgrep/semgrep.yaml --error
 ## Estructura
 
 ```
-lib/
-├── main.dart                 valida la config y arranca ProviderScope
-├── app/                      MusubiApp (tema, es-MX) y router (go_router)
-├── core/                     config/, network/ (dio, api_paths), errors/, theme/
-└── features/                 un módulo por carpeta (M-01…M-14) → domain/ data/ presentation/
-    └── status/               ping a la API (patrón de referencia, spec 01-03)
-test/                         unit + widget (helpers/ con fakes)
-integration_test/             pruebas en un dispositivo
-android/                      com.musubi.app · targetSdk 36 · network_security_config
-config/                       *.example.json por ambiente
-docs/                         trazabilidad, módulos, versionado.md, maqueta/
-specs/ scripts/ .claude/ .github/ .semgrep/
+lib/               main.dart, app/ (router, tema), core/ (config, red, sesión, widgets), features/ (14 módulos)
+test/              unitarias y de widget, helpers/ (fakes), security/, integration/ (contra la API)
+integration_test/  suite en un teléfono físico (app_test.dart, flows/)
+android/           com.musubi.app · targetSdk 36 · network_security_config
+config/            *.example.json por ambiente
+docs/              trazabilidad, módulos, versionado, maqueta/, play/, mcp.md
+specs/             SDD: fases 00–02 y mNN-<modulo>/HU-NN-*/
+scripts/ tool/     critic, secciones compartidas, integración, teléfono, guard de cobertura
+.claude/ .opencode/  agentes de IA (3) y skills (9)
 ```
 
-La convención de módulos y capas está en [`lib/features/README.md`](lib/features/README.md); los 14 módulos, en [`docs/modulos.md`](docs/modulos.md).
+## IA en el desarrollo
 
-## Flujo SDD
+- **Agentes:** 3 sub-agentes en `.claude/agents/`:
+  - `slice-scaffolder`;
+  - `security-reviewer` (MASVS, solo lectura);
+  - `traceability-clerk` (solo lectura).
+- **Skills:** 9 en `.claude/skills/`.
+- **MCP:** Atlassian y AWS ([`docs/mcp.md`](docs/mcp.md)).
+- **Memoria:** el aprendizaje del desarrollo queda en [`Memoria.md`](Memoria.md); las reglas permanentes, en `AGENTS.md`.
 
-**¿Eres nuevo en el equipo?** Lee [`docs/guia-equipo.md`](docs/guia-equipo.md): accesos, herramientas, el flujo de una HU paso a paso con Claude Code u OpenCode, prompts listos para copiar y lo que choca al trabajar varias personas a la vez.
+## Flujo SDD y ramas
 
-1. Al iniciar el sprint de una HU: `specs/mNN-<modulo>/HU-NN-<slug>/{spec,plan,task}.md`, con la **misma carpeta** que en `musubi-api` y el enlace en `Contraparte`.
-2. Rama `feature/SCRUM-NN-slug`.
-3. Esqueleto con el agente `slice-scaffolder` → implementación y pruebas (skills `vertical-slice` y `api-contract`).
-4. Gate pre-push: `pwsh scripts/critic-guardrails.ps1` + agente `security-reviewer` (MASVS); trazabilidad con `traceability-clerk`.
-5. PR con la clave Jira en el título (`SCRUM-19 HU-01 Crear cuenta: … (Tests N, analyze 0, critic PASS)`) que **enlaza el PR del back**.
-6. Actualizar `docs/trazabilidad.md` y `Memoria.md`.
+¿Eres nuevo en el equipo? Lee [`docs/guia-equipo.md`](docs/guia-equipo.md).
 
-## CI
+1. Escribe la spec de la HU, en la misma carpeta que en `musubi-api`.
+2. Crea la rama `feature/SCRUM-NN-slug`.
+3. Implementa con sus pruebas.
+4. Pásala por `security-reviewer`.
+5. Abre el PR con la clave Jira; debe enlazar el PR del back.
 
-`.github/workflows/ci-pr.yml` corre en cada `pull_request` y `push` a `main`:
-
-| Job | Qué hace |
-|---|---|
-| `analyze` | `dart format` (sin cambios) + `flutter analyze --fatal-infos --fatal-warnings` |
-| `test` | `flutter test --coverage` + artefacto `coverage-lcov` |
-| `critic` | `scripts/critic-guardrails.ps1` (4 bloqueantes) |
-| `semgrep` | SAST (`--config=auto` + reglas propias) |
-| `build-apk` | APK de debug con Java 17 — **solo en push a `main`** (ahorra minutos) |
-
-Las actions están fijadas por SHA y Flutter está fijado (`FLUTTER_VERSION`). Dependabot (pub y github-actions, con `cooldown` de 7 días) las mantiene al día.
-
-## Protección de rama (`main`)
-
-Ruleset **"Main Proteccion"** (GitHub → Settings → Rules → Rulesets), activo desde el 03-Nov-2026. Detalle en la spec [`02-05`](specs/phase-02-architecture/02-05-ci-cd/spec.md).
-
-- No se puede borrar `main` ni hacer force push.
-- Pull request obligatorio con **1 aprobación** (de un integrante distinto del autor).
-- Checks obligatorios con la rama al día: `analyze`, `test`, `critic` y `semgrep` (`build-apk` corre después del merge).
-- Revisión automática de Copilot en cada PR.
-- El administrador puede saltar la aprobación solo desde un PR, mientras no haya un revisor fijo.
-
-Los MCP del equipo (Atlassian y AWS) se configuran como dice [`musubi-api/docs/mcp.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/mcp.md).
-
-> En GitHub gratuito, la protección de rama (y los rulesets) solo se aplica en **repos públicos**. Para un repo **privado** se necesita GitHub Pro (cuenta personal) o GitHub Team (organización).
+`main` está protegida (ruleset "Main Proteccion", spec [`02-05`](specs/phase-02-architecture/02-05-ci-cd/spec.md)): no acepta force push, pide un PR con 1 aprobación y los checks del CI en verde.
 
 ## Créditos
 
