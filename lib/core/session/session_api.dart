@@ -11,9 +11,11 @@ abstract interface class SessionApi {
   /// conserva y se intenta despues.
   Future<SessionTokens?> refresh(String refreshToken);
 
-  /// Revoca la sesion de este dispositivo. Devuelve `false` si no se pudo
-  /// avisar a la API (sin red); el logout local sigue de todos modos.
-  Future<bool> revoke(String refreshToken);
+  /// Revoca la sesion de este dispositivo. Con [accessToken], la API tambien
+  /// lo revoca de inmediato (lista de revocacion, musubi-api 02-10). Devuelve
+  /// `false` si no se pudo avisar a la API (sin red); el logout local sigue de
+  /// todos modos.
+  Future<bool> revoke(String refreshToken, {String? accessToken});
 }
 
 /// [SessionApi] sobre el cliente sin sesion: la renovacion nunca pasa por el
@@ -42,11 +44,16 @@ class HttpSessionApi implements SessionApi {
   }
 
   @override
-  Future<bool> revoke(String refreshToken) async {
+  Future<bool> revoke(String refreshToken, {String? accessToken}) async {
     try {
+      // Este cliente no tiene AuthInterceptor: el access token va solo en esta
+      // peticion y solo hacia la API (su baseUrl), para que deje de servir ya.
       await _dio.post<void>(
         ApiPaths.authLogout,
         data: {'refreshToken': refreshToken},
+        options: accessToken == null
+            ? null
+            : Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
       return true;
     } on DioException {

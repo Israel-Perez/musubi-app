@@ -88,6 +88,23 @@ void main() {
       expect(adapter.requests.single.data, {'refreshToken': 'r1'});
     });
 
+    test(
+      'con el access token: va en Authorization para revocarlo ya',
+      () async {
+        final revoked = await api((_) async => ResponseBody.fromString('', 204))
+            .revoke('r1', accessToken: 'a1');
+
+        expect(revoked, isTrue);
+        expect(adapter.requests.single.headers['Authorization'], 'Bearer a1');
+      },
+    );
+
+    test('sin access token: no manda Authorization', () async {
+      await api((_) async => ResponseBody.fromString('', 204)).revoke('r1');
+
+      expect(adapter.requests.single.headers['Authorization'], isNull);
+    });
+
     test('sin red: false, sin lanzar', () async {
       final revoked = await api(
         (options) async => throw DioException.connectionError(
@@ -119,6 +136,8 @@ void main() {
       await container.read(sessionControllerProvider.notifier).logOut();
 
       expect(sessionApi.revoked, ['refresh-1']);
+      // 02-10: tambien el access token, para que la API lo revoque ya.
+      expect(sessionApi.revokedAccess, ['access-1']);
       expect(container.read(sessionControllerProvider), const Visitor());
       expect(await container.read(tokenStoreProvider).read(), isNull);
     });

@@ -1,5 +1,28 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — SCRUM-120 (02-10): pruebas contra la API real y seguridad de la sesión
+
+- **Qué:** la revisión contra "Prompts para evaluar v1" (16-Nov-2026) mostró que la app no tenía pruebas de integración (solo el arranque) y casi ninguna de seguridad. Ahora hay:
+  - `test/integration/`: 45 pruebas, un archivo por grupo de pantallas, con los proveedores reales contra musubi-api en Development;
+  - `tool/check_integration_coverage.dart`: 121 filas del catálogo llamadas y 1 excepción;
+  - el job `integration` del CI;
+  - `test/security/session_security_test.dart` (9).
+- **Cambio en `lib/`:** el logout manda también el access token (`HttpSessionApi.revoke(..., accessToken:)`), para que la API lo revoque de inmediato (`musubi-api:02-10`). Antes un token copiado seguía sirviendo hasta 15 minutos.
+- **Decisiones técnicas:**
+  - Las pruebas corren en la VM de `flutter test` (sin emulador), con `ProviderContainer` y los proveedores de la app. Así entran al CI y prueban Dio, `AuthInterceptor`, la sesión y el hub de SignalR de verdad.
+  - Las cuentas son reales: el código sale del log de la API (`Email:Provider=Log`).
+  - Sin `MUSUBI_API_URL` se saltan: `flutter test` no depende de la API.
+  - El CI usa la rama de musubi-api del mismo nombre si existe, para probar cambios coordinados antes de fusionar.
+  - Excepción: `POST /notifications/devices/remove`. Al cerrar sesión la app da de baja el teléfono en FCM y ya no tiene sesión para llamar a la API.
+- **Verificación (17-Nov-2026):** `flutter analyze` sin observaciones; `test/security` 14; integración 45 en verde contra la API de la rama `feature/SCRUM-120-cierre-evaluacion`; guard OK; `check_shared_sections` OK (fila `0.5.0-alpha.41`).
+- **Errores a evitar:**
+  - En Windows, varios procesos que agregan líneas al mismo archivo se pisan: la cobertura va en un archivo por proceso.
+  - El log de la API en Windows no viene en UTF-8: se lee con `allowMalformed`.
+  - `dotnet run` deja vivo el proceso hijo al detenerlo: el script corre el DLL directo.
+  - Aceptar un pedido exige que quien compra haya elegido el pago (`orders.payment_missing`).
+  - La hora de un apartado se elige con `PickupSlots` y el reloj del campus (UTC-6), no con el de la máquina: el CI corre en UTC y "mañana a la 1" puede pasar de las 24 h (`reservations.invalid_pickup_time`).
+- **Para las HU que vengan:** una llamada nueva a la API sin su flujo en `test/integration/` rompe el job `integration`; un archivo nuevo de `lib/` que toque tokens rompe `session_security_test.dart` (skill `testing-strategy`, pasos 9 y 10).
+
 ## Lote 0.11.0+13 a Google Play (16-Nov-2026, SCRUM-87)
 
 - Con la API `0.5.0-alpha.40` (`infra-up` del 16-Nov-2026): HU-52, HU-51, HU-55, HU-35, HU-49, HU-66, HU-18/29, HU-12, HU-36/37/38, HU-64, HU-67 y Administración (HU-39/40/41). Notas en `docs/play/whatsnew/whatsnew-es-419`.

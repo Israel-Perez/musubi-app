@@ -10,13 +10,17 @@ class FakeSessionApi implements SessionApi {
   final SessionTokens? renewed;
   final List<String> revoked = [];
 
+  /// Access tokens que el logout pidio revocar (musubi-api 02-10).
+  final List<String?> revokedAccess = [];
+
   @override
   Future<SessionTokens?> refresh(String refreshToken) async => renewed;
 
   @override
-  Future<bool> revoke(String refreshToken) async {
+  Future<bool> revoke(String refreshToken, {String? accessToken}) async {
     if (!online) return false;
     revoked.add(refreshToken);
+    revokedAccess.add(accessToken);
     return true;
   }
 }

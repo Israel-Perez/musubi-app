@@ -1,0 +1,5 @@
+tags:
+  # 02-10 (SCRUM-120): contra musubi-api real; sin MUSUBI_API_URL se saltan.
+  integration:
+  # Seguridad de la app (test/security y los flujos de seguridad de test/integration).
+  security:
