@@ -1,5 +1,9 @@
 # Memoria del proyecto — musubi-app
 
+## SCRUM-123: gitleaks en el CI (19-Nov-2026)
+
+- El job `gitleaks` (8.30.1, binario oficial verificado por checksum) revisa el historial completo de Git en cada PR; en local, 0 hallazgos en 143 commits. Complementa al critic, que solo revisa el diff. El DAST con OWASP ZAP vive en musubi-api (`dast.yml`).
+
 ## SCRUM-122: documentación al día para la auditoría v2 (19-Nov-2026)
 
 - El README es la portada del proyecto: qué hace, arquitectura, seguridad, pruebas con conteos, CI/CD y cómo correrlo. Se quitaron los "🚧 Pendiente" que ya estaban resueltos (observabilidad, dominio, Play) y lo que prometía controles que no existen (ZAP y SonarCloud).

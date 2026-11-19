@@ -77,6 +77,7 @@ Cada módulo vive en `lib/features/<modulo>/` con sus capas `domain/`, `data/` y
 | `test` | `flutter test --coverage` (artefacto lcov) |
 | `integration` | Levanta musubi-api (la rama del mismo nombre, o `main`) y corre `test/integration` con el guard de cobertura |
 | `critic` | Sin secretos, sin `http://` en `lib/`, sin `TODO`, sin `catch` que trague errores |
+| `gitleaks` | Secretos en el historial completo de Git (gitleaks 8.30.1, binario verificado) |
 | `semgrep` | SAST (`--config=auto` + reglas propias) |
 | `build-apk` | APK de debug (solo en push a `main`) |
 
