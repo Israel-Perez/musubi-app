@@ -1,6 +1,6 @@
 # 02-10 — Cierre de brechas de la evaluación (app)
 
-**HU / Jira / Sprint / Módulo / Contraparte:** N/A (spec técnica) / SCRUM-120 / S5 / Plataforma / [musubi-api:02-10](https://github.com/Israel-Perez/musubi-api/tree/main/specs/phase-02-architecture/02-10-cierre-evaluacion)
+**HU / Jira / Sprint / Módulo / Contraparte:** N/A (spec técnica) / SCRUM-120, SCRUM-121 (suite en el teléfono) / S5 / Plataforma / [musubi-api:02-10](https://github.com/Israel-Perez/musubi-api/tree/main/specs/phase-02-architecture/02-10-cierre-evaluacion)
 
 ## Contexto
 El documento "Prompts para evaluar v1" (16-Nov-2026) pregunta qué pantallas que consumen endpoints no tienen pruebas de integración o de seguridad. En la revisión del 17-Nov-2026 la app tenía:
@@ -25,6 +25,10 @@ El documento "Prompts para evaluar v1" (16-Nov-2026) pregunta qué pantallas que
    - un token alterado se rechaza y la sesión termina;
    - un visitante no entra a lo privado;
    - nadie lee el pedido o el apartado de otra persona (404).
+6. **Suite en un teléfono físico** ("Auditoría de evaluación v2", sección 3). `scripts/run_device_tests.ps1` hace todo con el teléfono conectado por USB:
+   - levanta la API en la PC y la expone con `adb reverse`;
+   - sirve los códigos de verificación (`tool/device_code_server.dart`);
+   - corre `integration_test/app_test.dart`, con 8 pruebas de pantallas reales: cuenta, sesión persistente, cerrar sesión, eliminar cuenta, buscar y chatear, apartar, publicar con foto y moderación.
 5. **El logout manda el access token** a `POST /auth/logout` para que la API lo revoque de inmediato (antes solo mandaba el refresh token).
 
 ## Diseño
@@ -53,16 +57,19 @@ El documento "Prompts para evaluar v1" (16-Nov-2026) pregunta qué pantallas que
   - `community_flow_test.dart` (2);
   - `admin_flow_test.dart` (4);
   - `security_flow_test.dart` (4).
+- `test/integration/device_flows_test.dart` (8): los flujos del teléfono en la VM.
+- `integration_test/app_test.dart` (8, en el teléfono): `flows/start_flow.dart`, `account_flow.dart`, `explore_flow.dart` y `sell_flow.dart`.
 - `test/security/session_security_test.dart` (9).
 - `test/core/session/session_api_test.dart`: el logout manda el access token.
 
 ## Criterios
-- [x] 45 pruebas de integración en verde contra la API.
+- [x] 53 pruebas de integración en verde contra la API (45 de datos + 8 de pantallas).
+- [ ] La suite del teléfono, corrida en un teléfono físico (pendiente de conectar uno).
 - [x] `check_integration_coverage`: OK, con 121 filas llamadas y 1 excepción documentada (`POST /notifications/devices/remove`).
 - [x] `flutter analyze` sin observaciones, `dart format` sin cambios y critic PASS.
 
 ## Límites
-- `integration_test/` (en un dispositivo) sigue siendo solo el arranque. Las pantallas tienen sus pruebas de widget; la integración se prueba en la VM para que corra en el CI sin emulador.
+- El CI no tiene teléfono: corre los flujos de pantallas en la VM (`device_flows_test.dart`). La suite en el teléfono se corre a mano con `run_device_tests.ps1`.
 - `POST /notifications/devices/remove`: al cerrar sesión la app da de baja el teléfono en FCM, y la API borra el token en el siguiente envío (HU-31).
 
 ## Aprobación y Control de Cambios

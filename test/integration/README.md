@@ -27,6 +27,10 @@ Opciones:
 
 Sin `MUSUBI_API_URL`, `flutter test` las salta, así que la suite normal no depende de la API.
 
+## Flujos del teléfono en la VM
+
+`device_flows_test.dart` corre los flujos de pantallas de `integration_test/flows/` en la VM, con frames y tiempo reales, contra la API. Es la misma suite que se corre en un teléfono con `scripts/run_device_tests.ps1` (ver `integration_test/README.md`).
+
 ## Reglas para una HU nueva
 
 - Si la HU agrega una llamada a la API, agrega su flujo aquí con `liveUser()` y los proveedores reales. Si no, el guard falla en el CI.
