@@ -149,7 +149,7 @@ scripts/ tool/     critic, secciones compartidas, integración, teléfono, guard
 4. Pásala por `security-reviewer`.
 5. Abre el PR con la clave Jira; debe enlazar el PR del back.
 
-`main` está protegida (ruleset "Main Proteccion", spec [`02-05`](specs/phase-02-architecture/02-05-ci-cd/spec.md)): no acepta force push, pide un PR con 1 aprobación y los checks del CI en verde.
+`main` está protegida (ruleset "Main Proteccion", spec [`02-05`](specs/phase-02-architecture/02-05-ci-cd/spec.md)): no acepta force push, pide un PR con 1 aprobación y los checks obligatorios en verde (`analyze`, `test`, `critic`, `semgrep` y `gitleaks`).
 
 ## Créditos
 
