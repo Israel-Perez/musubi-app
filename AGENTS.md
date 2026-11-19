@@ -16,7 +16,7 @@
   - `pwsh scripts/critic-guardrails.ps1`
   - `pwsh scripts/run_integration_tests.ps1` (02-10: levanta `../musubi-api`, corre `test/integration` contra ella y el guard de cobertura)
   - `pwsh scripts/run_device_tests.ps1` (02-10: la suite de `integration_test/` en un teléfono físico por USB contra `../musubi-api`; guía en `integration_test/README.md`)
-- **CI (`ci-pr.yml`):** `analyze`, `test` (cobertura como artefacto), `integration` (contra musubi-api real: la rama del mismo nombre o `main`), `critic`, `semgrep`; `build-apk` solo en push a `main`.
+- **CI (`ci-pr.yml`):** `analyze`, `test` (cobertura como artefacto), `integration` (contra musubi-api real: la rama del mismo nombre o `main`), `critic`, `gitleaks` (secretos en el historial, 02-10), `semgrep`; `build-apk` solo en push a `main`.
 - **Flujo SDD por HU:** spec (`specs/mNN-<modulo>/HU-NN-<slug>/`, misma carpeta que en el back; skill `spec-first-writing`) → `slice-scaffolder` (Fase A) → implementación y pruebas (skill `vertical-slice`) → `security-reviewer` → `traceability-clerk` → PR que enlaza el PR del back.
 - **Ramas y PR:** `feature/SCRUM-NN-slug` / `fix/SCRUM-NN-slug`; un PR = una HU o un fix; título con la clave Jira; checklist de `.github/pull_request_template.md` obligatorio.
 - **Naming:** código en inglés; textos de la UI, documentos y specs en español.
@@ -116,7 +116,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - MASVS-NETWORK: el token solo viaja al esquema, host y puerto de la API (`AuthInterceptor`, con self-test).
 - MASVS-AUTH (02-10): el logout manda también el access token para que la API lo revoque de inmediato (lista de revocación en Redis); `test/security/session_security_test.dart` cuida dónde viven los tokens (lista permitida de archivos), que nada los registre y que un error no los muestre.
 - MASVS-NETWORK: HTTPS fuera de dev (`AppConfig.parse`); release sin tráfico en claro; debug/profile solo hacia `10.0.2.2` (emulador) y `localhost` (USB con `adb reverse`).
-- MASVS-CODE: análisis estricto, Dependabot con `cooldown`, paquetes evaluados (00-01).
+- MASVS-CODE: análisis estricto, Dependabot con `cooldown`, paquetes evaluados (00-01); gitleaks revisa el historial completo en el CI. Las excepciones van en `.gitleaksignore` con su motivo.
 - MASVS-PRIVACY: datos mínimos, aviso de privacidad (HU-47), eliminación de cuenta (HU-46), la IA solo a petición (RNF-06).
 - Firebase (HU-31): política en la skill `critic-guardrails` (archivos ignorados, regenerados en CI desde secretos).
 - Checks del agente `security-reviewer`: `.claude/agents/security-reviewer.md`.
