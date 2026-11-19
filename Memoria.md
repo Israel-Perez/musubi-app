@@ -5,6 +5,17 @@
 - El README es la portada del proyecto: qué hace, arquitectura, seguridad, pruebas con conteos, CI/CD y cómo correrlo. Se quitaron los "🚧 Pendiente" que ya estaban resueltos (observabilidad, dominio, Play) y lo que prometía controles que no existen (ZAP y SonarCloud).
 - **Regla:** la auditoría se responde leyendo los repos. Al cerrar algo que un documento marcaba como pendiente, actualiza el README y `AGENTS.md` en el mismo PR. Si cambian mucho los conteos de pruebas, actualiza también la tabla del README.
 
+## HU-61 — Compartir un producto con un enlace (19-Nov-2026, SCRUM-101)
+
+- Se creó la spec hermana `specs/m04-marketplace/HU-61-compartir-producto-enlace/` en la rama `feature/SCRUM-101-compartir-producto-enlace`, basada en el `origin/main` actualizado.
+- Decisión: el share sheet Android lleva nombre, precio y `https://musubiapp.com.mx/p/{id}` por acción explícita; el preview HTML/OG externo permanece genérico y sin datos del producto.
+- Se conserva HU-48: visitantes mantienen la navegación pública existente; con sesión el API aplica campus y visibilidad. Cambiar a "solo con sesión" exige decisión del PO y conciliar HU-48/API.
+- Se implementaron la hoja nativa `ACTION_SEND`, el contenido con título/precio/URL canónico, la ruta externa `/p/{id}` y el intent filter Android `autoVerify`; la ruta `/producto/:id` se conserva.
+- Verificación: `flutter test` 831 passed, 53 skipped (integración sin API); format sin cambios. El análisis global falla por infos deprecadas `material.dart` que expone Flutter 3.50; los archivos nuevos no tienen diagnósticos y los tocados solo muestran esa deprecación preexistente.
+- El APK debug se compiló con `--android-skip-build-dependency-validation`; `aapt dump badging` confirma `com.musubi.app`, compile/target SDK 36 y version `0.11.0+13`. La compilación normal con Flutter 3.50 exige AGP 9.1.1 y el repo fija 9.1.0; no se cambió ese pin.
+- Para recuperar el espacio sin borrar el caché, se trasladó `C:\Users\alexh\.gradle` a `D:\OpenCodeCache\gradle` y se dejó una junction reversible en la ruta original.
+- Pendientes externos: validar App Links en dispositivo y publicar/verificar `assetlinks.json` y fallback genérico con el dueño de la landing. El 19-Nov-2026 `https://musubiapp.com.mx/.well-known/assetlinks.json` respondió 404.
+
 ## Trabajo en curso — SCRUM-120 (02-10): pruebas contra la API real y seguridad de la sesión
 
 - **Qué:** la revisión contra "Prompts para evaluar v1" (16-Nov-2026) mostró que la app no tenía pruebas de integración (solo el arranque) y casi ninguna de seguridad. Ahora hay:

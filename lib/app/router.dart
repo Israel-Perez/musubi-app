@@ -173,6 +173,9 @@ abstract final class AppRoutes {
   /// puede llevar la tarjeta de Inicio para mostrarla mientras carga.
   static String product(String id) => '/producto/${Uri.encodeComponent(id)}';
 
+  /// Enlace canónico que se comparte fuera de la app (HU-61).
+  static String sharedProduct(String id) => '/p/${Uri.encodeComponent(id)}';
+
   /// Una conversacion existente (desde `Mensajes`, HU-22).
   static String conversation(String id) => '$chat/${Uri.encodeComponent(id)}';
 
@@ -413,6 +416,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               ? state.extra! as ProductSummary
               : null,
         ),
+      ),
+      GoRoute(
+        path: '/p/:id',
+        builder: (context, state) =>
+            ProductScreen(productId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '${AppRoutes.seller}/:id',

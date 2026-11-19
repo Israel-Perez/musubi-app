@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/platform/product_share.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
@@ -115,13 +116,6 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
     super.dispose();
   }
 
-  void _soon(String what) => showMusubiSnack(
-    ScaffoldMessenger.of(context),
-    '$what llega muy pronto.',
-    icon: MusubiIcons.clock,
-    tone: SnackTone.info,
-  );
-
   void _gate(AccountGateMotive motive) => unawaited(
     showAccountGate(
       context,
@@ -133,6 +127,23 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
   /// HU-53: el corazon del detalle usa el mismo estado global que las tarjetas.
   void _toggle(ProductDetail detail) =>
       unawaited(toggleFavorite(context, ref, _summaryOf(detail)));
+
+  /// HU-61: compartir solo cuando quien usa la app lo solicita explícitamente.
+  Future<void> _share(ProductDetail detail) async {
+    final link = Uri.parse(
+      'https://musubiapp.com.mx${AppRoutes.sharedProduct(detail.id)}',
+    );
+    final text = '${detail.title} · ${formatPrice(detail.priceCents)}\n$link';
+    final shared = await ref.read(productShareLauncherProvider).share(text);
+    if (!mounted || shared) return;
+    showMusubiSnack(
+      ScaffoldMessenger.of(context),
+      'No pudimos abrir la hoja para compartir.',
+      icon: MusubiIcons.circleAlert,
+      tone: SnackTone.warn,
+      bottomOffset: _actionBarHeight,
+    );
+  }
 
   /// "Apartar" (HU-52): elige cuando y donde y abre `Apartado-listo`.
   Future<void> _reserve(ProductDetail detail) async {
@@ -253,7 +264,7 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
           page: _page,
           onPage: (page) => setState(() => _page = page),
           onBack: () => context.pop(),
-          onShare: () => _soon('Compartir'),
+          onShare: () => unawaited(_share(value)),
           onSave: () =>
               signedIn ? _toggle(value) : _gate(AccountGateMotive.save),
           onReserve: () =>

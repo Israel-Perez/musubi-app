@@ -43,6 +43,32 @@ class MainActivity : FlutterActivity() {
                     result.notImplemented()
                 }
             }
+        // HU-61: el usuario elige la app destinataria en el chooser del sistema.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "musubi/share")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "shareText") {
+                    val text = call.argument<String>("text")
+                    val chooserTitle = call.argument<String>("chooserTitle")
+                    result.success(
+                        if (text.isNullOrBlank()) false else shareText(text, chooserTitle)
+                    )
+                } else {
+                    result.notImplemented()
+                }
+            }
+    }
+
+    private fun shareText(text: String, chooserTitle: String?): Boolean {
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        return try {
+            startActivity(Intent.createChooser(sendIntent, chooserTitle ?: "Compartir"))
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        }
     }
 
     private fun requestReview(result: MethodChannel.Result) {

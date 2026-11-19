@@ -9,6 +9,7 @@ import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/platform/product_share.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
@@ -67,6 +68,8 @@ Future<FakeCatalogRepository> _open(
   FakeRecommendationRepository? recommendations,
   FakeComparisonRepository? comparison,
   PublicProfile? seller,
+  ProductShareLauncher? shareLauncher,
+  String location = '/producto/p1',
 }) async {
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 3;
@@ -98,6 +101,8 @@ Future<FakeCatalogRepository> _open(
         comparisonRepositoryProvider.overrideWithValue(
           comparison ?? FakeComparisonRepository(),
         ),
+        if (shareLauncher != null)
+          productShareLauncherProvider.overrideWithValue(shareLauncher),
       ],
       child: const MusubiApp(),
     ),
@@ -105,13 +110,69 @@ Future<FakeCatalogRepository> _open(
   final container = ProviderScope.containerOf(
     tester.element(find.byType(MusubiApp)),
   );
-  container.read(routerProvider).go(AppRoutes.product('p1'));
+  container.read(routerProvider).go(location);
   await tester.pumpAndSettle();
   return catalog;
 }
 
+class _RecordingProductShareLauncher implements ProductShareLauncher {
+  final List<String> messages = [];
+  bool result = true;
+
+  @override
+  Future<bool> share(String text) async {
+    messages.add(text);
+    return result;
+  }
+}
+
 // HU-11: la maqueta `Producto` (con sesion) y `Producto-visitante`.
 void main() {
+  group('Compartir producto (HU-61)', () {
+    testWidgets('comparte título, precio y enlace canónico', (tester) async {
+      final launcher = _RecordingProductShareLauncher();
+      await _open(tester, detail: _detail(), shareLauncher: launcher);
+
+      await tester.tap(find.bySemanticsLabel('Compartir'));
+      await tester.pumpAndSettle();
+
+      expect(launcher.messages, [
+        'Calculadora científica Casio fx-991ES Plus · \$450\nhttps://musubiapp.com.mx/p/p1',
+      ]);
+      expect(
+        find.text('No pudimos abrir la hoja para compartir.'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('si el chooser no abre, muestra un error en español', (
+      tester,
+    ) async {
+      final launcher = _RecordingProductShareLauncher()..result = false;
+      await _open(tester, detail: _detail(), shareLauncher: launcher);
+
+      await tester.tap(find.bySemanticsLabel('Compartir'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No pudimos abrir la hoja para compartir.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('el enlace /p/:id abre el mismo detalle sin sesión', (
+      tester,
+    ) async {
+      await _open(tester, detail: _detail(sellerId: null), location: '/p/p1');
+
+      expect(
+        find.text('Calculadora científica Casio fx-991ES Plus'),
+        findsOneWidget,
+      );
+      expect(find.text('Producto no disponible'), findsNothing);
+    });
+  });
+
   testWidgets('con sesion: todo el detalle y la tarjeta de quien vende', (
     tester,
   ) async {

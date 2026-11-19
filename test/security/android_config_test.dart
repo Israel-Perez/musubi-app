@@ -49,6 +49,20 @@ void main() {
     expect(config, isNot(contains('cleartextTrafficPermitted="true"')));
   });
 
+  test('HU-61: App Link verificado solo para productos HTTPS', () {
+    final appLink = RegExp(
+      r'<intent-filter android:autoVerify="true">([\s\S]*?)</intent-filter>',
+    ).firstMatch(manifest)?.group(1);
+
+    expect(appLink, isNotNull);
+    expect(appLink, contains('android.intent.action.VIEW'));
+    expect(appLink, contains('android.intent.category.DEFAULT'));
+    expect(appLink, contains('android.intent.category.BROWSABLE'));
+    expect(appLink, contains('android:scheme="https"'));
+    expect(appLink, contains('android:host="musubiapp.com.mx"'));
+    expect(appLink, contains('android:pathPrefix="/p/"'));
+  });
+
   test('debug y profile: HTTP en claro solo hacia la PC de desarrollo', () {
     for (final variant in ['debug', 'profile']) {
       final config = read(

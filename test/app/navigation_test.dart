@@ -45,6 +45,20 @@ void main() {
       );
     });
 
+    test(
+      'el enlace compartido de producto conserva el acceso visitante (HU-61)',
+      () {
+        expect(AppRoutes.sharedProduct('producto 1'), '/p/producto%201');
+        expect(
+          sessionRedirect(
+            signedIn: false,
+            location: Uri.parse('/p/producto%201'),
+          ),
+          isNull,
+        );
+      },
+    );
+
     test('con sesion no vuelve a las pantallas de visitante', () {
       expect(
         sessionRedirect(
