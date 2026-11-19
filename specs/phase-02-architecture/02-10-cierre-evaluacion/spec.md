@@ -64,7 +64,7 @@ El documento "Prompts para evaluar v1" (16-Nov-2026) pregunta qué pantallas que
 
 ## Criterios
 - [x] 53 pruebas de integración en verde contra la API (45 de datos + 8 de pantallas).
-- [ ] La suite del teléfono, corrida en un teléfono físico (pendiente de conectar uno).
+- [x] La suite del teléfono corrió en un teléfono físico (Galaxy A54, Android, 19-Nov-2026): 8/8 en 1 min 05 s con `run_device_tests.ps1`.
 - [x] `check_integration_coverage`: OK, con 121 filas llamadas y 1 excepción documentada (`POST /notifications/devices/remove`).
 - [x] `flutter analyze` sin observaciones, `dart format` sin cambios y critic PASS.
 

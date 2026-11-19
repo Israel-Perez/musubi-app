@@ -46,6 +46,15 @@ Lo que la prueba no puede tocar en Android se reemplaza:
 
 Quien vende y los datos de apoyo se preparan por la API con las mismas funciones de `test/integration/support/`.
 
+## Verificada
+
+19-Nov-2026, en un Galaxy A54 (Android): 8 de 8 pruebas en 1 min 05 s.
+
+Si `adb devices` no muestra el teléfono:
+- revisa que "Depuración por USB" esté activa en Opciones de desarrollador;
+- acepta el aviso "¿Permitir la depuración por USB?";
+- elige "Transferir archivos" en la notificación de USB.
+
 ## En el CI
 
 Los mismos flujos corren en la VM en `test/integration/device_flows_test.dart`, con frames y tiempo reales, contra la API del job `integration`. Si un cambio de pantalla rompe la suite del teléfono, el PR falla antes de llegar a un teléfono.

@@ -26,7 +26,7 @@
   - `scripts/run_device_tests.ps1` levanta la API, el servidor de códigos (`tool/device_code_server.dart`) y `adb reverse`.
   - Los mismos flujos corren en la VM en `test/integration/device_flows_test.dart` (`LiveTestWidgetsFlutterBinding` fullyLive y `HttpOverrides.global = null`), así que el CI los cuida.
   - El `app_smoke_test.dart` viejo buscaba un texto que ya no existía y nunca corrió: se quitó.
-  - Pendiente: correrla en un teléfono físico; en esta PC no hay ninguno conectado.
+  - Corrió en un teléfono físico (Galaxy A54, 19-Nov-2026): 8/8 en 1 min 05 s. Si `adb` no ve un Samsung: "Depuración por USB" en Opciones de desarrollador, aceptar el aviso en el teléfono y el modo "Transferir archivos".
   - Errores a evitar:
     - `home-enter` es "Entrar" del visitante (lleva a iniciar sesión);
     - una lista larga solo dibuja lo visible: `DeviceApp.reveal` desplaza la pantalla;
