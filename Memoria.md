@@ -31,6 +31,7 @@
     - `home-enter` es "Entrar" del visitante (lleva a iniciar sesión);
     - una lista larga solo dibuja lo visible: `DeviceApp.reveal` desplaza la pantalla;
     - `pumpAndSettle` no espera a la red real: `waitFor` hace polling.
+    - La hoja de "Apartar" usa la hora del dispositivo; en el CI (UTC) propone horas fuera del campus. `run_integration_tests.ps1` corre con `TZ=America/Mexico_City`.
 - **Para las HU que vengan:** una llamada nueva a la API sin su flujo en `test/integration/` rompe el job `integration`; un archivo nuevo de `lib/` que toque tokens rompe `session_security_test.dart` (skill `testing-strategy`, pasos 9 y 10).
 
 ## Lote 0.11.0+13 a Google Play (16-Nov-2026, SCRUM-87)

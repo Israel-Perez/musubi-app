@@ -35,6 +35,9 @@ $coverage = Join-Path $outDir 'coverage'
 foreach ($f in @($log, ($log + '.err'), $coverage)) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Recurse -Force } }
 
 $api = Start-MusubiLocalApi -ApiPath $ApiPath -Port $Port -Log $log -NoBuild:$NoBuild
+# Las pantallas usan la hora del telefono (en el campus, la de Mexico): asi las corre la VM aunque la
+# maquina este en otra zona (el CI corre en UTC). En Linux Dart toma la zona de TZ.
+$env:TZ = 'America/Mexico_City'
 $exit = 1
 try {
     Push-Location $repoRoot
