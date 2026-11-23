@@ -28,7 +28,7 @@ Cada módulo vive en `lib/features/<modulo>/` con sus capas `domain/`, `data/` y
 | `orders` | Pedido, pago en efectivo o por transferencia, entrega ("Agregar al calendario" y "Ya llegué"), apartar 24 h con QR, cuenta para recibir pagos |
 | `reputation` | Calificar, reportar y bloquear |
 | `notifications` | Avisos y push (Firebase Cloud Messaging) |
-| `recommendations` | "Recomendado para ti" y "Ver parecidos" (ML en la API) |
+| `recommendations` | "Recomendado para ti", "Ver parecidos" y el precio sugerido (ML en la API) |
 | `seller_support` | "Llevan tiempo sin venderse", quiénes la buscan, ideas con IA |
 | `profile` | Perfil, privacidad, intereses, tema, insignias de confianza |
 | `admin` | Moderación de reportes y cuentas, categorías (solo el rol `admin`) |
@@ -61,12 +61,12 @@ Cada módulo vive en `lib/features/<modulo>/` con sus capas `domain/`, `data/` y
 
 | Suite | Pruebas | Cómo se corre |
 |---|---|---|
-| Unitarias y de widget (`test/`) | 838 | `flutter test` |
+| Unitarias y de widget (`test/`) | 844 | `flutter test` |
 | Seguridad (`test/security/` + `test/integration/security_flow_test.dart`) | 14 + 4 | Las primeras con `flutter test`; las 4 de flujos, con el script de integración |
-| Integración contra la API real (`test/integration/`) | 54 | `pwsh scripts/run_integration_tests.ps1` (levanta `../musubi-api`) |
+| Integración contra la API real (`test/integration/`) | 55 | `pwsh scripts/run_integration_tests.ps1` (levanta `../musubi-api`) |
 | **En un teléfono físico** (`integration_test/`) | 8 | `pwsh scripts/run_device_tests.ps1` (teléfono por USB; guía en [`integration_test/README.md`](integration_test/README.md)) |
 
-- **Integración:** la suite llama a cada uno de los 122 endpoints que la app consume. Lo exige `tool/check_integration_coverage.dart` en el CI, así que una llamada nueva sin prueba no entra.
+- **Integración:** la suite llama a cada uno de los 124 endpoints que la app consume. Lo exige `tool/check_integration_coverage.dart` en el CI, así que una llamada nueva sin prueba no entra.
 - **Teléfono físico:** la suite corrió el 19-Nov-2026 en un Galaxy A54, 8/8. Recorre crear cuenta, sesión persistente, cerrar sesión, eliminar cuenta, buscar y chatear, apartar, publicar con foto y moderación.
 
 ## CI y CD

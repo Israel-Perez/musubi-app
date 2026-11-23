@@ -75,6 +75,10 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-06`).
   static const priceRange = '/api/v1/products/price-range';
 
+  /// `POST /api/v1/products/price-suggestion` — fila "M-11"
+  /// (spec `musubi-api:HU-58`): "Precio sugerido"; con sesion.
+  static const priceSuggestion = '/api/v1/products/price-suggestion';
+
   /// `POST /api/v1/auth/password/change` — fila "M-01"
   /// (spec `musubi-api:HU-04`). Con sesion; devuelve una sesion nueva.
   static const authPasswordChange = '/api/v1/auth/password/change';
@@ -137,6 +141,11 @@ abstract final class ApiPaths {
   /// `GET /api/v1/products/{id}/compare` — fila "M-03" (spec
   /// `musubi-api:HU-51`): "Compara antes de comprar"; con sesion.
   static String productCompare(String id) => '${product(id)}/compare';
+
+  /// `GET /api/v1/products/{id}/price-estimate` — fila "M-11" (spec
+  /// `musubi-api:HU-58`): lo que estima el modelo de ML; con sesion.
+  static String productPriceEstimate(String id) =>
+      '${product(id)}/price-estimate';
 
   /// `GET`, `PUT` y `DELETE /api/v1/products/{id}/stock-alert` — filas "M-03"
   /// (spec `musubi-api:HU-51`): "Avísame" de una agotada; con sesion.

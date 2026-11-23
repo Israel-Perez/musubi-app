@@ -129,6 +129,50 @@ void main() {
     expect(range?.highCents, 52000);
   });
 
+  test('precio sugerido (HU-58): manda el borrador y lee el rango', () async {
+    serve({'minCents': 40000, 'maxCents': 52000, 'samples': 31});
+
+    final suggestion = await repository.suggestPrice((
+      title: 'Calculadora Casio fx-991ES Plus',
+      category: 'calculadoras',
+      condition: ProductCondition.used,
+      usedDetail: UsedDetail.good,
+    ));
+
+    expect(
+      (suggestion?.minCents, suggestion?.maxCents, suggestion?.samples),
+      (40000, 52000, 31),
+    );
+    final request = adapter.requests.single;
+    expect((request.method, request.path), ('POST', ApiPaths.priceSuggestion));
+    expect(request.data, {
+      'title': 'Calculadora Casio fx-991ES Plus',
+      'category': 'calculadoras',
+      'condition': 'used',
+      'conditionDetail': 'good',
+    });
+  });
+
+  test(
+    'precio sugerido sin datos: null, y un nuevo no manda detalle',
+    () async {
+      serve({'minCents': null, 'maxCents': null, 'samples': 2});
+
+      final suggestion = await repository.suggestPrice((
+        title: 'Kalimba de 17 notas',
+        category: 'musica',
+        condition: ProductCondition.brandNew,
+        usedDetail: UsedDetail.likeNew,
+      ));
+
+      expect(suggestion, isNull);
+      expect(
+        (adapter.requests.single.data as Map).containsKey('conditionDetail'),
+        isFalse,
+      );
+    },
+  );
+
   test('un error de la API llega como ApiFailure con su code', () async {
     serve({
       'title': 'Agrega de 1 a 8 fotos tuyas para continuar.',

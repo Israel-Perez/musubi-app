@@ -51,6 +51,8 @@ class _CompareSectionState extends ConsumerState<CompareSection> {
     if (options.isEmpty) return const SizedBox.shrink();
     final comparison = Comparison(widget.currentPriceCents, options);
     final band = comparison.priceBand!;
+    // HU-58: la estimacion del modelo de ML, debajo de la regla de la maqueta.
+    final estimate = ref.watch(priceEstimateProvider(widget.productId)).value;
     final count = options.length;
     final same = comparison.sameModelCount;
     final subtitle =
@@ -107,6 +109,7 @@ class _CompareSectionState extends ConsumerState<CompareSection> {
                       ? 'Este modelo en ${widget.campus}'
                       : '${widget.categoryName} en ${widget.campus}',
                   currentCents: widget.currentPriceCents,
+                  estimate: estimate,
                 ),
               ),
               Padding(
@@ -153,11 +156,15 @@ class _PriceCard extends StatelessWidget {
     required this.band,
     required this.title,
     required this.currentCents,
+    this.estimate,
   });
 
   final PriceBand band;
   final String title;
   final int currentCents;
+
+  /// "Musubi estima $X – $Y para algo así" (HU-58), o `null`.
+  final PriceEstimate? estimate;
 
   @override
   Widget build(BuildContext context) {
@@ -332,6 +339,31 @@ class _PriceCard extends StatelessWidget {
               ),
             ],
           ),
+          if (estimate case final e?)
+            Row(
+              key: const Key('compare-estimate'),
+              spacing: 6,
+              children: [
+                MusubiIcon(
+                  MusubiIcons.sparkle,
+                  size: 12,
+                  color: c.textSecondary,
+                ),
+                Flexible(
+                  child: Text(
+                    'Musubi estima ${formatPrice(e.minCents)} – '
+                    '${formatPrice(e.maxCents)} para algo así · '
+                    '${e.verdict.label.toLowerCase()}',
+                    style: MusubiType.style(
+                      12,
+                      weight: FontWeight.w600,
+                      line: 16,
+                      color: c.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
