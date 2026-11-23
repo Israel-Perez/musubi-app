@@ -28,6 +28,7 @@ import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/presentation/delivery_actions.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/orders/presentation/order_summary_sheet.dart';
 import 'package:musubi_app/features/profile/presentation/profile_providers.dart';
@@ -339,6 +340,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         now: ref.watch(clockProvider)().toLocal(),
                       ),
               ),
+              // HU-62: "Ya llegué" desde 2 horas antes de la entrega.
+              if (ArrivalBar.showsFor(openOrder, ref.watch(clockProvider)()))
+                ArrivalBar(order: openOrder!, now: ref.watch(clockProvider)()),
               if (conversation != null && !conversation.canReply)
                 const _BlockedNotice()
               else

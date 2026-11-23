@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.provider.CalendarContract
 import com.google.android.play.core.review.ReviewManagerFactory
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -30,6 +31,24 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 if (call.method == "openInbox") {
                     result.success(openInbox())
+                } else {
+                    result.notImplemented()
+                }
+            }
+        // HU-62: "Agregar al calendario" abre la app de calendario con la
+        // entrega ya llena. Sin permiso de calendario: la persona la guarda.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "musubi/calendar")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "addEvent") {
+                    result.success(
+                        addEvent(
+                            call.argument<String>("title") ?: "",
+                            call.argument<Number>("begin")?.toLong() ?: 0L,
+                            call.argument<Number>("end")?.toLong() ?: 0L,
+                            call.argument<String>("location") ?: "",
+                            call.argument<String>("description") ?: "",
+                        ),
+                    )
                 } else {
                     result.notImplemented()
                 }
@@ -65,6 +84,22 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             // Sin Play Store (emulador o sideload): la app sigue sin avisar.
             result.success(false)
+        }
+    }
+
+    private fun addEvent(title: String, begin: Long, end: Long, location: String, description: String): Boolean {
+        val intent = Intent(Intent.ACTION_INSERT)
+            .setData(CalendarContract.Events.CONTENT_URI)
+            .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, begin)
+            .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, end)
+            .putExtra(CalendarContract.Events.TITLE, title)
+            .putExtra(CalendarContract.Events.EVENT_LOCATION, location)
+            .putExtra(CalendarContract.Events.DESCRIPTION, description)
+        return try {
+            startActivity(intent)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
         }
     }
 

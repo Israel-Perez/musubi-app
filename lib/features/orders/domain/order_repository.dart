@@ -56,4 +56,7 @@ abstract interface class OrderRepository {
 
   /// "Confirmar entrega" de quien mira; con las dos, se completa (RN-19).
   Future<Order> confirmHandover(String id);
+
+  /// "Ya llegué" de quien mira (HU-62): avisa a la otra parte.
+  Future<Order> arrived(String id);
 }

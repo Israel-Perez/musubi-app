@@ -343,6 +343,9 @@ class _Row extends StatelessWidget {
         c.warningSoft,
         c.warningText,
       ),
+      // HU-62: el recordatorio una hora antes y "Ana ya llegó".
+      'delivery_reminder' => (MusubiIcons.calendar, c.brandSoft, c.brand),
+      'order_arrived' => (MusubiIcons.mapPin, c.successSoft, c.successText),
       // HU-30: la solicitud a la que ofreciste ya no esta activa.
       'offer_closed' => (MusubiIcons.circleX, c.surface, c.textSecondary),
       _ => (MusubiIcons.bell, c.surface, c.textPrimary),
