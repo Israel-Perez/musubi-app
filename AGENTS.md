@@ -108,6 +108,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
   - `AdminAccountScreen` (`AppRoutes.adminAccount`) suspende con motivo o reactiva.
   - "Categorías" (HU-41): `AdminCategoriesScreen` (`AppRoutes.adminCategories`) agrega, renombra, desactiva y activa; `refreshCategories` también invalida `categoriesProvider` y `sellCategoriesProvider`.
   - La API vuelve a revisar el rol en cada acción.
+- Entrega (HU-62): `lib/features/orders/presentation/delivery_actions.dart`. En un pedido confirmado, `DeliveryCard` (debajo del producto en `Pedido-pago`) dice cuándo y dónde, con "Agregar al calendario" (`deviceCalendarProvider`: canal `musubi/calendar`, `Intent.ACTION_INSERT` sin permiso) y, desde 2 h antes (`Order.canSayArrived`), "Ya llegué" (`POST /orders/{id}/arrived`); en el chat, `ArrivalBar` sale arriba de la caja de texto en esa misma ventana. El recordatorio de una hora antes es un push de la API (`delivery_reminder`).
 - Pendientes con dueño: Crashlytics → 02-01; datos locales → HU-53; firma de subida → 02-02.
 
 ## 6. Seguridad (OWASP MASVS)
