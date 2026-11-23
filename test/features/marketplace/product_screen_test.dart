@@ -15,6 +15,7 @@ import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/data/http_catalog_repository.dart';
+import 'package:musubi_app/features/marketplace/domain/comparison.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
@@ -488,6 +489,34 @@ void main() {
           watching: watching,
         );
 
+    testWidgets('con la estimacion del modelo, la fila de Musubi (HU-58)', (
+      tester,
+    ) async {
+      final comparison = withOptions()
+        ..estimates['p1'] = const PriceEstimate(
+          minCents: 40000,
+          maxCents: 52000,
+          verdict: PriceVerdict.fair,
+        );
+      await _open(
+        tester,
+        detail: _detail(),
+        session: chatTokens(_now),
+        comparison: comparison,
+      );
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('compare-estimate')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(
+        find.text(r'Musubi estima $400 – $520 para algo así · precio justo'),
+        findsOneWidget,
+      );
+    });
+
     String location(WidgetTester tester) =>
         ProviderScope.containerOf(tester.element(find.byType(MusubiApp)))
             .read(routerProvider)
@@ -512,7 +541,9 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(comparison.calls, ['compare:p1']);
+      // HU-58: tambien pide la estimacion del modelo (sin ella no hay fila).
+      expect(comparison.calls, unorderedEquals(['compare:p1', 'estimate:p1']));
+      expect(find.byKey(const Key('compare-estimate')), findsNothing);
       expect(
         find.text('5 opciones en UTTT · 2 del mismo modelo'),
         findsOneWidget,
@@ -668,13 +699,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Avísame'), findsOneWidget);
       expect(comparison.watching, isEmpty);
-      expect(comparison.calls.where((c) => !c.startsWith('compare')), [
-        'status:p1',
-        'watch:p1',
-        'status:p1',
-        'unwatch:p1',
-        'status:p1',
-      ]);
+      expect(
+        comparison.calls.where(
+          // HU-58: la estimacion tampoco es parte del aviso.
+          (c) => !c.startsWith('compare') && !c.startsWith('estimate'),
+        ),
+        ['status:p1', 'watch:p1', 'status:p1', 'unwatch:p1', 'status:p1'],
+      );
     });
 
     testWidgets('si ya lo pedí, abre en "Te avisaremos"', (tester) async {

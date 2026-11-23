@@ -307,4 +307,75 @@ void main() {
       findsOneWidget,
     );
   });
+  testWidgets(
+    'con el modelo de ML dice Precio sugerido, con cuantos precios y la barra '
+    '(HU-58)',
+    (tester) async {
+      final h = _Harness(
+        tester,
+        range: const PriceRange(lowCents: 10000, highCents: 90000),
+      );
+      h.listings.suggestion = const PriceSuggestion(
+        minCents: 40000,
+        maxCents: 52000,
+        samples: 31,
+      );
+      await h.open();
+      await h.fillUntilCondition();
+      await h.tapText('Atrás');
+
+      expect(find.byKey(const Key('sell-price-range')), findsOneWidget);
+      expect(
+        find.textContaining(
+          r'Precio sugerido: $400 – $520',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Estimado con 31 precios de tu campus. Tú decides el precio.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Tu precio está dentro del rango'), findsOneWidget);
+      // Lo que se mando: el nombre, la categoria y el estado del borrador.
+      final query = h.listings.suggestionQueries.last;
+      expect(
+        (query.title, query.category, query.condition),
+        (
+          'Calculadora Casio fx-991ES Plus',
+          'calculadoras',
+          ProductCondition.used,
+        ),
+      );
+      // Es solo una sugerencia: el precio sigue siendo el de la persona.
+      await h.type('sell-price', '300');
+      expect(
+        find.text('Tu precio está abajo del rango: se venderá rápido'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('sin datos del modelo queda el rango de la categoria (HU-58)', (
+    tester,
+  ) async {
+    final h = _Harness(
+      tester,
+      range: const PriceRange(lowCents: 38000, highCents: 52000),
+    );
+    await h.open();
+    await h.fillUntilCondition();
+    await h.tapText('Atrás');
+
+    expect(
+      find.textContaining(
+        'Productos parecidos se venden entre',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('sell-price-suggested')), findsNothing);
+  });
 }

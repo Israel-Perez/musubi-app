@@ -156,6 +156,29 @@ class HttpListingsRepository implements ListingsRepository {
     );
   });
 
+  @override
+  Future<PriceSuggestion?> suggestPrice(PriceQuery query) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiPaths.priceSuggestion,
+      data: {
+        'title': query.title,
+        'category': query.category,
+        'condition': query.condition.apiValue,
+        if (query.condition == ProductCondition.used)
+          'conditionDetail': query.usedDetail.apiValue,
+      },
+    );
+    final body = response.data;
+    final min = body?['minCents'];
+    final max = body?['maxCents'];
+    if (min is! num || max is! num) return null;
+    return PriceSuggestion(
+      minCents: min.toInt(),
+      maxCents: max.toInt(),
+      samples: (body?['samples'] as num? ?? 0).toInt(),
+    );
+  });
+
   static Map<String, dynamic> _body(Response<Map<String, dynamic>> response) =>
       response.data ??
       (throw const ApiFailure(
