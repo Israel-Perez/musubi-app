@@ -1,5 +1,16 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-62 (SCRUM-102): recordatorio de la entrega y "Ya llegué"
+
+- **Qué:** en un pedido confirmado, la tarjeta "Entrega" de `Pedido-pago` dice cuándo y dónde, con "Agregar al calendario" y, desde 2 h antes, "Ya llegué". En el chat sale la franja con "Ya llegué" en esa misma ventana. El recordatorio de una hora antes lo manda la API (`delivery_reminder`) y `order_arrived` avisa que la otra parte llegó.
+- **Decisiones técnicas:**
+  - El calendario va con un intent (`ACTION_INSERT`) por el canal `musubi/calendar`: sin permiso ni paquete nuevo.
+  - La ventana de "Ya llegué" (`Order.arrivalLead`, 2 h) es la misma que valida la API.
+- **Para revisar:** "Agregar al calendario" sale en cualquier pedido confirmado (también días antes).
+- **Integración:** la entrega del flujo es mañana, así que contra la API real se prueba el rechazo `orders.arrival_too_early`; el aviso feliz lo cubren la prueba de integración de la API (reloj adelantado) y la prueba en el celular.
+- **App:** sin subir la versión; va en el siguiente lote de Google Play.
+- **Error encontrado (de SCRUM-120):** en Windows, `scripts/run_integration_tests.ps1` ponía `TZ=America/Mexico_City`. El runtime de C de Windows no entiende ese formato y Dart usaba UTC como hora local, así que "Apartar" proponía horas fuera del campus y la suite de la VM fallaba según la hora del día. En Windows ahora va `TZ=CST6` (POSIX, UTC-6 todo el año); en Linux sigue la zona IANA.
+
 ## SCRUM-123: gitleaks en el CI (19-Nov-2026)
 
 - El job `gitleaks` (8.30.1, binario oficial verificado por checksum) revisa el historial completo de Git en cada PR; en local, 0 hallazgos en 143 commits. Complementa al critic, que solo revisa el diff. El DAST con OWASP ZAP vive en musubi-api (`dast.yml`).

@@ -169,6 +169,8 @@ class Order {
     this.transferAvailable = false,
     this.buyerConfirmed = false,
     this.sellerConfirmed = false,
+    this.buyerArrived = false,
+    this.sellerArrived = false,
     this.cancellation,
     this.updatedAt,
     this.ratedByMe = false,
@@ -238,6 +240,29 @@ class Order {
   /// Quien vende ya marco "Marcar como entregado" (HU-24, RN-19).
   final bool sellerConfirmed;
 
+  /// Quien compra ya aviso "Ya llegué" (HU-62).
+  final bool buyerArrived;
+
+  /// Quien vende ya aviso "Ya llegué" (HU-62).
+  final bool sellerArrived;
+
+  /// Desde cuanto antes de la entrega se puede avisar "Ya llegué" (la API
+  /// responde `orders.arrival_too_early` antes).
+  static const arrivalLead = Duration(hours: 2);
+
+  /// Quien mira ya aviso que llego.
+  bool get iArrived => isBuyer ? buyerArrived : sellerArrived;
+
+  /// La otra parte ya aviso que llego.
+  bool get otherArrived => isBuyer ? sellerArrived : buyerArrived;
+
+  /// "Ya llegué" se muestra: confirmado, sin haberlo avisado y desde 2 horas
+  /// antes de la entrega.
+  bool canSayArrived(DateTime now) =>
+      status == OrderStatus.confirmed &&
+      !iArrived &&
+      !now.isBefore(deliveryAt.subtract(arrivalLead));
+
   /// Quien cancelo y por que, o `null` (HU-24).
   final OrderCancellation? cancellation;
 
@@ -279,6 +304,8 @@ class Order {
     bool? transferAvailable,
     bool? buyerConfirmed,
     bool? sellerConfirmed,
+    bool? buyerArrived,
+    bool? sellerArrived,
     OrderCancellation? cancellation,
     bool? ratedByMe,
     DateTime? rateUntil,
@@ -305,6 +332,8 @@ class Order {
     transferAvailable: transferAvailable ?? this.transferAvailable,
     buyerConfirmed: buyerConfirmed ?? this.buyerConfirmed,
     sellerConfirmed: sellerConfirmed ?? this.sellerConfirmed,
+    buyerArrived: buyerArrived ?? this.buyerArrived,
+    sellerArrived: sellerArrived ?? this.sellerArrived,
     cancellation: cancellation ?? this.cancellation,
     updatedAt: updatedAt,
     ratedByMe: ratedByMe ?? this.ratedByMe,

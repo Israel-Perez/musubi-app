@@ -181,6 +181,9 @@ class HttpOrderRepository implements OrderRepository {
   @override
   Future<Order> confirmHandover(String id) => _post(ApiPaths.orderHandover(id));
 
+  @override
+  Future<Order> arrived(String id) => _post(ApiPaths.orderArrived(id));
+
   Future<Order> _post(String path, [Map<String, Object?>? body]) => _guard(
     () async {
       final response = await _dio.post<Map<String, dynamic>>(path, data: body);
@@ -302,6 +305,8 @@ Order orderFromJson(Map<String, dynamic> json, Uri apiBaseUrl) {
     transferAvailable: json['transferAvailable'] as bool? ?? false,
     buyerConfirmed: handover?['buyerConfirmedAt'] != null,
     sellerConfirmed: handover?['sellerConfirmedAt'] != null,
+    buyerArrived: handover?['buyerArrivedAt'] != null,
+    sellerArrived: handover?['sellerArrivedAt'] != null,
     cancellation: cancellation == null
         ? null
         : OrderCancellation(

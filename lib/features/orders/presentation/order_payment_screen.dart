@@ -21,6 +21,7 @@ import 'package:musubi_app/features/chat/presentation/chat_format.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/presentation/delivery_actions.dart';
 import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/orders/presentation/payment_widgets.dart';
 
@@ -751,6 +752,12 @@ class _Body extends StatelessWidget {
                     const SizedBox(height: 12),
                   ],
                   _ItemCard(order: order, at: at),
+                  // HU-62: cuando y donde, "Agregar al calendario" y
+                  // "Ya llegué".
+                  if (_confirmed) ...[
+                    const SizedBox(height: 12),
+                    DeliveryCard(order: order, now: now),
+                  ],
                   if (_sellerEntersCode) ...[
                     const SizedBox(height: 12),
                     DeliveryCodeEntry(

@@ -19,7 +19,7 @@ const _clabe = '012180015488214829';
 /// `Pago-vendedor`, `Pedido-entrega`, `Pedido-efectivo`, `Mis-pedidos`,
 /// `Ventas`, `Calificar`, `Cuenta-pagos` y los apartados (`Apartado-listo`,
 /// `Mis-apartados`, `Verificar-comprador`) contra la API real (HU-23, HU-24,
-/// HU-25, HU-26, HU-27, HU-45, HU-52, HU-55).
+/// HU-25, HU-26, HU-27, HU-45, HU-52, HU-55 y "Ya llegué" de HU-62).
 void main() {
   group('Pedidos contra la API real', skip: liveSkip, () {
     test('pedido, entrega de las dos partes y calificaciones', () async {
@@ -66,6 +66,33 @@ void main() {
       expect(opinions.items, isNotEmpty);
       expect(mine.items.map((o) => o.id), contains(order.id));
       expect(sales.items.map((o) => o.id), contains(order.id));
+    });
+
+    test('Ya llegué: antes de 2 horas la API lo rechaza (HU-62)', () async {
+      final valeria = await liveUser(name: 'Valeria Integración');
+      final ana = await liveUser();
+      addTearDown(valeria.dispose);
+      addTearDown(ana.dispose);
+      final product = await publishProduct(valeria, title: 'Escuadras');
+      final order = await placeOrder(ana, (await openChat(ana, product.id)).id);
+      final buyer = ana.read(orderRepositoryProvider);
+      await buyer.payCash(order.id);
+      final accepted = await valeria
+          .read(orderRepositoryProvider)
+          .accept(order.id);
+
+      // La entrega es mañana a la 1:00 p. m.: todavía falta.
+      final early = await buyer
+          .arrived(order.id)
+          .then<ApiFailure?>(
+            (_) => null,
+            onError: (Object e) => e as ApiFailure,
+          );
+
+      expect(accepted.status, OrderStatus.confirmed);
+      expect(accepted.canSayArrived(DateTime.now()), isFalse);
+      expect(early?.code, 'orders.arrival_too_early');
+      expect(early?.message, startsWith('Todavía falta para la entrega'));
     });
 
     test('en efectivo: el codigo de 4 digitos completa el pedido', () async {

@@ -32,6 +32,8 @@ Order sampleOrder({
   int quantity = 1,
   bool buyerConfirmed = false,
   bool sellerConfirmed = false,
+  bool buyerArrived = false,
+  bool sellerArrived = false,
   OrderCancellation? cancellation,
   String title = 'Calculadora Casio fx-991ES Plus',
   int priceCents = 45000,
@@ -65,6 +67,8 @@ Order sampleOrder({
   codeAttemptsLeft: codeAttemptsLeft,
   buyerConfirmed: buyerConfirmed,
   sellerConfirmed: sellerConfirmed,
+  buyerArrived: buyerArrived,
+  sellerArrived: sellerArrived,
   cancellation: cancellation,
   updatedAt: updatedAt,
 );
@@ -384,6 +388,22 @@ class FakeOrderRepository implements OrderRepository {
         rateUntil: buyer && seller ? completedRateUntil : null,
       );
     });
+  }
+
+  /// "Ya llegué" (HU-62).
+  final List<String> arrivals = [];
+
+  @override
+  Future<Order> arrived(String id) async {
+    arrivals.add(id);
+    _fail();
+    return _replace(
+      id,
+      (o) => o.copyWith(
+        buyerArrived: o.buyerArrived || o.isBuyer,
+        sellerArrived: o.sellerArrived || !o.isBuyer,
+      ),
+    );
   }
 
   void _fail() {
