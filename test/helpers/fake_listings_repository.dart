@@ -78,6 +78,16 @@ class FakeListingsRepository implements ListingsRepository {
   @override
   Future<PriceRange?> priceRange(String category) async => range;
 
+  /// "Precio sugerido" (HU-58) y lo que se pidio.
+  PriceSuggestion? suggestion;
+  final List<PriceQuery> suggestionQueries = [];
+
+  @override
+  Future<PriceSuggestion?> suggestPrice(PriceQuery query) async {
+    suggestionQueries.add(query);
+    return suggestion;
+  }
+
   /// Lo que se mando al editar (HU-07), por id.
   final Map<String, ListingUpdate> updates = {};
 

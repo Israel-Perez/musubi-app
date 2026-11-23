@@ -116,6 +116,32 @@ class UploadedPhoto {
   final String url;
 }
 
+/// Lo que se va a publicar, para el precio sugerido (HU-58). Es un record:
+/// dos consultas iguales comparten el provider.
+typedef PriceQuery = ({
+  String title,
+  String category,
+  ProductCondition condition,
+  UsedDetail usedDetail,
+});
+
+/// "Precio sugerido: $X – $Y" (HU-58): lo estima el modelo de ML de la API
+/// con los precios del campus.
+@immutable
+class PriceSuggestion {
+  const new({
+    required this.minCents,
+    required this.maxCents,
+    required this.samples,
+  });
+
+  final int minCents;
+  final int maxCents;
+
+  /// Precios de esa categoria en el campus.
+  final int samples;
+}
+
 /// "Productos parecidos se venden entre…" (maqueta `Vender-3`).
 @immutable
 class PriceRange {

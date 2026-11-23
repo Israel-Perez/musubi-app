@@ -70,6 +70,20 @@ enum CompareBadge {
   final String label;
 }
 
+/// "Musubi estima $400 – $520 para algo así" (HU-58), con el veredicto del
+/// modelo para el precio de la publicacion.
+class PriceEstimate {
+  const new({
+    required this.minCents,
+    required this.maxCents,
+    required this.verdict,
+  });
+
+  final int minCents;
+  final int maxCents;
+  final PriceVerdict verdict;
+}
+
 /// "Buen precio", "Precio justo" o "Arriba del promedio".
 enum PriceVerdict {
   good('Buen precio'),
@@ -282,6 +296,10 @@ String seeAllLabel(String? categoryName) => switch (categoryName) {
 abstract interface class ComparisonRepository {
   /// "Compara antes de comprar" (hasta 5).
   Future<List<ComparisonOption>> compare(String productId);
+
+  /// Lo que estima el modelo de ML para esta publicacion (HU-58); `null` sin
+  /// datos suficientes.
+  Future<PriceEstimate?> estimate(String productId);
 
   /// Si ya pedi "Avísame" de esta publicacion.
   Future<bool> stockAlert(String productId);

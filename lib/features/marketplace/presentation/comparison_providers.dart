@@ -20,6 +20,14 @@ final FutureProviderFamily<List<ComparisonOption>, String> comparisonProvider =
       retry: (_, _) => null,
     );
 
+/// Lo que estima el modelo de ML (HU-58); `null` sin datos o si falla (la
+/// seccion sigue con la regla de la maqueta).
+final FutureProviderFamily<PriceEstimate?, String> priceEstimateProvider =
+    FutureProvider.autoDispose.family<PriceEstimate?, String>(
+      (ref, id) => ref.watch(comparisonRepositoryProvider).estimate(id),
+      retry: (_, _) => null,
+    );
+
 /// Si ya pedi "Avísame" de una agotada ("Te avisaremos", HU-51). El toque lo
 /// maneja `Producto` y luego invalida este provider.
 final FutureProviderFamily<bool, String> stockAlertProvider = FutureProvider

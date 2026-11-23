@@ -31,6 +31,9 @@ abstract interface class ListingsRepository {
   /// publicaciones para que sea honesto.
   Future<PriceRange?> priceRange(String category);
 
+  /// "Precio sugerido" (HU-58); `null` si la categoria tiene pocos precios.
+  Future<PriceSuggestion?> suggestPrice(PriceQuery query);
+
   /// "Editar publicacion" (HU-07): manda todos los campos editables.
   Future<OwnListing> update(String id, ListingUpdate update);
 

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
+import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
 import 'package:musubi_app/features/seller_support/presentation/seller_support_providers.dart';
 
 import 'support/live_api.dart';
@@ -12,7 +13,8 @@ import 'support/live_flows.dart';
 
 /// Pantallas `Vender-1…4`, `Vender-listo`, `Mis-productos` y `Editar` contra
 /// la API real (HU-06, HU-07, HU-08, HU-50), con el apoyo a vendedores
-/// (HU-36, HU-37, HU-38) y la moderacion del texto (02-07).
+/// (HU-36, HU-37, HU-38), el precio sugerido (HU-58) y la moderacion del
+/// texto (02-07).
 void main() {
   group('Vender contra la API real', skip: liveSkip, () {
     test('publicar con foto, editar, pausar, reanudar y piezas', () async {
@@ -51,6 +53,49 @@ void main() {
       expect(stocked.product.stock, 3);
       expect(mine.map((l) => l.product.id), contains(product.id));
       expect(page.items.map((l) => l.product.id), contains(product.id));
+    });
+
+    test('precio sugerido y estimación del modelo de ML (HU-58)', () async {
+      final valeria = await liveUser(name: 'Valeria Integración');
+      final ana = await liveUser();
+      addTearDown(valeria.dispose);
+      addTearDown(ana.dispose);
+      final product = await publishProduct(valeria, title: 'Calculadora Casio');
+
+      final suggestion = await valeria
+          .read(listingsRepositoryProvider)
+          .suggestPrice((
+            title: 'Calculadora Casio fx-991ES Plus',
+            category: 'calculadoras',
+            condition: ProductCondition.used,
+            usedDetail: UsedDetail.good,
+          ));
+      final estimate = await ana
+          .read(comparisonRepositoryProvider)
+          .estimate(product.id);
+      final invalid = await valeria
+          .read(listingsRepositoryProvider)
+          .suggestPrice((
+            title: 'ab',
+            category: 'calculadoras',
+            condition: ProductCondition.used,
+            usedDetail: UsedDetail.good,
+          ))
+          .then<ApiFailure?>(
+            (_) => null,
+            onError: (Object e) => e as ApiFailure,
+          );
+
+      // La API local empieza vacía: con menos de 20 precios del campus no
+      // sugiere (sin inventar); con más, el rango es de pesos redondos.
+      if (suggestion != null) {
+        expect(suggestion.minCents, lessThan(suggestion.maxCents));
+        expect(suggestion.samples, greaterThanOrEqualTo(5));
+      }
+      if (estimate != null) {
+        expect(estimate.minCents, lessThan(estimate.maxCents));
+      }
+      expect(invalid?.code, 'recommendations.invalid_price_request');
     });
 
     test('marcar como vendido y eliminar', () async {

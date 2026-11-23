@@ -123,6 +123,15 @@ class FakeComparisonRepository implements ComparisonRepository {
     return options[productId] ?? const [];
   }
 
+  /// Lo que estima el modelo por publicacion (HU-58).
+  final Map<String, PriceEstimate> estimates = {};
+
+  @override
+  Future<PriceEstimate?> estimate(String productId) async {
+    calls.add('estimate:$productId');
+    return estimates[productId];
+  }
+
   @override
   Future<bool> stockAlert(String productId) async {
     calls.add('status:$productId');

@@ -110,6 +110,21 @@ class _SellPriceScreenState extends ConsumerState<SellPriceScreen> {
     final range = category == null
         ? null
         : ref.watch(priceRangeProvider(category)).value;
+    // HU-58: con el modelo de ML, "Precio sugerido" para este nombre, categoria
+    // y estado; sin datos suficientes queda el rango de la categoria.
+    final title = draft.title.trim();
+    final suggestion = category == null || title.length < 3
+        ? null
+        : ref
+              .watch(
+                priceSuggestionProvider((
+                  title: title,
+                  category: category,
+                  condition: draft.condition,
+                  usedDetail: draft.usedDetail,
+                )),
+              )
+              .value;
     return SellStepLayout(
       step: 3,
       heading: widget.editing ? sellEditHeading : 'Vender un producto',
@@ -211,7 +226,19 @@ class _SellPriceScreenState extends ConsumerState<SellPriceScreen> {
                   ),
                 ),
               ),
-              if (range != null)
+              if (suggestion != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: _PriceRangeCard(
+                    range: PriceRange(
+                      lowCents: suggestion.minCents,
+                      highCents: suggestion.maxCents,
+                    ),
+                    price: draft.priceCents,
+                    suggestion: suggestion,
+                  ),
+                )
+              else if (range != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: _PriceRangeCard(range: range, price: draft.priceCents),
@@ -378,12 +405,14 @@ class _CategoriesError extends StatelessWidget {
 }
 
 /// "Productos parecidos se venden entre $X y $Y." con la barra y la marca
-/// del precio (maqueta `Vender-3`).
+/// del precio (maqueta `Vender-3`). Con [suggestion] (HU-58) dice "Precio
+/// sugerido: $X – $Y" y con cuantos precios del campus se estimo.
 class _PriceRangeCard extends StatelessWidget {
-  const new({required this.range, required this.price});
+  const new({required this.range, required this.price, this.suggestion});
 
   final PriceRange range;
   final int price;
+  final PriceSuggestion? suggestion;
 
   @override
   Widget build(BuildContext context) {
@@ -439,17 +468,37 @@ class _PriceRangeCard extends StatelessWidget {
                       line: 18,
                       color: c.textPrimary,
                     ),
-                    children: [
-                      const TextSpan(
-                        text: 'Productos parecidos se venden entre ',
-                      ),
-                      TextSpan(text: formatPrice(low), style: bold),
-                      const TextSpan(text: ' y '),
-                      TextSpan(text: formatPrice(high), style: bold),
-                      const TextSpan(text: '.'),
-                    ],
+                    children: suggestion == null
+                        ? [
+                            const TextSpan(
+                              text: 'Productos parecidos se venden entre ',
+                            ),
+                            TextSpan(text: formatPrice(low), style: bold),
+                            const TextSpan(text: ' y '),
+                            TextSpan(text: formatPrice(high), style: bold),
+                            const TextSpan(text: '.'),
+                          ]
+                        : [
+                            const TextSpan(text: 'Precio sugerido: '),
+                            TextSpan(
+                              text:
+                                  '${formatPrice(low)} – ${formatPrice(high)}',
+                              style: bold,
+                            ),
+                          ],
                   ),
                 ),
+                if (suggestion case final s?)
+                  Text(
+                    'Estimado con ${s.samples} precios de tu campus. '
+                    'Tú decides el precio.',
+                    key: const Key('sell-price-suggested'),
+                    style: MusubiType.style(
+                      12,
+                      line: 16,
+                      color: c.textSecondary,
+                    ),
+                  ),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final w = constraints.maxWidth;

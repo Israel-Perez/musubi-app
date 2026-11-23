@@ -25,6 +25,26 @@ class HttpComparisonRepository implements ComparisonRepository {
   });
 
   @override
+  Future<PriceEstimate?> estimate(String productId) => _guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiPaths.productPriceEstimate(productId),
+    );
+    final body = response.data;
+    final min = body?['minCents'];
+    final max = body?['maxCents'];
+    if (min is! num || max is! num) return null;
+    return PriceEstimate(
+      minCents: min.toInt(),
+      maxCents: max.toInt(),
+      verdict: switch (body?['verdict']) {
+        'good' => PriceVerdict.good,
+        'high' => PriceVerdict.high,
+        _ => PriceVerdict.fair,
+      },
+    );
+  });
+
+  @override
   Future<bool> stockAlert(String productId) => _guard(() async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiPaths.productStockAlert(productId),
