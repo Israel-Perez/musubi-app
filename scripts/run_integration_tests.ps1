@@ -36,8 +36,14 @@ foreach ($f in @($log, ($log + '.err'), $coverage)) { if (Test-Path -LiteralPath
 
 $api = Start-MusubiLocalApi -ApiPath $ApiPath -Port $Port -Log $log -NoBuild:$NoBuild
 # Las pantallas usan la hora del telefono (en el campus, la de Mexico): asi las corre la VM aunque la
-# maquina este en otra zona (el CI corre en UTC). En Linux Dart toma la zona de TZ.
-$env:TZ = 'America/Mexico_City'
+# maquina este en otra zona (el CI corre en UTC). En Linux Dart toma la zona IANA de TZ. En Windows el
+# runtime de C solo entiende el formato POSIX: con 'America/Mexico_City' Dart usaba UTC como hora local
+# y "Apartar" proponia horas fuera del campus (la API las rechazaba). El campus es UTC-6 todo el ano.
+if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) {
+    $env:TZ = 'CST6'
+} else {
+    $env:TZ = 'America/Mexico_City'
+}
 $exit = 1
 try {
     Push-Location $repoRoot

@@ -253,6 +253,31 @@ void main() {
     expect(order.iConfirmed, isTrue);
   });
 
+  test('Ya llegué va por POST sin cuerpo y lee quien llegó (HU-62)', () async {
+    serve(
+      (_) => FakeHttpAdapter.json(
+        orderJson(
+          status: 'confirmed',
+          handover: {
+            'buyerConfirmedAt': null,
+            'sellerConfirmedAt': null,
+            'buyerArrivedAt': '2026-11-11T18:20:00Z',
+            'sellerArrivedAt': null,
+          },
+        ),
+      ),
+    );
+
+    final order = await repository.arrived('o1');
+
+    expect(
+      [for (final r in adapter.requests) (r.method, r.path, r.data)],
+      [('POST', ApiPaths.orderArrived('o1'), null)],
+    );
+    expect((order.buyerArrived, order.sellerArrived), (true, false));
+    expect((order.iArrived, order.otherArrived), (true, false));
+  });
+
   test('cancelar manda el codigo del motivo y lee quien cancelo', () async {
     serve(
       (_) => FakeHttpAdapter.json(

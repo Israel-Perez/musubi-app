@@ -258,6 +258,10 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-24`).
   static String orderHandover(String id) => '$orders/$id/handover';
 
+  /// `POST /api/v1/orders/{id}/arrived` — fila "M-08"
+  /// (spec `musubi-api:HU-62`): "Ya llegué".
+  static String orderArrived(String id) => '$orders/$id/arrived';
+
   /// `GET` y `POST /api/v1/orders/{id}/transfer` — filas "M-08" (spec
   /// `musubi-api:HU-55`): la cuenta para transferir y "Enviar referencia".
   static String orderTransfer(String id) => '$orders/$id/transfer';
