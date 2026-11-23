@@ -196,6 +196,41 @@ void main() {
       },
     );
 
+    test(
+      'la estimación del modelo (HU-58): rango y veredicto, o nada',
+      () async {
+        final adapter = FakeHttpAdapter(
+          (options) async => options.path.contains('p1')
+              ? FakeHttpAdapter.json({
+                  'minCents': 40000,
+                  'maxCents': 52000,
+                  'samples': 31,
+                  'verdict': 'high',
+                })
+              : FakeHttpAdapter.json({
+                  'minCents': null,
+                  'maxCents': null,
+                  'samples': 3,
+                  'verdict': null,
+                }),
+        );
+        final repository = HttpComparisonRepository(dio(adapter), base);
+
+        final estimate = await repository.estimate('p1');
+        final none = await repository.estimate('p2');
+
+        expect(
+          (estimate?.minCents, estimate?.maxCents, estimate?.verdict),
+          (40000, 52000, PriceVerdict.high),
+        );
+        expect(none, isNull);
+        expect(
+          adapter.requests.first.path,
+          '/api/v1/products/p1/price-estimate',
+        );
+      },
+    );
+
     test('un 409 llega como ApiFailure con su código', () async {
       final adapter = FakeHttpAdapter(
         (_) async => FakeHttpAdapter.json({

@@ -1,5 +1,14 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-58 (SCRUM-98): precio sugerido con ML
+
+- **Qué:** "Precio sugerido: $X – $Y" en `Vender-3` (y editar) y la estimación del modelo en "Compara antes de comprar". El modelo (regresión de ML.NET por campus) vive en la API.
+- **Decisiones técnicas:**
+  - Es la misma tarjeta de la maqueta: con sugerencia cambia la frase de arriba y se agrega "Estimado con N precios de tu campus. Tú decides el precio."; sin ella queda el rango de la categoría.
+  - `PriceQuery` es un record para que dos consultas iguales compartan el provider. El precio no va en la consulta, así que escribirlo no vuelve a pedir la sugerencia.
+- **Errores a evitar:** la prueba de `Producto` que revisaba `comparison.calls == ['compare:p1']` ahora también ve `estimate:p1`.
+- **App:** sin subir la versión; va en el siguiente lote de Google Play.
+
 ## Trabajo en curso — HU-62 (SCRUM-102): recordatorio de la entrega y "Ya llegué"
 
 - **Qué:** en un pedido confirmado, la tarjeta "Entrega" de `Pedido-pago` dice cuándo y dónde, con "Agregar al calendario" y, desde 2 h antes, "Ya llegué". En el chat sale la franja con "Ya llegué" en esa misma ventana. El recordatorio de una hora antes lo manda la API (`delivery_reminder`) y `order_arrived` avisa que la otra parte llegó.

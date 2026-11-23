@@ -36,6 +36,15 @@ final FutureProviderFamily<PriceRange?, String> priceRangeProvider =
       retry: (_, _) => null,
     );
 
+/// "Precio sugerido" del modelo de ML (HU-58); `null` sin datos suficientes o
+/// si la API no responde (la tarjeta cae al rango de la categoria).
+final FutureProviderFamily<PriceSuggestion?, PriceQuery>
+priceSuggestionProvider = FutureProvider.autoDispose
+    .family<PriceSuggestion?, PriceQuery>(
+      (ref, query) => ref.watch(listingsRepositoryProvider).suggestPrice(query),
+      retry: (_, _) => null,
+    );
+
 /// Una pestana de `Mis-productos` con los conteos de las tres (HU-08).
 final FutureProviderFamily<MyListingsPage, MyProductsTab>
 myListingsTabProvider = FutureProvider.autoDispose
