@@ -22,6 +22,9 @@ const _tokenFiles = {
   'lib/core/session/session_tokens.dart',
   // El hub de SignalR lleva el access token en ?access_token= (API HU-20).
   'lib/features/chat/presentation/chat_providers.dart',
+  // HU-63: solo nombra las llaves para quitarlas antes de escribir en SQLite
+  // (`OfflineCache.sanitize`, probado en test/core/network/).
+  'lib/core/network/offline_cache.dart',
 };
 
 Iterable<File> _libFiles() =>

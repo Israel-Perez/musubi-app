@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
+import 'package:musubi_app/features/chat/presentation/chat_outbox.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/reputation/presentation/reputation_providers.dart';
@@ -101,10 +102,16 @@ class ChatController extends Notifier<ChatState> {
 
   @override
   ChatState build() {
-    ref.listen(chatIncomingProvider, (_, next) {
-      final message = next.value;
-      if (message != null) _receive(message);
-    });
+    ref
+      ..listen(chatIncomingProvider, (_, next) {
+        final message = next.value;
+        if (message != null) _receive(message);
+      })
+      // HU-63: un "Por enviar" ya salio (o la API lo rechazo).
+      ..listen(chatOutboxEventsProvider, (_, next) {
+        final event = next.value;
+        if (event != null) _settle(event);
+      });
     unawaited(Future.microtask(load));
     return const ChatState();
   }
@@ -118,10 +125,13 @@ class ChatController extends Notifier<ChatState> {
           ? await repository.conversation(target.conversationId!)
           : await repository.start(target.productId!);
       final page = await repository.messages(conversation.id);
+      final pending = await ref
+          .read(chatOutboxProvider)
+          .pending(conversation.id);
       if (!ref.mounted) return;
       state = state.copyWith(
         conversation: conversation,
-        messages: _merge(state.messages, page.items),
+        messages: _merge(state.messages, [...page.items, ...pending]),
         nextCursor: page.nextCursor,
         clearCursor: page.nextCursor == null,
         loading: false,
@@ -174,6 +184,19 @@ class ChatController extends Notifier<ChatState> {
       return true;
     } on ApiFailure catch (failure) {
       if (!ref.mounted) return false;
+      // HU-63: sin red queda "Por enviar" y sale solo al volver.
+      if (isOfflineFailure(failure)) {
+        final pending = await ref
+            .read(chatOutboxProvider)
+            .enqueue(conversation.id, trimmed);
+        if (!ref.mounted) return pending != null;
+        state = state.copyWith(
+          messages: pending == null ? null : _merge(state.messages, [pending]),
+          sending: false,
+          sendFailure: pending == null ? failure : null,
+        );
+        return pending != null;
+      }
       // HU-57: la otra persona bloqueo (o la bloquee en otro dispositivo).
       final blocked = failure.code == 'chat.blocked';
       state = state.copyWith(
@@ -202,6 +225,20 @@ class ChatController extends Notifier<ChatState> {
     SignedIn(:final tokens) => tokens.userId,
     Visitor() => null,
   };
+
+  void _settle(OutboxEvent event) {
+    final messages = [
+      for (final m in state.messages)
+        if (m.id != event.localId) m,
+    ];
+    final sent = event.sent;
+    state = state.copyWith(
+      messages: sent != null && sent.conversationId == state.conversation?.id
+          ? _merge(messages, [sent])
+          : messages,
+      sendFailure: event.failure,
+    );
+  }
 
   void _receive(ChatMessage message) {
     final conversation = state.conversation;

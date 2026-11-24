@@ -9,6 +9,7 @@ import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
+import 'package:musubi_app/core/widgets/offline_banner.dart';
 import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/listings/presentation/publish_sheet.dart';
@@ -76,6 +77,13 @@ class _AppShellState extends ConsumerState<AppShell> {
         body: Stack(
           children: [
             shell,
+            // HU-63: arriba de la barra mientras no hay conexion.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: barHeight,
+              child: const OfflineBanner(),
+            ),
             Positioned.fill(
               child: PublishOverlay(
                 open: _publishOpen && signedIn,

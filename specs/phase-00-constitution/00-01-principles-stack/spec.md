@@ -41,7 +41,7 @@ N/A — verificación estructural y por los guardarraíles que hacen cumplir cad
 
 ## Criterios
 - Cada principio cita una consecuencia práctica verificable (tabla de Diseño).
-- `pubspec.yaml` solo contiene paquetes del stack (`dio`, `flutter_riverpod`, `go_router`, `flutter_localizations`, `flutter_secure_storage`, `image_picker`, `qr_flutter`, `mobile_scanner`; dev: `very_good_analysis`, `flutter_test`, `integration_test`).
+- `pubspec.yaml` solo contiene paquetes del stack (`dio`, `flutter_riverpod`, `go_router`, `flutter_localizations`, `flutter_secure_storage`, `image_picker`, `qr_flutter`, `mobile_scanner`, `path`, `sqflite`; dev: `very_good_analysis`, `flutter_test`, `integration_test`, `sqflite_common_ffi`).
 - `AGENTS.md` y `00-02` citan `00-01` (`grep -n "00-01" AGENTS.md specs/phase-00-constitution/00-02-sdd-governance/spec.md`).
 
 ## Límites
@@ -51,4 +51,4 @@ No fija versiones exactas (viven en `pubspec.yaml`/`pubspec.lock` y en Memoria.m
 - **Estado:** 🚧 Borrador con evidencia
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
 - **Fecha:** 20-Oct-2026
-- **Detalle:** Adaptada de la referencia WebAPIDevSecOpsScallingSDD (00-01) al front Flutter de MUSUBI. Paquetes aprobados por el usuario: Riverpod, go_router, dio y very_good_analysis. 20-Oct-2026 (SCRUM-66): la constitución §1 (compartida) fija la evaluación el 02-Dic-2026 y hace mandar los lineamientos de la materia; §6 agrega el diseño de la maqueta y los datos locales (02-01). 27-Oct-2026 (SCRUM-23): `image_picker` 1.2.4 aprobado por el usuario como excepción (ver el `plan.md` de HU-06). 14-Nov-2026 (SCRUM-107): Play Core `review` 2.0.2 aprobado como dependencia de plataforma para la In-App Review de HU-67 (ver el `plan.md` de HU-67). 15-Nov-2026 (SCRUM-74): `qr_flutter` 4.1.0 y `mobile_scanner` 7.5.0 aprobados por la usuaria ("QR y cámara completos") como excepción (ver el `plan.md` de HU-52).
+- **Detalle:** Adaptada de la referencia WebAPIDevSecOpsScallingSDD (00-01) al front Flutter de MUSUBI. Paquetes aprobados por el usuario: Riverpod, go_router, dio y very_good_analysis. 20-Oct-2026 (SCRUM-66): la constitución §1 (compartida) fija la evaluación el 02-Dic-2026 y hace mandar los lineamientos de la materia; §6 agrega el diseño de la maqueta y los datos locales (02-01). 27-Oct-2026 (SCRUM-23): `image_picker` 1.2.4 aprobado por el usuario como excepción (ver el `plan.md` de HU-06). 14-Nov-2026 (SCRUM-107): Play Core `review` 2.0.2 aprobado como dependencia de plataforma para la In-App Review de HU-67 (ver el `plan.md` de HU-67). 15-Nov-2026 (SCRUM-74): `qr_flutter` 4.1.0 y `mobile_scanner` 7.5.0 aprobados por la usuaria ("QR y cámara completos") como excepción (ver el `plan.md` de HU-52). 23-Nov-2026 (SCRUM-103): `sqflite` 2.4.6 y `path` 1.9.1 (y `sqflite_common_ffi` 2.4.7 en las pruebas) propuestos como excepción para la base local de HU-63 (lineamiento L-16h; ver el `plan.md` de HU-63); los aprueba la usuaria al fusionar el PR.

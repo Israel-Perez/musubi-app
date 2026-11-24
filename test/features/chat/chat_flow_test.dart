@@ -9,8 +9,10 @@ import 'package:musubi_app/app/splash/brand_splash.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/core/storage/local_store.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
+import 'package:musubi_app/features/chat/presentation/chat_outbox.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
@@ -75,6 +77,7 @@ class ChatHarness {
   final WidgetTester tester;
   final FakeChatRepository chat;
   final realtime = FakeChatRealtime();
+  final store = InMemoryLocalStore();
   late ProviderContainer container;
 
   Future<void> open(String location, {Object? extra}) async {
@@ -99,6 +102,7 @@ class ChatHarness {
           initialSessionTokensProvider.overrideWithValue(session),
           chatRepositoryProvider.overrideWithValue(chat),
           chatRealtimeProvider.overrideWithValue(realtime),
+          localStoreProvider.overrideWithValue(store),
         ],
         child: const MusubiApp(),
       ),
@@ -238,6 +242,80 @@ void main() {
         find.byKey(const Key('chat-input')),
       );
       expect(input.controller!.text, isEmpty);
+    });
+
+    testWidgets('sin conexion queda "Por enviar" y sale al volver la red '
+        '(HU-63)', (tester) async {
+      final harness = ChatHarness(
+        tester,
+        chat: FakeChatRepository(
+          sendFailure: const ApiFailure(
+            code: ApiFailure.networkOffline,
+            message: 'No hay conexión con el servidor.',
+          ),
+        ),
+      );
+      await harness.open(AppRoutes.conversation('c1'));
+
+      await tester.enterText(find.byKey(const Key('chat-input')), 'Ya voy');
+      await harness.tap(find.bySemanticsLabel('Enviar'));
+
+      expect(find.text('Ya voy'), findsOneWidget);
+      expect(find.text('Por enviar'), findsOneWidget);
+      expect(harness.store.items.single.text, 'Ya voy');
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('chat-input')))
+            .controller!
+            .text,
+        isEmpty,
+      );
+
+      // Vuelve la red: el buzon lo envia y la burbuja deja de esperar.
+      harness.chat.sendFailure = null;
+      await harness.container.read(chatOutboxProvider).flush();
+      await tester.pumpAndSettle();
+
+      expect(harness.chat.sent, ['Ya voy']);
+      expect(find.text('Por enviar'), findsNothing);
+      expect(find.text('Ya voy'), findsOneWidget);
+      expect(harness.store.items, isEmpty);
+    });
+
+    testWidgets('lo que quedo por enviar sale al abrir el chat; si la API lo '
+        'rechaza se quita y avisa (HU-63)', (tester) async {
+      final harness = ChatHarness(
+        tester,
+        chat: FakeChatRepository(
+          sendFailure: const ApiFailure(
+            code: 'moderation.text_rejected',
+            message: 'Revisa el mensaje: no cumple las reglas de la comunidad.',
+            status: 422,
+          ),
+        ),
+      );
+      await harness.store.enqueue(
+        OutboxItem(
+          id: 'local-1',
+          userId: myId,
+          conversationId: 'c1',
+          text: 'texto feo',
+          createdAt: _now,
+        ),
+      );
+      await harness.open(AppRoutes.conversation('c1'));
+
+      expect(find.text('texto feo'), findsOneWidget);
+      expect(find.text('Por enviar'), findsOneWidget);
+      await harness.container.read(chatOutboxProvider).flush();
+      await tester.pumpAndSettle();
+
+      expect(find.text('texto feo'), findsNothing);
+      expect(
+        find.text('Revisa el mensaje: no cumple las reglas de la comunidad.'),
+        findsOneWidget,
+      );
+      expect(harness.store.items, isEmpty);
     });
 
     testWidgets('un mensaje rechazado avisa y no se borra lo escrito', (

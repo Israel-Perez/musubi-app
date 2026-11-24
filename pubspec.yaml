@@ -25,13 +25,20 @@ dependencies:
   # Camara y galeria para las fotos de HU-06 (flutter.dev, BSD-3; excepcion 00-01 del 27-Oct-2026).
   image_picker: ^1.2.4
   mobile_scanner: ^7.5.0
+  # HU-63 (L-16h): lo ultimo que cargo la persona en SQLite, para abrir al instante y
+  # consultar sin conexion. path (dart.dev, BSD-3) y sqflite (tekartik.com, BSD-2);
+  # excepcion 00-01 del 23-Nov-2026 (ver el plan.md de HU-63).
+  path: ^1.9.1
   qr_flutter: ^4.1.0
+  sqflite: ^2.4.6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   integration_test:
     sdk: flutter
+  # HU-63: el SQLite real en las pruebas de la VM (sin telefono), mismo autor que sqflite.
+  sqflite_common_ffi: ^2.4.7
   very_good_analysis: ^11.0.0
 
 flutter:

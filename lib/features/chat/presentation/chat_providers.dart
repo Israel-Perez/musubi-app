@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/data/http_chat_repository.dart';
@@ -77,6 +78,7 @@ final StreamProvider<String> chatAgreementChangesProvider =
 /// Bandeja por pestana. Se vuelve a pedir al llegar un mensaje.
 final FutureProviderFamily<InboxPage, InboxFilter> inboxProvider =
     FutureProvider.autoDispose.family<InboxPage, InboxFilter>((ref, filter) {
+      refreshWithOfflineCopies(ref, const {ApiPaths.conversations});
       ref.listen(chatIncomingProvider, (_, next) {
         if (next.hasValue) ref.invalidateSelf();
       });

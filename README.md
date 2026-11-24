@@ -43,12 +43,14 @@ Cada módulo vive en `lib/features/<modulo>/` con sus capas `domain/`, `data/` y
   - `POST_NOTIFICATIONS`: avisos push;
   - `INTERNET`.
 - Las fotos usan el selector del sistema, sin permiso de almacenamiento.
+- **Sin conexión (SQLite):** `Inicio`, `Mensajes`, "Mis pedidos" y "Mis productos" abren al instante con lo último que se cargó y se actualizan al llegar lo nuevo. Sin red se ve lo guardado con el aviso "Sin conexión", y un mensaje escrito sin red queda "Por enviar" y sale solo al volver. Al cerrar sesión se borra todo.
 
 ## Seguridad (OWASP MASVS)
 
 - **Almacenamiento:**
   - los tokens van solo en el almacén seguro, y una prueba exige que solo los archivos de sesión los toquen;
   - `allowBackup=false`;
+  - la base local (SQLite) nunca guarda tokens, el código de entrega ni la referencia de una transferencia, y se borra al cerrar sesión;
   - nada sensible en el APK: las llaves privadas viven solo en la API.
 - **Red:**
   - HTTPS fuera de dev (se valida al arrancar);
@@ -61,9 +63,9 @@ Cada módulo vive en `lib/features/<modulo>/` con sus capas `domain/`, `data/` y
 
 | Suite | Pruebas | Cómo se corre |
 |---|---|---|
-| Unitarias y de widget (`test/`) | 844 | `flutter test` |
+| Unitarias y de widget (`test/`) | 862 | `flutter test` |
 | Seguridad (`test/security/` + `test/integration/security_flow_test.dart`) | 14 + 4 | Las primeras con `flutter test`; las 4 de flujos, con el script de integración |
-| Integración contra la API real (`test/integration/`) | 55 | `pwsh scripts/run_integration_tests.ps1` (levanta `../musubi-api`) |
+| Integración contra la API real (`test/integration/`) | 56 | `pwsh scripts/run_integration_tests.ps1` (levanta `../musubi-api`) |
 | **En un teléfono físico** (`integration_test/`) | 8 | `pwsh scripts/run_device_tests.ps1` (teléfono por USB; guía en [`integration_test/README.md`](integration_test/README.md)) |
 
 - **Integración:** la suite llama a cada uno de los 124 endpoints que la app consume. Lo exige `tool/check_integration_coverage.dart` en el CI, así que una llamada nueva sin prueba no entra.
