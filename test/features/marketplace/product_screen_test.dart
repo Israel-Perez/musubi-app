@@ -9,6 +9,7 @@ import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/platform/share_sheet.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
@@ -35,6 +36,7 @@ import '../../helpers/fake_http_adapter.dart';
 import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_recommendations.dart';
 import '../../helpers/fake_session_api.dart';
+import '../../helpers/fake_share_sheet.dart';
 import '../../helpers/in_memory_token_store.dart';
 
 final _now = DateTime.utc(2026, 11, 6, 21);
@@ -68,6 +70,8 @@ Future<FakeCatalogRepository> _open(
   FakeRecommendationRepository? recommendations,
   FakeComparisonRepository? comparison,
   PublicProfile? seller,
+  FakeShareSheet? share,
+  String? location,
 }) async {
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 3;
@@ -99,6 +103,7 @@ Future<FakeCatalogRepository> _open(
         comparisonRepositoryProvider.overrideWithValue(
           comparison ?? FakeComparisonRepository(),
         ),
+        shareSheetProvider.overrideWithValue(share ?? FakeShareSheet()),
       ],
       child: const MusubiApp(),
     ),
@@ -106,7 +111,7 @@ Future<FakeCatalogRepository> _open(
   final container = ProviderScope.containerOf(
     tester.element(find.byType(MusubiApp)),
   );
-  container.read(routerProvider).go(AppRoutes.product('p1'));
+  container.read(routerProvider).go(location ?? AppRoutes.product('p1'));
   await tester.pumpAndSettle();
   return catalog;
 }
@@ -336,6 +341,111 @@ void main() {
 
     expect(find.text('Ver mis productos'), findsOneWidget);
     expect(find.bySemanticsLabel('Enviar mensaje'), findsNothing);
+  });
+
+  group('Compartir (HU-61)', () {
+    testWidgets('abre la hoja del sistema con nombre, precio y enlace', (
+      tester,
+    ) async {
+      final share = FakeShareSheet();
+      await _open(
+        tester,
+        detail: _detail(),
+        session: chatTokens(_now),
+        share: share,
+      );
+
+      await tester.tap(find.bySemanticsLabel('Compartir'));
+      await tester.pumpAndSettle();
+
+      expect(share.shared, hasLength(1));
+      expect(
+        share.shared.single.text,
+        'Calculadora científica Casio fx-991ES Plus · \$450 en Musubi\n'
+        'https://musubiapp.com.mx/p/p1',
+      );
+      expect(share.shared.single.subject, startsWith('Calculadora'));
+      // Sin datos de quien vende (RNF-05).
+      expect(share.shared.single.text, isNot(contains('Valeria')));
+      expect(find.textContaining('llega muy pronto'), findsNothing);
+    });
+
+    testWidgets('un visitante tambien comparte, y una agotada tambien', (
+      tester,
+    ) async {
+      final share = FakeShareSheet();
+      await _open(
+        tester,
+        detail: _detail(status: 'soldOut', stock: 0, sellerId: null),
+        share: share,
+      );
+
+      await tester.tap(find.bySemanticsLabel('Compartir'));
+      await tester.pumpAndSettle();
+
+      expect(share.shared.single.text, endsWith('/p/p1'));
+    });
+
+    testWidgets('mi publicacion pausada no se comparte y lo dice', (
+      tester,
+    ) async {
+      final share = FakeShareSheet();
+      await _open(
+        tester,
+        detail: _detail(status: 'hidden', sellerId: myId),
+        session: chatTokens(_now),
+        share: share,
+      );
+
+      await tester.tap(find.bySemanticsLabel('Compartir'));
+      await tester.pump();
+
+      expect(share.shared, isEmpty);
+      expect(
+        find.text('Solo puedes compartir lo que está a la venta.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sin una app para compartir, lo dice', (tester) async {
+      await _open(
+        tester,
+        detail: _detail(),
+        share: FakeShareSheet(result: false),
+      );
+
+      await tester.tap(find.bySemanticsLabel('Compartir'));
+      await tester.pump();
+
+      expect(
+        find.text('No encontramos una app para compartir.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('el enlace /p/{id} abre el detalle; "Regresar" va a Inicio', (
+      tester,
+    ) async {
+      await _open(
+        tester,
+        detail: _detail(),
+        session: chatTokens(_now),
+        location: '/p/p1',
+      );
+
+      expect(
+        find.text('Calculadora científica Casio fx-991ES Plus'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.bySemanticsLabel('Regresar'));
+      await tester.pumpAndSettle();
+
+      final router = ProviderScope.containerOf(
+        tester.element(find.byType(MusubiApp)),
+      ).read(routerProvider);
+      expect(router.state.uri.path, AppRoutes.home);
+    });
   });
 
   testWidgets('una publicacion que ya no existe lo explica', (tester) async {

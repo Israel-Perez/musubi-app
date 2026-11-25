@@ -1,5 +1,21 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-61 (SCRUM-101): compartir un producto con un enlace
+
+- **Qué:**
+  - El botón de compartir de `Producto` (estaba en la maqueta y decía "llega muy pronto") abre la hoja del sistema con "{nombre} · {precio} en Musubi" y `https://musubiapp.com.mx/p/{id}`.
+  - Con la app instalada, el enlace abre el producto (App Links).
+  - Sin la app, la landing muestra la vista previa con Open Graph y el botón de Google Play.
+- **Decisiones técnicas:**
+  - El canal nativo `musubi/share` (`Intent.ACTION_SEND`) en lugar de `share_plus`: sin paquete nuevo, como el calendario de HU-62.
+  - La vista previa es un Worker de Cloudflare en `musubi-landing` que solo atiende `/p/*`. WhatsApp necesita las etiquetas Open Graph en el HTML y el sitio estático no puede ponerlas por producto. El navegador sigue sin JavaScript.
+  - Solo `https://musubiapp.com.mx/p/` en el `intent-filter`: un esquema propio lo podría registrar otra app.
+  - Abierto desde un enlace no hay pantalla anterior: "Regresar" va a Inicio (antes `context.pop()` habría fallado).
+- **Para revisar:** la vista previa es pública (los datos que la API ya da sin sesión, sin quien vende).
+- **Pendiente:** la huella SHA-256 de la llave de firma de Google Play en `musubi-landing/src/static/.well-known/assetlinks.json` (Play Console → Integridad de la app → Firma de apps). Sin ella App Links no se verifica en las instalaciones de Play; "Abrir en Musubi" de la landing sí funciona.
+- **Errores a evitar:** Edge sin interfaz en Windows no baja de unos 500 px de ancho. Una captura "de 390 px" sale recortada aunque la página esté bien: revisa a 600 px o compárala con otra página del sitio.
+- **App:** sin subir la versión; va en el siguiente lote de Google Play.
+
 ## Trabajo en curso — HU-65 (SCRUM-105): fotos, "escribiendo…" y "leído" en el chat
 
 - **Qué:** el "+" del chat envía una foto de la cámara o la galería (moderada por la API); "Valeria está escribiendo…" en tiempo real; "Leído" bajo mi último mensaje; respuestas rápidas en la primera conversación de quien compra.

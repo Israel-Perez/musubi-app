@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/platform/share_sheet.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
@@ -20,6 +21,7 @@ import 'package:musubi_app/features/auth/presentation/account_gate.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
+import 'package:musubi_app/features/marketplace/domain/product_share.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/presentation/compare_section.dart';
 import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
@@ -115,12 +117,37 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
     super.dispose();
   }
 
-  void _soon(String what) => showMusubiSnack(
-    ScaffoldMessenger.of(context),
-    '$what llega muy pronto.',
-    icon: MusubiIcons.clock,
-    tone: SnackTone.info,
-  );
+  /// "Regresar". Abierto desde un enlace compartido (HU-61) no hay a donde
+  /// volver: va a Inicio.
+  void _back() => context.canPop() ? context.pop() : context.go(AppRoutes.home);
+
+  /// "Compartir" (HU-61): la hoja del sistema con el nombre, el precio y el
+  /// enlace a la landing. Una pausada o vendida (solo su dueno la ve) no se
+  /// comparte: el enlace diria "Ya no está disponible".
+  Future<void> _share(ProductDetail detail) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (!ProductShare.canShare(detail)) {
+      showMusubiSnack(
+        messenger,
+        'Solo puedes compartir lo que está a la venta.',
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.info,
+        bottomOffset: _actionBarHeight,
+      );
+      return;
+    }
+    final shared = await ref
+        .read(shareSheetProvider)
+        .share(ProductShare.of(detail));
+    if (shared || !mounted) return;
+    showMusubiSnack(
+      messenger,
+      'No encontramos una app para compartir.',
+      icon: MusubiIcons.circleAlert,
+      tone: SnackTone.warn,
+      bottomOffset: _actionBarHeight,
+    );
+  }
 
   void _gate(AccountGateMotive motive) => unawaited(
     showAccountGate(
@@ -252,8 +279,8 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
           pages: _pages,
           page: _page,
           onPage: (page) => setState(() => _page = page),
-          onBack: () => context.pop(),
-          onShare: () => _soon('Compartir'),
+          onBack: _back,
+          onShare: () => unawaited(_share(value)),
           onSave: () =>
               signedIn ? _toggle(value) : _gate(AccountGateMotive.save),
           onReserve: () =>
@@ -308,7 +335,7 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
                   kind: InlineMessageKind.warning,
                 ),
                 Pressable(
-                  onTap: () => context.pop(),
+                  onTap: _back,
                   semanticLabel: 'Regresar',
                   builder: (context, _) => SizedBox(
                     height: MusubiSizes.minTouch,
@@ -328,7 +355,7 @@ class _ProductScreenState extends ConsumerState<ProductScreen> {
             ),
           ),
         ),
-        _ => _Preview(preview: widget.preview, onBack: () => context.pop()),
+        _ => _Preview(preview: widget.preview, onBack: _back),
       },
     );
   }

@@ -67,6 +67,31 @@ void main() {
     }
   });
 
+  test('App Links (HU-61): solo https://musubiapp.com.mx/p/ y verificado', () {
+    final filters = RegExp(
+      '<intent-filter[^>]*>(.*?)</intent-filter>',
+      dotAll: true,
+    ).allMatches(manifest).map((m) => m.group(0)!).toList();
+    final views = filters
+        .where((f) => f.contains('android.intent.action.VIEW'))
+        .toList();
+
+    // Un solo filtro de enlaces, verificado con assetlinks.json de la landing.
+    expect(views, hasLength(1));
+    final links = views.single;
+    expect(links, contains('android:autoVerify="true"'));
+    expect(links, contains('android.intent.category.BROWSABLE'));
+    final data = RegExp('<data([^>]*)/>').allMatches(links).toList();
+    expect(data, hasLength(1));
+    final attrs = data.single.group(1)!;
+    expect(attrs, contains('android:scheme="https"'));
+    expect(attrs, contains('android:host="musubiapp.com.mx"'));
+    expect(attrs, contains('android:pathPrefix="/p/"'));
+    // Nunca http ni un esquema propio que cualquier app podria usar.
+    expect(manifest, isNot(contains('android:scheme="http"')));
+    expect(RegExp('android:scheme="(?!https")').hasMatch(manifest), isFalse);
+  });
+
   test('ningun archivo de Firebase o de firma versionado', () {
     final tracked = Process.runSync('git', ['ls-files']).stdout as String;
 
