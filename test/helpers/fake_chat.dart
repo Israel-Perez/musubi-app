@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
@@ -8,6 +9,12 @@ import 'package:musubi_app/features/chat/domain/chat_repository.dart';
 
 /// Mi id en las pruebas del chat (el `sub` de [chatTokens]).
 const myId = '6716a0000000000000000003';
+
+/// Un PNG valido de 1×1 (la foto de las pruebas del chat, HU-65).
+final Uint8List onePixelPng = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQ'
+  'GAhKmMIQAAAABJRU5ErkJggg==',
+);
 
 /// La vendedora de las pruebas (maqueta `Chat-Valeria`).
 const valeria = ChatCounterpart(
@@ -101,6 +108,34 @@ class FakeChatRepository implements ChatRepository {
     return message;
   }
 
+  /// HU-65: las fotos enviadas (la ruta del archivo) y si la siguiente falla.
+  final List<String> photosSent = [];
+  ApiFailure? photoFailure;
+
+  @override
+  Future<ChatMessage> sendPhoto(String conversationId, String filePath) async {
+    if (photoFailure != null) throw photoFailure!;
+    photosSent.add(filePath);
+    final id = 'p${100 + photosSent.length}';
+    final message = ChatMessage(
+      id: id,
+      conversationId: conversationId,
+      senderId: myId,
+      text: '📷 Foto',
+      sentAt: DateTime.utc(2026, 11, 6, 20, 40 + photosSent.length),
+      photoPath: '/api/v1/conversations/$conversationId/photos/$id.webp',
+    );
+    stored.add(message);
+    return message;
+  }
+
+  /// HU-65: los bytes de cada foto (un PNG de 1×1 si no se dio otro).
+  final Map<String, Uint8List> photoBytes = {};
+
+  @override
+  Future<Uint8List> photo(String path) async =>
+      photoBytes[path] ?? Uint8List.fromList(onePixelPng);
+
   @override
   Future<InboxPage> inbox({
     InboxFilter filter = InboxFilter.all,
@@ -124,7 +159,29 @@ class FakeChatRepository implements ChatRepository {
 class FakeChatRealtime implements ChatRealtime {
   final _controller = StreamController<ChatMessage>.broadcast();
   final _agreements = StreamController<String>.broadcast();
+  final _typing = StreamController<TypingSignal>.broadcast();
+  final _reads = StreamController<ReadSignal>.broadcast();
   int starts = 0;
+
+  /// HU-65: a que conversaciones se aviso "escribiendo…".
+  final List<String> typed = [];
+
+  /// HU-65: la otra persona escribe.
+  void typingFrom(String conversationId, String userId) =>
+      _typing.add((conversationId: conversationId, userId: userId));
+
+  /// HU-65: alguien abrio la conversacion.
+  void readBy(String conversationId, String readerId, DateTime at) =>
+      _reads.add((conversationId: conversationId, readerId: readerId, at: at));
+
+  @override
+  Stream<TypingSignal> get typing => _typing.stream;
+
+  @override
+  Stream<ReadSignal> get reads => _reads.stream;
+
+  @override
+  void sendTyping(String conversationId) => typed.add(conversationId);
 
   void push(ChatMessage message) => _controller.add(message);
 

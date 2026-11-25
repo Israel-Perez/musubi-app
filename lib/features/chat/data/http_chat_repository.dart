@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
@@ -51,6 +53,28 @@ class HttpChatRepository implements ChatRepository {
       });
 
   @override
+  Future<ChatMessage> sendPhoto(String conversationId, String filePath) =>
+      _guard(() async {
+        final form = FormData.fromMap({
+          'photo': await MultipartFile.fromFile(filePath),
+        });
+        final response = await _dio.post<Map<String, dynamic>>(
+          ApiPaths.conversationPhotos(conversationId),
+          data: form,
+        );
+        return messageFromJson(_body(response));
+      });
+
+  @override
+  Future<Uint8List> photo(String path) => _guard(() async {
+    final response = await _dio.get<List<int>>(
+      path,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data ?? const []);
+  });
+
+  @override
   Future<ChatMessage> send(String conversationId, String text) =>
       _guard(() async {
         final response = await _dio.post<Map<String, dynamic>>(
@@ -96,6 +120,10 @@ class HttpChatRepository implements ChatRepository {
       counterpart: _counterpart(json['counterpart']),
       // Una API anterior a HU-57 no lo manda: se puede responder.
       canReply: json['canReply'] as bool? ?? true,
+      counterpartReadAt: switch (json['counterpartReadAt']) {
+        final String at => DateTime.parse(at).toUtc(),
+        _ => null,
+      },
       context: ChatContext(
         id: context['id'] as String,
         title: context['title'] as String,
@@ -156,4 +184,5 @@ ChatMessage messageFromJson(Map<String, dynamic> json) => ChatMessage(
   text: json['text'] as String,
   sentAt: DateTime.parse(json['sentAt'] as String).toUtc(),
   notice: json['kind'] == 'notice',
+  photoPath: json['kind'] == 'photo' ? json['photo'] as String? : null,
 );

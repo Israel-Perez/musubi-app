@@ -68,7 +68,7 @@ Cada módulo vive en `lib/features/<modulo>/` con sus capas `domain/`, `data/` y
 | Integración contra la API real (`test/integration/`) | 56 | `pwsh scripts/run_integration_tests.ps1` (levanta `../musubi-api`) |
 | **En un teléfono físico** (`integration_test/`) | 8 | `pwsh scripts/run_device_tests.ps1` (teléfono por USB; guía en [`integration_test/README.md`](integration_test/README.md)) |
 
-- **Integración:** la suite llama a cada uno de los 124 endpoints que la app consume. Lo exige `tool/check_integration_coverage.dart` en el CI, así que una llamada nueva sin prueba no entra.
+- **Integración:** la suite llama a cada uno de los 126 endpoints que la app consume. Lo exige `tool/check_integration_coverage.dart` en el CI, así que una llamada nueva sin prueba no entra.
 - **Teléfono físico:** la suite corrió el 19-Nov-2026 en un Galaxy A54, 8/8. Recorre crear cuenta, sesión persistente, cerrar sesión, eliminar cuenta, buscar y chatear, apartar, publicar con foto y moderación.
 
 ## CI y CD

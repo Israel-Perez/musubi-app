@@ -51,6 +51,7 @@ class ChatState {
     this.sending = false,
     this.failure,
     this.sendFailure,
+    this.counterpartTyping = false,
   });
 
   final Conversation? conversation;
@@ -68,6 +69,9 @@ class ChatState {
   /// No se pudo enviar el ultimo mensaje (moderacion, limite, red).
   final ApiFailure? sendFailure;
 
+  /// HU-65: la otra persona esta escribiendo ("Valeria está escribiendo…").
+  final bool counterpartTyping;
+
   bool get ownProduct => failure?.code == 'chat.own_product';
 
   ChatState copyWith({
@@ -82,6 +86,7 @@ class ChatState {
     bool clearFailure = false,
     ApiFailure? sendFailure,
     bool clearSendFailure = false,
+    bool? counterpartTyping,
   }) => ChatState(
     conversation: conversation ?? this.conversation,
     messages: messages ?? this.messages,
@@ -91,6 +96,7 @@ class ChatState {
     sending: sending ?? this.sending,
     failure: clearFailure ? null : failure ?? this.failure,
     sendFailure: clearSendFailure ? null : sendFailure ?? this.sendFailure,
+    counterpartTyping: counterpartTyping ?? this.counterpartTyping,
   );
 }
 
@@ -111,7 +117,17 @@ class ChatController extends Notifier<ChatState> {
       ..listen(chatOutboxEventsProvider, (_, next) {
         final event = next.value;
         if (event != null) _settle(event);
-      });
+      })
+      // HU-65: "Escribiendo…" y "Leído" de la otra persona.
+      ..listen(chatTypingProvider, (_, next) {
+        final signal = next.value;
+        if (signal != null) _typingFrom(signal);
+      })
+      ..listen(chatReadsProvider, (_, next) {
+        final signal = next.value;
+        if (signal != null) _readBy(signal);
+      })
+      ..onDispose(() => _typingTimer?.cancel());
     unawaited(Future.microtask(load));
     return const ChatState();
   }
@@ -208,6 +224,81 @@ class ChatController extends Notifier<ChatState> {
     }
   }
 
+  /// Cuanto dura "Escribiendo…" sin otro aviso.
+  static const typingFor = Duration(seconds: 5);
+
+  /// Cada cuanto se avisa, como mucho, que escribo.
+  static const typingEvery = Duration(seconds: 3);
+
+  Timer? _typingTimer;
+  DateTime? _lastTyped;
+
+  /// HU-65: la persona escribe en la caja: se avisa a la otra, a lo mas cada
+  /// [typingEvery] y nunca con un bloqueo.
+  void typed() {
+    final conversation = state.conversation;
+    if (conversation == null || !conversation.canReply) return;
+    final now = DateTime.now();
+    final last = _lastTyped;
+    if (last != null && now.difference(last) < typingEvery) return;
+    _lastTyped = now;
+    ref.read(chatRealtimeProvider).sendTyping(conversation.id);
+  }
+
+  /// HU-65: envia una foto (la API la modera). Devuelve `true` si se guardo.
+  Future<bool> sendPhoto(String filePath) async {
+    final conversation = state.conversation;
+    if (conversation == null || !conversation.canReply || state.sending) {
+      return false;
+    }
+    state = state.copyWith(sending: true, clearSendFailure: true);
+    try {
+      final message = await ref
+          .read(chatRepositoryProvider)
+          .sendPhoto(conversation.id, filePath);
+      if (!ref.mounted) return true;
+      state = state.copyWith(
+        messages: _merge(state.messages, [message]),
+        sending: false,
+      );
+      return true;
+    } on ApiFailure catch (failure) {
+      if (!ref.mounted) return false;
+      final blocked = failure.code == 'chat.blocked';
+      state = state.copyWith(
+        sending: false,
+        sendFailure: failure,
+        conversation: blocked ? conversation.blocked() : null,
+      );
+      return false;
+    }
+  }
+
+  void _typingFrom(TypingSignal signal) {
+    final conversation = state.conversation;
+    if (conversation == null ||
+        signal.conversationId != conversation.id ||
+        signal.userId == myId ||
+        !conversation.canReply) {
+      return;
+    }
+    _typingTimer?.cancel();
+    _typingTimer = Timer(typingFor, () {
+      if (ref.mounted) state = state.copyWith(counterpartTyping: false);
+    });
+    state = state.copyWith(counterpartTyping: true);
+  }
+
+  void _readBy(ReadSignal signal) {
+    final conversation = state.conversation;
+    if (conversation == null ||
+        signal.conversationId != conversation.id ||
+        signal.readerId == myId) {
+      return;
+    }
+    state = state.copyWith(conversation: conversation.readAt(signal.at));
+  }
+
   /// "Bloquear a …" (HU-57): bloquea a la otra persona y cambia la caja de
   /// texto por el aviso. Lanza `ApiFailure` si no se pudo.
   Future<void> blockCounterpart() async {
@@ -245,7 +336,13 @@ class ChatController extends Notifier<ChatState> {
     if (conversation == null || message.conversationId != conversation.id) {
       return;
     }
-    state = state.copyWith(messages: _merge(state.messages, [message]));
+    // HU-65: llego su mensaje, ya no esta escribiendo.
+    final fromThem = message.senderId != myId;
+    if (fromThem) _typingTimer?.cancel();
+    state = state.copyWith(
+      messages: _merge(state.messages, [message]),
+      counterpartTyping: fromThem ? false : null,
+    );
     // Llega con la conversacion abierta: ya esta leido.
     if (message.senderId != myId) unawaited(_markRead());
   }

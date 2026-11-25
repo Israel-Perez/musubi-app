@@ -25,6 +25,8 @@ import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/genai/domain/agreement_models.dart';
 import 'package:musubi_app/features/genai/presentation/agreement_providers.dart';
 import 'package:musubi_app/features/genai/presentation/agreement_sheet.dart';
+import 'package:musubi_app/features/listings/data/photo_picker.dart';
+import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_cards.dart';
 import 'package:musubi_app/features/notifications/presentation/notifications_screen.dart';
@@ -71,7 +73,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _input.text = widget.draft ?? '';
+    _input
+      ..text = widget.draft ?? ''
+      // HU-65: "Escribiendo…" del otro lado (el controlador dice cada
+      // cuanto).
+      ..addListener(() {
+        if (_input.text.trim().isNotEmpty) {
+          ref.read(chatControllerProvider(widget.target).notifier).typed();
+        }
+      });
     _scroll.addListener(() {
       // La lista va invertida: el final del scroll son los mas viejos.
       if (_scroll.position.extentAfter < 240) {
@@ -95,6 +105,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     icon: MusubiIcons.clock,
     tone: SnackTone.info,
   );
+
+  /// HU-65: el clip. "Tomar foto" o "Elegir de la galería" y se envia (la API
+  /// la modera antes de guardarla).
+  Future<void> _attach() async {
+    final camera = await showMusubiPanel<bool>(
+      context,
+      builder: (context) => MusubiPanel(
+        key: const Key('chat-attach'),
+        title: 'Enviar una foto',
+        bodyInset: 12,
+        child: MusubiOptions<bool>(
+          plain: true,
+          options: const [
+            MusubiOption(value: true, label: 'Tomar foto'),
+            MusubiOption(value: false, label: 'Elegir de la galería'),
+          ],
+          onPick: (camera) => Navigator.of(context).pop(camera),
+        ),
+      ),
+    );
+    if (camera == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final picker = ref.read(photoPickerProvider);
+    String? path;
+    try {
+      path = camera
+          ? await picker.takePhoto()
+          : (await picker.pickFromGallery(max: 1)).firstOrNull;
+    } on PhotoPickFailure {
+      if (!mounted) return;
+      showMusubiSnack(
+        messenger,
+        'No pudimos abrir la cámara ni la galería.',
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+      return;
+    }
+    if (path == null || !mounted) return;
+    final controller = ref.read(chatControllerProvider(widget.target).notifier);
+    if (await controller.sendPhoto(path) || !mounted) return;
+    final failure = ref.read(chatControllerProvider(widget.target)).sendFailure;
+    if (failure != null) {
+      showMusubiSnack(
+        messenger,
+        failure.message,
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+    }
+  }
 
   /// "Resumir acuerdo": abre el acuerdo vigente o le pide uno a la IA.
   Future<void> _summarize(Conversation? conversation) async {
@@ -357,6 +418,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               // HU-62: "Ya llegué" desde 2 horas antes de la entrega.
               if (ArrivalBar.showsFor(openOrder, ref.watch(clockProvider)()))
                 ArrivalBar(order: openOrder!, now: ref.watch(clockProvider)()),
+              // HU-65: "Valeria está escribiendo…".
+              if (state.counterpartTyping && conversation != null)
+                _TypingLine(name: conversation.counterpart.name),
+              // HU-65: respuestas rapidas en la primera conversacion.
+              if (conversation != null &&
+                  conversation.canReply &&
+                  conversation.role == ChatRole.buyer &&
+                  !state.loading &&
+                  state.messages.isEmpty)
+                _QuickReplies(
+                  priceCents: conversation.context.priceCents,
+                  onPick: (text) => _input
+                    ..text = text
+                    ..selection = TextSelection.collapsed(offset: text.length),
+                ),
               if (conversation != null && !conversation.canReply)
                 const _BlockedNotice()
               else
@@ -365,7 +441,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   enabled: conversation != null,
                   sending: state.sending,
                   onSend: _send,
-                  onAttach: () => _soon('Enviar fotos'),
+                  onAttach: () => unawaited(_attach()),
                 ),
             ],
           ],
@@ -878,6 +954,19 @@ class _Log extends StatelessWidget {
         ? 'Conversación sobre tu publicación'
         : 'Conversación sobre su publicación';
 
+    // HU-65: "Leído" va debajo de mi ultimo mensaje si la otra persona abrio
+    // la conversacion despues.
+    final readAt = state.conversation?.counterpartReadAt;
+    ChatMessage? lastMine;
+    for (final m in messages.reversed) {
+      if (m.senderId == myId && !m.pending && !m.notice) {
+        lastMine = m;
+        break;
+      }
+    }
+    final lastMineRead =
+        lastMine != null && readAt != null && !lastMine.sentAt.isAfter(readAt);
+
     // Del mas nuevo al mas viejo (lista invertida).
     final items = <Widget>[];
     for (var i = messages.length - 1; i >= 0; i--) {
@@ -888,17 +977,25 @@ class _Log extends StatelessWidget {
       // mensajes), del lado de quien escribio el ultimo.
       final lastOfGroup =
           next == null || next.sentAt.difference(message.sentAt).inMinutes >= 5;
+      final read = lastMineRead && identical(message, lastMine);
       if (message.pending) {
         // HU-63: escrito sin conexion; sale solo al volver la red.
         items.add(const _Stamp(text: 'Por enviar', mine: true, pending: true));
-      } else if (lastOfGroup) {
+      } else if (lastOfGroup || read) {
+        final stamp = messageStamp(message.sentAt.toLocal(), now);
         items.add(
-          _Stamp(text: messageStamp(message.sentAt.toLocal(), now), mine: mine),
+          _Stamp(
+            key: read ? const Key('chat-read') : null,
+            text: read ? (lastOfGroup ? '$stamp · Leído' : 'Leído') : stamp,
+            mine: mine,
+          ),
         );
       }
       items.add(
         message.notice
             ? _NoticeLine(text: message.text)
+            : message.isPhoto
+            ? _PhotoBubble(message: message, mine: mine)
             : _Bubble(message: message, mine: mine),
       );
     }
@@ -1047,8 +1144,154 @@ class _Bubble extends StatelessWidget {
   }
 }
 
+/// HU-65: una foto del chat. Se baja con la sesion (solo los participantes la
+/// ven) y se queda en memoria.
+class _PhotoBubble extends ConsumerWidget {
+  const new({required this.message, required this.mine});
+
+  final ChatMessage message;
+  final bool mine;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.musubi;
+    final side = (MediaQuery.sizeOf(context).width - 32) * 0.62;
+    final bytes = ref.watch(chatPhotoProvider(message.photoPath!));
+    return Align(
+      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Semantics(
+        image: true,
+        label: mine ? 'Foto que enviaste' : 'Foto que te enviaron',
+        child: ClipRRect(
+          key: Key('chat-photo-${message.id}'),
+          borderRadius: BorderRadius.circular(18),
+          child: SizedBox.square(
+            dimension: side,
+            child: switch (bytes) {
+              AsyncData(:final value) => Image.memory(
+                value,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                errorBuilder: (_, _, _) => _PhotoMissing(color: c.surface),
+              ),
+              AsyncError() => _PhotoMissing(color: c.surface),
+              _ => SkeletonBox(width: side, height: side, radius: 18),
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoMissing extends StatelessWidget {
+  const new({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+    color: color,
+    child: Center(
+      child: MusubiIcon(
+        MusubiIcons.image,
+        size: 28,
+        color: context.musubi.textSecondary,
+      ),
+    ),
+  );
+}
+
+/// HU-65: "Valeria está escribiendo…" arriba de la caja de texto.
+class _TypingLine extends StatelessWidget {
+  const new({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    key: const Key('chat-typing'),
+    padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+    child: Semantics(
+      liveRegion: true,
+      child: Text(
+        '${name.trim().split(RegExp(r'\s+')).first} está escribiendo…',
+        style: MusubiType.style(
+          12.5,
+          weight: FontWeight.w600,
+          color: context.musubi.textSecondary,
+        ),
+      ),
+    ),
+  );
+}
+
+/// HU-65: respuestas rapidas de quien compra en una conversacion nueva. Al
+/// tocarla se escribe en la caja; la persona la envia o la cambia.
+class _QuickReplies extends StatelessWidget {
+  const new({required this.priceCents, required this.onPick});
+
+  final int? priceCents;
+  final ValueChanged<String> onPick;
+
+  /// "¿Aceptas $400?": un 10 % abajo del precio, en pesos de 10 en 10.
+  static String offer(int? priceCents) {
+    if (priceCents == null || priceCents < 1000) return '¿Aceptas una oferta?';
+    final pesos = ((priceCents / 100) * 0.9 / 10).floor() * 10;
+    return '¿Aceptas ${formatPrice(pesos * 100)}?';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    final replies = [
+      '¿Sigue disponible?',
+      '¿Dónde nos vemos?',
+      offer(priceCents),
+    ];
+    return SingleChildScrollView(
+      key: const Key('chat-quick-replies'),
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      child: Row(
+        spacing: 8,
+        children: [
+          for (final reply in replies)
+            Pressable(
+              onTap: () => onPick(reply),
+              semanticLabel: reply,
+              builder: (context, pressed) => Container(
+                height: 36,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: pressed ? c.surface : c.background,
+                  borderRadius: BorderRadius.circular(MusubiSizes.radiusChip),
+                  border: Border.all(color: c.border, width: 1.5),
+                ),
+                child: Text(
+                  reply,
+                  style: MusubiType.style(
+                    13.5,
+                    weight: FontWeight.w600,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Stamp extends StatelessWidget {
-  const new({required this.text, required this.mine, this.pending = false});
+  const new({
+    required this.text,
+    required this.mine,
+    this.pending = false,
+    super.key,
+  });
 
   final String text;
   final bool mine;

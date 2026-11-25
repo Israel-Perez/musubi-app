@@ -93,6 +93,7 @@ class Conversation {
     required this.counterpart,
     required this.context,
     this.canReply = true,
+    this.counterpartReadAt,
   });
 
   final String id;
@@ -104,8 +105,13 @@ class Conversation {
   /// texto se ve un aviso. La API no dice quien bloqueo.
   final bool canReply;
 
+  /// HU-65: la ultima vez que la otra persona abrio la conversacion (UTC);
+  /// mis mensajes de antes salen "Leído". `null` si nunca la abrio o hay un
+  /// bloqueo.
+  final DateTime? counterpartReadAt;
+
   /// La misma conversacion sin poder responder (al bloquear o al recibir
-  /// `chat.blocked`).
+  /// `chat.blocked`): con un bloqueo tampoco se ve "Leído".
   Conversation blocked() => Conversation(
     id: id,
     role: role,
@@ -113,7 +119,23 @@ class Conversation {
     context: context,
     canReply: false,
   );
+
+  /// La misma conversacion leida por la otra persona en [at] (HU-65).
+  Conversation readAt(DateTime at) => Conversation(
+    id: id,
+    role: role,
+    counterpart: counterpart,
+    context: context,
+    canReply: canReply,
+    counterpartReadAt: canReply ? at : null,
+  );
 }
+
+/// HU-65: la otra persona esta escribiendo (evento `typing` del hub).
+typedef TypingSignal = ({String conversationId, String userId});
+
+/// HU-65: alguien abrio la conversacion (evento `conversationRead` del hub).
+typedef ReadSignal = ({String conversationId, String readerId, DateTime at});
 
 /// Un mensaje de texto. Tambien es lo que llega por el hub (`messageCreated`).
 @immutable
@@ -126,6 +148,7 @@ class ChatMessage {
     required this.sentAt,
     this.notice = false,
     this.pending = false,
+    this.photoPath,
   });
 
   final String id;
@@ -140,6 +163,13 @@ class ChatMessage {
 
   /// Escrito sin conexion: "Por enviar" hasta que vuelva la red (HU-63).
   final bool pending;
+
+  /// HU-65: la ruta de la foto en la API (`/api/v1/conversations/{id}/photos/
+  /// …`, con sesion), o `null` si es texto.
+  final String? photoPath;
+
+  /// Es una foto (HU-65).
+  bool get isPhoto => photoPath != null;
 
   @override
   bool operator ==(Object other) => other is ChatMessage && other.id == id;
