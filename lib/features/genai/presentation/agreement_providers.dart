@@ -37,21 +37,33 @@ abstract interface class AiNoticeStore {
 
 /// En el almacen cifrado del sistema, como la sesion.
 class SecureAiNoticeStore implements AiNoticeStore {
-  new([FlutterSecureStorage? storage])
+  new([FlutterSecureStorage? storage, this.entry = key])
     : _storage = storage ?? const FlutterSecureStorage();
 
   static const key = 'musubi.ai_notice_seen';
 
+  /// HU-59: el aviso de "Llenar con IA", que envia otra cosa (la foto).
+  static const photoKey = 'musubi.photo_ai_notice_seen';
+
   final FlutterSecureStorage _storage;
 
-  @override
-  Future<bool> seen() async => await _storage.read(key: key) == '1';
+  /// La entrada del almacen de este aviso.
+  final String entry;
 
   @override
-  Future<void> markSeen() => _storage.write(key: key, value: '1');
+  Future<bool> seen() async => await _storage.read(key: entry) == '1';
+
+  @override
+  Future<void> markSeen() => _storage.write(key: entry, value: '1');
 }
 
 /// El aviso de la IA. En pruebas, uno en memoria.
 final aiNoticeStoreProvider = Provider<AiNoticeStore>(
   (ref) => SecureAiNoticeStore(),
+);
+
+/// El aviso de "Llenar con IA" (HU-59): la primera vez se explica que la
+/// portada se envia a la IA. En pruebas, uno en memoria.
+final photoAiNoticeStoreProvider = Provider<AiNoticeStore>(
+  (ref) => SecureAiNoticeStore(null, SecureAiNoticeStore.photoKey),
 );

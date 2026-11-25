@@ -244,6 +244,44 @@ class SellDraftNotifier extends Notifier<SellDraft> {
     if (photo != null && photo.upload == PhotoUpload.failed) _upload(photo);
   }
 
+  /// "Llenar con IA" (HU-59): espera a que se suba la portada, pide la
+  /// propuesta y la pone en el borrador. Una categoria que la IA no reconocio
+  /// deja la que ya habia. Nada se publica: quien vende lo revisa en
+  /// `Vender-2…4` (RN-38). Lanza `ApiFailure` con el mensaje de la API.
+  Future<PhotoDraftProposal> fillFromCover() async {
+    final cover = state.photos.firstOrNull;
+    if (cover == null) {
+      throw const ApiFailure(
+        code: ApiFailure.validationFailed,
+        message: 'Agrega una foto para usar la IA.',
+      );
+    }
+    if (cover.upload == PhotoUpload.failed) _upload(cover);
+    await _uploads[cover.id];
+    final uploaded = state.photos.where((p) => p.id == cover.id).firstOrNull;
+    final key = uploaded?.key;
+    if (uploaded == null || key == null) {
+      throw ApiFailure(
+        code: ApiFailure.networkOffline,
+        message: uploaded?.upload == PhotoUpload.rejected
+            ? 'Cambia la portada: esa foto no se puede usar.'
+            : 'No pudimos subir tu portada. Revisa tu conexión.',
+      );
+    }
+    final proposal = await ref
+        .read(listingsRepositoryProvider)
+        .draftFromPhoto(key);
+    if (!ref.mounted) return proposal;
+    state = state.copyWith(
+      title: proposal.title,
+      description: proposal.description,
+      category: proposal.category,
+      condition: proposal.condition,
+      usedDetail: proposal.usedDetail,
+    );
+    return proposal;
+  }
+
   void setTitle(String value) => state = state.copyWith(title: value);
 
   void setDescription(String value) =>

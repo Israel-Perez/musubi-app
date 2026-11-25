@@ -20,8 +20,8 @@ import 'support/live_flows.dart';
 
 /// Pantallas `Vender-1…4`, `Vender-listo`, `Mis-productos` y `Editar` contra
 /// la API real (HU-06, HU-07, HU-08, HU-50), con el apoyo a vendedores
-/// (HU-36, HU-37, HU-38), el precio sugerido (HU-58) y la moderacion del
-/// texto (02-07).
+/// (HU-36, HU-37, HU-38), el precio sugerido (HU-58), "Llenar con IA"
+/// (HU-59) y la moderacion del texto (02-07).
 void main() {
   group('Vender contra la API real', skip: liveSkip, () {
     test('publicar con foto, editar, pausar, reanudar y piezas', () async {
@@ -103,6 +103,50 @@ void main() {
         expect(estimate.minCents, lessThan(estimate.maxCents));
       }
       expect(invalid?.code, 'recommendations.invalid_price_request');
+    });
+
+    test('Llenar con IA (HU-59): la portada propone el borrador; solo la '
+        'mia', () async {
+      final valeria = await liveUser(name: 'Valeria Integración');
+      final ana = await liveUser();
+      addTearDown(valeria.dispose);
+      addTearDown(ana.dispose);
+      final listings = valeria.read(listingsRepositoryProvider);
+      final cover = await listings.uploadPhoto(livePhoto().path);
+
+      final proposal = await listings.draftFromPhoto(cover.key);
+      final categories = await listings.categories();
+      final theirs = await ana
+          .read(listingsRepositoryProvider)
+          .draftFromPhoto(cover.key)
+          .then<ApiFailure?>(
+            (_) => null,
+            onError: (Object e) => e as ApiFailure,
+          );
+
+      // La API local usa la IA en memoria (determinista, sin Gemini).
+      expect(proposal.title.length, inInclusiveRange(3, 80));
+      expect(proposal.description, isNotEmpty);
+      expect(categories.map((c) => c.slug), contains(proposal.category));
+      expect(proposal.condition, ProductCondition.used);
+      expect(proposal.usedDetail, isNotNull);
+      // RN-38: nada se publico; con lo que propuso, y el precio, se publica.
+      expect(await listings.mine(), isEmpty);
+      final published = await listings.publish(
+        NewListing(
+          title: proposal.title,
+          description: proposal.description,
+          category: proposal.category!,
+          priceCents: 30000,
+          condition: proposal.condition,
+          usedDetail: proposal.usedDetail,
+          quantity: 1,
+          photoKeys: [cover.key],
+        ),
+      );
+      expect(published.title, proposal.title);
+      // OWASP API1: la foto de Valeria no le sirve a nadie mas.
+      expect(theirs?.code, 'listings.photo_not_found');
     });
 
     test('sin conexion se ve lo ultimo que cargo (HU-63, L-16h)', () async {

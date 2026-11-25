@@ -98,4 +98,75 @@ void main() {
     );
     expect(listings.published, isEmpty);
   });
+
+  group('Llenar con IA (HU-59)', () {
+    test('usa la portada y llena el borrador; sin categoria deja la que '
+        'habia', () async {
+      final listings = FakeListingsRepository()
+        ..draft = const PhotoDraftProposal(
+          title: 'Kalimba de 17 notas',
+          condition: ProductCondition.brandNew,
+          description: 'En su caja.',
+        );
+      final container = ProviderContainer.test(
+        overrides: [listingsRepositoryProvider.overrideWithValue(listings)],
+      );
+      final draft = container.read(sellDraftProvider.notifier)
+        ..addPhotos(['portada.jpg', 'otra.jpg'])
+        ..setCategory('musica');
+
+      await draft.fillFromCover();
+
+      final state = container.read(sellDraftProvider);
+      expect(listings.draftedKeys, ['media/products/u1/1.webp']);
+      expect(state.title, 'Kalimba de 17 notas');
+      expect(state.description, 'En su caja.');
+      expect(state.category, 'musica');
+      expect(state.condition, ProductCondition.brandNew);
+      expect(state.photos, hasLength(2));
+    });
+
+    test('sin fotos, o con la portada rechazada, no pide nada', () async {
+      final listings = FakeListingsRepository();
+      final container = ProviderContainer.test(
+        overrides: [listingsRepositoryProvider.overrideWithValue(listings)],
+      );
+      final draft = container.read(sellDraftProvider.notifier);
+
+      await expectLater(draft.fillFromCover(), throwsA(isA<ApiFailure>()));
+
+      listings.rejectedPaths.add('mala.jpg');
+      draft.addPhotos(['mala.jpg']);
+      await expectLater(
+        draft.fillFromCover(),
+        throwsA(
+          isA<ApiFailure>().having(
+            (f) => f.message,
+            'message',
+            contains('Cambia la portada'),
+          ),
+        ),
+      );
+      expect(listings.draftedKeys, isEmpty);
+    });
+
+    test('sin IA el borrador no cambia (RNF-15)', () async {
+      final listings = FakeListingsRepository()
+        ..draftFailure = const ApiFailure(
+          code: 'listings.draft_unavailable',
+          message: 'La IA no está disponible ahora.',
+          status: 503,
+        );
+      final container = ProviderContainer.test(
+        overrides: [listingsRepositoryProvider.overrideWithValue(listings)],
+      );
+      final draft = container.read(sellDraftProvider.notifier)
+        ..addPhotos(['portada.jpg'])
+        ..setTitle('Mi calculadora');
+
+      await expectLater(draft.fillFromCover(), throwsA(isA<ApiFailure>()));
+
+      expect(container.read(sellDraftProvider).title, 'Mi calculadora');
+    });
+  });
 }

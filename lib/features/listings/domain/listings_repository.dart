@@ -10,6 +10,10 @@ abstract interface class ListingsRepository {
   /// metadatos.
   Future<UploadedPhoto> uploadPhoto(String filePath);
 
+  /// "Llenar con IA" (HU-59): la IA propone la publicacion de una foto ya
+  /// subida (la portada). Sin IA lanza `listings.draft_unavailable`.
+  Future<PhotoDraftProposal> draftFromPhoto(String photoKey);
+
   /// Publica y devuelve la tarjeta tal como se vera en la vitrina.
   Future<ProductSummary> publish(NewListing listing);
 

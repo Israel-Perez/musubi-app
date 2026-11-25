@@ -56,6 +56,25 @@ class FakeListingsRepository implements ListingsRepository {
     return UploadedPhoto(key: key, url: 'https://api.musubi.example/$key');
   }
 
+  /// "Llenar con IA" (HU-59): lo que propone y las llaves que se pidieron.
+  /// Con [draftFailure], lanza ese error.
+  PhotoDraftProposal draft = const PhotoDraftProposal(
+    title: 'Calculadora científica Casio fx-82',
+    category: 'calculadoras',
+    condition: ProductCondition.used,
+    usedDetail: UsedDetail.good,
+    description: 'Calculadora científica en buen estado, con su tapa.',
+  );
+  ApiFailure? draftFailure;
+  final List<String> draftedKeys = [];
+
+  @override
+  Future<PhotoDraftProposal> draftFromPhoto(String photoKey) async {
+    draftedKeys.add(photoKey);
+    if (draftFailure case final failure?) throw failure;
+    return draft;
+  }
+
   @override
   Future<ProductSummary> publish(NewListing listing) async {
     published.add(listing);

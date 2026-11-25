@@ -5,16 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
+import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/css_dashes.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
+import 'package:musubi_app/core/widgets/musubi_dialog.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/shake.dart';
+import 'package:musubi_app/features/genai/presentation/agreement_providers.dart';
 import 'package:musubi_app/features/listings/data/photo_picker.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/listings/presentation/sell_draft.dart';
@@ -30,6 +33,7 @@ class SellPhotosScreen extends ConsumerStatefulWidget {
 
 class _SellPhotosScreenState extends ConsumerState<SellPhotosScreen> {
   Object? _shake;
+  bool _filling = false;
 
   SellDraftNotifier get _draft => ref.read(sellDraftProvider.notifier);
 
@@ -86,6 +90,52 @@ class _SellPhotosScreenState extends ConsumerState<SellPhotosScreen> {
       actionLabel: 'Deshacer',
       onAction: () => _draft.restorePhoto(index, photo),
     );
+  }
+
+  /// "Llenar con IA" (HU-59): la primera vez explica que se envia la
+  /// portada; luego pide la propuesta y abre `Vender-2` para revisarla
+  /// (RN-38). Sin IA, se sigue a mano (RNF-15).
+  Future<void> _fillWithAi() async {
+    final notices = ref.read(photoAiNoticeStoreProvider);
+    if (!await notices.seen()) {
+      if (!mounted) return;
+      final go = await showMusubiDialog(
+        context,
+        icon: MusubiIcons.sparkle,
+        title: 'Llenar con IA',
+        message:
+            'La IA de Google (Gemini) verá tu foto de portada para proponer '
+            'el nombre, la categoría, el estado y la descripción. No se '
+            'envían tu nombre ni tus datos, y tú revisas todo antes de '
+            'publicar.',
+        confirmLabel: 'Continuar',
+        confirmKey: const Key('sell-ai-notice-continue'),
+      );
+      if (!go) return;
+      await notices.markSeen();
+    }
+    if (!mounted) return;
+    setState(() => _filling = true);
+    try {
+      await _draft.fillFromCover();
+      if (!mounted) return;
+      setState(() => _filling = false);
+      showSellSnack(
+        context,
+        'Listo. Revisa lo que propuso la IA',
+        icon: MusubiIcons.sparkle,
+      );
+      unawaited(context.push(AppRoutes.sellDetails));
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _filling = false);
+      showSellSnack(
+        context,
+        failure.message,
+        icon: MusubiIcons.circleAlert,
+        tone: SnackTone.warn,
+      );
+    }
   }
 
   void _continue() {
@@ -194,8 +244,98 @@ class _SellPhotosScreenState extends ConsumerState<SellPhotosScreen> {
             ],
           ),
         ),
+        if (photos.isNotEmpty)
+          _AiFillCard(
+            filling: _filling,
+            onFill: () => unawaited(_fillWithAi()),
+          ),
         const _PhotoTips(),
       ],
+    );
+  }
+}
+
+/// "Llenar con IA" (HU-59): la maqueta no lo tiene; se agrega sin quitar
+/// nada (lineamiento 4), con la misma tarjeta de "Nombre y descripción con
+/// IA" (HU-37).
+class _AiFillCard extends StatelessWidget {
+  const new({required this.filling, required this.onFill});
+
+  final bool filling;
+  final VoidCallback onFill;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.musubi;
+    return Container(
+      key: const Key('sell-ai'),
+      margin: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(MusubiSizes.radiusButton),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 12,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: c.inverse,
+                  borderRadius: BorderRadius.circular(MusubiSizes.radiusThumb),
+                ),
+                alignment: Alignment.center,
+                child: MusubiIcon(
+                  MusubiIcons.sparkle,
+                  size: 18,
+                  color: c.onBrand,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    Text(
+                      'Llenar con IA',
+                      style: MusubiType.style(
+                        15,
+                        weight: FontWeight.w800,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Con tu portada te proponemos el nombre, la categoría, '
+                      'el estado y la descripción. Tú revisas todo antes de '
+                      'publicar.',
+                      style: MusubiType.style(
+                        13.5,
+                        line: 19,
+                        color: c.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          MusubiButton(
+            key: const Key('sell-ai-fill'),
+            label: 'Llenar con IA',
+            kind: MusubiButtonKind.secondary,
+            icon: MusubiIcons.sparkle,
+            loading: filling,
+            loadingLabel: 'Mirando tu foto…',
+            onPressed: filling ? null : onFill,
+          ),
+        ],
+      ),
     );
   }
 }
