@@ -18,7 +18,7 @@
   - El Worker solo atiende `/p/*` y arma el HTML en el servidor: el navegador sigue sin JavaScript y con la misma CSP.
   - Cuesta cero: es el plan gratis de Workers y Cloudflare guarda la respuesta 5 minutos.
 - **La vista previa es pública:** son los mismos datos que la API ya da sin sesión (HU-48), sin quien vende. Todo lo demás (comprar, el chat, quien vende) exige la cuenta del campus.
-- **"Abrir en Musubi" con `intent://`:** si App Links no se verifica (falta la huella de Play o el enlace se abre dentro de WhatsApp), Android igual abre la app, o Google Play si no está instalada.
+- **"Abrir en Musubi" con `intent://`:** si App Links no se verifica (por ejemplo, el enlace se abre dentro del navegador de WhatsApp), Android igual abre la app, o Google Play si no está instalada.
 - **Solo `https://musubiapp.com.mx/p/`:** un esquema propio (`musubi://`) lo podría registrar cualquier app. Con App Links verificados, solo la nuestra lo abre.
 
 ## 3. Excepciones al stack
