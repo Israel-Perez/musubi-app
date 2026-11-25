@@ -1,5 +1,24 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-63 (SCRUM-103): abrir al instante y consultar sin conexión
+
+- **Qué:**
+  - SQLite (`sqflite`, L-16h) guarda la primera página de `Inicio`, `Mensajes`, "Mis pedidos" y "Mis productos".
+  - Las 4 pantallas abren con lo guardado y se actualizan al llegar lo nuevo (stale-while-revalidate).
+  - Sin red se ve lo guardado con "Sin conexión · lo que ves puede no estar al día".
+  - Un mensaje escrito sin red queda "Por enviar" y sale solo al volver la red.
+  - Cerrar sesión o eliminar la cuenta borra la base.
+- **Decisiones técnicas:**
+  - Se guarda la respuesta JSON en un interceptor de Dio (el primero), así los parsers de los repositorios no cambian.
+  - `/orders/mine` trae el código de entrega y la referencia de la transferencia: se quitan antes de escribir (`OfflineCache.sanitize`).
+  - La llave de cada copia es el id de la cuenta más la ruta y la consulta, sin el host.
+- **Excepción 00-01:** `sqflite` 2.4.6 y `path` 1.9.1, más `sqflite_common_ffi` 2.4.7 en las pruebas. La aprueba la usuaria al fusionar.
+- **Errores a evitar:**
+  - El `databaseFactory` global de sqflite lanza `StateError` en la VM: se usa `databaseFactorySqflitePlugin`.
+  - En pruebas de Dart sin binding, el plugin lanza un `Error`, no una excepción. Por eso `test/flutter_test_config.dart` pone a toda la suite sobre SQLite real en memoria (`SqliteLocalStore.testFactory`).
+  - `cat > /dev/null` en un comando espera la entrada para siempre.
+- **App:** sin subir la versión; va en el siguiente lote de Google Play.
+
 ## Trabajo en curso — HU-58 (SCRUM-98): precio sugerido con ML
 
 - **Qué:** "Precio sugerido: $X – $Y" en `Vender-3` (y editar) y la estimación del modelo en "Compara antes de comprar". El modelo (regresión de ML.NET por campus) vive en la API.

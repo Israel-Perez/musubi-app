@@ -125,6 +125,7 @@ class ChatMessage {
     required this.text,
     required this.sentAt,
     this.notice = false,
+    this.pending = false,
   });
 
   final String id;
@@ -136,6 +137,9 @@ class ChatMessage {
   /// Un aviso de la app ("Ana pidió un resumen con IA", HU-32): se pinta
   /// centrado, no como burbuja.
   final bool notice;
+
+  /// Escrito sin conexion: "Por enviar" hasta que vuelva la red (HU-63).
+  final bool pending;
 
   @override
   bool operator ==(Object other) => other is ChatMessage && other.id == id;

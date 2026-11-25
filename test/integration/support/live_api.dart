@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/core/storage/local_store.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 
@@ -83,19 +84,22 @@ class _CoverageRecorder extends Interceptor {
 
 /// Una persona (o un visitante) usando la app contra la API real.
 class LiveSession {
-  new _(this.container, this.store);
+  new _(this.container, this.store, this.local);
 
   /// Visitante: sin cuenta.
   factory visitor() => LiveSession._create();
 
   factory _create() {
     final store = InMemoryTokenStore();
+    final local = InMemoryLocalStore();
     final container = ProviderContainer(
       overrides: [
         appConfigProvider.overrideWithValue(
           AppConfig.parse(environment: 'dev', apiBaseUrl: liveApiUrl),
         ),
         tokenStoreProvider.overrideWithValue(store),
+        // HU-63: la base local de este "telefono" (SQLite en el real).
+        localStoreProvider.overrideWithValue(local),
       ],
     );
     for (final dio in [
@@ -104,13 +108,16 @@ class LiveSession {
     ]) {
       dio.interceptors.insert(0, _CoverageRecorder());
     }
-    return LiveSession._(container, store);
+    return LiveSession._(container, store, local);
   }
 
   final ProviderContainer container;
 
   /// El almacen seguro de este "telefono".
   final InMemoryTokenStore store;
+
+  /// Su base local (HU-63).
+  final InMemoryLocalStore local;
 
   late String email;
   late AuthUser user;

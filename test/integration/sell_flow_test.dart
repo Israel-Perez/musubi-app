@@ -1,11 +1,18 @@
 @Tags(['integration'])
 library;
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
+import 'package:musubi_app/core/session/session_controller.dart';
+import 'package:musubi_app/core/storage/local_store.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
+import 'package:musubi_app/features/orders/domain/order_models.dart';
+import 'package:musubi_app/features/orders/presentation/order_providers.dart';
 import 'package:musubi_app/features/seller_support/presentation/seller_support_providers.dart';
 
 import 'support/live_api.dart';
@@ -96,6 +103,55 @@ void main() {
         expect(estimate.minCents, lessThan(estimate.maxCents));
       }
       expect(invalid?.code, 'recommendations.invalid_price_request');
+    });
+
+    test('sin conexion se ve lo ultimo que cargo (HU-63, L-16h)', () async {
+      final valeria = await liveUser(name: 'Valeria Integración');
+      addTearDown(valeria.dispose);
+      final product = await publishProduct(valeria, title: 'Calculadora Casio');
+      // Con red: "Mis productos" y "Mis pedidos" llegan y se guardan.
+      final online = await valeria
+          .read(listingsRepositoryProvider)
+          .minePage(MyProductsTab.active);
+      await valeria.read(orderRepositoryProvider).mine(tab: MyOrdersTab.active);
+
+      // El mismo telefono sin red: la misma sesion y la misma base local, con
+      // la API apagada.
+      final phone = ProviderContainer(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            AppConfig.parse(
+              environment: 'dev',
+              apiBaseUrl: 'http://localhost:9',
+            ),
+          ),
+          tokenStoreProvider.overrideWithValue(valeria.store),
+          initialSessionTokensProvider.overrideWithValue(valeria.store.saved),
+          localStoreProvider.overrideWithValue(valeria.local),
+        ],
+      );
+      addTearDown(phone.dispose);
+      final offlinePage = await phone
+          .read(listingsRepositoryProvider)
+          .minePage(MyProductsTab.active);
+      final orders = await phone
+          .read(orderRepositoryProvider)
+          .mine(tab: MyOrdersTab.active);
+      // La revalidacion en segundo plano no llega: "Sin conexión" (en Windows
+      // un puerto cerrado tarda ~2 s en rechazar la conexion).
+      for (var i = 0; i < 100 && !phone.read(offlineProvider); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+
+      expect(online.items.map((l) => l.product.id), contains(product.id));
+      expect(offlinePage.items.map((l) => l.product.id), contains(product.id));
+      expect(orders.items, isEmpty);
+      expect(phone.read(offlineProvider), isTrue);
+      // Lo sensible nunca se escribe en el telefono.
+      expect(
+        valeria.local.responses.values.any((b) => b.contains('accessToken')),
+        isFalse,
+      );
     });
 
     test('marcar como vendido y eliminar', () async {

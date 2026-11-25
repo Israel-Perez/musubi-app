@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/session/token_store.dart';
+import 'package:musubi_app/core/storage/local_store.dart';
 
 /// Estado de la sesion: visitante o con sesion (L-16g: siempre viva salvo
 /// logout).
@@ -74,6 +75,9 @@ class SessionController extends Notifier<SessionState> {
   /// [logOut] y el interceptor cuando la API ya dio la sesion por terminada.
   Future<void> signOut() async {
     await ref.read(tokenStoreProvider).clear();
+    // HU-63 (MASVS-STORAGE): lo guardado para abrir sin conexion se va con la
+    // sesion (tambien al eliminar la cuenta, HU-46).
+    await ref.read(localStoreProvider).clear();
     state = const Visitor();
   }
 }

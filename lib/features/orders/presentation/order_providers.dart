@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
+import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
 import 'package:musubi_app/features/orders/data/http_order_repository.dart';
 import 'package:musubi_app/features/orders/data/http_reservation_repository.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
@@ -95,10 +97,10 @@ final FutureProvider<SalesPage> salesProvider =
 /// La primera pagina de una pestana de "Mis pedidos" (HU-25); "Ver más" pide
 /// las siguientes con el repositorio.
 final FutureProviderFamily<MyOrdersPage, MyOrdersTab> myOrdersProvider =
-    FutureProvider.autoDispose.family<MyOrdersPage, MyOrdersTab>(
-      (ref, tab) => ref.watch(orderRepositoryProvider).mine(tab: tab),
-      retry: (_, _) => null,
-    );
+    FutureProvider.autoDispose.family<MyOrdersPage, MyOrdersTab>((ref, tab) {
+      refreshWithOfflineCopies(ref, const {ApiPaths.myOrders});
+      return ref.watch(orderRepositoryProvider).mine(tab: tab);
+    }, retry: (_, _) => null);
 
 /// Los apartados (HU-52). En pruebas, un fake.
 final reservationRepositoryProvider = Provider<ReservationRepository>(

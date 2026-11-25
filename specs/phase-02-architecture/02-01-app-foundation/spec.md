@@ -56,7 +56,7 @@ Esta spec deja esa base y las primeras pruebas de seguridad del móvil (L-07). *
 - **Componentes:** `lib/core/widgets/` (`MusubiButton`, `MusubiTextField`, `InlineMessage`, `LoadingView`, `EmptyView`, `ErrorView`).
 - **Íconos:** Material *outlined* en lugar de un paquete Lucide; son equivalentes de trazo y evitan una dependencia (regla de excepción de 00-01).
 - **Permisos:** solo `INTERNET`. Cámara y galería (HU-06) y notificaciones (HU-31) se piden **en contexto**, en el momento de usarlas y con explicación previa. Cada permiso nuevo se agrega a la lista aprobada de `test/security/android_config_test.dart` en su HU.
-- **Datos locales:** en el MVP no hay SQLite (lineamiento 16, "si el proyecto lo requiere"). HU-53 decidió el 08-Nov-2026 que los favoritos no tienen modo sin conexión; la caché local queda fuera del MVP.
+- **Datos locales:** HU-53 decidió el 08-Nov-2026 que los favoritos no tienen modo sin conexión. HU-63 (23-Nov-2026) agrega SQLite (`sqflite`, lineamiento 16h): la primera página de 4 pantallas para abrir sin conexión y los mensajes "Por enviar" (ver `specs/m04-marketplace/HU-63-sin-conexion/`).
 
 ## Contratos
 - Errores: `musubi-api/docs/errores.md` (se enlaza). Los códigos `network.*` y `request.rejected` son de la app y la API nunca los envía.

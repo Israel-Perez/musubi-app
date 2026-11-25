@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
+import 'package:musubi_app/features/chat/presentation/chat_outbox.dart';
 import 'package:musubi_app/features/notifications/presentation/notification_providers.dart';
 import 'package:musubi_app/features/profile/domain/theme_preference.dart';
 import 'package:musubi_app/features/profile/presentation/theme_preference_providers.dart';
@@ -15,7 +16,10 @@ class MusubiApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // HU-31: avisos push mientras la app vive.
-    ref.watch(pushCoordinatorProvider);
+    ref
+      ..watch(pushCoordinatorProvider)
+      // HU-63: los mensajes "Por enviar" salen solos al volver la red.
+      ..watch(chatOutboxProvider);
     return MaterialApp.router(
       title: 'Musubi',
       scaffoldMessengerKey: ref.watch(scaffoldMessengerKeyProvider),

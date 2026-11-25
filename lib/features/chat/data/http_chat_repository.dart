@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
 import 'package:musubi_app/features/chat/domain/chat_repository.dart';
 import 'package:musubi_app/features/marketplace/data/product_json.dart';
@@ -67,6 +68,8 @@ class HttpChatRepository implements ChatRepository {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiPaths.conversations,
       queryParameters: {'role': ?filter.role, 'cursor': ?cursor},
+      // HU-63: la primera pagina de la bandeja se abre sin conexion.
+      options: cursor == null ? OfflineCache.options : null,
     );
     final body = _body(response);
     return InboxPage(

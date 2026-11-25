@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/domain/listings_repository.dart';
 import 'package:musubi_app/features/marketplace/data/product_json.dart';
@@ -71,6 +72,8 @@ class HttpListingsRepository implements ListingsRepository {
         final response = await _dio.get<Map<String, dynamic>>(
           ApiPaths.myProducts,
           queryParameters: {'tab': tab.apiValue, 'cursor': ?cursor},
+          // HU-63: la primera pagina de "Mis productos" se abre sin conexion.
+          options: cursor == null ? OfflineCache.options : null,
         );
         final body = _body(response);
         final counts = body['counts'] as Map<String, dynamic>? ?? const {};

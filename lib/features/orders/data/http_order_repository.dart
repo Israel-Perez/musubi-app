@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
 import 'package:musubi_app/features/marketplace/data/product_json.dart';
 import 'package:musubi_app/features/orders/domain/order_models.dart';
 import 'package:musubi_app/features/orders/domain/order_repository.dart';
@@ -100,6 +101,8 @@ class HttpOrderRepository implements OrderRepository {
             'cursor': ?cursor,
             'limit': ?limit,
           },
+          // HU-63: la primera pagina de "Mis pedidos" se abre sin conexion.
+          options: cursor == null ? OfflineCache.options : null,
         );
         final body = response.data ?? const <String, dynamic>{};
         final counts = body['counts'] as Map<String, dynamic>? ?? const {};

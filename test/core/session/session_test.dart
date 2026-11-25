@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/core/session/token_store.dart';
+import 'package:musubi_app/core/storage/local_store.dart';
 
 import '../../helpers/in_memory_token_store.dart';
 
@@ -88,6 +89,7 @@ void main() {
           overrides: [
             tokenStoreProvider.overrideWithValue(store),
             initialSessionTokensProvider.overrideWithValue(store.saved),
+            localStoreProvider.overrideWithValue(InMemoryLocalStore()),
           ],
         );
 
@@ -127,6 +129,34 @@ void main() {
       expect(store.saved, isNull);
       expect(store.clears, 1);
       expect(c.read(sessionControllerProvider), const Visitor());
+    });
+
+    test('signOut tambien borra la base local del telefono (HU-63, '
+        'MASVS-STORAGE)', () async {
+      final local = InMemoryLocalStore();
+      await local.write('u1|/api/v1/orders/mine', '{}');
+      await local.enqueue(
+        OutboxItem(
+          id: 'local-1',
+          userId: 'u1',
+          conversationId: 'c1',
+          text: 'Hola',
+          createdAt: DateTime.utc(2026, 11, 23),
+        ),
+      );
+      final store = InMemoryTokenStore(testTokens());
+      final c = ProviderContainer.test(
+        overrides: [
+          tokenStoreProvider.overrideWithValue(store),
+          initialSessionTokensProvider.overrideWithValue(store.saved),
+          localStoreProvider.overrideWithValue(local),
+        ],
+      );
+
+      await c.read(sessionControllerProvider.notifier).signOut();
+
+      expect(local.responses, isEmpty);
+      expect(local.items, isEmpty);
     });
   });
 }

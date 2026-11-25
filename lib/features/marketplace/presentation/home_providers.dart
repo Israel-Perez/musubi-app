@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
+import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/marketplace/data/demo_catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/data/http_catalog_repository.dart';
@@ -59,15 +61,21 @@ class CatalogFilterNotifier extends Notifier<CatalogFilter> {
 /// Sin el reintento automatico de Riverpod 3: si falla, se ve `Inicio-error`
 /// de inmediato y la persona decide con "Reintentar" o jalando la pantalla.
 final FutureProvider<HomeFeed> homeFeedProvider =
-    FutureProvider.autoDispose<HomeFeed>(
-      (ref) => ref
+    FutureProvider.autoDispose<HomeFeed>((ref) {
+      // HU-63: abre con lo guardado y se actualiza al llegar lo nuevo.
+      refreshWithOfflineCopies(ref, const {
+        ApiPaths.products,
+        ApiPaths.categories,
+        ApiPaths.wanted,
+        ApiPaths.popularProducts,
+      });
+      return ref
           .watch(catalogRepositoryProvider)
           .homeFeed(
             period: ref.watch(popularPeriodProvider),
             filter: ref.watch(catalogFilterProvider),
-          ),
-      retry: (_, _) => null,
-    );
+          );
+    }, retry: (_, _) => null);
 
 /// Cuantos productos veria la persona con el filtro que esta eligiendo
 /// ("Ver 6 productos").

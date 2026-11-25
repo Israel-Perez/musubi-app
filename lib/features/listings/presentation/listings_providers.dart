@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/api_client.dart';
+import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
 import 'package:musubi_app/features/listings/data/http_listings_repository.dart';
 import 'package:musubi_app/features/listings/data/photo_picker.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
@@ -48,10 +50,11 @@ priceSuggestionProvider = FutureProvider.autoDispose
 /// Una pestana de `Mis-productos` con los conteos de las tres (HU-08).
 final FutureProviderFamily<MyListingsPage, MyProductsTab>
 myListingsTabProvider = FutureProvider.autoDispose
-    .family<MyListingsPage, MyProductsTab>(
-      (ref, tab) => ref.watch(listingsRepositoryProvider).minePage(tab),
-      retry: (_, _) => null,
-    );
+    .family<MyListingsPage, MyProductsTab>((ref, tab) {
+      // HU-63: abre con lo guardado y se actualiza al llegar lo nuevo.
+      refreshWithOfflineCopies(ref, const {ApiPaths.myProducts});
+      return ref.watch(listingsRepositoryProvider).minePage(tab);
+    }, retry: (_, _) => null);
 
 /// Todas mis publicaciones (Perfil y "Yo tengo este producto").
 final FutureProvider<List<OwnListing>> myListingsProvider =

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_paths.dart';
+import 'package:musubi_app/core/network/offline_cache.dart';
 import 'package:musubi_app/features/marketplace/data/product_json.dart';
 import 'package:musubi_app/features/marketplace/domain/catalog_repository.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
@@ -46,8 +47,13 @@ class HttpCatalogRepository implements CatalogRepository {
             if (filter.hideSoldOut) 'hideSoldOut': true,
             'limit': pageSize,
           },
+          // HU-63: la vitrina de Inicio se abre sin conexion.
+          options: OfflineCache.options,
         ),
-        _dio.get<List<dynamic>>(ApiPaths.categories),
+        _dio.get<List<dynamic>>(
+          ApiPaths.categories,
+          options: OfflineCache.options,
+        ),
       ]);
       final wanted = await wantedFuture;
       final popular = await popularFuture;
@@ -77,6 +83,7 @@ class HttpCatalogRepository implements CatalogRepository {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiPaths.wanted,
         queryParameters: {'limit': wantedCount},
+        options: OfflineCache.options,
       );
       return [
         for (final item
@@ -97,6 +104,7 @@ class HttpCatalogRepository implements CatalogRepository {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiPaths.popularProducts,
         queryParameters: {'period': period.name, 'limit': 6},
+        options: OfflineCache.options,
       );
       return [
         for (final item

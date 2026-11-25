@@ -20,6 +20,7 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
 import 'package:musubi_app/features/chat/presentation/chat_controller.dart';
 import 'package:musubi_app/features/chat/presentation/chat_format.dart';
+import 'package:musubi_app/features/chat/presentation/chat_outbox.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
 import 'package:musubi_app/features/genai/domain/agreement_models.dart';
 import 'package:musubi_app/features/genai/presentation/agreement_providers.dart';
@@ -274,6 +275,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final agreement = conversation == null
         ? null
         : ref.watch(agreementProvider(conversation.id)).value;
+    // HU-63: un "Por enviar" que la API rechazo al volver la red.
+    ref.listen(chatOutboxEventsProvider, (_, next) {
+      final event = next.value;
+      final failure = event?.failure;
+      if (failure != null && event?.conversationId == conversation?.id) {
+        showMusubiSnack(
+          ScaffoldMessenger.of(context),
+          failure.message,
+          icon: MusubiIcons.circleAlert,
+          tone: SnackTone.warn,
+        );
+      }
+    });
     // Un pedido que salio del acuerdo en otro dispositivo (HU-34).
     ref.listen(chatAgreementChangesProvider, (_, next) {
       final id = conversation?.id;
@@ -874,7 +888,10 @@ class _Log extends StatelessWidget {
       // mensajes), del lado de quien escribio el ultimo.
       final lastOfGroup =
           next == null || next.sentAt.difference(message.sentAt).inMinutes >= 5;
-      if (lastOfGroup) {
+      if (message.pending) {
+        // HU-63: escrito sin conexion; sale solo al volver la red.
+        items.add(const _Stamp(text: 'Por enviar', mine: true, pending: true));
+      } else if (lastOfGroup) {
         items.add(
           _Stamp(text: messageStamp(message.sentAt.toLocal(), now), mine: mine),
         );
@@ -1002,9 +1019,13 @@ class _Bubble extends StatelessWidget {
           maxWidth: (MediaQuery.sizeOf(context).width - 32) * 0.78,
         ),
         child: Container(
+          key: message.pending ? Key('chat-pending-${message.id}') : null,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: mine ? c.brand : c.surface,
+            // HU-63: "Por enviar" va mas tenue hasta que sale.
+            color: mine
+                ? (message.pending ? c.brand.withValues(alpha: 0.55) : c.brand)
+                : c.surface,
             borderRadius: BorderRadius.only(
               topLeft: big,
               topRight: big,
@@ -1027,26 +1048,42 @@ class _Bubble extends StatelessWidget {
 }
 
 class _Stamp extends StatelessWidget {
-  const new({required this.text, required this.mine});
+  const new({required this.text, required this.mine, this.pending = false});
 
   final String text;
   final bool mine;
 
+  /// "Por enviar" (HU-63): con el reloj.
+  final bool pending;
+
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-    child: Padding(
-      padding: EdgeInsets.only(left: mine ? 0 : 4, right: mine ? 4 : 0),
-      child: Text(
-        text,
-        style: MusubiType.style(
-          11.5,
-          weight: FontWeight.w600,
-          color: context.musubi.textSecondary,
-        ),
+  Widget build(BuildContext context) {
+    final style = MusubiType.style(
+      11.5,
+      weight: FontWeight.w600,
+      color: context.musubi.textSecondary,
+    );
+    return Align(
+      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.only(left: mine ? 0 : 4, right: mine ? 4 : 0),
+        child: pending
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 4,
+                children: [
+                  MusubiIcon(
+                    MusubiIcons.clock,
+                    size: 12,
+                    color: context.musubi.textSecondary,
+                  ),
+                  Text(text, style: style),
+                ],
+              )
+            : Text(text, style: style),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _LogSkeleton extends StatelessWidget {
