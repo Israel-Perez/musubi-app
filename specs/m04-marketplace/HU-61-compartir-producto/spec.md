@@ -71,7 +71,7 @@ Fila `GET /api/v1/products/{id}` de [`musubi-api/docs/endpoints.md`](https://git
 
 ## Criterios
 - [x] "Compartir" abre la hoja del sistema con el nombre, el precio y el enlace → `abre la hoja del sistema con nombre, precio y enlace`, `nombre, precio y enlace; nunca quien vende (RNF-05)`.
-- [ ] Con la app instalada, el enlace abre el producto (App Links verificados) → `el enlace /p/{id} abre el detalle; "Regresar" va a Inicio` y `App Links (HU-61)`. Falta la huella de la llave de firma de Google Play en `assetlinks.json` y la prueba en el celular (T5).
+- [ ] Con la app instalada, el enlace abre el producto (App Links verificados) → `el enlace /p/{id} abre el detalle; "Regresar" va a Inicio` y `App Links (HU-61)`. `assetlinks.json` ya lleva la huella de Google Play (musubi-landing#5); falta la prueba en el celular (T5).
 - [x] Sin la app, la landing muestra la vista previa con Open Graph y el botón de Google Play → `un producto disponible: nombre, precio, foto y Open Graph…` y la prueba con `wrangler dev` (T3).
 - [x] Vendido, pausado o eliminado: "Ya no está disponible" → `vendido, pausado o eliminado (404 de la API)…`, `compartir (HU-61): el enlace lleva lo que ve un visitante`.
 - [x] Sin datos de quien vende → `nombre, precio y enlace; nunca quien vende`, `seller: null` en el Worker.
