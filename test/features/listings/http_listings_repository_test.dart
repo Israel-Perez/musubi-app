@@ -173,6 +173,61 @@ void main() {
     },
   );
 
+  test('llenar con IA (HU-59): manda la llave y lee la propuesta', () async {
+    serve({
+      'title': 'Calculadora científica Casio fx-82',
+      'category': 'calculadoras',
+      'condition': 'used',
+      'conditionDetail': 'likeNew',
+      'description': 'Con su tapa.',
+    });
+
+    final proposal = await repository.draftFromPhoto(
+      'media/products/u1/portada.webp',
+    );
+
+    expect(proposal.title, 'Calculadora científica Casio fx-82');
+    expect(proposal.category, 'calculadoras');
+    expect(proposal.condition, ProductCondition.used);
+    expect(proposal.usedDetail, UsedDetail.likeNew);
+    expect(proposal.description, 'Con su tapa.');
+    final request = adapter.requests.single;
+    expect((request.method, request.path), ('POST', ApiPaths.photoDraft));
+    expect(request.data, {'photo': 'media/products/u1/portada.webp'});
+  });
+
+  test('llenar con IA: nuevo sin detalle, sin categoria y sin IA', () async {
+    serve({
+      'title': 'Kalimba de 17 notas',
+      'category': null,
+      'condition': 'new',
+      'conditionDetail': null,
+      'description': 'En su caja.',
+    });
+
+    final proposal = await repository.draftFromPhoto('k');
+
+    expect(proposal.category, isNull);
+    expect(proposal.condition, ProductCondition.brandNew);
+    expect(proposal.usedDetail, isNull);
+
+    serve({
+      'title': 'La IA no está disponible ahora.',
+      'code': 'listings.draft_unavailable',
+      'status': 503,
+    }, status: 503);
+    await expectLater(
+      repository.draftFromPhoto('k'),
+      throwsA(
+        isA<ApiFailure>().having(
+          (f) => f.code,
+          'code',
+          'listings.draft_unavailable',
+        ),
+      ),
+    );
+  });
+
   test('un error de la API llega como ApiFailure con su code', () async {
     serve({
       'title': 'Agrega de 1 a 8 fotos tuyas para continuar.',

@@ -53,6 +53,10 @@ abstract final class ApiPaths {
   /// `POST /api/v1/products/photos` — fila "M-03" (spec `musubi-api:HU-06`).
   static const productPhotos = '/api/v1/products/photos';
 
+  /// `POST /api/v1/products/photo-draft` — fila "M-03" (spec
+  /// `musubi-api:HU-59`): "Llenar con IA" en `Vender-1`; con sesion.
+  static const photoDraft = '/api/v1/products/photo-draft';
+
   /// `GET /api/v1/products/mine` — fila "M-03" (specs `musubi-api:HU-06` y
   /// `musubi-api:HU-08`): `?tab=active|sold|soldOut&cursor=&limit=` con los
   /// conteos de las tres pestanas; sin `tab`, todas menos las quitadas.

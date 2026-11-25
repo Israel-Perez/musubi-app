@@ -28,6 +28,9 @@ void main() {
   test('aviso: IA solo a petición (RN-40) y revisión de reportes (RN-22)', () {
     expect(privacy, contains('## Inteligencia artificial'));
     expect(privacy, contains('Solo cuando una de las personas'));
+    // HU-59: la portada solo se envia si quien publica lo pide.
+    expect(privacy, contains('"Llenar con IA"'));
+    expect(privacy, contains('foto de portada'));
     expect(privacy, contains('## Moderación y reportes'));
     expect(privacy, contains('el equipo administrador puede revisar'));
   });

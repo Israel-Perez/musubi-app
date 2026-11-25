@@ -142,6 +142,30 @@ class PriceSuggestion {
   final int samples;
 }
 
+/// "Llenar con IA" (HU-59): lo que propone la IA al ver la portada. Solo
+/// llena el borrador; quien vende lo revisa antes de publicar (RN-38).
+@immutable
+class PhotoDraftProposal {
+  const new({
+    required this.title,
+    required this.condition,
+    required this.description,
+    this.category,
+    this.usedDetail,
+  });
+
+  final String title;
+
+  /// Slug de una categoria del campus, o `null` si la IA no reconocio
+  /// ninguna (quien vende la elige en `Vender-3`).
+  final String? category;
+  final ProductCondition condition;
+
+  /// Solo usado.
+  final UsedDetail? usedDetail;
+  final String description;
+}
+
 /// "Productos parecidos se venden entre…" (maqueta `Vender-3`).
 @immutable
 class PriceRange {

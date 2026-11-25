@@ -43,6 +43,12 @@ Solo cuando una de las personas de una conversación toca "Resumir acuerdo", Mus
 - No guardamos la conversación que se envía. Solo guardamos la propuesta, que se borra cuando crean el pedido, cuando la descartan o a los 30 días.
 - La propuesta nunca se confirma sola: ambas personas la revisan, la corrigen y la confirman.
 
+También usamos Gemini solo cuando tú lo pides al publicar:
+
+- **"Llenar con IA":** se envía la foto de portada de lo que vas a publicar, ya revisada por la moderación y sin sus metadatos (como la ubicación), junto con los nombres de las categorías de tu campus, para proponer el nombre, la categoría, el estado y la descripción. La primera vez la app te lo explica.
+- **"Ideas para vender más rápido":** se envía el texto de tu publicación, cuántas veces la vieron, cuántas personas buscan algo parecido y lo que escriben en sus solicitudes, sin nombres ni datos de contacto de nadie, para proponer un nombre y una descripción más claros.
+- No guardamos lo que se envía ni la propuesta: solo llena tu borrador, y tú decides qué se publica.
+
 ## Moderación y reportes
 
 Si alguien reporta una conversación o una publicación, el equipo administrador puede revisar ese contenido para atender el reporte. Antes de publicarse, los textos y las imágenes se revisan con servicios automáticos para detectar contenido inapropiado.
