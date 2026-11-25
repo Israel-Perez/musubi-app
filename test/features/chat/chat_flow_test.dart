@@ -14,6 +14,7 @@ import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
 import 'package:musubi_app/features/chat/presentation/chat_outbox.dart';
 import 'package:musubi_app/features/chat/presentation/chat_providers.dart';
+import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/domain/product_detail.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
@@ -21,6 +22,7 @@ import 'package:musubi_app/features/profile/presentation/profile_providers.dart'
 
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_chat.dart';
+import '../../helpers/fake_listings_repository.dart';
 import '../../helpers/fake_profile_repository.dart';
 import '../../helpers/fake_session_api.dart';
 import '../../helpers/in_memory_token_store.dart';
@@ -78,6 +80,7 @@ class ChatHarness {
   final FakeChatRepository chat;
   final realtime = FakeChatRealtime();
   final store = InMemoryLocalStore();
+  final picker = FakePhotoPicker();
   late ProviderContainer container;
 
   Future<void> open(String location, {Object? extra}) async {
@@ -103,6 +106,7 @@ class ChatHarness {
           chatRepositoryProvider.overrideWithValue(chat),
           chatRealtimeProvider.overrideWithValue(realtime),
           localStoreProvider.overrideWithValue(store),
+          photoPickerProvider.overrideWithValue(picker),
         ],
         child: const MusubiApp(),
       ),
@@ -316,6 +320,117 @@ void main() {
         findsOneWidget,
       );
       expect(harness.store.items, isEmpty);
+    });
+
+    testWidgets('el clip envia una foto de la galeria y se ve en el chat '
+        '(HU-65)', (tester) async {
+      final harness = ChatHarness(tester);
+      await harness.open(AppRoutes.conversation('c1'));
+
+      await harness.tap(find.bySemanticsLabel('Adjuntar foto o archivo'));
+      await tester.tap(find.text('Elegir de la galería'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+
+      expect(harness.picker.galleryRequests, [1]);
+      expect(harness.chat.photosSent, ['fotos/galeria-1.jpg']);
+      expect(find.byKey(const Key('chat-photo-p101')), findsOneWidget);
+    });
+
+    testWidgets('una foto rechazada por la moderacion avisa (HU-65)', (
+      tester,
+    ) async {
+      final harness = ChatHarness(tester);
+      harness.chat.photoFailure = const ApiFailure(
+        code: 'moderation.image_rejected',
+        message: 'La foto no cumple las reglas de la comunidad.',
+        status: 422,
+      );
+      await harness.open(AppRoutes.conversation('c1'));
+
+      await harness.tap(find.bySemanticsLabel('Adjuntar foto o archivo'));
+      await tester.tap(find.text('Tomar foto'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('La foto no cumple las reglas de la comunidad.'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('chat-photo-p101')), findsNothing);
+    });
+
+    testWidgets('"Escribiendo…" llega y se va; el mio se avisa a lo mas cada '
+        '3 s (HU-65)', (tester) async {
+      final harness = ChatHarness(tester);
+      await harness.open(AppRoutes.conversation('c1'));
+
+      harness.realtime.typingFrom('c1', valeria.id);
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('Valeria está escribiendo…'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 6));
+      expect(find.byKey(const Key('chat-typing')), findsNothing);
+
+      await tester.enterText(find.byKey(const Key('chat-input')), 'H');
+      await tester.enterText(find.byKey(const Key('chat-input')), 'Ho');
+      await tester.pump();
+      expect(harness.realtime.typed, ['c1']);
+    });
+
+    testWidgets('"Leído" sale bajo mi ultimo mensaje cuando lo abre la otra '
+        'persona (HU-65)', (tester) async {
+      final harness = ChatHarness(
+        tester,
+        chat: FakeChatRepository(
+          messages: [_message('m1', '¿Me la dejas en 400?', myId, 10)],
+        ),
+      );
+      await harness.open(AppRoutes.conversation('c1'));
+
+      expect(find.byKey(const Key('chat-read')), findsNothing);
+      harness.realtime.readBy(
+        'c1',
+        valeria.id,
+        DateTime.utc(2026, 11, 6, 20, 20),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const Key('chat-read')), findsOneWidget);
+      expect(find.textContaining('Leído'), findsOneWidget);
+    });
+
+    testWidgets('respuestas rapidas en la primera conversacion; tocar una la '
+        'escribe (HU-65)', (tester) async {
+      final harness = ChatHarness(tester);
+      await harness.open(AppRoutes.conversation('c1'));
+
+      expect(find.byKey(const Key('chat-quick-replies')), findsOneWidget);
+      expect(find.text(r'¿Aceptas $400?'), findsOneWidget);
+      await harness.tap(find.text('¿Dónde nos vemos?'));
+
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('chat-input')))
+            .controller!
+            .text,
+        '¿Dónde nos vemos?',
+      );
+    });
+
+    testWidgets('con mensajes ya no salen las respuestas rapidas (HU-65)', (
+      tester,
+    ) async {
+      final harness = ChatHarness(
+        tester,
+        chat: FakeChatRepository(
+          messages: [_message('m1', 'Hola', valeria.id, 10)],
+        ),
+      );
+      await harness.open(AppRoutes.conversation('c1'));
+
+      expect(find.byKey(const Key('chat-quick-replies')), findsNothing);
     });
 
     testWidgets('un mensaje rechazado avisa y no se borra lo escrito', (

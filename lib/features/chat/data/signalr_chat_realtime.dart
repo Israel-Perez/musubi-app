@@ -18,8 +18,10 @@ typedef AccessTokenReader = Future<String?> Function();
 /// Cliente minimo del protocolo JSON de SignalR para `/hubs/chat` (HU-20).
 ///
 /// Solo lo que la API usa: WebSockets sin negociar (`skipNegotiation`), el
-/// token en `?access_token=` y el evento `messageCreated`. La app no llama
-/// metodos del hub (los mensajes se envian por REST). Sin paquete: el
+/// token en `?access_token=` y los eventos `messageCreated`,
+/// `agreementChanged`, `typing` y `conversationRead`. El unico metodo que la
+/// app llama es `Typing`
+/// (HU-65, sin respuesta); los mensajes se envian por REST. Sin paquete: el
 /// protocolo son mensajes JSON separados por `0x1E` (00-01: sin dependencias
 /// nuevas).
 class SignalRChatRealtime implements ChatRealtime {
@@ -36,6 +38,8 @@ class SignalRChatRealtime implements ChatRealtime {
   final Duration _pingInterval;
   final _messages = StreamController<ChatMessage>.broadcast();
   final _agreements = StreamController<String>.broadcast();
+  final _typing = StreamController<TypingSignal>.broadcast();
+  final _reads = StreamController<ReadSignal>.broadcast();
 
   WebSocket? _socket;
   Timer? _ping;
@@ -57,6 +61,22 @@ class SignalRChatRealtime implements ChatRealtime {
 
   @override
   Stream<String> get agreementChanges => _agreements.stream;
+
+  @override
+  Stream<TypingSignal> get typing => _typing.stream;
+
+  @override
+  Stream<ReadSignal> get reads => _reads.stream;
+
+  /// Una invocacion sin respuesta (sin `invocationId`) del metodo `Typing`.
+  @override
+  void sendTyping(String conversationId) => _socket?.add(
+    '${jsonEncode({
+      'type': 1,
+      'target': 'Typing',
+      'arguments': [conversationId],
+    })}$recordSeparator',
+  );
 
   @override
   void start() {
@@ -131,6 +151,32 @@ class SignalRChatRealtime implements ChatRealtime {
         }:
           _attempt = 0;
           _agreements.add(id);
+        case {
+          'type': 1,
+          'target': 'typing',
+          'arguments': [
+            {'conversationId': final String id, 'userId': final String user},
+            ...,
+          ],
+        }:
+          _typing.add((conversationId: id, userId: user));
+        case {
+          'type': 1,
+          'target': 'conversationRead',
+          'arguments': [
+            {
+              'conversationId': final String id,
+              'readerId': final String reader,
+              'readAt': final String at,
+            },
+            ...,
+          ],
+        }:
+          _reads.add((
+            conversationId: id,
+            readerId: reader,
+            at: DateTime.parse(at).toUtc(),
+          ));
         case {'type': 7}:
           // El servidor cierra (por ejemplo, el token vencio): se reconecta.
           unawaited(_socket?.close());

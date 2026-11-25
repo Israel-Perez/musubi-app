@@ -124,6 +124,66 @@ void main() {
       expect(sent.id, 'm3');
     });
 
+    test(
+      'foto (HU-65): multipart a /photos, la lee y baja sus bytes',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('hu65');
+        addTearDown(() => dir.delete(recursive: true));
+        final file = File('${dir.path}/foto.png')..writeAsBytesSync([1, 2, 3]);
+        adapter = FakeHttpAdapter((options) async {
+          if (options.method == 'GET') {
+            return ResponseBody.fromBytes([9, 8, 7], 200);
+          }
+          return FakeHttpAdapter.json({
+            ...messageJson('m4', '📷 Foto'),
+            'kind': 'photo',
+            'photo': '/api/v1/conversations/c1/photos/abc.webp',
+          }, status: 201);
+        });
+        repository = HttpChatRepository(
+          Dio(BaseOptions(baseUrl: 'https://api.musubi.example'))
+            ..httpClientAdapter = adapter,
+          Uri.parse('https://api.musubi.example'),
+        );
+
+        final sent = await repository.sendPhoto('c1', file.path);
+        final bytes = await repository.photo(sent.photoPath!);
+
+        expect(adapter.requests[0].path, ApiPaths.conversationPhotos('c1'));
+        expect(adapter.requests[0].data, isA<FormData>());
+        expect(
+          (adapter.requests[0].data as FormData).files.single.key,
+          'photo',
+        );
+        expect(sent.isPhoto, isTrue);
+        expect(
+          adapter.requests[1].path,
+          '/api/v1/conversations/c1/photos/abc.webp',
+        );
+        expect(bytes, [9, 8, 7]);
+      },
+    );
+
+    test(
+      'la conversacion trae cuando la leyo la otra persona (HU-65)',
+      () async {
+        serve(
+          (_) => {
+            ...conversationJson,
+            'counterpartReadAt': '2026-11-06T20:31:00Z',
+          },
+        );
+
+        final conversation = await repository.conversation('c1');
+
+        expect(
+          conversation.counterpartReadAt,
+          DateTime.utc(2026, 11, 6, 20, 31),
+        );
+        expect(conversation.blocked().counterpartReadAt, isNull);
+      },
+    );
+
     test('inbox filtra por role y markRead llama a /read', () async {
       serve(
         (o) => o.method == 'GET'
@@ -251,6 +311,76 @@ void main() {
       expect(token, 'tok-123');
       expect(message.text, '¿Sigue disponible?');
       expect(message.senderId, 'u2');
+    });
+
+    test('entrega typing y conversationRead y manda Typing sin respuesta '
+        '(HU-65)', () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      final fromApp = StreamController<String>.broadcast();
+      const rs = SignalRChatRealtime.recordSeparator;
+      final typingFrame = jsonEncode({
+        'type': 1,
+        'target': 'typing',
+        'arguments': [
+          {'conversationId': 'c1', 'userId': 'u2'},
+        ],
+      });
+      final readFrame = jsonEncode({
+        'type': 1,
+        'target': 'conversationRead',
+        'arguments': [
+          {
+            'conversationId': 'c1',
+            'readerId': 'u2',
+            'readAt': '2026-11-06T20:31:00Z',
+          },
+        ],
+      });
+      server.listen((request) async {
+        final socket = await WebSocketTransformer.upgrade(request);
+        var greeted = false;
+        socket.listen((data) {
+          fromApp.add(data as String);
+          if (greeted) return;
+          greeted = true;
+          socket
+            ..add('{}$rs')
+            ..add('$typingFrame$rs$readFrame$rs');
+        });
+      });
+      final realtime = SignalRChatRealtime(
+        apiBaseUrl: Uri.parse('http://127.0.0.1:${server.port}'),
+        readToken: () async => 'tok-123',
+      );
+      addTearDown(realtime.stop);
+      addTearDown(fromApp.close);
+
+      final typing = realtime.typing.first;
+      final read = realtime.reads.first;
+      realtime.start();
+
+      expect(await typing.timeout(const Duration(seconds: 5)), (
+        conversationId: 'c1',
+        userId: 'u2',
+      ));
+      expect(await read.timeout(const Duration(seconds: 5)), (
+        conversationId: 'c1',
+        readerId: 'u2',
+        at: DateTime.utc(2026, 11, 6, 20, 31),
+      ));
+      final invocation = fromApp.stream.firstWhere((f) => f.contains('Typing'));
+      realtime.sendTyping('c1');
+      expect(
+        SignalRChatRealtime.parseFrames(
+          await invocation.timeout(const Duration(seconds: 5)),
+        ).single,
+        {
+          'type': 1,
+          'target': 'Typing',
+          'arguments': ['c1'],
+        },
+      );
     });
 
     test('sin sesion no se conecta', () async {

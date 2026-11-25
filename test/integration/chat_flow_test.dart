@@ -15,7 +15,8 @@ import 'support/live_flows.dart';
 
 /// Pantallas `Mensajes`, `Chat-Valeria` y `Acuerdo-esperando` /
 /// `Acuerdo-confirmado` contra la API real, con el tiempo real por el hub
-/// (HU-20, HU-22, HU-32, HU-33, HU-34).
+/// (HU-20, HU-22, HU-32, HU-33, HU-34) y las fotos, "escribiendo…" y "leído"
+/// (HU-65).
 void main() {
   group('Chat contra la API real', skip: liveSkip, () {
     test('abrir el chat, escribir, bandeja, historial y leido', () async {
@@ -69,6 +70,59 @@ void main() {
 
       expect((await received).text, '¿Mañana?');
       await realtime.stop();
+    });
+
+    test('fotos, "escribiendo…" y "leído" (HU-65)', () async {
+      final valeria = await liveUser(name: 'Valeria Integración');
+      final ana = await liveUser();
+      addTearDown(valeria.dispose);
+      addTearDown(ana.dispose);
+      final product = await publishProduct(valeria, title: 'Mochila azul');
+      final conversation = await openChat(ana, product.id);
+      final sellerHub = valeria.read(chatRealtimeProvider);
+      final buyerHub = ana.read(chatRealtimeProvider);
+      final typing = sellerHub.typing
+          .firstWhere((t) => t.conversationId == conversation.id)
+          .timeout(const Duration(seconds: 20));
+      final read = buyerHub.reads
+          .firstWhere((r) => r.conversationId == conversation.id)
+          .timeout(const Duration(seconds: 20));
+      sellerHub.start();
+      buyerHub.start();
+      await Future<void>.delayed(const Duration(seconds: 2));
+
+      final photo = await ana
+          .read(chatRepositoryProvider)
+          .sendPhoto(conversation.id, livePhoto().path);
+      final bytes = await valeria
+          .read(chatRepositoryProvider)
+          .photo(photo.photoPath!);
+      final rejected = await ana
+          .read(chatRepositoryProvider)
+          .sendPhoto(
+            conversation.id,
+            livePhoto(red: 255, green: 0, blue: 255).path,
+          )
+          .then<ApiFailure?>(
+            (_) => null,
+            onError: (Object e) => e as ApiFailure,
+          );
+      buyerHub.sendTyping(conversation.id);
+      final typed = await typing;
+      await valeria.read(chatRepositoryProvider).markRead(conversation.id);
+      final readSignal = await read;
+      final asBuyer = await ana
+          .read(chatRepositoryProvider)
+          .conversation(conversation.id);
+
+      expect(photo.isPhoto, isTrue);
+      expect(bytes, isNotEmpty);
+      expect(rejected?.code, 'moderation.image_rejected');
+      expect(typed.userId, ana.user.id);
+      expect(readSignal.readerId, valeria.user.id);
+      expect(asBuyer.counterpartReadAt, isNotNull);
+      await sellerHub.stop();
+      await buyerHub.stop();
     });
 
     test('un mensaje inapropiado no se envia', () async {

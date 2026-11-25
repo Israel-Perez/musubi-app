@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:musubi_app/features/chat/domain/chat_models.dart';
 
 /// Conversaciones y mensajes (HU-20) y bandeja (HU-22), con sesion. Lanza
@@ -15,6 +17,12 @@ abstract interface class ChatRepository {
 
   /// Envia un texto; la API lo modera antes de guardarlo.
   Future<ChatMessage> send(String conversationId, String text);
+
+  /// HU-65: envia una foto (la API la modera antes de guardarla).
+  Future<ChatMessage> sendPhoto(String conversationId, String filePath);
+
+  /// HU-65: los bytes de una foto del chat (solo para los participantes).
+  Future<Uint8List> photo(String path);
 
   /// Bandeja: conversaciones con mensajes, por actividad reciente.
   Future<InboxPage> inbox({
@@ -35,6 +43,16 @@ abstract interface class ChatRealtime {
   /// El id de cada conversacion cuyo acuerdo con IA cambio (`agreementChanged`,
   /// HU-34): se pidio, se corrigio, se confirmo, se descarto o ya es pedido.
   Stream<String> get agreementChanges;
+
+  /// HU-65: "Escribiendo…" de la otra persona (no se guarda).
+  Stream<TypingSignal> get typing;
+
+  /// HU-65: alguien abrio una conversacion ("Leído").
+  Stream<ReadSignal> get reads;
+
+  /// HU-65: avisa que estoy escribiendo en [conversationId] (sin respuesta;
+  /// sin conexion no hace nada).
+  void sendTyping(String conversationId);
 
   /// Conecta (y reconecta solo) mientras haya sesion.
   void start();

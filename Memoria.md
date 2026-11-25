@@ -1,5 +1,18 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-65 (SCRUM-105): fotos, "escribiendo…" y "leído" en el chat
+
+- **Qué:** el "+" del chat envía una foto de la cámara o la galería (moderada por la API); "Valeria está escribiendo…" en tiempo real; "Leído" bajo mi último mensaje; respuestas rápidas en la primera conversación de quien compra.
+- **Decisiones técnicas:**
+  - La foto se baja por Dio con sesión (`chatPhotoProvider`), porque la API solo la entrega a los participantes.
+  - `Typing` es una invocación del hub sin respuesta, a lo más cada 3 s; la línea se va a los 5 s o al llegar el mensaje.
+  - Las respuestas rápidas solo llenan la caja: la persona revisa antes de enviar ("¿Aceptas $X?" es 10 % menos, de 10 en 10).
+- **Para revisar:** la foto no se abre a pantalla completa ni se guarda en "Por enviar" sin red.
+- **Errores a evitar:**
+  - `dart format` junta las líneas dentro de una interpolación: los frames de prueba van en variables.
+  - Después de una señal del stream, el widget test necesita dos `pump`.
+- **App:** sin subir la versión; va en el siguiente lote de Google Play.
+
 ## Trabajo en curso — HU-63 (SCRUM-103): abrir al instante y consultar sin conexión
 
 - **Qué:**

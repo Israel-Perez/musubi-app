@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -67,6 +68,25 @@ final chatConnectionProvider = Provider<void>((ref) {
 final StreamProvider<ChatMessage> chatIncomingProvider =
     StreamProvider<ChatMessage>(
       (ref) => ref.watch(chatRealtimeProvider).messages,
+    );
+
+/// HU-65: "Escribiendo…" de la otra persona.
+final StreamProvider<TypingSignal> chatTypingProvider =
+    StreamProvider<TypingSignal>(
+      (ref) => ref.watch(chatRealtimeProvider).typing,
+    );
+
+/// HU-65: alguien abrio una conversacion ("Leído").
+final StreamProvider<ReadSignal> chatReadsProvider = StreamProvider<ReadSignal>(
+  (ref) => ref.watch(chatRealtimeProvider).reads,
+);
+
+/// HU-65: los bytes de una foto del chat (con sesion: la API solo la da a los
+/// participantes). Se queda en memoria mientras la app vive.
+final FutureProviderFamily<Uint8List, String> chatPhotoProvider =
+    FutureProvider.family<Uint8List, String>(
+      (ref, path) => ref.watch(chatRepositoryProvider).photo(path),
+      retry: (_, _) => null,
     );
 
 /// El id de cada conversacion cuyo acuerdo con IA cambio (HU-34).

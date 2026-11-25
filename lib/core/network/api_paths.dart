@@ -142,6 +142,12 @@ abstract final class ApiPaths {
   /// `musubi-api:HU-51`): "Compara antes de comprar"; con sesion.
   static String productCompare(String id) => '${product(id)}/compare';
 
+  /// `POST /api/v1/conversations/{id}/photos` — fila "M-07" (spec
+  /// `musubi-api:HU-65`): enviar una foto. La descarga usa la ruta `photo`
+  /// que trae el mensaje (`GET …/photos/{name}`, con sesion).
+  static String conversationPhotos(String id) =>
+      '$conversations/${Uri.encodeComponent(id)}/photos';
+
   /// `GET /api/v1/products/{id}/price-estimate` — fila "M-11" (spec
   /// `musubi-api:HU-58`): lo que estima el modelo de ML; con sesion.
   static String productPriceEstimate(String id) =>
