@@ -49,6 +49,8 @@ También usamos Gemini solo cuando tú lo pides al publicar:
 - **"Ideas para vender más rápido":** se envía el texto de tu publicación, cuántas veces la vieron, cuántas personas buscan algo parecido y lo que escriben en sus solicitudes, sin nombres ni datos de contacto de nadie, para proponer un nombre y una descripción más claros.
 - No guardamos lo que se envía ni la propuesta: solo llena tu borrador, y tú decides qué se publica.
 
+Para encontrar coincidencias aunque se usen otras palabras (que "calculadora científica" encuentre una "Casio fx-991"), Musubi envía a Gemini el nombre y la descripción de cada publicación y lo que dice cada solicitud "Se busca", que ya son públicos en tu campus. Se envían sin tu nombre y sin correos, teléfonos, cuentas ni enlaces. Gemini devuelve una lista de números (un "vector") que guardamos para comparar; no guardamos lo que Gemini reciba. Los vectores se borran cuando eliminas tu cuenta.
+
 ## Moderación y reportes
 
 Si alguien reporta una conversación o una publicación, el equipo administrador puede revisar ese contenido para atender el reporte. Antes de publicarse, los textos y las imágenes se revisan con servicios automáticos para detectar contenido inapropiado.

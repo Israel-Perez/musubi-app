@@ -176,7 +176,7 @@ La fuente canónica es `specs/phase-00-constitution/00-04-lessons-learned/spec.m
 | `integration_test/` | Suite en un teléfono físico (`app_test.dart`, `flows/`; 02-10) |
 | `android/` | Proyecto Android (`com.musubi.app`, targetSdk 36) |
 | `config/` | `*.example.json` por ambiente + README |
-| `docs/` | `trazabilidad.md` (66 HU), `modulos.md` (14 módulos), `versionado.md`, `maqueta/` (HTML + índice) |
+| `docs/` | `trazabilidad.md` (67 HU), `modulos.md` (14 módulos), `versionado.md`, `maqueta/` (HTML + índice) |
 | `specs/` | SDD: plantilla, fases 00 y 01, `mNN-*/HU-NN-*` |
 | `scripts/` | `critic-guardrails.ps1`, `check_shared_sections.ps1`, `run_integration_tests.ps1`, `run_device_tests.ps1`, `MusubiLocalApi.ps1` |
 | `.claude/` | `agents/` (3), `skills/` (9), `hooks/` |

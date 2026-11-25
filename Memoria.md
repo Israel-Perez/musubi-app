@@ -1,5 +1,11 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-60 (SCRUM-100): coincidencias por significado
+
+- **Qué:** la lógica vive en musubi-api (embeddings de Gemini, API `0.5.0-alpha.47`). En la app no cambian pantallas ni llamadas: "Ya coinciden con lo que buscas" y los avisos de coincidencias ahora encuentran también lo que significa lo mismo.
+- **Aquí:** el aviso de privacidad (los textos públicos de publicaciones y solicitudes van a Gemini sin contacto) y `docs/play/README.md` ("Otro contenido generado por el usuario" pasa a compartido en el siguiente lote).
+- **Para revisar (25-Nov-2026):** que esos textos salgan solos, sin que nadie lo pida (son públicos en el campus y no son conversaciones; RNF-06 no cambia).
+
 ## Trabajo en curso — HU-59 (SCRUM-99): "Llenar con IA" desde la foto
 
 - **Qué:** `Vender-1` suma la tarjeta "Llenar con IA" (con al menos una foto). La primera vez explica que la portada va a Gemini; luego `fillFromCover` pide `POST /products/photo-draft` (API `0.5.0-alpha.46`), llena el borrador y abre `Vender-2` para revisar. Sin IA avisa y se sigue a mano.
