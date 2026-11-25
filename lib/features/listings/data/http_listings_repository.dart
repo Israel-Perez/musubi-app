@@ -47,6 +47,31 @@ class HttpListingsRepository implements ListingsRepository {
   });
 
   @override
+  Future<PhotoDraftProposal> draftFromPhoto(
+    String photoKey,
+  ) => _guard(() async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiPaths.photoDraft,
+      data: {'photo': photoKey},
+    );
+    final body = _body(response);
+    final condition = body['condition'] == ProductCondition.brandNew.apiValue
+        ? ProductCondition.brandNew
+        : ProductCondition.used;
+    final detail = body['conditionDetail'] as String?;
+    return PhotoDraftProposal(
+      title: body['title'] as String,
+      category: body['category'] as String?,
+      condition: condition,
+      usedDetail: condition == ProductCondition.used
+          ? UsedDetail.values.where((d) => d.apiValue == detail).firstOrNull ??
+                UsedDetail.good
+          : null,
+      description: body['description'] as String,
+    );
+  });
+
+  @override
   Future<ProductSummary> publish(NewListing listing) => _guard(() async {
     final response = await _dio.post<Map<String, dynamic>>(
       ApiPaths.products,

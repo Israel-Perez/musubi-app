@@ -1,5 +1,14 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-59 (SCRUM-99): "Llenar con IA" desde la foto
+
+- **Qué:** `Vender-1` suma la tarjeta "Llenar con IA" (con al menos una foto). La primera vez explica que la portada va a Gemini; luego `fillFromCover` pide `POST /products/photo-draft` (API `0.5.0-alpha.46`), llena el borrador y abre `Vender-2` para revisar. Sin IA avisa y se sigue a mano.
+- **Decisiones para revisar (25-Nov-2026):**
+  - El aviso de privacidad suma "Llenar con IA" (y las ideas de HU-37, que faltaban) sin cambiar su versión (`2026-10`): no pide aceptarlo otra vez porque el aviso de la app sale antes de enviar la foto.
+  - En Play, "Fotos" pasa a **Compartido** en el siguiente lote (`docs/play/README.md`).
+- **Decisiones técnicas:** un aviso aparte del de "Resumir acuerdo" (`SecureAiNoticeStore.photoKey`), porque envía otra cosa. Una categoría que la IA no reconoció deja la que ya había.
+- **Errores a evitar:** la landing toma el aviso de `main` al construirse: después de fusionar hay que volver a desplegarla para que `/aviso-de-privacidad` lo muestre.
+
 ## Trabajo en curso — HU-61 (SCRUM-101): compartir un producto con un enlace
 
 - **Qué:**

@@ -3,15 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/app/musubi_app.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
+import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/session/session_tokens.dart';
 import 'package:musubi_app/features/auth/presentation/auth_providers.dart';
+import 'package:musubi_app/features/genai/presentation/agreement_providers.dart';
 import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
 
+import '../../helpers/fake_agreements.dart';
 import '../../helpers/fake_catalog_repository.dart';
 import '../../helpers/fake_listings_repository.dart';
 import '../../helpers/fake_session_api.dart';
@@ -27,6 +30,9 @@ class _Harness {
   final WidgetTester tester;
   final FakeListingsRepository listings;
   final picker = FakePhotoPicker();
+
+  /// El aviso de "Llenar con IA" (HU-59).
+  final aiNotice = FakeAiNoticeStore();
 
   Future<void> open() async {
     final tokens = SessionTokens(
@@ -48,6 +54,7 @@ class _Harness {
           ),
           listingsRepositoryProvider.overrideWithValue(listings),
           photoPickerProvider.overrideWithValue(picker),
+          photoAiNoticeStoreProvider.overrideWithValue(aiNotice),
           sessionApiProvider.overrideWithValue(FakeSessionApi()),
           clockProvider.overrideWithValue(() => _now),
           tokenStoreProvider.overrideWithValue(InMemoryTokenStore(tokens)),
@@ -377,5 +384,106 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('sell-price-suggested')), findsNothing);
+  });
+
+  group('Llenar con IA (HU-59)', () {
+    testWidgets('sin foto no aparece; con la portada llena el borrador y '
+        'se revisa antes de publicar', (tester) async {
+      final h = _Harness(tester);
+      await h.open();
+      await h.startSelling();
+      expect(find.byKey(const Key('sell-ai')), findsNothing);
+
+      await h.tapKey('sell-camera');
+      expect(find.text('Llenar con IA'), findsWidgets);
+      await h.tapKey('sell-ai-fill');
+
+      // La primera vez explica que la portada va a la IA (RNF-06).
+      expect(find.textContaining('verá tu foto de portada'), findsOneWidget);
+      await h.tapKey('sell-ai-notice-continue');
+
+      expect(h.aiNotice.wasSeen, isTrue);
+      expect(h.listings.draftedKeys, ['media/products/u1/1.webp']);
+      expect(find.text('Cuéntanos qué es'), findsOneWidget);
+      expect(find.text('Calculadora científica Casio fx-82'), findsOneWidget);
+      expect(
+        find.text('Calculadora científica en buen estado, con su tapa.'),
+        findsOneWidget,
+      );
+      // RN-38: nada se publico; quien vende corrige el nombre y sigue.
+      expect(h.listings.published, isEmpty);
+      await h.type('sell-title', 'Calculadora Casio fx-82 con tapa');
+      await h.tapText('Continuar');
+      await h.type('sell-price', '300');
+      await h.tapText('Continuar');
+      expect(find.text('Usado · Buen estado · 1 disponible'), findsOneWidget);
+      await h.tapKey('sell-publish');
+
+      final listing = h.listings.published.single;
+      expect(listing.title, 'Calculadora Casio fx-82 con tapa');
+      expect(listing.category, 'calculadoras');
+      expect(listing.condition, ProductCondition.used);
+      expect(listing.usedDetail, UsedDetail.good);
+    });
+
+    testWidgets('el aviso sale una vez; si lo cancela no envia nada', (
+      tester,
+    ) async {
+      final h = _Harness(tester);
+      await h.open();
+      await h.startSelling();
+      await h.tapKey('sell-camera');
+
+      await h.tapKey('sell-ai-fill');
+      await h.tapText('Cancelar');
+      expect(h.listings.draftedKeys, isEmpty);
+      expect(h.aiNotice.wasSeen, isFalse);
+
+      h.aiNotice.wasSeen = true;
+      await h.tapKey('sell-ai-fill');
+      expect(find.textContaining('verá tu foto de portada'), findsNothing);
+      expect(h.listings.draftedKeys, hasLength(1));
+    });
+
+    testWidgets('sin IA lo dice y se sigue a mano (RNF-15)', (tester) async {
+      final h = _Harness(tester);
+      h.listings.draftFailure = const ApiFailure(
+        code: 'listings.draft_unavailable',
+        message:
+            'La IA no está disponible ahora. Llena los datos a mano o '
+            'inténtalo más tarde.',
+        status: 503,
+      );
+      h.aiNotice.wasSeen = true;
+      await h.open();
+      await h.startSelling();
+      await h.tapKey('sell-camera');
+
+      await h.tapKey('sell-ai-fill');
+
+      expect(
+        find.textContaining('La IA no está disponible ahora'),
+        findsOneWidget,
+      );
+      expect(find.text('Agrega fotos'), findsOneWidget);
+      await h.tapText('Continuar');
+      expect(find.text('Cuéntanos qué es'), findsOneWidget);
+    });
+
+    testWidgets('una portada que no subio se reintenta antes de pedirla', (
+      tester,
+    ) async {
+      final h = _Harness(tester, failUploads: 1);
+      h.aiNotice.wasSeen = true;
+      await h.open();
+      await h.startSelling();
+      await h.tapKey('sell-camera');
+
+      await h.tapKey('sell-ai-fill');
+
+      expect(h.listings.uploaded, hasLength(1));
+      expect(h.listings.draftedKeys, ['media/products/u1/1.webp']);
+      expect(find.text('Cuéntanos qué es'), findsOneWidget);
+    });
   });
 }
