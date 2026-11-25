@@ -12,7 +12,7 @@
   - Solo `https://musubiapp.com.mx/p/` en el `intent-filter`: un esquema propio lo podría registrar otra app.
   - Abierto desde un enlace no hay pantalla anterior: "Regresar" va a Inicio (antes `context.pop()` habría fallado).
 - **Para revisar:** la vista previa es pública (los datos que la API ya da sin sesión, sin quien vende).
-- **Pendiente:** la huella SHA-256 de la llave de firma de Google Play en `musubi-landing/src/static/.well-known/assetlinks.json` (Play Console → Integridad de la app → Firma de apps). Sin ella App Links no se verifica en las instalaciones de Play; "Abrir en Musubi" de la landing sí funciona.
+- **Huella de Google Play (25-Nov-2026):** `musubi-landing/src/static/.well-known/assetlinks.json` lleva la huella de la llave de subida y la de la firma de Google Play (musubi-landing#5). Si cambia la llave de firma o la de subida, hay que actualizarla ahí o App Links deja de verificarse.
 - **Errores a evitar:** Edge sin interfaz en Windows no baja de unos 500 px de ancho. Una captura "de 390 px" sale recortada aunque la página esté bien: revisa a 600 px o compárala con otra página del sitio.
 - **App:** sin subir la versión; va en el siguiente lote de Google Play.
 
