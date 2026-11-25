@@ -24,6 +24,7 @@ import 'package:musubi_app/features/listings/presentation/sell_done_screen.dart'
 import 'package:musubi_app/features/listings/presentation/sell_photos_screen.dart';
 import 'package:musubi_app/features/listings/presentation/sell_price_screen.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/product_share.dart';
 import 'package:musubi_app/features/marketplace/domain/search_filter.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_screen.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_screen.dart';
@@ -404,6 +405,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => ChatScreen(
           target: ChatTarget.product(state.extra! as ProductSummary),
         ),
+      ),
+      // HU-61: el enlace compartido https://musubiapp.com.mx/p/{id} (App
+      // Links) abre el detalle; con o sin sesion, como la vitrina.
+      GoRoute(
+        path: '${ProductShare.pathPrefix}:id',
+        redirect: (context, state) =>
+            AppRoutes.product(state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/producto/:id',

@@ -34,6 +34,15 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- HU-61: https://musubiapp.com.mx/p/{id} abre el producto en la app (App Links,
+                 verificados con /.well-known/assetlinks.json de musubi-landing). Solo ese host y
+                 esa ruta: lo demas del sitio sigue en el navegador. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="musubiapp.com.mx" android:pathPrefix="/p/"/>
+            </intent-filter>
         </activity>
         <!-- HU-31: los push de FCM sin channel_id caen en el canal "musubi" (lo crea MainActivity). -->
         <meta-data

@@ -53,6 +53,21 @@ class MainActivity : FlutterActivity() {
                     result.notImplemented()
                 }
             }
+        // HU-61: "Compartir" un producto abre la hoja del sistema con el
+        // texto y el enlace. Sin permisos: la persona elige la app.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "musubi/share")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "shareText") {
+                    result.success(
+                        shareText(
+                            call.argument<String>("text") ?: "",
+                            call.argument<String>("subject") ?: "",
+                        ),
+                    )
+                } else {
+                    result.notImplemented()
+                }
+            }
         // HU-67: la reseña de la app en Google Play (In-App Review).
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "musubi/review")
             .setMethodCallHandler { call, result ->
@@ -84,6 +99,19 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             // Sin Play Store (emulador o sideload): la app sigue sin avisar.
             result.success(false)
+        }
+    }
+
+    private fun shareText(text: String, subject: String): Boolean {
+        val send = Intent(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .putExtra(Intent.EXTRA_TEXT, text)
+            .putExtra(Intent.EXTRA_SUBJECT, subject)
+        return try {
+            startActivity(Intent.createChooser(send, "Compartir producto"))
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
         }
     }
 

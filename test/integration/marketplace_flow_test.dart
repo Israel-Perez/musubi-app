@@ -2,8 +2,11 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:musubi_app/core/errors/api_failure.dart';
+import 'package:musubi_app/features/listings/domain/listing_models.dart';
 import 'package:musubi_app/features/listings/presentation/listings_providers.dart';
 import 'package:musubi_app/features/marketplace/domain/home_feed.dart';
+import 'package:musubi_app/features/marketplace/domain/product_share.dart';
 import 'package:musubi_app/features/marketplace/presentation/comparison_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/favorites_providers.dart';
 import 'package:musubi_app/features/marketplace/presentation/home_providers.dart';
@@ -47,6 +50,44 @@ void main() {
         expect(seller.items.map((p) => p.id), contains(product.id));
       },
     );
+
+    test('compartir (HU-61): el enlace lleva lo que ve un visitante', () async {
+      final valeria = await liveUser(name: 'Valeria Integración');
+      addTearDown(valeria.dispose);
+      final visitor = LiveSession.visitor();
+      addTearDown(visitor.dispose);
+      final product = await publishProduct(
+        valeria,
+        title: 'Calculadora para compartir',
+      );
+      final mine = await valeria
+          .read(catalogRepositoryProvider)
+          .product(product.id);
+
+      final shared = ProductShare.of(mine);
+      // La landing (worker de /p/{id}) lee el mismo detalle sin sesion.
+      final preview = await visitor
+          .read(catalogRepositoryProvider)
+          .product(product.id);
+
+      expect(ProductShare.canShare(mine), isTrue);
+      expect(shared.text, contains('Calculadora para compartir'));
+      expect(shared.text, endsWith('https://musubiapp.com.mx/p/${product.id}'));
+      expect(shared.text, isNot(contains(valeria.user.id)));
+      expect(preview.title, 'Calculadora para compartir');
+      expect(preview.priceCents, mine.priceCents);
+      expect(preview.sellerId, isNull);
+
+      // Pausada: el enlace dice "Ya no está disponible" (404 sin sesion).
+      final paused = await valeria
+          .read(listingsRepositoryProvider)
+          .pause(product.id);
+      expect(paused.status, isNot(ListingStatus.active));
+      await expectLater(
+        visitor.read(catalogRepositoryProvider).product(product.id),
+        throwsA(isA<ApiFailure>().having((f) => f.status, 'status', 404)),
+      );
+    });
 
     test('un visitante explora sin cuenta', () async {
       final valeria = await liveUser(name: 'Valeria Integración');
