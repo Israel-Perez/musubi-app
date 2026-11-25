@@ -31,6 +31,12 @@ void main() {
     // HU-59: la portada solo se envia si quien publica lo pide.
     expect(privacy, contains('"Llenar con IA"'));
     expect(privacy, contains('foto de portada'));
+    // HU-60: los textos publicos para las coincidencias, sin contacto.
+    expect(privacy, contains('coincidencias aunque se usen otras palabras'));
+    expect(
+      privacy,
+      contains('Los vectores se borran cuando eliminas tu cuenta'),
+    );
     expect(privacy, contains('## Moderación y reportes'));
     expect(privacy, contains('el equipo administrador puede revisar'));
   });
