@@ -258,3 +258,99 @@ class AdminCategory {
 /// Largo del nombre de una categoria (como en musubi-api).
 const adminCategoryNameMin = 2;
 const adminCategoryNameMax = 40;
+
+/// El periodo de los indicadores (HU-42).
+enum IndicatorPeriod {
+  week('week', 'Última semana'),
+  month('month', 'Último mes');
+
+  new(this.code, this.label);
+
+  /// Valor de `?period=`.
+  final String code;
+  final String label;
+}
+
+/// Como se lee un indicador.
+enum IndicatorUnit { count, percent, average, hours, stars }
+
+/// Una parte del desglose por categoria.
+@immutable
+class IndicatorBreakdown {
+  const new({required this.label, required this.value});
+
+  final String label;
+  final int value;
+}
+
+/// Un indicador del apartado 19 de la propuesta. [value] es `null` si no
+/// hay base para calcularlo (un porcentaje sin datos).
+@immutable
+class UsageIndicator {
+  const new({
+    required this.key,
+    required this.label,
+    required this.unit,
+    required this.detail,
+    this.value,
+    this.breakdown = const [],
+  });
+
+  final String key;
+  final String label;
+  final double? value;
+  final IndicatorUnit unit;
+  final String detail;
+  final List<IndicatorBreakdown> breakdown;
+
+  /// "12", "25 %", "1.5", "5.3 h", "4.7 ★" o "—" sin datos.
+  String get display {
+    final v = value;
+    if (v == null) return '—';
+    String decimal(double n) =>
+        n == n.roundToDouble() ? n.toStringAsFixed(0) : n.toStringAsFixed(1);
+    return switch (unit) {
+      IndicatorUnit.count => _thousands(v.round()),
+      IndicatorUnit.percent => '${decimal(v)} %',
+      IndicatorUnit.average => decimal(v),
+      IndicatorUnit.hours => '${decimal(v)} h',
+      IndicatorUnit.stars => '${v.toStringAsFixed(1)} ★',
+    };
+  }
+
+  static String _thousands(int n) {
+    final digits = n.abs().toString();
+    final grouped = digits.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => ',',
+    );
+    return n < 0 ? '-$grouped' : grouped;
+  }
+}
+
+/// Un area: adopcion, oferta, demanda, conexion, operaciones, chat, IA,
+/// vendedores o confianza.
+@immutable
+class IndicatorArea {
+  const new({required this.key, required this.title, required this.items});
+
+  final String key;
+  final String title;
+  final List<UsageIndicator> items;
+}
+
+/// "Indicadores de uso" del campus (HU-42).
+@immutable
+class UsageIndicators {
+  const new({
+    required this.period,
+    required this.from,
+    required this.to,
+    required this.areas,
+  });
+
+  final IndicatorPeriod period;
+  final DateTime from;
+  final DateTime to;
+  final List<IndicatorArea> areas;
+}

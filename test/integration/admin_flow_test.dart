@@ -13,7 +13,8 @@ import 'package:musubi_app/features/reputation/presentation/reputation_providers
 import 'support/live_api.dart';
 
 /// Pantallas `Administracion`, la hoja del reporte, `Cuenta-admin` y
-/// `Categorias` contra la API real (HU-39, HU-40, HU-41), con lo que la
+/// `Categorias` e "Indicadores de uso" contra la API real (HU-39 a HU-42),
+/// con lo que la
 /// suspension le hace a la sesion abierta de esa persona (02-10).
 ///
 /// Es el unico archivo que usa la cuenta `admin` (las pruebas corren en
@@ -101,6 +102,39 @@ void main() {
       expect(renamed.name, '$name y drones');
       expect(inactive.active, isFalse);
       expect(all.map((c) => c.slug), contains(created.slug));
+    });
+
+    test('indicadores de uso (HU-42): las 9 áreas; sin el rol, 403', () async {
+      final ana = await liveUser();
+      addTearDown(ana.dispose);
+
+      final week = await admin
+          .read(adminRepositoryProvider)
+          .indicators(IndicatorPeriod.week);
+      final month = await admin
+          .read(adminRepositoryProvider)
+          .indicators(IndicatorPeriod.month);
+
+      expect(week.areas.map((a) => a.key), [
+        'adoption',
+        'supply',
+        'demand',
+        'connection',
+        'operations',
+        'chat',
+        'ai',
+        'sellers',
+        'trust',
+      ]);
+      final registered = week.areas.first.items.first;
+      expect(registered.key, 'users_registered');
+      expect(registered.value, greaterThanOrEqualTo(2));
+      expect(month.period, IndicatorPeriod.month);
+      expect(month.to.difference(month.from).inDays, 30);
+      await expectLater(
+        ana.read(adminRepositoryProvider).indicators(IndicatorPeriod.week),
+        throwsA(isA<ApiFailure>().having((f) => f.status, 'status', 403)),
+      );
     });
 
     test('una cuenta sin el rol no entra a Administracion', () async {

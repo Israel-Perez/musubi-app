@@ -30,6 +30,9 @@ abstract interface class AdminRepository {
   /// Las categorias del campus, tambien las desactivadas (HU-41).
   Future<List<AdminCategory>> categories();
 
+  /// "Indicadores de uso" (HU-42): los del campus en el periodo.
+  Future<UsageIndicators> indicators(IndicatorPeriod period);
+
   /// "Agregar categoría": activa y al final.
   Future<AdminCategory> createCategory(String name);
 

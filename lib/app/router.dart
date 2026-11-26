@@ -6,6 +6,7 @@ import 'package:musubi_app/app/shell/app_shell.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/features/admin/presentation/admin_account_screen.dart';
 import 'package:musubi_app/features/admin/presentation/admin_categories_screen.dart';
+import 'package:musubi_app/features/admin/presentation/admin_indicators_screen.dart';
 import 'package:musubi_app/features/admin/presentation/admin_screen.dart';
 import 'package:musubi_app/features/auth/domain/auth_models.dart';
 import 'package:musubi_app/features/auth/presentation/forgot_password_screen.dart';
@@ -99,6 +100,9 @@ abstract final class AppRoutes {
 
   /// "Categorías" en "Administración" (HU-41).
   static const adminCategories = '$settingsAdmin/categorias';
+
+  /// "Indicadores de uso" (HU-42).
+  static const adminIndicators = '$settingsAdmin/indicadores';
 
   /// "Vender un producto" (HU-06): `Vender-1…4` y `Vender-listo`.
   static const sell = '/vender';
@@ -550,6 +554,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.adminCategories,
         builder: (context, state) => const AdminCategoriesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminIndicators,
+        builder: (context, state) => const AdminIndicatorsScreen(),
       ),
       GoRoute(
         path: '${AppRoutes.settingsAdmin}/cuenta/:id',

@@ -186,6 +186,19 @@ class FakeAdminRepository implements AdminRepository {
     return accounts[userId] = _with(userId, AccountStatus.active);
   }
 
+  /// "Indicadores de uso" (HU-42): lo que se pidio y lo que responde.
+  final List<IndicatorPeriod> indicatorPeriods = [];
+  UsageIndicators Function(IndicatorPeriod period) indicatorsFor =
+      sampleIndicators;
+  ApiFailure? indicatorsFailure;
+
+  @override
+  Future<UsageIndicators> indicators(IndicatorPeriod period) async {
+    indicatorPeriods.add(period);
+    if (indicatorsFailure case final failure?) throw failure;
+    return indicatorsFor(period);
+  }
+
   @override
   Future<List<AdminCategory>> categories() async {
     if (failLoad) throw _offline;
@@ -253,3 +266,87 @@ class FakeAdminRepository implements AdminRepository {
     message: 'No encontramos esa cuenta.',
   );
 }
+
+/// Indicadores de muestra (forma del fixture `admin-indicators.json`).
+UsageIndicators sampleIndicators(IndicatorPeriod period) => UsageIndicators(
+  period: period,
+  from: DateTime.utc(2026, 11, 18, 18),
+  to: DateTime.utc(2026, 11, 25, 18),
+  areas: const [
+    IndicatorArea(
+      key: 'adoption',
+      title: 'Adopción',
+      items: [
+        UsageIndicator(
+          key: 'users_registered',
+          label: 'Usuarios registrados',
+          value: 1250,
+          unit: IndicatorUnit.count,
+          detail: '1,180 validados · 40 nuevos en el periodo',
+        ),
+      ],
+    ),
+    IndicatorArea(
+      key: 'supply',
+      title: 'Oferta',
+      items: [
+        UsageIndicator(
+          key: 'products_created',
+          label: 'Publicaciones creadas',
+          value: 4,
+          unit: IndicatorUnit.count,
+          detail: 'En el periodo',
+          breakdown: [
+            IndicatorBreakdown(label: 'Calculadoras', value: 3),
+            IndicatorBreakdown(label: 'Libros', value: 1),
+          ],
+        ),
+      ],
+    ),
+    IndicatorArea(
+      key: 'demand',
+      title: 'Demanda',
+      items: [
+        UsageIndicator(
+          key: 'direct_offers',
+          label: 'Ofertas directas',
+          value: 25,
+          unit: IndicatorUnit.percent,
+          detail: '2 de 8 ofertas, con productos que no estaban publicados',
+        ),
+      ],
+    ),
+    IndicatorArea(
+      key: 'ai',
+      title: 'IA',
+      items: [
+        UsageIndicator(
+          key: 'ai_precision',
+          label: 'Confirmados sin correcciones',
+          unit: IndicatorUnit.percent,
+          detail: '0 de 0 acuerdos',
+        ),
+      ],
+    ),
+    IndicatorArea(
+      key: 'trust',
+      title: 'Confianza',
+      items: [
+        UsageIndicator(
+          key: 'rating_average',
+          label: 'Calificación promedio',
+          value: 4.7,
+          unit: IndicatorUnit.stars,
+          detail: '6 calificaciones',
+        ),
+        UsageIndicator(
+          key: 'time_to_offer',
+          label: 'Tiempo para encontrar un producto',
+          value: 5.3,
+          unit: IndicatorUnit.hours,
+          detail: 'Hasta la primera oferta',
+        ),
+      ],
+    ),
+  ],
+);
