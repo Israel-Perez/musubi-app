@@ -38,6 +38,16 @@ void main() {
     );
   });
 
+  test('Crashlytics arranca apagado (SCRUM-108): solo la app lo enciende en '
+      'release', () {
+    expect(
+      RegExp(
+        r'firebase_crashlytics_collection_enabled"\s+android:value="false"',
+      ).hasMatch(manifest),
+      isTrue,
+    );
+  });
+
   test('release: sin trafico en claro (RNF-02)', () {
     final config = read(
       'android/app/src/main/res/xml/network_security_config.xml',

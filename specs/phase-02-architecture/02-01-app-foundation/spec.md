@@ -84,6 +84,11 @@ Esta spec deja esa base y las primeras pruebas de seguridad del móvil (L-07). *
 - Self-test: si el interceptor acepta cualquier host, falla la prueba "nunca envía el token a otro host" (21-Oct-2026).
 - `pwsh scripts/critic-guardrails.ps1` → PASS · Semgrep → 0.
 
+- [x] **Crashlytics (SCRUM-108):**
+  - registra los fallos y los errores inesperados de la API (5xx), con la versión de la app y sin datos personales → `test/core/observability/crash_reporter_test.dart`;
+  - apagado en debug y en las pruebas, y en release solo con `google-services.json` → `reportero` y `Crashlytics arranca apagado` en `android_config_test.dart`.
+- [ ] El tablero de Crashlytics muestra el "error de prueba" de un build de release interno (Ajustes → Administración → "Enviar un error de prueba").
+
 ## Límites
 - La renovación HTTP y el logout contra la API llegan con HU-02. Mientras tanto, un 401 con sesión cierra la sesión local.
 - `UpcomingSection` muestra texto provisional en las secciones sin HU (Se busca, Mensajes, Perfil y Publicar).

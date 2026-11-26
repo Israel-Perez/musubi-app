@@ -35,5 +35,5 @@
 - ~~`NOTE (HU-02)`: renovación HTTP y logout contra la API~~ → resuelto en HU-02 (`HttpSessionApi`, `SessionController.logOut`, 21-Oct-2026).
 - `NOTE (HU-48)`: aviso "Crea tu cuenta" antes de mandar al visitante a iniciar sesión.
 - `NOTE (HU-15, HU-22, HU-04, HU-06, HU-13)`: reemplazar cada `UpcomingSection` por su pantalla.
-- `NOTE (HU-31)`: Firebase (FCM y Crashlytics). `NOTE (02-05)`: timeouts medidos contra la API desplegada.
+- ~~`NOTE (HU-31)`: Firebase (FCM y Crashlytics)~~ → FCM con HU-31; Crashlytics con SCRUM-108 (26-Nov-2026, `crash_reporter.dart`). Falta ver el error de prueba en el tablero con un build de release. `NOTE (02-05)`: timeouts medidos contra la API desplegada.
 - ~~`NOTE (HU-53)`: decidir los datos locales (SQLite o caché) para favoritos sin conexión~~ → resuelto el 08-Nov-2026: sin modo sin conexión; la caché local queda fuera del MVP.

@@ -37,6 +37,9 @@ void main() {
       privacy,
       contains('Los vectores se borran cuando eliminas tu cuenta'),
     );
+    // SCRUM-108: los reportes de fallos, sin datos de la persona.
+    expect(privacy, contains('## Fallos de la app'));
+    expect(privacy, contains('no lleva tu nombre, tu correo, tu sesión'));
     expect(privacy, contains('## Moderación y reportes'));
     expect(privacy, contains('el equipo administrador puede revisar'));
   });

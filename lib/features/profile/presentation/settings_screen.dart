@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/app_version.dart';
 import 'package:musubi_app/app/router.dart';
+import 'package:musubi_app/core/observability/crash_reporter.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/avatars.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_snack.dart';
 import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/core/widgets/top_bar.dart';
 import 'package:musubi_app/features/admin/presentation/admin_providers.dart';
@@ -227,6 +229,14 @@ class SettingsScreen extends ConsumerWidget {
                         onTap: () =>
                             unawaited(context.push(AppRoutes.adminIndicators)),
                       ),
+                      // SCRUM-108: comprobar que Crashlytics recibe los
+                      // errores de este build (solo release con Firebase).
+                      SettingsRow(
+                        key: const Key('settings-admin-crash-test'),
+                        icon: MusubiIcons.triangleAlert,
+                        title: 'Enviar un error de prueba',
+                        onTap: () => _sendTestError(context, ref),
+                      ),
                     ],
                   ),
                 ],
@@ -327,4 +337,35 @@ class _Group extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "Enviar un error de prueba" (SCRUM-108): un error no fatal para ver en el
+/// tablero de Crashlytics; en debug o sin Firebase solo lo dice.
+void _sendTestError(BuildContext context, WidgetRef ref) {
+  final reporter = ref.read(crashReporterProvider);
+  final messenger = ScaffoldMessenger.of(context);
+  if (!reporter.active) {
+    showMusubiSnack(
+      messenger,
+      'Crashlytics está apagado en este build (solo release con Firebase).',
+      icon: MusubiIcons.info,
+      tone: SnackTone.info,
+    );
+    return;
+  }
+  unawaited(
+    reporter.record(
+      const ScrubbedError(
+        'PruebaCrashlytics',
+        'Error de prueba desde Administración',
+      ),
+      StackTrace.current,
+      fatal: false,
+    ),
+  );
+  showMusubiSnack(
+    messenger,
+    'Enviamos un error de prueba a Crashlytics.',
+    icon: MusubiIcons.circleCheck,
+  );
 }

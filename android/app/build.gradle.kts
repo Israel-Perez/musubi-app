@@ -74,7 +74,8 @@ dependencies {
 }
 
 // HU-31: Firebase (push) solo si existe google-services.json. Sin el archivo la app compila igual y los avisos push
-// quedan apagados (las pruebas y el CI de PR no lo necesitan).
+// quedan apagados (las pruebas y el CI de PR no lo necesitan). SCRUM-108: Crashlytics, igual.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }
