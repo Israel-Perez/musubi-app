@@ -129,16 +129,18 @@ Notas:
 - **`0.7.0` (lote de HU-14, HU-53, HU-23 y HU-32/33/34) comparte mensajes con Google (Gemini) y recopila pedidos, acuerdos y favoritos:** actualiza en Play Console la pregunta "¿Se comparten datos?" y las filas de arriba antes de enviar esa versión.
 - **`0.8.0` (HU-07, HU-08, HU-31 y HU-54) agrega avisos push:** recopila el ID de instalación de Firebase (fila de arriba). FCM entrega los avisos por cuenta de Musubi, así que no cuenta como compartir. El modo noche se guarda en la cuenta, pero es una preferencia de la app y no un dato que declarar. Antes de enviarla, actualiza el formulario en Play Console. El secreto `GOOGLE_SERVICES_JSON_B64` ya existe en el repositorio (11-Nov-2026); si falta, `release-play` se detiene.
 - **`0.10.0` (HU-27, HU-45, HU-26, HU-19 y HU-30) agrega las calificaciones:** son "Otro contenido generado por el usuario", un tipo que ya está declarado con los mismos fines; no hay que cambiar el formulario. Tampoco se comparte nada nuevo.
-- **Siguiente lote (con HU-59 y HU-60) — actualiza el formulario en Play Console antes de enviarla:**
-  - En "Fotos y videos → Fotos" marca también **Compartido** (con Google, Gemini en la capa gratuita) con el fin "Funcionalidad de la app": "Llenar con IA" envía la portada cuando la persona lo pide.
-  - En "Actividad en la app → Otro contenido generado por el usuario" marca también **Compartido** (con Google) con el fin "Funcionalidad de la app": las coincidencias por significado (HU-60) envían el nombre y la descripción de las publicaciones y lo que dicen las solicitudes, sin datos de contacto.
-  - El aviso de privacidad ya lo dice (sección "Inteligencia artificial").
 - **`0.11.0` (lote del 16-Nov-2026) — actualiza el formulario en Play Console antes de enviarla:**
   - **Recomendaciones (HU-35):** en "Interacciones con la app" se marca también el fin **Personalización**. No se comparte nada: el modelo de ML corre en la API de Musubi.
   - **Información financiera → Información de pago del usuario (HU-55):** la CLABE para recibir pagos. Opcional, cifrada en tránsito y en la base, solo para la funcionalidad. Musubi no procesa pagos: "Funciones financieras" sigue en No.
   - **Historial de búsqueda en la app (HU-12):** las búsquedas guardadas. Opcional, solo para la funcionalidad.
   - **Cámara (HU-52):** el permiso `CAMERA` solo lee el QR de un apartado en el teléfono (ML Kit); la imagen no se guarda ni se envía, así que no se declara como dato. Los intereses (HU-66), los avisos de "Avísame" (HU-51) y las insignias (HU-64) caben en tipos ya declarados.
-- **Siguiente lote (con SCRUM-108):** marca en Play Console "Registros de fallas" y "Diagnóstico" como recopilados (no compartidos), con el fin "Análisis". El identificador de instalación de Crashlytics entra en "IDs de dispositivo u otros IDs", que ya está declarado (el FID de los avisos).
+- **`1.0.0` (lote del 26-Nov-2026, a producción) — actualiza el formulario en Play Console antes de enviarla:**
+  - **Fotos y videos → Fotos:** marca también **Compartido** (con Google, Gemini en la capa gratuita) con el fin "Funcionalidad de la app". "Llenar con IA" (HU-59) envía la portada cuando la persona lo pide.
+  - **Actividad en la app → Otro contenido generado por el usuario:** marca también **Compartido** (con Google) con el fin "Funcionalidad de la app". Las coincidencias por significado (HU-60) envían el nombre y la descripción de las publicaciones y lo que dicen las solicitudes, sin datos de contacto.
+  - **Información y rendimiento de la app:** "Registros de fallas" y "Diagnóstico" como recopilados (no compartidos), con el fin "Análisis" (Crashlytics, SCRUM-108). El identificador de instalación de Crashlytics cabe en "IDs de dispositivo u otros IDs", que ya está declarado.
+  - El calendario (HU-62) abre la app del sistema sin permiso, y las fotos del chat (HU-65) son contenido que ya está declarado. No hay que agregar nada por ellos.
+  - El aviso de privacidad ya lo dice todo (secciones "Inteligencia artificial" y "Fallos de la app").
+  - **Producción:** con cuenta personal, Play pide 12 testers durante 14 días seguidos en la prueba cerrada antes de abrir la pista de producción. Si todavía no está abierta, sube esta versión a `alpha` y pide el acceso a producción.
 
 ### Acceso a la app: texto para Play (en inglés)
 

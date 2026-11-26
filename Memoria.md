@@ -1,5 +1,11 @@
 # Memoria del proyecto — musubi-app
 
+## Lote 1.0.0+14 a Google Play (26-Nov-2026, SCRUM-87)
+
+- Con la API `0.5.0-alpha.48` (`infra-up` del 26-Nov-2026, ya en producción): HU-62, HU-58, HU-63, HU-65, HU-61, HU-59, HU-60, HU-42 y Crashlytics (SCRUM-108). Notas en `docs/play/whatsnew/whatsnew-es-419`.
+- **Antes de enviarla:** "Seguridad de los datos" (fotos y contenido compartidos con Google; registros de fallas y diagnóstico). Detalle en `docs/play/README.md`.
+- **Producción:** si Play todavía no abre la pista (12 testers durante 14 días), se sube a `alpha` y se pide el acceso.
+
 ## Trabajo en curso — SCRUM-108: Crashlytics
 
 - **Qué:** `lib/core/observability/crash_reporter.dart`.
