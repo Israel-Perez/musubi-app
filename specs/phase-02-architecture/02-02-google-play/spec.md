@@ -62,7 +62,7 @@ La cuenta de desarrollador es **personal** (un equipo estudiantil no tiene D-U-N
 - `actionlint` del workflow; la primera corrida del workflow sube a la prueba interna.
 
 ## Criterios
-- [ ] El AAB de release está firmado con la llave de subida y Play Console lo acepta en la prueba interna.
+- [x] El AAB de release está firmado con la llave de subida y Play Console lo acepta en la prueba interna (`0.3.0+3`, 30-Oct-2026; `docs/versionado.md`).
 - [ ] La ficha, la clasificación, Seguridad de los datos, el público, los anuncios y el acceso para revisores están completos (sin avisos en Play Console).
 - [ ] La prueba cerrada tiene 12 o más testers inscritos durante 14 días seguidos.
 - [ ] La app está publicada en producción y se descarga desde Google Play antes del 02-Dic-2026.
@@ -76,7 +76,7 @@ La cuenta de desarrollador es **personal** (un equipo estudiantil no tiene D-U-N
 - **Fuera de alcance:** iOS / App Store.
 
 ## Aprobación y Control de Cambios
-- **Estado:** 🚧 Borrador
+- **Estado:** 🚧 Borrador con evidencia (26-Nov-2026, SCRUM-109: prueba cerrada desde el 09-Nov-2026; falta producción)
 - **Revisores:** Pendiente de designar (1 integrante distinto del autor)
 - **Fecha:** 29-Oct-2026
 - **Detalle:** cuenta personal por no tener D-U-N-S; requisito de 12 testers × 14 días (support.google.com/googleplay/android-developer/answer/14151465).

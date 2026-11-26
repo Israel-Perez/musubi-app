@@ -60,7 +60,7 @@ Reglas de mantenimiento (skill `traceability`; las verifica el sub-agente `trace
 | HU-46 | SCRUM-32 | S2 | M-01 | Eliminar mi cuenta y mis datos | `specs/m01-auth/HU-46-eliminar-cuenta/` | [musubi-api:HU-46](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-46-eliminar-cuenta) | `test/features/auth/presentation/delete_account_flow_test.dart`, `test/features/auth/data/http_account_repository_test.dart` | Borrador con evidencia |
 | HU-47 | SCRUM-33 | S2 | M-01 | Aceptar aviso de privacidad y términos de uso | `specs/m01-auth/HU-47-aviso-privacidad/` | [musubi-api:HU-47](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m01-auth/HU-47-aviso-privacidad) | `test/features/auth/legal_documents_test.dart`, `auth_flow_test.dart` | Borrador con evidencia |
 | HU-48 | SCRUM-73 | S4 | M-04 | Explorar la app como visitante | `specs/m04-marketplace/HU-48-explorar-visitante/` | — (catálogo público con HU-06) | `test/features/marketplace/visitor_flow_test.dart`, `test/features/marketplace/home_screen_test.dart`, `test/app/navigation_test.dart`, `test/features/purchase_requests/wanted_board_test.dart` | Borrador con evidencia |
-| HU-49 | SCRUM-69 | S4 | M-04 | Ver populares y recién publicados | `specs/m04-marketplace/HU-49-populares-recientes/` | [musubi-api:HU-49](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m04-marketplace/HU-49-populares-recientes) | `test/features/marketplace/http_catalog_repository_test.dart`, `test/features/marketplace/recent_products_provider_test.dart`, `test/features/marketplace/home_screen_test.dart`, `test/app/navigation_test.dart` | Implementación presente; suite Flutter pendiente por Dart SDK incompatible |
+| HU-49 | SCRUM-69 | S4 | M-04 | Ver populares y recién publicados | `specs/m04-marketplace/HU-49-populares-recientes/` | [musubi-api:HU-49](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m04-marketplace/HU-49-populares-recientes) | `test/features/marketplace/http_catalog_repository_test.dart`, `test/features/marketplace/recent_products_provider_test.dart`, `test/features/marketplace/home_screen_test.dart`, `test/app/navigation_test.dart` | Borrador con evidencia (Google Play `0.11.0+13`, 16-Nov-2026) |
 | HU-50 | SCRUM-67 | S4 | M-03 | Manejar la cantidad disponible de un producto | `specs/m03-listings/HU-50-cantidad-disponible/` | [musubi-api:HU-50](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m03-listings/HU-50-cantidad-disponible) | `test/features/listings/my_products_manage_test.dart`, `test/features/listings/http_listings_repository_test.dart` | Borrador con evidencia |
 | HU-51 | SCRUM-70 | S5 | M-04 | Comparar opciones y pedir aviso de disponibilidad | `specs/m04-marketplace/HU-51-comparar-avisame/` | [musubi-api:HU-51](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m04-marketplace/HU-51-comparar-avisame) | `test/features/marketplace/comparison_test.dart`, `test/features/marketplace/product_screen_test.dart` | Borrador con evidencia (16-Nov-2026) |
 | HU-52 | SCRUM-74 | S5 | M-08 | Apartar un producto y verificar la entrega con QR o código | `specs/m08-orders/HU-52-apartar-producto/` | [musubi-api:HU-52](https://github.com/Israel-Perez/musubi-api/tree/main/specs/m08-orders/HU-52-apartar-producto) | `test/features/orders/reservations_test.dart`, `test/security/android_config_test.dart` | Borrador con evidencia (15-Nov-2026) |
@@ -96,15 +96,19 @@ Total: 67 HU (S1: 1 · S2: 13 · S3: 6 · S4: 25 · S5: 20 · Post-MVP: 0 · Por
 | 01-04 | Configuración por ambiente | 🚧 Borrador con evidencia | `test/core/config/app_config_test.dart` |
 | 01-05 | Estructura, calidad y CI | 🚧 Borrador con evidencia | `scripts/critic-guardrails.ps1`, `.github/workflows/ci-pr.yml` |
 | 02-01 | Base de la app: tema, navegación, sesión y errores (SCRUM-79) | 🚧 Borrador con evidencia | `test/{app,core,security}/` |
-| 02-02 | Publicación en Google Play (SCRUM-86) | 🚧 Borrador | `specs/phase-02-architecture/02-02-google-play/` |
+| 02-02 | Publicación en Google Play (SCRUM-86) | 🚧 Borrador con evidencia | `.github/workflows/release-play.yml`, `docs/play/README.md`, `docs/versionado.md` (prueba cerrada desde el 09-Nov-2026, hoy `0.11.0+13`); falta pasar a producción |
 | 02-03 | Marca y arranque (SCRUM-81) | 🚧 Borrador con evidencia | `test/core/widgets/musubi_logo_test.dart`, `test/app/brand_splash_test.dart` |
 | 02-04 | Fidelidad con la maqueta (SCRUM-82) | 🚧 Borrador con evidencia | `test/core/widgets/`, `tool/screenshots_test.dart` |
+| 02-05 | CI/CD de musubi-app | 🚧 Borrador con evidencia | `.github/workflows/ci-pr.yml` (analyze, test, integration, critic, gitleaks, semgrep, build-apk), `release-play.yml` |
+| 02-06 | Caché de la app (tercer nivel) | 🚧 Borrador con evidencia | `lib/core/network/offline_cache.dart`, `test/core/network/offline_cache_test.dart`, `test/core/network/etag_cache_test.dart` (HU-63) |
+| 02-10 | Cierre de brechas de la evaluación (app) | 🚧 Borrador con evidencia | `test/integration/` (contra la API real), `integration_test/` (teléfono), `test/security/session_security_test.dart`, `tool/check_integration_coverage.dart` |
 
 ## Tareas transversales
 
 | Jira | Qué | Specs tocadas | Evidencia | Estado |
 |---|---|---|---|---|
-| SCRUM-66 | Maqueta versionada, matriz de versionamiento, fecha de evaluación y lineamientos | 00-01, 00-03 | `docs/maqueta/`, `test/versioning_test.dart` | En revisión (PR) |
+| SCRUM-66 | Maqueta versionada, matriz de versionamiento, fecha de evaluación y lineamientos | 00-01, 00-03 | `docs/maqueta/`, `test/versioning_test.dart` | Hecho (fusionado) |
+| SCRUM-109 | Trazabilidad y checklist de lineamientos al día antes de la evaluación | 02-02 | Este archivo y [`musubi-api/docs/bitacora/lineamientos-materia.md`](https://github.com/Israel-Perez/musubi-api/blob/main/docs/bitacora/lineamientos-materia.md) | En revisión (PR) |
 
 ## Lineamientos de la materia y maqueta
 
