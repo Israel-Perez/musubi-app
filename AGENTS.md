@@ -124,6 +124,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - MASVS-AUTH (02-10): el logout manda también el access token para que la API lo revoque de inmediato (lista de revocación en Redis); `test/security/session_security_test.dart` cuida dónde viven los tokens (lista permitida de archivos), que nada los registre y que un error no los muestre.
 - MASVS-NETWORK: HTTPS fuera de dev (`AppConfig.parse`); release sin tráfico en claro; debug/profile solo hacia `10.0.2.2` (emulador) y `localhost` (USB con `adb reverse`).
 - MASVS-CODE: análisis estricto, Dependabot con `cooldown`, paquetes evaluados (00-01); gitleaks revisa el historial completo en el CI. Las excepciones van en `.gitleaksignore` con su motivo.
+- MASVS-RESILIENCE (SCRUM-125): el AAB de `release-play` lleva el código Dart ofuscado (`--obfuscate --split-debug-info`) y R8 encoge las clases de Android. Los símbolos nunca se publican (el repo es público): van a Crashlytics con el secreto opcional `FIREBASE_CRASHLYTICS_SA_JSON` o se descartan. Con la ofuscación, `runtimeType` da nombres ofuscados: no se usa para decidir nada (solo agrupa en `CrashScrubber`).
 - MASVS-PRIVACY: datos mínimos, aviso de privacidad (HU-47), eliminación de cuenta (HU-46), la IA solo a petición (RNF-06).
 - Firebase (HU-31): política en la skill `critic-guardrails` (archivos ignorados, regenerados en CI desde secretos).
 - Checks del agente `security-reviewer`: `.claude/agents/security-reviewer.md`.
@@ -149,7 +150,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - El workflow `release-play` (manual) hace esto:
   1. valida que la versión no exista;
   2. corre las pruebas;
-  3. compila y firma el AAB con la llave de subida (secreto de GitHub, se borra al terminar);
+  3. compila el AAB con el código Dart ofuscado y lo firma con la llave de subida (secreto de GitHub, se borra al terminar); los símbolos van a Crashlytics o se descartan (SCRUM-125);
   4. lo sube a la pista elegida;
   5. etiqueta `app-vX.Y.Z+N`.
 - En local, la firma lee `android/key.properties` (ignorado).

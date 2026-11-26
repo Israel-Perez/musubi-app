@@ -185,9 +185,12 @@ Musubi is a marketplace for students of Universidad Tecnologica de Tula-Tepeji. 
 **Qué hace:** se lanza a mano y solo desde `main`.
 1. Revisa que la etiqueta `app-v<version>` no exista.
 2. Corre `flutter analyze` y `flutter test`.
-3. Compila el AAB firmado con la llave de subida.
-4. Lo sube a la pista elegida con la API de Google Play.
-5. Crea la etiqueta.
+3. Compila el AAB firmado con la llave de subida, con el código Dart **ofuscado** (`--obfuscate --split-debug-info`, SCRUM-125).
+4. Sube los símbolos de Dart a Crashlytics si existe `FIREBASE_CRASHLYTICS_SA_JSON`; si no, los descarta.
+5. Lo sube a la pista elegida con la API de Google Play.
+6. Crea la etiqueta.
+
+**Símbolos de la ofuscación (SCRUM-125):** con ellos se deshace la ofuscación y el repo es público, así que nunca se guardan como artefacto ni en un release. Sin el secreto, la versión sale igual, pero sus trazas en Crashlytics se ven ofuscadas. Las clases de Java/Kotlin las encoge R8 y Play usa el mapa que trae el AAB.
 
 Las notas de la versión salen de `whatsnew/whatsnew-es-419` (máximo 500 caracteres): cámbialas antes de cada publicación.
 
@@ -213,6 +216,7 @@ Las notas de la versión salen de `whatsnew/whatsnew-es-419` (máximo 500 caract
      | `PLAY_UPLOAD_KEY_ALIAS` | `upload` |
      | `PLAY_UPLOAD_KEY_PASSWORD` | La misma de `contrasena-llave-subida.txt` (PKCS12 usa una sola) |
      | `PLAY_SERVICE_ACCOUNT_JSON` | El contenido completo del JSON de la cuenta de servicio |
+     | `FIREBASE_CRASHLYTICS_SA_JSON` (opcional, SCRUM-125) | El JSON de una cuenta de servicio del proyecto de Firebase `musubi-2a78e` con el rol **Firebase Crashlytics Admin**, solo para subir los símbolos. Créala en Google Cloud → IAM → Cuentas de servicio (proyecto de Firebase), descarga su llave JSON y guárdala con `gh secret set FIREBASE_CRASHLYTICS_SA_JSON --env google-play < llave.json`; luego borra el archivo |
 
 **Cuenta de servicio creada:** `github-release@sodium-cat-513606-s7.iam.gserviceaccount.com` (proyecto `sodium-cat-513606-s7`). Su llave JSON solo vive en el secreto `PLAY_SERVICE_ACCOUNT_JSON`. Si una llave se expone (por ejemplo, pegada en un chat), bórrala en Google Cloud → Cuentas de servicio → Claves y crea otra.
 
