@@ -229,4 +229,73 @@ void main() {
     expect(requests[2].data, {'name': 'Batas'});
     expect(requests[3].data, {'active': false});
   });
+
+  test('los indicadores (HU-42): el periodo, las áreas, sin datos y el '
+      'desglose', () async {
+    final adapter = FakeHttpAdapter(
+      (request) async => FakeHttpAdapter.json({
+        'period': 'month',
+        'from': '2026-10-26T18:00:00Z',
+        'to': '2026-11-25T18:00:00Z',
+        'areas': [
+          {
+            'key': 'supply',
+            'title': 'Oferta',
+            'items': [
+              {
+                'key': 'products_created',
+                'label': 'Publicaciones creadas',
+                'value': 4,
+                'unit': 'count',
+                'detail': 'En el periodo',
+                'breakdown': [
+                  {'label': 'Calculadoras', 'value': 3},
+                ],
+              },
+              {
+                'key': 'direct_offers',
+                'label': 'Ofertas directas',
+                'value': null,
+                'unit': 'percent',
+                'detail': '0 de 0 ofertas',
+                'breakdown': null,
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    final repository = repositoryWith(adapter);
+
+    final page = await repository.indicators(IndicatorPeriod.month);
+
+    expect(page.period, IndicatorPeriod.month);
+    expect(page.from, DateTime.utc(2026, 10, 26, 18));
+    final [created, direct] = page.areas.single.items;
+    expect((created.value, created.unit), (4.0, IndicatorUnit.count));
+    expect(created.breakdown.single.label, 'Calculadoras');
+    expect(direct.value, isNull);
+    expect(direct.breakdown, isEmpty);
+    expect(adapter.requests.single.path, ApiPaths.adminIndicators);
+    expect(adapter.requests.single.queryParameters, {'period': 'month'});
+  });
+
+  test('un indicador se lee con su unidad; sin datos es una raya', () {
+    UsageIndicator of(double? value, IndicatorUnit unit) => UsageIndicator(
+      key: 'k',
+      label: 'L',
+      value: value,
+      unit: unit,
+      detail: '',
+    );
+
+    expect(of(1250, IndicatorUnit.count).display, '1,250');
+    expect(of(25, IndicatorUnit.percent).display, '25 %');
+    expect(of(33.3, IndicatorUnit.percent).display, '33.3 %');
+    expect(of(1.5, IndicatorUnit.average).display, '1.5');
+    expect(of(5.3, IndicatorUnit.hours).display, '5.3 h');
+    expect(of(4.7, IndicatorUnit.stars).display, '4.7 ★');
+    expect(of(5, IndicatorUnit.stars).display, '5.0 ★');
+    expect(of(null, IndicatorUnit.percent).display, '—');
+  });
 }

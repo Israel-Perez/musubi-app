@@ -66,3 +66,12 @@ void refreshCategories(WidgetRef ref) {
     ..invalidate(categoriesProvider)
     ..invalidate(sellCategoriesProvider);
 }
+
+/// "Indicadores de uso" del campus por periodo (HU-42). Sin reintento
+/// automatico: la pantalla ofrece reintentar.
+final FutureProviderFamily<UsageIndicators, IndicatorPeriod>
+adminIndicatorsProvider = FutureProvider.autoDispose
+    .family<UsageIndicators, IndicatorPeriod>(
+      (ref, period) => ref.watch(adminRepositoryProvider).indicators(period),
+      retry: (_, _) => null,
+    );

@@ -393,6 +393,10 @@ abstract final class ApiPaths {
   /// (spec `musubi-api:HU-41`).
   static const adminCategories = '/api/v1/admin/categories';
 
+  /// `GET /api/v1/admin/indicators` — fila "M-14" (spec `musubi-api:HU-42`):
+  /// los indicadores de uso del campus; solo el rol `admin`.
+  static const adminIndicators = '/api/v1/admin/indicators';
+
   /// `PATCH /api/v1/admin/categories/{slug}` — fila "M-14"
   /// (spec `musubi-api:HU-41`).
   static String adminCategory(String slug) =>

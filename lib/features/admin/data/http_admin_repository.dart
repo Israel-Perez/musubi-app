@@ -82,6 +82,59 @@ class HttpAdminRepository implements AdminRepository {
   });
 
   @override
+  Future<UsageIndicators> indicators(IndicatorPeriod period) =>
+      _guard(() async {
+        final response = await _dio.get<Map<String, dynamic>>(
+          ApiPaths.adminIndicators,
+          queryParameters: {'period': period.code},
+        );
+        final body = response.data ?? const {};
+        return UsageIndicators(
+          period: IndicatorPeriod.values.firstWhere(
+            (p) => p.code == body['period'],
+            orElse: () => period,
+          ),
+          from: DateTime.parse(body['from'] as String),
+          to: DateTime.parse(body['to'] as String),
+          areas: [
+            for (final area
+                in (body['areas'] as List<dynamic>? ?? const [])
+                    .cast<Map<String, dynamic>>())
+              IndicatorArea(
+                key: area['key'] as String,
+                title: area['title'] as String,
+                items: [
+                  for (final item
+                      in (area['items'] as List<dynamic>? ?? const [])
+                          .cast<Map<String, dynamic>>())
+                    _indicator(item),
+                ],
+              ),
+          ],
+        );
+      });
+
+  static UsageIndicator _indicator(Map<String, dynamic> item) => UsageIndicator(
+    key: item['key'] as String,
+    label: item['label'] as String,
+    value: (item['value'] as num?)?.toDouble(),
+    unit: IndicatorUnit.values.firstWhere(
+      (u) => u.name == item['unit'],
+      orElse: () => IndicatorUnit.count,
+    ),
+    detail: item['detail'] as String? ?? '',
+    breakdown: [
+      for (final part
+          in (item['breakdown'] as List<dynamic>? ?? const [])
+              .cast<Map<String, dynamic>>())
+        IndicatorBreakdown(
+          label: part['label'] as String,
+          value: (part['value'] as num).toInt(),
+        ),
+    ],
+  );
+
+  @override
   Future<List<AdminCategory>> categories() => _guard(() async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiPaths.adminCategories,

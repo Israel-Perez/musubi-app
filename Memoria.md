@@ -1,5 +1,11 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — HU-42 (SCRUM-65): indicadores de uso
+
+- **Qué:** "Indicadores de uso" en `Ajustes` → "Administración" (solo el rol `admin`), con "Última semana" y "Último mes". Lee `GET /admin/indicators` (API `0.5.0-alpha.48`) y muestra las 9 áreas del apartado 19 de la propuesta. Cada indicador lleva su valor con unidad y su detalle; sin datos, "—".
+- **Decisión técnica:** el formato lo decide la app con `unit` (`count`, `percent`, `average`, `hours`, `stars`); la API manda números, no texto.
+- **Errores a evitar:** una fila de chips en una pantalla de 390 px se desborda: va en un `SingleChildScrollView` horizontal, como las pestañas de "Administración".
+
 ## Trabajo en curso — HU-60 (SCRUM-100): coincidencias por significado
 
 - **Qué:** la lógica vive en musubi-api (embeddings de Gemini, API `0.5.0-alpha.47`). En la app no cambian pantallas ni llamadas: "Ya coinciden con lo que buscas" y los avisos de coincidencias ahora encuentran también lo que significa lo mismo.
