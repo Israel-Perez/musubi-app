@@ -103,11 +103,33 @@ jobs:
           fi
           printf '%s' "$GOOGLE_SERVICES_JSON_B64" | base64 --decode > android/app/google-services.json
 
+      # SCRUM-125 (MASVS-RESILIENCE): el codigo Dart sale ofuscado y sus simbolos quedan aparte en build/symbols.
       - name: AAB ${{ steps.version.outputs.version }}
-        run: flutter build appbundle --release --dart-define-from-file=config/prod.json
+        run: >-
+          flutter build appbundle --release --obfuscate --split-debug-info=build/symbols
+          --dart-define-from-file=config/prod.json
 
       - name: Firmado con la llave de subida
         run: keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | grep -q "CN=Musubi"
+
+      # Los simbolos nunca se publican (el repo es publico y con ellos se deshace la ofuscacion): van directo a
+      # Crashlytics si existe el secreto FIREBASE_CRASHLYTICS_SA_JSON (docs/play/README.md). Sin el se descartan
+      # y las trazas de esta version salen ofuscadas en Crashlytics.
+      - name: Simbolos a Crashlytics
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_CRASHLYTICS_SA_JSON }}
+        run: |
+          if [ -z "$SA_JSON" ]; then
+            echo "::warning::Sin FIREBASE_CRASHLYTICS_SA_JSON: las trazas de esta version saldran ofuscadas en Crashlytics."
+            echo "Simbolos de Dart: descartados (falta FIREBASE_CRASHLYTICS_SA_JSON)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          umask 077
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/crashlytics-sa.json"
+          app_id=$(jq -r '.client[] | select(.client_info.android_client_info.package_name == "com.musubi.app") | .client_info.mobilesdk_app_id' android/app/google-services.json)
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/crashlytics-sa.json" \
+            npx --yes firebase-tools@15.35.0 crashlytics:symbols:upload --app="$app_id" build/symbols
+          echo "Simbolos de Dart: subidos a Crashlytics" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
@@ -133,4 +155,4 @@ jobs:
 
       - name: Limpiar la llave
         if: always()
-        run: rm -f "$RUNNER_TEMP/upload.jks" android/key.properties
+        run: rm -rf "$RUNNER_TEMP/upload.jks" android/key.properties "$RUNNER_TEMP/crashlytics-sa.json" build/symbols

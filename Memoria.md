@@ -1,5 +1,12 @@
 # Memoria del proyecto — musubi-app
 
+## SCRUM-125 (26-Nov-2026): código Dart ofuscado en release
+
+- `release-play` compila con `--obfuscate --split-debug-info=build/symbols` (OWASP Mobile M7, MASVS-RESILIENCE). R8 ya encogía las clases de Android.
+- **Decisión:** los símbolos nunca se guardan como artefacto ni en un release, porque el repo es público y con ellos se deshace la ofuscación. Van directo a Crashlytics con `firebase-tools@15.35.0` si existe el secreto opcional `FIREBASE_CRASHLYTICS_SA_JSON` (entorno `google-play`); si no, se descartan y las trazas de esa versión salen ofuscadas. Cómo crearlo: `docs/play/README.md`.
+- **Errores a evitar:** con la ofuscación, `runtimeType.toString()` da nombres como `a3`; no lo uses para decidir nada. Hoy solo `CrashScrubber` lo usa, para agrupar.
+- Fila `0.5.0-alpha.49` en `docs/versionado.md` (sección compartida, rate limit global de la API, SCRUM-125).
+
 ## Lote 1.0.0+14 a Google Play (26-Nov-2026, SCRUM-87)
 
 - Con la API `0.5.0-alpha.48` (`infra-up` del 26-Nov-2026, ya en producción): HU-62, HU-58, HU-63, HU-65, HU-61, HU-59, HU-60, HU-42 y Crashlytics (SCRUM-108). Notas en `docs/play/whatsnew/whatsnew-es-419`.
