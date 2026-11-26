@@ -115,7 +115,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - Sin conexión (HU-63, L-16h): `lib/core/storage/local_store.dart` (SQLite con `sqflite`; `InMemoryLocalStore` en pruebas) y `lib/core/network/offline_cache.dart`. `OfflineCacheInterceptor` (el primero de `dioProvider`) guarda los `GET` marcados con `OfflineCache.options` (la primera página de `Inicio`, `Mensajes`, "Mis pedidos" y "Mis productos"), sin `deliveryCode`, `reference` ni tokens. Al abrir entrega la copia y revalida en segundo plano (`refreshWithOfflineCopies` reconstruye el provider); sin red entrega la copia y enciende `offlineProvider` (`OfflineBanner` en `AppShell`). `ChatOutbox` (lo enciende `MusubiApp`) guarda los mensajes "Por enviar" y los envía al volver la red. `signOut` borra la base local. Una llamada nueva que deba abrir sin conexión: marca su primera página con `OfflineCache.options` y su provider con `refreshWithOfflineCopies`.
 - Fotos, "escribiendo…" y "leído" (HU-65): `lib/features/chat/`. El "+" de la caja (`_attach`) abre "Tomar foto" / "Elegir de la galería" con `photoPickerProvider` (HU-06) y `ChatController.sendPhoto`; la foto se baja con sesión por `chatPhotoProvider` (nunca `Image.network`). `ChatController.typed` avisa `Typing` por el hub cada 3 s como máximo y "{nombre} está escribiendo…" dura 5 s (`chatTypingProvider`); "Leído" va bajo mi último mensaje si `Conversation.counterpartReadAt` es posterior (`chatReadsProvider`). Las respuestas rápidas (`_QuickReplies`) salen a quien compra en una conversación vacía y solo llenan la caja. Con un bloqueo (`canReply`) no hay nada de esto.
 - Compartir (HU-61): el botón de compartir de `Producto` usa `ProductShare.of` ("{nombre} · {precio} en Musubi" y `https://musubiapp.com.mx/p/{id}`, sin quien vende) y `shareSheetProvider` (canal `musubi/share`, `Intent.ACTION_SEND`, sin paquete). Una pausada o vendida no se comparte (`ProductShare.canShare`). El `intent-filter` de App Links (solo `https://musubiapp.com.mx/p/`, `autoVerify`) y la ruta `/p/:id` abren el detalle; sin pantalla anterior, "Regresar" va a Inicio. La vista previa sin la app es el Worker de `musubi-landing` (`worker/`), que lee el detalle público de la API; `assetlinks.json` vive ahí.
-- Pendientes con dueño: Crashlytics → 02-01; firma de subida → 02-02.
+- Fallos (SCRUM-108): `lib/core/observability/crash_reporter.dart`. `crashReporterProvider` (en `main` es `FirebaseCrashReporter`; en las pruebas, `NoCrashReporter`) recibe los fallos no controlados (`FlutterError.onError`, `PlatformDispatcher.onError`) y los 5xx de la API (`CrashReportingInterceptor`). Todo pasa por `CrashScrubber`. "Enviar un error de prueba" en Administración comprueba un build de release.
 
 ## 6. Seguridad (OWASP MASVS)
 
@@ -139,7 +139,9 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 
 ## 8. Observabilidad
 
-> Pendiente (`02-01`): Firebase Crashlytics y registro de errores sin PII. La observabilidad del servicio (logs, alarmas y dashboard de CloudWatch) está en `musubi-api`.
+- **Firebase Crashlytics (SCRUM-108):** fallos no controlados y errores 5xx o desconocidos de la API, como no fatales. Solo en release con `google-services.json`; el manifiesto lo deja apagado (`firebase_crashlytics_collection_enabled=false`) y la app lo enciende.
+- **Sin datos personales:** nunca un id de usuario, correo, nombre, token ni texto del chat (`CrashScrubber`; de la API solo el método, la ruta sin ids, el estado y el código).
+- La observabilidad del servicio (logs, alarmas y dashboard de CloudWatch) está en `musubi-api`.
 
 ## 9. Publicación
 

@@ -1,5 +1,16 @@
 # Memoria del proyecto — musubi-app
 
+## Trabajo en curso — SCRUM-108: Crashlytics
+
+- **Qué:** `lib/core/observability/crash_reporter.dart`.
+  - Los fallos no controlados (`FlutterError.onError`, `PlatformDispatcher.onError`) y los 5xx o fallas desconocidas de la API (`CrashReportingInterceptor` en los dos clientes) van a Crashlytics.
+  - Todo pasa por `CrashScrubber`.
+  - Solo en release con `google-services.json`: el manifiesto lo deja apagado y `FirebaseCrashReporter` lo enciende.
+  - "Enviar un error de prueba" en Administración comprueba el tablero.
+- **Excepción del stack:** `firebase_crashlytics` 6.1.0 y el plugin de Gradle 3.0.8 (`plan.md` de 02-01).
+- **Para revisar (26-Nov-2026):** el aviso de privacidad suma "Fallos de la app" (sin cambiar de versión). En Play, "Registros de fallas" y "Diagnóstico" van en el siguiente lote.
+- **Errores a evitar:** en un heredoc de Python, `\\n` dentro de una cadena de Dart se vuelve un salto de línea real; para buscar en el manifiesto usa una expresión regular.
+
 ## SCRUM-109 (26-Nov-2026): trazabilidad y lineamientos al día
 
 - La trazabilidad de los dos repos refleja lo que ya está en Google Play: HU-07, 08, 11, 20, 22, 49 y 50 pasan a "Borrador con evidencia" con la versión de Play en que salieron. HU-48 en la API dice que no tiene rutas propias (usa el catálogo público). Están las specs técnicas que faltaban: 02-08 a 02-10 en la API y 02-05, 02-06 y 02-10 en la app.

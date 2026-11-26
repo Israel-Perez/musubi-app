@@ -120,7 +120,7 @@ Qué datos se recopilan:
 | Información financiera → Información de pago del usuario | Sí desde `0.11.0` (HU-55): la CLABE de quien quiere recibir pagos por transferencia; se guarda cifrada y quien compra la ve solo para transferir | Funcionalidad de la app | Sí (solo quien la registra en Ajustes → Cuenta para recibir pagos) |
 | Actividad en la app → Historial de búsqueda en la app | Sí desde `0.11.0` (HU-12): las búsquedas que se guardan con "Avísame cuando aparezca" (30 días) | Funcionalidad de la app | Sí |
 | Ubicación, contactos, correos o SMS, salud, archivos, calendario, audio | No | — | — |
-| Información y rendimiento de la app (fallos) | No (sin Crashlytics en esta versión) | — | — |
+| Información y rendimiento de la app → Registros de fallas y Diagnóstico | Sí desde la versión que lleve SCRUM-108 (Firebase Crashlytics): el tipo de error, dónde ocurrió, la versión de la app, el modelo y Android del teléfono. Sin nombre, correo, sesión ni textos del chat. Firebase lo procesa por cuenta de Musubi: **no** cuenta como compartir | Análisis (corregir fallos) | No (es parte de la app; solo en release) |
 
 Notas:
 - La API guarda el *user agent* de cada sesión para que el usuario la reconozca. No es un identificador del dispositivo.
@@ -138,7 +138,7 @@ Notas:
   - **Información financiera → Información de pago del usuario (HU-55):** la CLABE para recibir pagos. Opcional, cifrada en tránsito y en la base, solo para la funcionalidad. Musubi no procesa pagos: "Funciones financieras" sigue en No.
   - **Historial de búsqueda en la app (HU-12):** las búsquedas guardadas. Opcional, solo para la funcionalidad.
   - **Cámara (HU-52):** el permiso `CAMERA` solo lee el QR de un apartado en el teléfono (ML Kit); la imagen no se guarda ni se envía, así que no se declara como dato. Los intereses (HU-66), los avisos de "Avísame" (HU-51) y las insignias (HU-64) caben en tipos ya declarados.
-- **Cuando llegue** Crashlytics, **hay que actualizar este formulario** antes de subir esa versión.
+- **Siguiente lote (con SCRUM-108):** marca en Play Console "Registros de fallas" y "Diagnóstico" como recopilados (no compartidos), con el fin "Análisis". El identificador de instalación de Crashlytics entra en "IDs de dispositivo u otros IDs", que ya está declarado (el FID de los avisos).
 
 ### Acceso a la app: texto para Play (en inglés)
 

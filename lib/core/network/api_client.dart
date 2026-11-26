@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:musubi_app/core/config/app_config.dart';
 import 'package:musubi_app/core/network/etag_cache.dart';
 import 'package:musubi_app/core/network/offline_cache.dart';
+import 'package:musubi_app/core/observability/crash_reporter.dart';
 import 'package:musubi_app/core/session/auth_interceptor.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
@@ -33,6 +34,10 @@ final sessionRefresherProvider = Provider<SessionRefresher>(
 /// (asi la renovacion nunca pasa por el interceptor que la provoca).
 final publicDioProvider = Provider<Dio>((ref) {
   final dio = createApiClient(ref.watch(appConfigProvider));
+  // SCRUM-108: los 5xx y las fallas desconocidas, a Crashlytics.
+  dio.interceptors.add(
+    CrashReportingInterceptor(ref.watch(crashReporterProvider)),
+  );
   ref.onDispose(dio.close);
   return dio;
 });
@@ -62,6 +67,8 @@ final dioProvider = Provider<Dio>((ref) {
     onRefreshed: ref.read(offlineRefreshesProvider).add,
   )..fetch = dio.fetch;
   dio.interceptors
+    // SCRUM-108: los 5xx y las fallas desconocidas, a Crashlytics.
+    ..add(CrashReportingInterceptor(ref.watch(crashReporterProvider)))
     ..add(offline)
     ..add(
       EtagCacheInterceptor(

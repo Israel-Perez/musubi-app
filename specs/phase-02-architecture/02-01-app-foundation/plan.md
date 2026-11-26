@@ -19,3 +19,22 @@
    - El token solo viaja a la API, con self-test de mutación.
 4. **Validación:** pruebas unitarias, de widgets y de seguridad (80/80), APK de debug y critic/Semgrep.
 5. **Secuencia:** tokens y tema → errores → sesión → interceptor → router y barra → componentes → pruebas → documentación.
+
+## Crashlytics (SCRUM-108, 26-Nov-2026)
+
+- **Qué:** `lib/core/observability/crash_reporter.dart`:
+  - `CrashReporter` (`FirebaseCrashReporter` y `NoCrashReporter`);
+  - `CrashScrubber`;
+  - `CrashReportingInterceptor` en `dioProvider` y `publicDioProvider`;
+  - en `main.dart`, `FlutterError.onError` y `PlatformDispatcher.onError`.
+- **Excepción del stack (00-01):**
+  - `firebase_crashlytics` 6.1.0: publisher verificado `firebase.google.com`, licencia BSD-3 (`LICENSE` del paquete), de la misma familia que `firebase_core`/`firebase_messaging`, que ya estaban aprobados con HU-31;
+  - el plugin de Gradle `com.google.firebase.crashlytics` 3.0.8 (Google Maven): el ID del build y los símbolos de los fallos nativos;
+  - los dos se aplican solo si existe `google-services.json`, como el de los avisos.
+- **Alternativa descartada:** Sentry (otra cuenta, otro SDK y su capa gratuita aparte). Crashlytics usa el mismo proyecto de Firebase y no cuesta.
+- **Privacidad (MASVS-PRIVACY):**
+  - nunca se llama `setUserIdentifier` ni se agregan claves con datos de la persona;
+  - cada error pasa por `CrashScrubber`: sin correos, tokens, consultas de URL, números largos ni textos entre comillas;
+  - de la API solo sale el método, la ruta sin ids, el estado y el código.
+- **Apagado por defecto:** `firebase_crashlytics_collection_enabled=false` en el manifiesto; `FirebaseCrashReporter` lo enciende solo con `kReleaseMode` y Firebase configurado.
+- **Remoción:** quitar el paquete, las dos líneas de Gradle y `crash_reporter.dart`; la app queda con `NoCrashReporter` (sin cambios en las pantallas).

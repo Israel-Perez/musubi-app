@@ -23,6 +23,8 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.4.0" apply false
     // HU-31: lee android/app/google-services.json (ignorado; en CI sale del secreto GOOGLE_SERVICES_JSON_B64).
     id("com.google.gms.google-services") version "4.5.0" apply false
+    // SCRUM-108: Crashlytics (el ID del build y los simbolos de los fallos nativos), tambien solo con google-services.json.
+    id("com.google.firebase.crashlytics") version "3.0.8" apply false
 }
 
 include(":app")

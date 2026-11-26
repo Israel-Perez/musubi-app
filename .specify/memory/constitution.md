@@ -74,7 +74,7 @@
 | QR | `qr_flutter` 4.1.0 (dibuja el QR del apartado) y `mobile_scanner` 7.5.0 (lee el QR con la cámara; ML Kit sin empaquetar, permiso `CAMERA` pedido al abrir el lector), ambos BSD-3 (HU-52, excepción de 00-01 del 15-Nov-2026) |
 | Reseñas en Play | Google Play Core (`com.google.android.play:review` 2.0.2, licencia *Play Core SDK Terms of Service*): In-App Review del sistema, sin permisos ni datos de la persona (HU-67, excepción de 00-01 del 14-Nov-2026) |
 | Tiempo real | Cliente SignalR (chat y avisos dentro de la app) — `NOTE (HU-20)` |
-| Notificaciones y monitoreo | Firebase Cloud Messaging — `NOTE (HU-31)` · Firebase Crashlytics — `NOTE (HU-31)` (llega con Firebase) |
+| Notificaciones y monitoreo | Firebase Cloud Messaging (HU-31) · Firebase Crashlytics (`firebase_crashlytics` 6.1.0, BSD-3, y el plugin de Gradle 3.0.8; SCRUM-108, excepción de 00-01 del 26-Nov-2026): fallos y errores 5xx sin datos personales, solo en release |
 | Configuración | `--dart-define-from-file=config/<ambiente>.json` (valores públicos: URL base y banderas) |
 | Diseño visual | Maqueta de `docs/maqueta/` (lineamiento 4): Plus Jakarta Sans, rojo `#D7191F`, modo claro y oscuro; tokens en `lib/core/theme/musubi_tokens.dart`; fuente empaquetada (OFL) (02-01) |
 | Datos locales | SQLite con `sqflite` (HU-63, lineamiento 16h): la primera página de `Inicio`, `Mensajes`, "Mis pedidos" y "Mis productos" (stale-while-revalidate) y los mensajes "Por enviar"; nada de sesión ni datos sensibles, y se borra al cerrar sesión |

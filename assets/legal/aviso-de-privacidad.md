@@ -51,6 +51,16 @@ También usamos Gemini solo cuando tú lo pides al publicar:
 
 Para encontrar coincidencias aunque se usen otras palabras (que "calculadora científica" encuentre una "Casio fx-991"), Musubi envía a Gemini el nombre y la descripción de cada publicación y lo que dice cada solicitud "Se busca", que ya son públicos en tu campus. Se envían sin tu nombre y sin correos, teléfonos, cuentas ni enlaces. Gemini devuelve una lista de números (un "vector") que guardamos para comparar; no guardamos lo que Gemini reciba. Los vectores se borran cuando eliminas tu cuenta.
 
+## Fallos de la app
+
+Cuando la app falla o la API responde con un error inesperado, la app envía un reporte a Firebase Crashlytics (Google), que procesa estos datos por nuestra cuenta, para que podamos corregirlo. El reporte lleva:
+
+- el tipo de error y dónde ocurrió en el código;
+- la versión de la app, y el modelo y la versión de Android del teléfono;
+- un identificador de instalación que asigna Firebase.
+
+El reporte no lleva tu nombre, tu correo, tu sesión, lo que escribes en el chat ni datos de contacto: la app los quita antes de enviarlo. Los reportes se borran solos a los 90 días.
+
 ## Moderación y reportes
 
 Si alguien reporta una conversación o una publicación, el equipo administrador puede revisar ese contenido para atender el reporte. Antes de publicarse, los textos y las imágenes se revisan con servicios automáticos para detectar contenido inapropiado.
