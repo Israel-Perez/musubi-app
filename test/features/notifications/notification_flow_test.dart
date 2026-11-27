@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:musubi_app/app/musubi_app.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/app/splash/brand_splash.dart';
+import 'package:musubi_app/core/observability/crash_reporter.dart';
 import 'package:musubi_app/core/session/session_api.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
@@ -36,6 +37,7 @@ class _Harness {
     FakePushService? push,
     bool asked = false,
     FakeWantedRepository? wanted,
+    this.crashes,
   }) : notifications = FakeNotificationRepository(items: items),
        wanted = wanted ?? FakeWantedRepository(),
        push = push ?? FakePushService(),
@@ -47,6 +49,7 @@ class _Harness {
   final FakePushAskStore ask;
   final FakeWantedRepository wanted;
   final chat = FakeChatRepository();
+  final _RecordingCrashes? crashes;
   late ProviderContainer container;
 
   Future<void> open(String location) async {
@@ -77,6 +80,8 @@ class _Harness {
           listingsRepositoryProvider.overrideWithValue(
             FakeListingsRepository(),
           ),
+          if (crashes case final crashes?)
+            crashReporterProvider.overrideWithValue(crashes),
         ],
         child: const MusubiApp(),
       ),
@@ -441,5 +446,69 @@ void main() {
 
       expect(h.push.unregisters, 1);
     });
+
+    // SCRUM-126: Crashlytics vio "FCM Registration failed!" como falla fatal.
+    testWidgets('si FCM falla al registrar, la app sigue y lo reporta como '
+        'no fatal', (tester) async {
+      final crashes = _RecordingCrashes();
+      final h = _Harness(
+        tester,
+        push: FakePushService(allowed: true)
+          ..registerError = Exception('FCM Registration failed!'),
+        crashes: crashes,
+      );
+      await h.open(AppRoutes.home);
+
+      expect(tester.takeException(), isNull);
+      expect(h.push.registers, 1);
+      expect(h.notifications.devices, isEmpty);
+      expect(crashes.fatal, [false]);
+      expect(crashes.reasons, ['Registro en FCM']);
+      expect(h.here, AppRoutes.home);
+    });
+
+    testWidgets('si FCM falla al dar de baja, la sesion se cierra igual', (
+      tester,
+    ) async {
+      final crashes = _RecordingCrashes();
+      final h = _Harness(
+        tester,
+        push: FakePushService(allowed: true)
+          ..unregisterError = Exception('SERVICE_NOT_AVAILABLE'),
+        crashes: crashes,
+      );
+      await h.open(AppRoutes.home);
+
+      await h.container.read(sessionControllerProvider.notifier).signOut();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(h.push.unregisters, 1);
+      expect(crashes.fatal, [false]);
+      expect(crashes.reasons, ['Baja en FCM']);
+    });
   });
+}
+
+/// Guarda lo que se manda a Crashlytics (SCRUM-126).
+class _RecordingCrashes implements CrashReporter {
+  final List<bool> fatal = [];
+  final List<String?> reasons = [];
+
+  @override
+  bool get active => true;
+
+  @override
+  Future<void> start() async {}
+
+  @override
+  Future<void> record(
+    Object error,
+    StackTrace? stack, {
+    required bool fatal,
+    String? reason,
+  }) async {
+    this.fatal.add(fatal);
+    reasons.add(reason);
+  }
 }

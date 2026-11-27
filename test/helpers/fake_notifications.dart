@@ -84,6 +84,10 @@ class FakePushService implements PushService {
   bool grants;
   int registers = 0;
   int unregisters = 0;
+
+  /// Si no es nulo, FCM falla al registrar o al dar de baja (SCRUM-126).
+  Exception? registerError;
+  Exception? unregisterError;
   int permissionRequests = 0;
   PushOpen? initialOpen;
 
@@ -116,6 +120,7 @@ class FakePushService implements PushService {
   @override
   Future<void> register() async {
     registers++;
+    if (registerError case final error?) throw error;
     installation('fid-telefono');
   }
 
@@ -123,7 +128,10 @@ class FakePushService implements PushService {
   Stream<String> get installations => _installations.stream;
 
   @override
-  Future<void> unregister() async => unregisters++;
+  Future<void> unregister() async {
+    unregisters++;
+    if (unregisterError case final error?) throw error;
+  }
 
   @override
   Future<PushOpen?> initial() async => initialOpen;
