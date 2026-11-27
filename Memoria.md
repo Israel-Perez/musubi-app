@@ -1,5 +1,12 @@
 # Memoria del proyecto — musubi-app
 
+## SCRUM-126 (26-Nov-2026): "FCM Registration failed!" ya no es una falla fatal
+
+- Crashlytics vio en `1.0.0 (14)` una falla **fatal** en `FirebasePushService.register`: `[firebase_messaging/unknown] java.io.IOException: FCM Registration failed!`. Pasó en un `sdk_gphone64_arm64` con Android 16, seguramente el reporte previo al lanzamiento de Play. `PushCoordinator` llamaba al registro con `unawaited` y sin `try`, así que el error subía como no controlado.
+- **Arreglo:** `PushCoordinator.register` y la baja al cerrar sesión atrapan el error y lo mandan a Crashlytics como **no fatal** ("Registro en FCM" / "Baja en FCM"). La app sigue sin push y reintenta en el siguiente arranque o inicio de sesión (RNF-15). Sin reintentos en bucle.
+- **Errores a evitar:** todo `unawaited(...)` que llame a un plugin nativo necesita su `try`. Un error no atrapado llega a `PlatformDispatcher.onError` y Crashlytics lo cuenta como bloqueo, aunque la app no se cierre.
+- Entra a Play con la siguiente subida (los lotes juntan varias correcciones).
+
 ## SCRUM-125 (26-Nov-2026): código Dart ofuscado en release
 
 - `release-play` compila con `--obfuscate --split-debug-info=build/symbols` (OWASP Mobile M7, MASVS-RESILIENCE). R8 ya encogía las clases de Android.

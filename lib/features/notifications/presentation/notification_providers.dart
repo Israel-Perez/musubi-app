@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
 import 'package:musubi_app/core/errors/api_failure.dart';
 import 'package:musubi_app/core/network/api_client.dart';
+import 'package:musubi_app/core/observability/crash_reporter.dart';
 import 'package:musubi_app/core/session/session_controller.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
 import 'package:musubi_app/core/widgets/musubi_snack.dart';
@@ -156,7 +157,7 @@ class PushCoordinator {
       if (next is SignedIn && previous is! SignedIn) {
         unawaited(register());
       } else if (next is! SignedIn && previous is SignedIn) {
-        unawaited(_push.unregister());
+        unawaited(_unregister());
       }
     });
     // Subscribirse antes de register(): FCM entrega aqui el ID al registrar,
@@ -172,11 +173,32 @@ class PushCoordinator {
 
   /// Con sesion y permiso, registra este telefono en FCM (el ID llega por
   /// `installations` y se manda a la API).
+  ///
+  /// SCRUM-126: sin red o sin Play Services completos, FCM lanza
+  /// "FCM Registration failed!". La app sigue sin push (RNF-15), el error sale
+  /// como no fatal y se reintenta en el siguiente arranque o inicio de sesion.
   Future<void> register() async {
     if (!_ready || _ref.read(sessionControllerProvider) is! SignedIn) return;
-    if (!await _push.permitted()) return;
-    await _push.register();
+    try {
+      if (!await _push.permitted()) return;
+      await _push.register();
+    } on Object catch (error, stack) {
+      await _report(error, stack, 'Registro en FCM');
+    }
   }
+
+  /// Da de baja el telefono en FCM al cerrar sesion; si falla, sigue igual.
+  Future<void> _unregister() async {
+    try {
+      await _push.unregister();
+    } on Object catch (error, stack) {
+      await _report(error, stack, 'Baja en FCM');
+    }
+  }
+
+  Future<void> _report(Object error, StackTrace stack, String reason) => _ref
+      .read(crashReporterProvider)
+      .record(error, stack, fatal: false, reason: reason);
 
   Future<void> _send(String installationId) async {
     if (_ref.read(sessionControllerProvider) is! SignedIn) return;
