@@ -1,5 +1,11 @@
 # Memoria del proyecto — musubi-app
 
+## Lote 1.0.0+15 a la prueba cerrada (27-Nov-2026)
+
+- Lleva la ofuscación (SCRUM-125), la corrección de push (SCRUM-126) y el aviso y los términos enlazados a la landing (SCRUM-127). Va a `alpha` porque Google pidió 14 días más de prueba cerrada antes de producción (SCRUM-124).
+- Primer AAB con `--obfuscate`: sin el secreto `FIREBASE_CRASHLYTICS_SA_JSON`, las trazas de Crashlytics de esta versión salen ofuscadas.
+- "Seguridad de los datos" no cambia.
+
 ## SCRUM-127 (27-Nov-2026): aviso y términos enlazados a la landing
 
 - `LandingLink` ("Consúltalo también en musubiapp.com.mx/…") al final del aviso de privacidad y de los términos (lineamiento 16). Abre el navegador con `webPageProvider` (canal nativo `musubi/web`, `Intent.ACTION_VIEW`, sin paquete ni permisos). Solo abre `https://musubiapp.com.mx`: lo revisan `LandingPages.allowed` en Dart y `openLandingPage` en Kotlin.

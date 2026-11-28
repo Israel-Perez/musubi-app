@@ -146,7 +146,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 
 ## 9. Publicación
 
-- Google Play en **prueba cerrada** desde el 09-Nov-2026. La versión vigente está en `docs/versionado.md` (hoy `1.0.0+14`, el lote para producción del 26-Nov-2026); la ficha y "Seguridad de los datos", en `docs/play/README.md`.
+- Google Play en **prueba cerrada** desde el 09-Nov-2026. La versión vigente está en `docs/versionado.md` (hoy `1.0.0+15` en la prueba cerrada, la versión de la evaluación del 02-Dic-2026); la ficha y "Seguridad de los datos", en `docs/play/README.md`.
 - El workflow `release-play` (manual) hace esto:
   1. valida que la versión no exista;
   2. corre las pruebas;
