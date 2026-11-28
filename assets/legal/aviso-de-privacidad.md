@@ -63,7 +63,11 @@ El reporte no lleva tu nombre, tu correo, tu sesión, lo que escribes en el chat
 
 ## Moderación y reportes
 
-Si alguien reporta una conversación o una publicación, el equipo administrador puede revisar ese contenido para atender el reporte. Antes de publicarse, los textos y las imágenes se revisan con servicios automáticos para detectar contenido inapropiado.
+Si alguien reporta una conversación o una publicación, el equipo administrador puede revisar ese contenido para atender el reporte. Antes de guardarse, los textos y las imágenes se revisan con servicios automáticos para detectar contenido inapropiado:
+
+- Las fotos, con Amazon Rekognition (AWS), que las procesa por nuestra cuenta.
+- Los textos que verá tu campus (publicaciones, solicitudes "Se busca", ofertas y reseñas), con un filtro de palabras y después con Gemini (Google) en su capa gratuita. Se envían sin tu nombre y sin correos, teléfonos, cuentas ni enlaces, y no guardamos lo que Gemini reciba.
+- Los mensajes del chat solo pasan por el filtro de palabras: nunca se envían a Gemini para revisarlos.
 
 ## Con quién compartimos tus datos
 
