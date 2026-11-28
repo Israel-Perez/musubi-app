@@ -42,6 +42,9 @@ void main() {
     expect(privacy, contains('no lleva tu nombre, tu correo, tu sesión'));
     expect(privacy, contains('## Moderación y reportes'));
     expect(privacy, contains('el equipo administrador puede revisar'));
+    // SCRUM-127: el texto publico se modera con Gemini; el chat, nunca.
+    expect(privacy, contains('después con Gemini (Google)'));
+    expect(privacy, contains('nunca se envían a Gemini para revisarlos'));
   });
 
   test('aviso: coherente con D-01 (sin pagos ni tarjetas)', () {

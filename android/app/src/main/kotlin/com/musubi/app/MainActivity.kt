@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.CalendarContract
@@ -31,6 +32,16 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 if (call.method == "openInbox") {
                     result.success(openInbox())
+                } else {
+                    result.notImplemented()
+                }
+            }
+        // SCRUM-127 (lineamiento 16): el aviso de privacidad y los terminos en
+        // la landing. Solo https://musubiapp.com.mx, en el navegador.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "musubi/web")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "open") {
+                    result.success(openLandingPage(call.argument<String>("url") ?: ""))
                 } else {
                     result.notImplemented()
                 }
@@ -123,6 +134,22 @@ class MainActivity : FlutterActivity() {
             .putExtra(CalendarContract.Events.TITLE, title)
             .putExtra(CalendarContract.Events.EVENT_LOCATION, location)
             .putExtra(CalendarContract.Events.DESCRIPTION, description)
+        return try {
+            startActivity(intent)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
+    }
+
+    private fun openLandingPage(url: String): Boolean {
+        val uri = Uri.parse(url)
+        if (uri.scheme != "https" || uri.host != "musubiapp.com.mx" || uri.userInfo != null || uri.port != -1) {
+            return false
+        }
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+            .addCategory(Intent.CATEGORY_BROWSABLE)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return try {
             startActivity(intent)
             true

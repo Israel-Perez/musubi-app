@@ -1,5 +1,13 @@
 # Memoria del proyecto — musubi-app
 
+## SCRUM-127 (27-Nov-2026): aviso y términos enlazados a la landing
+
+- `LandingLink` ("Consúltalo también en musubiapp.com.mx/…") al final del aviso de privacidad y de los términos (lineamiento 16). Abre el navegador con `webPageProvider` (canal nativo `musubi/web`, `Intent.ACTION_VIEW`, sin paquete ni permisos). Solo abre `https://musubiapp.com.mx`: lo revisan `LandingPages.allowed` en Dart y `openLandingPage` en Kotlin.
+- La ruta real de la landing es `/privacidad` (`/aviso-de-privacidad` da 404) y `/terminos`.
+- El aviso dice ahora cómo se modera: fotos con Rekognition, texto público con el léxico y Gemini (API `0.5.0-alpha.50`) y el chat solo con el léxico. "Seguridad de los datos" no cambia: el contenido público ya está declarado como compartido con Google (HU-60).
+- **Errores a evitar:** una prueba que abre la misma pantalla legal dos veces se cuelga, porque `rootBundle` guarda la carga del asset ligada a la primera prueba. Sobrescribe `legalDocumentProvider` con un texto fijo.
+- Fila `0.5.0-alpha.50` en `docs/versionado.md` (sección compartida).
+
 ## SCRUM-126 (26-Nov-2026): "FCM Registration failed!" ya no es una falla fatal
 
 - Crashlytics vio en `1.0.0 (14)` una falla **fatal** en `FirebasePushService.register`: `[firebase_messaging/unknown] java.io.IOException: FCM Registration failed!`. Pasó en un `sdk_gphone64_arm64` con Android 16, seguramente el reporte previo al lanzamiento de Play. `PushCoordinator` llamaba al registro con `unawaited` y sin `try`, así que el error subía como no controlado.

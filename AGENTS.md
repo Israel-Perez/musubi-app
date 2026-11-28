@@ -125,7 +125,7 @@ Claves y estado: `specs/phase-01-foundation/01-04-config-reference/spec.md` + `c
 - MASVS-NETWORK: HTTPS fuera de dev (`AppConfig.parse`); release sin tráfico en claro; debug/profile solo hacia `10.0.2.2` (emulador) y `localhost` (USB con `adb reverse`).
 - MASVS-CODE: análisis estricto, Dependabot con `cooldown`, paquetes evaluados (00-01); gitleaks revisa el historial completo en el CI. Las excepciones van en `.gitleaksignore` con su motivo.
 - MASVS-RESILIENCE (SCRUM-125): el AAB de `release-play` lleva el código Dart ofuscado (`--obfuscate --split-debug-info`) y R8 encoge las clases de Android. Los símbolos nunca se publican (el repo es público): van a Crashlytics con el secreto opcional `FIREBASE_CRASHLYTICS_SA_JSON` o se descartan. Con la ofuscación, `runtimeType` da nombres ofuscados: no se usa para decidir nada (solo agrupa en `CrashScrubber`).
-- MASVS-PRIVACY: datos mínimos, aviso de privacidad (HU-47), eliminación de cuenta (HU-46), la IA solo a petición (RNF-06).
+- MASVS-PRIVACY: datos mínimos, aviso de privacidad (HU-47) enlazado a `musubiapp.com.mx/privacidad` (`LandingLink`, canal `musubi/web` que solo abre la landing, SCRUM-127), eliminación de cuenta (HU-46), la IA solo a petición (RNF-06; la moderación del texto público con Gemini es de la API).
 - Firebase (HU-31): política en la skill `critic-guardrails` (archivos ignorados, regenerados en CI desde secretos).
 - Checks del agente `security-reviewer`: `.claude/agents/security-reviewer.md`.
 

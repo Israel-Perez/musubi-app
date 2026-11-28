@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musubi_app/app/router.dart';
+import 'package:musubi_app/core/platform/web_page.dart';
 import 'package:musubi_app/core/theme/app_theme.dart';
 import 'package:musubi_app/core/theme/musubi_tokens.dart';
 import 'package:musubi_app/core/widgets/feedback_views.dart';
 import 'package:musubi_app/core/widgets/musubi_button.dart';
 import 'package:musubi_app/core/widgets/musubi_icon.dart';
 import 'package:musubi_app/core/widgets/musubi_icons.dart';
+import 'package:musubi_app/core/widgets/musubi_snack.dart';
+import 'package:musubi_app/core/widgets/pressable.dart';
 import 'package:musubi_app/features/auth/presentation/auth_layout.dart';
 
 /// Documentos legales (HU-47). Fuente unica: `assets/legal/*.md` (la landing
@@ -174,6 +177,10 @@ class PrivacyNoticeScreen extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(20, 28, 20, 0),
           child: LegalDocumentView(asset: LegalDocuments.privacy),
         ),
+        const LandingLink(
+          url: LandingPages.privacy,
+          label: 'musubiapp.com.mx/privacidad',
+        ),
       ],
     );
   }
@@ -200,8 +207,67 @@ class TermsScreen extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(20, 22, 20, 0),
         child: LegalDocumentView(asset: LegalDocuments.terms, skipTitle: true),
       ),
+      LandingLink(url: LandingPages.terms, label: 'musubiapp.com.mx/terminos'),
     ],
   );
+}
+
+/// "Consúltalo también en musubiapp.com.mx/…" (SCRUM-127, lineamiento 16: el
+/// aviso y el manejo de datos enlazados a la landing). Abre el navegador.
+class LandingLink extends ConsumerWidget {
+  const new({required this.url, required this.label, super.key});
+
+  final String url;
+  final String label;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.musubi;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      child: Pressable(
+        semanticLabel: 'Abrir $label',
+        onTap: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          if (!await ref.read(webPageProvider).open(url)) {
+            showMusubiSnack(
+              messenger,
+              'No pudimos abrir el navegador. Visita $label',
+              tone: SnackTone.warn,
+              icon: MusubiIcons.externalLink,
+            );
+          }
+        },
+        builder: (context, pressed) => Row(
+          spacing: MusubiSizes.space2,
+          children: [
+            MusubiIcon(MusubiIcons.externalLink, size: 16, color: c.brandText),
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  text: 'Consúltalo también en ',
+                  style: MusubiType.style(
+                    13.5,
+                    line: 19,
+                    color: c.textSecondary,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: label,
+                      style: TextStyle(
+                        color: c.brandText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Icono de 60 en su cuadro rojo claro, titulo de 28 y fecha.
